@@ -1,16 +1,28 @@
-// src/App.tsx
+import { BrowserRouter, Routes, Route } from 'react-router-dom';
+import Header from './components/Layout/Header';
+import Sidebar from './components/Layout/SideBar';
+import Dashboard from './pages/Dashboard';
+import ReservaCita from './pages/ReservaCita';
+import ListaCitas from './pages/ListaCitas';
 
-import React from 'react';
-import Header from './components/Header';
-import ReservaCita from './components/ReservaCita';
-
-const App = () => {
+function App() {
   return (
-    <div className="App">
-      <Header />
-      <ReservaCita />
-    </div>
+    <BrowserRouter>
+      <div className="app">
+        <Sidebar />
+        <div style={{ flex: 1, display: 'flex', flexDirection: 'column' }}>
+          <Header />
+          <main style={{ flex: 1 }}>
+            <Routes>
+              <Route path="/" element={<Dashboard />} />
+              <Route path="/reserva-cita" element={<ReservaCita />} />
+              <Route path="/lista-citas" element={<ListaCitas />} />
+            </Routes>
+          </main>
+        </div>
+      </div>
+    </BrowserRouter>
   );
-};
+}
 
 export default App;
