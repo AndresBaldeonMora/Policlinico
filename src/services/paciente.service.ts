@@ -6,10 +6,10 @@ import api from './api';
 export interface Paciente {
   id: string;
   dni: string;
-  nombre: string;
-  apellido: string;
+  nombres: string;
+  apellidos: string;
   telefono?: string;
-  email?: string;
+  correo?: string;
 }
 
 export class PacienteApiService {

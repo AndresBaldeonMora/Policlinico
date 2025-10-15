@@ -5,11 +5,20 @@ import api from './api';
 
 export interface Cita {
   id: string;
-  paciente: { nombre: string; dni: string };
-  doctor: { nombre: string; especialidad: string };
+  pacienteId: string;
+  doctorId: string;
   fecha: string;
   hora: string;
-  estado: 'PENDIENTE' | 'CONFIRMADA' | 'EN_ATENCION' | 'COMPLETADA' | 'CANCELADA';
+  paciente?: {
+    nombres: string;
+    apellidos: string;
+    dni: string;
+  };
+  doctor?: {
+    nombres: string;
+    apellidos: string;
+    especialidad: string;
+  };
 }
 
 export class CitaApiService {
@@ -26,6 +35,7 @@ export class CitaApiService {
       );
       return response.data.data || null;
     } catch (error) {
+      console.error('Error al crear cita:', error);
       throw error;
     }
   }
