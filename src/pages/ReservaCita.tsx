@@ -1,107 +1,180 @@
 import { useState, useEffect } from 'react';
+import { PacienteApiService, type Paciente } from '../services/Paciente.service';
+import { EspecialidadApiService, type Especialidad } from '../services/especialidad.service';
+import { DoctorApiService, type Doctor, type HorarioDisponible } from '../services/doctor.service';
+import { CitaApiService } from '../services/cita.service';
 import './ReservaCita.css';
-
-interface Paciente {
-  dni: string;
-  nombre: string;
-}
-
-interface Doctor {
-  id: string;
-  nombre: string;
-  especialidad: string;
-  horarios: string[];
-}
 
 const ReservaCita = () => {
   const [paso, setPaso] = useState(1);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState('');
+
+  // Paso 1: Búsqueda de Paciente
   const [searchDNI, setSearchDNI] = useState('');
   const [pacienteSeleccionado, setPacienteSeleccionado] = useState<Paciente | null>(null);
-  const [especialidadSeleccionada, setEspecialidadSeleccionada] = useState('');
+
+  // Paso 2: Especialidad
   const [searchEspecialidad, setSearchEspecialidad] = useState('');
-  const [doctorSeleccionado, setDoctorSeleccionado] = useState<Doctor | null>(null);
-  const [fechaSeleccionada, setFechaSeleccionada] = useState('');
-  const [horaSeleccionada, setHoraSeleccionada] = useState('');
+  const [especialidades, setEspecialidades] = useState<Especialidad[]>([]);
+  const [especialidadSeleccionada, setEspecialidadSeleccionada] = useState<Especialidad | null>(null);
   const [showSuggestions, setShowSuggestions] = useState(false);
 
-  // Datos mock - En producción vendrán del backend
-  const pacientesMock: Paciente[] = [
-    { dni: '72345678', nombre: 'Juan Carlos Pérez Rodríguez' },
-    { dni: '71234567', nombre: 'María Fernanda González Silva' },
-    { dni: '70123456', nombre: 'Carlos Alberto Ruiz Martínez' },
-    { dni: '73456789', nombre: 'Ana Patricia López Fernández' },
-  ];
+  // Paso 3: Doctor y Horarios
+  const [doctores, setDoctores] = useState<Doctor[]>([]);
+  const [fechaSeleccionada, setFechaSeleccionada] = useState('');
+  const [doctorSeleccionado, setDoctorSeleccionado] = useState<Doctor | null>(null);
+  const [horarios, setHorarios] = useState<HorarioDisponible[]>([]);
+  const [horaSeleccionada, setHoraSeleccionada] = useState('');
 
-  const especialidades = [
-    'Pediatría', 'Medicina Interna', 'Ginecología', 'Cardiología', 
-    'Oftalmología', 'Medicina Física y Rehabilitación', 'Neumología', 
-    'Reumatología', 'Radiología', 'Gastroenterología', 'Odontología', 
-    'Endocrinología', 'Traumatología', 'Geriatría', 'Medicina Familiar', 
-    'Ecografías', 'Otorrinolaringología', 'Urología'
-  ];
+  // Cargar especialidades al montar
+  useEffect(() => {
+    cargarEspecialidades();
+    const today = new Date().toISOString().split('T')[0];
+    setFechaSeleccionada(today);
+  }, []);
 
-  const doctoresMock: Doctor[] = [
-    { 
-      id: '1', 
-      nombre: 'Dr. Roberto López Martínez', 
-      especialidad: 'Cardiología',
-      horarios: ['09:00', '09:30', '10:00', '10:30', '11:00']
-    },
-    { 
-      id: '2', 
-      nombre: 'Dra. Carmen García Ruiz', 
-      especialidad: 'Cardiología',
-      horarios: ['14:00', '14:30', '15:00', '15:30', '16:00']
-    },
-  ];
+  // Cargar especialidades
+  const cargarEspecialidades = async () => {
+    try {
+      setLoading(true);
+      const data = await EspecialidadApiService.listar();
+      setEspecialidades(data);
+    } catch (err) {
+      setError('Error al cargar especialidades');
+      console.error(err);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   // Buscar paciente por DNI
-  const buscarPaciente = (dni: string) => {
+  const buscarPaciente = async (dni: string) => {
     setSearchDNI(dni);
-    if (dni.length >= 8) {
-      const paciente = pacientesMock.find(p => p.dni === dni);
+    setError('');
+
+    if (dni.length < 8) {
+      setPacienteSeleccionado(null);
+      return;
+    }
+
+    try {
+      setLoading(true);
+      const paciente = await PacienteApiService.buscarPorDNI(dni);
+      
       if (paciente) {
         setPacienteSeleccionado(paciente);
+      } else {
+        setError('Paciente no encontrado');
+        setPacienteSeleccionado(null);
       }
-    } else {
-      setPacienteSeleccionado(null);
+    } catch (err) {
+      setError('Error al buscar paciente');
+      console.error(err);
+    } finally {
+      setLoading(false);
     }
   };
 
   // Filtrar especialidades
   const especialidadesFiltradas = especialidades.filter(esp =>
-    esp.toLowerCase().includes(searchEspecialidad.toLowerCase())
+    esp.nombre.toLowerCase().includes(searchEspecialidad.toLowerCase())
   );
 
-  // Filtrar doctores por especialidad
-  const doctoresDisponibles = doctoresMock.filter(
-    doc => doc.especialidad === especialidadSeleccionada
-  );
-
-  // Generar horarios ocupados (mock)
-  const horariosOcupados = ['10:00', '14:30'];
-
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    console.log('Cita registrada:', {
-      paciente: pacienteSeleccionado,
-      especialidad: especialidadSeleccionada,
-      doctor: doctorSeleccionado,
-      fecha: fechaSeleccionada,
-      hora: horaSeleccionada,
-    });
-    alert('✅ Cita registrada exitosamente');
+  // Seleccionar especialidad
+  const handleSelectEspecialidad = (especialidad: Especialidad) => {
+    setEspecialidadSeleccionada(especialidad);
+    setSearchEspecialidad(especialidad.nombre);
+    setShowSuggestions(false);
+    cargarDoctores(especialidad.id);
   };
 
-  // Establecer fecha actual por defecto
-  useEffect(() => {
-    const today = new Date().toISOString().split('T')[0];
-    setFechaSeleccionada(today);
-  }, []);
+  // Cargar doctores por especialidad
+  const cargarDoctores = async (especialidadId: string) => {
+    try {
+      setLoading(true);
+      const data = await DoctorApiService.obtenerPorEspecialidad(especialidadId);
+      setDoctores(data);
+      setDoctorSeleccionado(null);
+      setHorarios([]);
+    } catch (err) {
+      setError('Error al cargar doctores');
+      console.error(err);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Cargar horarios disponibles
+  const cargarHorarios = async (doctorId: string, fecha: string) => {
+    try {
+      setLoading(true);
+      const data = await DoctorApiService.obtenerHorariosDisponibles(doctorId, fecha);
+      setHorarios(data);
+      setHoraSeleccionada('');
+    } catch (err) {
+      setError('Error al cargar horarios');
+      console.error(err);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Manejar cambio de doctor
+  const handleSelectDoctor = (doctor: Doctor) => {
+    setDoctorSeleccionado(doctor);
+    cargarHorarios(doctor.id, fechaSeleccionada);
+  };
+
+  // Manejar cambio de fecha
+  const handleFechaChange = (nuevaFecha: string) => {
+    setFechaSeleccionada(nuevaFecha);
+    if (doctorSeleccionado) {
+      cargarHorarios(doctorSeleccionado.id, nuevaFecha);
+    }
+  };
+
+  // Crear cita
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+
+    if (!pacienteSeleccionado || !doctorSeleccionado || !horaSeleccionada || !fechaSeleccionada) {
+      setError('Por favor completa todos los campos');
+      return;
+    }
+
+    try {
+      setLoading(true);
+      await CitaApiService.crear({
+        pacienteId: pacienteSeleccionado.id,
+        doctorId: doctorSeleccionado.id,
+        fecha: fechaSeleccionada,
+        hora: horaSeleccionada,
+      });
+
+      alert('✅ Cita registrada exitosamente');
+      // Reiniciar formulario
+      setSearchDNI('');
+      setPacienteSeleccionado(null);
+      setEspecialidadSeleccionada(null);
+      setSearchEspecialidad('');
+      setDoctorSeleccionado(null);
+      setHoraSeleccionada('');
+      setError('');
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Error al crear cita');
+      console.error(err);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   return (
     <div className="reserva-cita">
       <h1>Nueva Reserva de Cita</h1>
+
+      {error && <div className="error-message">{error}</div>}
+      {loading && <div className="loading-spinner">Cargando...</div>}
 
       <div className="card">
         <form onSubmit={handleSubmit} className="cita-form">
@@ -122,14 +195,14 @@ const ReservaCita = () => {
                 onChange={(e) => buscarPaciente(e.target.value)}
                 placeholder="Ingrese DNI (8 dígitos)"
                 maxLength={8}
-                required
+                disabled={loading}
                 className="input-dni"
               />
               {pacienteSeleccionado && (
                 <div className="paciente-info">
                   <span className="check-icon">✅</span>
                   <div>
-                    <p className="paciente-nombre">{pacienteSeleccionado.nombre}</p>
+                    <p className="paciente-nombre">{pacienteSeleccionado.nombre} {pacienteSeleccionado.apellido}</p>
                     <p className="paciente-dni">DNI: {pacienteSeleccionado.dni}</p>
                   </div>
                 </div>
@@ -158,6 +231,7 @@ const ReservaCita = () => {
                     }}
                     onFocus={() => setShowSuggestions(true)}
                     placeholder="Escriba para buscar..."
+                    disabled={loading}
                     className="input-search"
                   />
                   {showSuggestions && searchEspecialidad && (
@@ -165,15 +239,11 @@ const ReservaCita = () => {
                       {especialidadesFiltradas.length > 0 ? (
                         especialidadesFiltradas.map((esp) => (
                           <div
-                            key={esp}
+                            key={esp.id}
                             className="suggestion-item"
-                            onClick={() => {
-                              setEspecialidadSeleccionada(esp);
-                              setSearchEspecialidad(esp);
-                              setShowSuggestions(false);
-                            }}
+                            onClick={() => handleSelectEspecialidad(esp)}
                           >
-                            🏥 {esp}
+                            🏥 {esp.nombre}
                           </div>
                         ))
                       ) : (
@@ -186,12 +256,13 @@ const ReservaCita = () => {
                 </div>
                 {especialidadSeleccionada && !showSuggestions && (
                   <div className="selected-tag">
-                    <span>🏥 {especialidadSeleccionada}</span>
+                    <span>🏥 {especialidadSeleccionada.nombre}</span>
                     <button
                       type="button"
                       onClick={() => {
-                        setEspecialidadSeleccionada('');
+                        setEspecialidadSeleccionada(null);
                         setSearchEspecialidad('');
+                        setDoctores([]);
                         setDoctorSeleccionado(null);
                       }}
                       className="tag-close"
@@ -218,60 +289,62 @@ const ReservaCita = () => {
                   type="date"
                   id="fecha"
                   value={fechaSeleccionada}
-                  onChange={(e) => setFechaSeleccionada(e.target.value)}
+                  onChange={(e) => handleFechaChange(e.target.value)}
                   min={new Date().toISOString().split('T')[0]}
+                  disabled={loading}
                   required
                 />
               </div>
 
-              <div className="doctores-grid">
-                {doctoresDisponibles.map((doctor) => (
-                  <div key={doctor.id} className="doctor-card">
-                    <div className="doctor-info">
-                      <div className="doctor-avatar">👨‍⚕️</div>
-                      <div>
-                        <h4 className="doctor-nombre">{doctor.nombre}</h4>
-                        <p className="doctor-especialidad">{doctor.especialidad}</p>
+              {doctores.length > 0 && (
+                <div className="doctores-grid">
+                  {doctores.map((doctor) => (
+                    <div 
+                      key={doctor.id} 
+                      className={`doctor-card ${doctorSeleccionado?.id === doctor.id ? 'selected' : ''}`}
+                      onClick={() => handleSelectDoctor(doctor)}
+                    >
+                      <div className="doctor-info">
+                        <div className="doctor-avatar">👨‍⚕️</div>
+                        <div>
+                          <h4 className="doctor-nombre">{doctor.nombre} {doctor.apellido}</h4>
+                          <p className="doctor-especialidad">{doctor.especialidad}</p>
+                        </div>
                       </div>
-                    </div>
 
-                    <div className="horarios-grid">
-                      {doctor.horarios.map((hora) => {
-                        const isOcupado = horariosOcupados.includes(hora);
-                        const isSelected = doctorSeleccionado?.id === doctor.id && horaSeleccionada === hora;
-                        
-                        return (
-                          <button
-                            key={hora}
-                            type="button"
-                            className={`horario-btn ${isOcupado ? 'ocupado' : ''} ${isSelected ? 'selected' : ''}`}
-                            disabled={isOcupado}
-                            onClick={() => {
-                              setDoctorSeleccionado(doctor);
-                              setHoraSeleccionada(hora);
-                            }}
-                          >
-                            {hora}
-                          </button>
-                        );
-                      })}
+                      {doctorSeleccionado?.id === doctor.id && horarios.length > 0 && (
+                        <div className="horarios-grid">
+                          {horarios.map((horario) => (
+                            <button
+                              key={horario.hora}
+                              type="button"
+                              className={`horario-btn ${horario.disponible ? '' : 'ocupado'} ${horaSeleccionada === horario.hora ? 'selected' : ''}`}
+                              disabled={!horario.disponible}
+                              onClick={() => horario.disponible && setHoraSeleccionada(horario.hora)}
+                            >
+                              {horario.hora}
+                            </button>
+                          ))}
+                        </div>
+                      )}
                     </div>
-                  </div>
-                ))}
-              </div>
+                  ))}
+                </div>
+              )}
             </div>
           )}
 
           {/* Botones de acción */}
           {pacienteSeleccionado && especialidadSeleccionada && doctorSeleccionado && horaSeleccionada && (
             <div className="form-actions">
-              <button type="submit" className="btn btn-primary">
+              <button type="submit" className="btn btn-primary" disabled={loading}>
                 ✅ Registrar Cita
               </button>
               <button 
                 type="button" 
                 className="btn btn-secondary"
                 onClick={() => window.location.href = '/'}
+                disabled={loading}
               >
                 Cancelar
               </button>
