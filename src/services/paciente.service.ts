@@ -17,15 +17,17 @@ export interface Paciente {
 
 export interface PacienteTransformado {
   id: string;
-  _id: string; // ⭐ Mantener ambos
+  _id: string;
   dni: string;
   nombres: string;
   apellidos: string;
   fechaNacimiento: string;
+  edad?: number; // ✅ 
   telefono: string;
   correo: string;
   direccion: string;
 }
+
 
 // ⭐ Type helper para errores
 interface AxiosErrorResponse {

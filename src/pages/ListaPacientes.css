@@ -1,0 +1,80 @@
+/* ==========================================
+   ListaPacientes.css - Estilo uniforme
+   ========================================== */
+
+.lista-pacientes {
+  max-width: 900px;
+  margin: 2rem auto;
+  padding: 0 1rem;
+}
+
+.lista-pacientes h1 {
+  color: #1a1a1a;
+  font-size: 2rem;
+  font-weight: 700;
+  margin-bottom: 2rem;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+/* Buscador */
+.buscador-container {
+  margin-bottom: 1.5rem;
+}
+
+.input-busqueda {
+  width: 100%;
+  padding: 0.75rem 1rem;
+  font-size: 1rem;
+  border: 2px solid #e5e7eb;
+  border-radius: 8px;
+  transition: all 0.2s ease;
+}
+
+.input-busqueda:focus {
+  border-color: #10b981;
+  outline: none;
+  box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.1);
+}
+
+/* Card */
+.card {
+  background: white;
+  border-radius: 12px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+  padding: 1rem 1.5rem;
+}
+
+/* Tabla */
+.tabla-pacientes {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.95rem;
+}
+
+.tabla-pacientes th {
+  background-color: #f9fafb;
+  color: #374151;
+  font-weight: 600;
+  text-align: left;
+  padding: 1rem;
+  border-bottom: 2px solid #e5e7eb;
+}
+
+.tabla-pacientes td {
+  padding: 0.85rem 1rem;
+  border-bottom: 1px solid #f3f4f6;
+  color: #1f2937;
+}
+
+.tabla-pacientes tr:hover td {
+  background-color: #f9f9f9;
+}
+
+.sin-resultados {
+  text-align: center;
+  color: #9ca3af;
+  padding: 1.5rem;
+  font-style: italic;
+}
