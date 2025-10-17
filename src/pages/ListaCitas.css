@@ -3,6 +3,33 @@
   flex: 1;
 }
 
+h1 {
+  font-size: 1.5rem;
+  color: #111827;
+  margin-bottom: 1rem;
+}
+
+/* 🔍 Buscador */
+.buscador-container {
+  margin-bottom: 1rem;
+}
+
+.input-busqueda {
+  width: 100%;
+  max-width: 400px;
+  padding: 0.5rem 0.75rem;
+  border: 1px solid #d1d5db;
+  border-radius: 8px;
+  font-size: 0.95rem;
+  transition: box-shadow 0.2s ease;
+}
+
+.input-busqueda:focus {
+  outline: none;
+  box-shadow: 0 0 0 2px #3b82f6;
+}
+
+/* 🧾 Tabla */
 .table-container {
   overflow-x: auto;
 }
@@ -26,9 +53,10 @@
 }
 
 .citas-table tbody tr:hover {
-  background-color: #f9fafb;
+  background-color: #f3f4f6;
 }
 
+/* 🏷️ Etiquetas de estado */
 .badge {
   padding: 0.25rem 0.75rem;
   border-radius: 12px;
@@ -46,6 +74,17 @@
   color: #92400e;
 }
 
+.badge-info {
+  background-color: #bfdbfe;
+  color: #1e40af;
+}
+
+.badge-finalizado {
+  background-color: #e5e7eb;
+  color: #374151;
+}
+
+/* 🎯 Botones de acción */
 .btn-icon {
   background: none;
   border: none;
@@ -58,4 +97,13 @@
 
 .btn-icon:hover {
   transform: scale(1.2);
+}
+
+/* 📋 Sin resultados o cargando */
+.texto-cargando,
+.sin-resultados {
+  text-align: center;
+  padding: 1rem;
+  color: #6b7280;
+  font-size: 0.95rem;
 }

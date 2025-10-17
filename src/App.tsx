@@ -1,6 +1,6 @@
 import { BrowserRouter, Routes, Route } from 'react-router-dom';
 import Header from './components/Layout/Header';
-import Sidebar from './components/Layout/SideBar';
+import Sidebar from './components/Layout/Sidebar';
 import Dashboard from './pages/Dashboard';
 import ReservaCita from './pages/ReservaCita';
 import ListaCitas from './pages/ListaCitas';
