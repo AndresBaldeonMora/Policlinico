@@ -36,6 +36,16 @@ export interface HorarioDisponible {
   disponible: boolean;
 }
 
+// ⭐ Type helper para errores de Axios
+interface AxiosErrorResponse {
+  response?: {
+    data?: {
+      message?: string;
+    };
+  };
+  message?: string;
+}
+
 // ⭐ Función helper para transformar doctor
 const transformarDoctor = (doctor: Doctor): DoctorTransformado => {
   const especialidadPoblada = typeof doctor.especialidadId === 'object' 
@@ -73,7 +83,8 @@ export class DoctorApiService {
 
       console.warn('⚠️ Respuesta sin datos o sin éxito');
       return [];
-    } catch (err: any) {
+    } catch (error: unknown) {
+      const err = error as AxiosErrorResponse;
       console.error('❌ Error al obtener doctores:', err.response?.data || err.message);
       throw new Error(err.response?.data?.message || 'Error al obtener doctores');
     }
@@ -99,8 +110,9 @@ export class DoctorApiService {
       }
 
       return [];
-    } catch (error: any) {
-      console.error('❌ Error al obtener horarios:', error.response?.data || error.message);
+    } catch (error: unknown) {
+      const err = error as AxiosErrorResponse;
+      console.error('❌ Error al obtener horarios:', err.response?.data || err.message);
       return [];
     }
   }
@@ -118,7 +130,7 @@ export class DoctorApiService {
 
       return [];
     } catch (error: unknown) {
-      const err = error as { response?: { data?: { message?: string } }; message?: string };
+      const err = error as AxiosErrorResponse;
       console.error('❌ Error al listar doctores:', err.response?.data || err.message);
       throw new Error(err.response?.data?.message || 'Error al listar doctores');
     }

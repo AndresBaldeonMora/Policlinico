@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import {
   PacienteApiService,
-  type Paciente,
+  type PacienteTransformado as Paciente,
 } from "../services/paciente.service";
 import {
   EspecialidadApiService,
@@ -176,8 +176,8 @@ const ReservaCita = () => {
     try {
       setLoading(true);
       await CitaApiService.crear({
-        pacienteId: pacienteSeleccionado.id,
-        doctorId: doctorSeleccionado.id,
+        pacienteId: pacienteSeleccionado._id || pacienteSeleccionado.id,
+        doctorId: doctorSeleccionado.id, // Este ya está transformado correctamente
         fecha: fechaSeleccionada,
         hora: horaSeleccionada,
       });

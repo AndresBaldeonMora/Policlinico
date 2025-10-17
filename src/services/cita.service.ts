@@ -1,76 +1,173 @@
-// ============================================
 // src/services/cita.service.ts
-// ============================================
 import api from './api';
 
 export interface Cita {
-  id: string;
+  _id?: string;
+  id?: string;
   pacienteId: string;
   doctorId: string;
-  fecha: string;
+  fecha: Date | string;
   hora: string;
-  paciente?: {
+  estado?: 'pendiente' | 'completada' | 'cancelada';
+  createdAt?: string;
+  updatedAt?: string;
+}
+
+export interface CrearCitaDTO {
+  pacienteId: string;
+  doctorId: string;
+  fecha: string; // "2025-10-17"
+  hora: string;  // "08:00"
+}
+
+export interface CitaPopulada extends Omit<Cita, 'pacienteId' | 'doctorId'> {
+  paciente: {
+    _id: string;
     nombres: string;
     apellidos: string;
     dni: string;
   };
-  doctor?: {
+  doctor: {
+    _id: string;
     nombres: string;
     apellidos: string;
-    especialidad: string;
+    especialidadId: {
+      _id: string;
+      nombre: string;
+    };
   };
 }
 
 export class CitaApiService {
-  static async crear(cita: {
-    pacienteId: string;
-    doctorId: string;
-    fecha: string;
-    hora: string;
-  }): Promise<Cita | null> {
+  // Crear nueva cita
+  static async crear(datos: CrearCitaDTO): Promise<Cita> {
     try {
+      console.log('📤 Enviando datos de cita:', datos);
+
+      // ⭐ Convertir fecha a formato ISO completo
+      const fechaISO = new Date(datos.fecha).toISOString();
+
+      const payload = {
+        pacienteId: datos.pacienteId,
+        doctorId: datos.doctorId,
+        fecha: fechaISO,  // ⭐ Enviar como ISO
+        hora: datos.hora
+      };
+
+      console.log('📦 Payload procesado:', payload);
+
       const response = await api.post<{ success: boolean; data: Cita }>(
         '/citas',
-        cita
+        payload
       );
-      return response.data.data || null;
-    } catch (error) {
-      console.error('Error al crear cita:', error);
-      throw error;
+
+      console.log('✅ Cita creada:', response.data);
+
+      if (response.data.success && response.data.data) {
+        return response.data.data;
+      }
+
+      throw new Error('Respuesta inesperada del servidor');
+    } catch (error: unknown) {
+      if (error instanceof Error) {
+        console.error('❌ Error al crear cita:', error.message);
+        throw error;
+      }
+      
+      const err = error as { 
+        response?: { 
+          data?: { message?: string; error?: string }; 
+          status?: number 
+        }; 
+        message?: string 
+      };
+      
+      console.error('❌ Error al crear cita:', {
+        status: err.response?.status,
+        data: err.response?.data,
+        message: err.message
+      });
+
+      throw new Error(
+        err.response?.data?.message || 
+        err.response?.data?.error ||
+        err.message || 
+        'Error al crear la cita'
+      );
     }
   }
 
-  static async listar(): Promise<Cita[]> {
+  // Listar todas las citas (con populate)
+  static async listar(): Promise<CitaPopulada[]> {
     try {
-      const response = await api.get<{ success: boolean; data: Cita[] }>(
+      const response = await api.get<{ success: boolean; data: CitaPopulada[] }>(
         '/citas'
       );
-      return response.data.data || [];
-    } catch (error) {
-      console.error('Error al listar citas:', error);
+
+      if (response.data.success && response.data.data) {
+        return response.data.data;
+      }
+
       return [];
+    } catch (error: unknown) {
+      const err = error as { response?: { data?: { message?: string } }; message?: string };
+      console.error('❌ Error al listar citas:', err.response?.data || err.message);
+      throw new Error(err.response?.data?.message || 'Error al listar citas');
     }
   }
 
-  static async obtenerDelDia(): Promise<Cita[]> {
+  // Eliminar cita
+  static async eliminar(id: string): Promise<void> {
     try {
-      const response = await api.get<{ success: boolean; data: Cita[] }>(
-        '/citas/hoy'
+      const response = await api.delete<{ success: boolean; message: string }>(
+        `/citas/${id}`
       );
-      return response.data.data || [];
-    } catch (error) {
-      console.error('Error al obtener citas del día:', error);
+
+      if (!response.data.success) {
+        throw new Error(response.data.message || 'Error al eliminar cita');
+      }
+    } catch (error: unknown) {
+      const err = error as { response?: { data?: { message?: string } }; message?: string };
+      console.error('❌ Error al eliminar cita:', err.response?.data || err.message);
+      throw new Error(err.response?.data?.message || 'Error al eliminar la cita');
+    }
+  }
+
+  // Obtener citas por paciente
+  static async obtenerPorPaciente(pacienteId: string): Promise<CitaPopulada[]> {
+    try {
+      const response = await api.get<{ success: boolean; data: CitaPopulada[] }>(
+        `/citas/paciente/${pacienteId}`
+      );
+
+      if (response.data.success && response.data.data) {
+        return response.data.data;
+      }
+
+      return [];
+    } catch (error: unknown) {
+      const err = error as { response?: { data?: { message?: string } }; message?: string };
+      console.error('❌ Error al obtener citas del paciente:', err.response?.data || err.message);
       return [];
     }
   }
 
-  static async cancelar(citaId: string): Promise<boolean> {
+  // Obtener citas por doctor
+  static async obtenerPorDoctor(doctorId: string): Promise<CitaPopulada[]> {
     try {
-      await api.patch(`/citas/${citaId}/cancelar`);
-      return true;
-    } catch (error) {
-      console.error('Error al cancelar cita:', error);
-      return false;
+      const response = await api.get<{ success: boolean; data: CitaPopulada[] }>(
+        `/citas/doctor/${doctorId}`
+      );
+
+      if (response.data.success && response.data.data) {
+        return response.data.data;
+      }
+
+      return [];
+    } catch (error: unknown) {
+      const err = error as { response?: { data?: { message?: string } }; message?: string };
+      console.error('❌ Error al obtener citas del doctor:', err.response?.data || err.message);
+      return [];
     }
   }
 }
