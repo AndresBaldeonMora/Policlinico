@@ -9,7 +9,7 @@ import {
 } from "../services/especialidad.service";
 import {
   DoctorApiService,
-  type Doctor,
+  type DoctorTransformado as Doctor,
   type HorarioDisponible,
 } from "../services/doctor.service";
 import { CitaApiService } from "../services/cita.service";
