@@ -2,13 +2,29 @@ import { useEffect, useState } from "react";
 import "./ListaCitas.css";
 import { CitaApiService } from "../services/cita.service";
 import type { CitaProcesada } from "../services/cita.service";
+import { Trash2, CalendarClock } from "lucide-react"; // 🧩 Íconos profesionales
+
+const HORARIOS = [
+  "08:00", "08:30", "09:00", "09:30", "10:00", "10:30",
+  "11:00", "11:30", "12:00", "12:30", "13:00", "13:30",
+  "14:00", "14:30", "15:00", "15:30", "16:00", "16:30", "17:00",
+];
 
 const ListaCitas = () => {
   const [citas, setCitas] = useState<CitaProcesada[]>([]);
   const [busqueda, setBusqueda] = useState("");
   const [cargando, setCargando] = useState(true);
 
-  // 🔹 Cargar citas desde backend
+  const [editando, setEditando] = useState<{
+    id: string;
+    dni: string;
+    paciente: string;
+    especialidad: string;
+    doctor: string;
+    fecha: string;
+    hora: string;
+  } | null>(null);
+
   const cargarCitas = async () => {
     try {
       setCargando(true);
@@ -25,7 +41,6 @@ const ListaCitas = () => {
     cargarCitas();
   }, []);
 
-  // 🔍 Buscar por DNI o Doctor
   const filtrarCitas = citas.filter((cita) => {
     const filtro = busqueda.toLowerCase();
     return (
@@ -34,7 +49,6 @@ const ListaCitas = () => {
     );
   });
 
-  // 🟢 Manejo de eliminación
   const eliminarCita = async (id: string) => {
     if (confirm("¿Seguro que deseas eliminar esta cita?")) {
       try {
@@ -48,10 +62,48 @@ const ListaCitas = () => {
     }
   };
 
+  const onReprogramar = (cita: CitaProcesada) => {
+    setEditando({
+      id: cita._id,
+      dni: cita.dni,
+      paciente: cita.paciente,
+      especialidad: cita.especialidad,
+      doctor: cita.doctor,
+      fecha: "",
+      hora: "",
+    });
+  };
+
+  const confirmarReprogramar = async () => {
+    if (!editando?.fecha || !editando?.hora) {
+      alert("Por favor selecciona nueva fecha y hora");
+      return;
+    }
+
+    try {
+      await CitaApiService.reprogramar(
+        editando.id,
+        editando.fecha,
+        editando.hora
+      );
+      alert("✅ Cita reprogramada correctamente");
+      setEditando(null);
+      cargarCitas();
+    } catch (error: unknown) {
+      if (error instanceof Error) {
+        alert(error.message || "❌ Error al reprogramar cita");
+      } else {
+        alert("❌ Error desconocido al reprogramar cita");
+      }
+      console.error(error);
+    }
+  };
+
   return (
     <div className="lista-citas">
       <h1>Lista de Citas Programadas</h1>
 
+      {/* 🔍 Buscador */}
       <div className="buscador-container">
         <input
           type="text"
@@ -107,18 +159,21 @@ const ListaCitas = () => {
                         </span>
                       </td>
                       <td>
-                        <button className="btn-icon" title="Ver">
-                          👁️
-                        </button>
-                        <button className="btn-icon" title="Reprogramar">
-                          ✏️
+                        <button
+                          className="btn-icon"
+                          title="Reprogramar cita"
+                          aria-label="Reprogramar cita"
+                          onClick={() => onReprogramar(cita)}
+                        >
+                          <CalendarClock size={20} strokeWidth={2} />
                         </button>
                         <button
                           className="btn-icon"
-                          title="Eliminar"
+                          title="Eliminar cita"
+                          aria-label="Eliminar cita"
                           onClick={() => eliminarCita(cita._id)}
                         >
-                          ❌
+                          <Trash2 size={20} strokeWidth={2} color="#dc2626" />
                         </button>
                       </td>
                     </tr>
@@ -132,6 +187,89 @@ const ListaCitas = () => {
                 )}
               </tbody>
             </table>
+          </div>
+        </div>
+      )}
+
+      {/* 🟣 Modal Reprogramar */}
+      {editando && (
+        <div className="modal-overlay">
+          <div className="modal-card">
+            <h3>Reprogramar Cita</h3>
+
+            <div className="modal-body">
+              <div className="form-group">
+                <label>DNI</label>
+                <input type="text" value={editando.dni} disabled />
+              </div>
+              <div className="form-group">
+                <label>Paciente</label>
+                <input type="text" value={editando.paciente} disabled />
+              </div>
+              <div className="form-group">
+                <label>Especialidad</label>
+                <input type="text" value={editando.especialidad} disabled />
+              </div>
+              <div className="form-group">
+                <label>Doctor</label>
+                <input type="text" value={editando.doctor} disabled />
+              </div>
+
+              {/* 📅 Nueva fecha */}
+              <div className="form-group">
+                <label>Nueva Fecha</label>
+                <input
+                  type="date"
+                  value={editando.fecha}
+                  min={new Date().toISOString().split("T")[0]}
+                  onChange={(e) =>
+                    setEditando({
+                      ...editando,
+                      fecha: e.target.value,
+                      hora: "",
+                    })
+                  }
+                  className="input-date"
+                />
+              </div>
+
+              {/* 🕒 Horarios disponibles */}
+              {editando.fecha && (
+                <div className="horarios-section">
+                  <p className="horarios-title">Horarios Disponibles</p>
+                  <div className="horarios-grid">
+                    {HORARIOS.map((hora) => (
+                      <button
+                        key={hora}
+                        type="button"
+                        className={`horario-btn ${
+                          editando.hora === hora ? "selected" : "disponible"
+                        }`}
+                        onClick={() => setEditando({ ...editando, hora })}
+                      >
+                        {hora}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </div>
+
+            <div className="modal-actions">
+              <button
+                onClick={() => setEditando(null)}
+                className="btn btn-secondary"
+              >
+                Cancelar
+              </button>
+              <button
+                onClick={confirmarReprogramar}
+                className="btn btn-primary"
+                disabled={!editando.fecha || !editando.hora}
+              >
+                Guardar Cambios
+              </button>
+            </div>
           </div>
         </div>
       )}
