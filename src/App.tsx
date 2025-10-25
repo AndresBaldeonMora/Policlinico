@@ -2,7 +2,7 @@ import { BrowserRouter, Routes, Route } from "react-router-dom";
 import Header from "./components/Layout/Header";
 import Sidebar from "./components/Layout/Sidebar";
 import Dashboard from "./pages/Dashboard";
-import ReservaCita from "./pages/ReservaCita";
+import ReservaCita from "./pages/ReservaCita/ReservaCita";
 import ListaCitas from "./pages/ListaCitas";
 import ListaMedicos from "./pages/ListaMedicos"; // ✅ nuevo
 import ListaPacientes from "./pages/ListaPacientes"; // ✅ nuevo
