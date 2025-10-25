@@ -1,104 +1,115 @@
 /* ============================================
-   ReservaCita.css - Estilos mejorados
+   ReservaCita.css - Estilos Sanna (unificado)
+   Autor: Victor Rodríguez (optimizado)
    ============================================ */
 
+/* =========== VARIABLES =========== */
+:root {
+  --verde-primario: #10b981;
+  --verde-oscuro: #059669;
+  --azul-primario: #2563eb;
+  --gris-claro: #f3f4f6;
+  --gris-borde: #e5e7eb;
+  --texto: #1a1a1a;
+  --texto-sec: #6b7280;
+  --radio: 12px;
+  --trans: 0.18s ease;
+  --sombra: 0 4px 12px rgba(0, 0, 0, 0.06);
+}
+
+/* =========== CONTENEDOR PRINCIPAL =========== */
 .reserva-cita {
-  max-width: 900px;
+  max-width: 980px;
   margin: 2rem auto;
   padding: 0 1rem;
+  color: var(--texto);
+  font-family: system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue",
+    Arial;
 }
 
+/* título */
 .reserva-cita h1 {
-  color: #1a1a1a;
-  margin-bottom: 2rem;
-  font-size: 2rem;
+  color: var(--texto);
+  margin-bottom: 1.75rem;
+  font-size: 1.9rem;
   font-weight: 600;
+  text-align: left;
 }
 
-/* ============================================
-   CARD PRINCIPAL
-   ============================================ */
-
+/* =========== CARD PRINCIPAL =========== */
 .card {
-  background: white;
-  border-radius: 12px;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  background: #fff;
+  border-radius: var(--radio);
+  box-shadow: var(--sombra);
   padding: 2rem;
 }
 
-/* ============================================
-   MENSAJES
-   ============================================ */
-
+/* =========== MENSAJES =========== */
 .error-message {
-  background: #fee;
-  color: #c33;
+  background: #fff5f5;
+  color: #b91c1c;
   padding: 1rem;
-  border-radius: 8px;
-  margin-bottom: 1.5rem;
-  border-left: 4px solid #c33;
+  border-radius: 10px;
+  margin-bottom: 1.25rem;
+  border-left: 4px solid #b91c1c;
 }
 
 .loading-spinner {
   text-align: center;
   padding: 2rem;
-  color: #666;
-  font-size: 1.1rem;
+  color: var(--texto-sec);
+  font-size: 1.05rem;
 }
 
-/* ============================================
-   FORMULARIO
-   ============================================ */
-
+/* =========== FORMULARIO =========== */
 .cita-form {
   display: flex;
   flex-direction: column;
-  gap: 2rem;
+  gap: 1.75rem;
 }
 
-/* Steps */
-
+/* Step card */
 .form-step {
-  border: 1px solid #e5e5e5;
+  border: 1px solid var(--gris-borde);
   border-radius: 10px;
   padding: 1.5rem;
   background: #fafafa;
 }
 
+/* Header step */
 .step-header {
   display: flex;
   align-items: center;
   gap: 1rem;
-  margin-bottom: 1.5rem;
+  margin-bottom: 1.25rem;
 }
 
 .step-number {
-  background: #10b981;
-  color: white;
+  background: var(--verde-primario);
+  color: #fff;
   width: 36px;
   height: 36px;
   border-radius: 50%;
-  display: flex;
+  display: inline-flex;
   align-items: center;
   justify-content: center;
-  font-weight: 600;
-  font-size: 1.1rem;
+  font-weight: 700;
+  font-size: 1rem;
+  flex: 0 0 36px;
 }
 
 .step-header h3 {
   margin: 0;
-  color: #1a1a1a;
-  font-size: 1.25rem;
+  color: var(--texto);
+  font-size: 1.15rem;
+  font-weight: 600;
 }
 
-/* ============================================
-   FORM GROUPS
-   ============================================ */
-
+/* =========== FORM GROUPS =========== */
 .form-row {
   display: grid;
   grid-template-columns: 1fr 1fr;
-  gap: 1.5rem;
+  gap: 1rem 1.25rem;
 }
 
 .form-group {
@@ -108,159 +119,152 @@
 }
 
 .form-group label {
-  font-weight: 500;
-  color: #374151;
+  font-weight: 600;
+  color: var(--texto-sec);
   font-size: 0.95rem;
 }
 
-/* ============================================
-   INPUTS
-   ============================================ */
-
+/* =========== INPUTS =========== */
 input[type="text"],
-input[type="date"] {
-  padding: 0.75rem;
-  border: 2px solid #e5e7eb;
-  border-radius: 8px;
+input[type="date"],
+textarea,
+select {
+  padding: 0.72rem 0.9rem;
+  border: 2px solid var(--gris-borde);
+  border-radius: 10px;
   font-size: 1rem;
-  transition: all 0.2s;
+  transition: box-shadow var(--trans), border-color var(--trans),
+    transform var(--trans);
+  background: #fff;
+  color: var(--texto);
 }
 
 input[type="text"]:focus,
-input[type="date"]:focus {
+input[type="date"]:focus,
+textarea:focus,
+select:focus {
   outline: none;
-  border-color: #10b981;
-  box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.1);
+  border-color: var(--verde-primario);
+  box-shadow: 0 0 0 6px rgba(16, 185, 129, 0.08);
+  transform: translateY(-1px);
 }
 
 .input-disabled {
-  background: #f3f4f6;
+  background: var(--gris-claro);
   cursor: not-allowed;
-  color: #6b7280;
+  color: var(--texto-sec);
 }
 
-.input-search {
-  background: white;
-}
-
-.input-date {
+/* date picker indicator */
+.input-date::-webkit-calendar-picker-indicator {
   cursor: pointer;
+  padding: 0.35rem;
+  border-radius: 6px;
+  transition: background var(--trans);
 }
 
-/* ============================================
-   AUTOCOMPLETE
-   ============================================ */
+.input-date::-webkit-calendar-picker-indicator:hover {
+  background: #f3f4f6;
+}
 
+/* =========== AUTOCOMPLETE =========== */
 .autocomplete-container {
   position: relative;
 }
 
 .suggestions-list {
   position: absolute;
-  top: 100%;
+  top: calc(100% + 0.4rem);
   left: 0;
   right: 0;
-  background: white;
-  border: 1px solid #e5e7eb;
-  border-radius: 8px;
+  background: #fff;
+  border: 1px solid var(--gris-borde);
+  border-radius: 10px;
   margin-top: 0.25rem;
-  max-height: 250px;
+  max-height: 260px;
   overflow-y: auto;
-  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-  z-index: 10;
+  box-shadow: 0 8px 18px rgba(0, 0, 0, 0.06);
+  z-index: 30;
 }
 
 .suggestion-item {
-  padding: 0.75rem 1rem;
+  padding: 0.7rem 0.95rem;
   cursor: pointer;
-  transition: background 0.15s;
+  transition: background var(--trans);
   border-bottom: 1px solid #f3f4f6;
+  display: flex;
+  flex-direction: column;
 }
 
 .suggestion-item:hover {
   background: #f9fafb;
 }
 
-.suggestion-item:last-child {
-  border-bottom: none;
-}
-
 .suggestion-dni {
-  font-weight: 600;
-  color: #1a1a1a;
-  margin-bottom: 0.25rem;
+  font-weight: 700;
+  color: var(--texto);
+  margin-bottom: 0.15rem;
 }
 
 .suggestion-nombre {
-  font-size: 0.9rem;
-  color: #6b7280;
+  font-size: 0.92rem;
+  color: var(--texto-sec);
 }
 
 .no-results {
   color: #9ca3af;
   text-align: center;
-  cursor: default;
+  padding: 0.8rem;
 }
 
-.no-results:hover {
-  background: white;
-}
-
-/* ============================================
-   TAG SELECCIONADO
-   ============================================ */
-
+/* =========== SELECTED TAG =========== */
 .selected-tag {
   display: inline-flex;
   align-items: center;
   gap: 0.5rem;
-  background: #e0f2fe;
-  color: #0369a1;
-  padding: 0.5rem 1rem;
-  border-radius: 6px;
-  font-weight: 500;
+  background: #e6f6ff;
+  color: #024e73;
+  padding: 0.45rem 0.9rem;
+  border-radius: 8px;
+  font-weight: 600;
   margin-top: 0.5rem;
 }
 
 .tag-close {
-  background: none;
+  background: transparent;
   border: none;
-  color: #0369a1;
-  font-size: 1.5rem;
+  color: #024e73;
+  font-size: 1.25rem;
   cursor: pointer;
   padding: 0;
-  width: 24px;
-  height: 24px;
-  display: flex;
+  display: inline-flex;
   align-items: center;
   justify-content: center;
-  border-radius: 4px;
-  transition: background 0.15s;
+  width: 28px;
+  height: 28px;
+  border-radius: 6px;
 }
 
 .tag-close:hover {
-  background: rgba(3, 105, 161, 0.1);
+  background: rgba(2, 78, 115, 0.06);
 }
 
-/* ============================================
-   DOCTOR ASIGNADO
-   ============================================ */
-
+/* =========== DOCTOR ASIGNADO =========== */
 .doctor-asignado {
   display: flex;
   align-items: center;
   gap: 1rem;
-  background: white;
-  padding: 1.25rem;
+  background: #fff;
+  padding: 1rem;
   border-radius: 10px;
-  border: 2px solid #10b981;
+  border: 2px solid var(--verde-primario);
 }
 
 .doctor-avatar {
-  font-size: 3rem;
+  font-size: 2.4rem;
   background: #ecfdf5;
-  width: 70px;
-  height: 70px;
+  width: 66px;
+  height: 66px;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -268,160 +272,320 @@ input[type="date"]:focus {
 }
 
 .doctor-info-text h4 {
-  margin: 0 0 0.25rem 0;
-  color: #1a1a1a;
-  font-size: 1.1rem;
+  margin: 0 0 0.2rem 0;
+  color: var(--texto);
+  font-size: 1.05rem;
 }
 
 .doctor-info-text p {
   margin: 0;
-  color: #10b981;
-  font-weight: 500;
-}
-
-/* ============================================
-   HORARIOS
-   ============================================ */
-
-.horarios-section {
-  margin-top: 1.5rem;
-}
-
-.horarios-title {
+  color: var(--verde-primario);
   font-weight: 600;
-  color: #374151;
+}
+
+/* =========== FILTROS RANGO (chips) =========== */
+.filtros-rango {
+  display: flex;
+  gap: 0.6rem;
   margin-bottom: 1rem;
-  font-size: 1rem;
+  flex-wrap: wrap;
 }
 
-.horarios-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(90px, 1fr));
-  gap: 0.75rem;
-}
-
-.horario-btn {
-  padding: 0.75rem;
-  border: 2px solid;
-  border-radius: 8px;
+.filtro-btn {
+  padding: 0.6rem 1.1rem;
+  border: 2px solid var(--gris-borde);
+  border-radius: 999px;
+  background: #fff;
+  color: var(--texto-sec);
   font-size: 0.95rem;
   font-weight: 600;
   cursor: pointer;
-  transition: all 0.2s;
+  transition: all var(--trans);
+  white-space: nowrap;
+}
+
+.filtro-btn:hover {
+  border-color: var(--verde-primario);
+  color: var(--verde-primario);
+  background: #f0fdf4;
+}
+
+.filtro-btn.activo {
+  background: var(--verde-primario);
+  border-color: var(--verde-primario);
+  color: #fff;
+  box-shadow: 0 6px 18px rgba(16, 185, 129, 0.12);
+}
+
+/* =========== SELECCIÓN DE MES / DÍA / HORARIOS =========== */
+
+/* selector contenedores */
+.selector-mes,
+.selector-dia {
+  margin-top: 0.5rem;
+  margin-bottom: 0.75rem;
+}
+
+/* label pequeño para selectores */
+.selector-label {
+  display: block;
+  font-weight: 600;
+  color: var(--texto-sec);
+  margin-bottom: 0.5rem;
+}
+
+/* lista de meses (botones) */
+.meses-lista {
+  display: flex;
+  gap: 0.6rem;
+  flex-wrap: wrap;
+  align-items: center;
+}
+
+.mes-btn {
+  padding: 0.6rem 0.95rem;
+  border-radius: 12px;
+  border: 1.5px solid var(--gris-borde);
+  background: #fff;
+  cursor: pointer;
+  font-weight: 600;
+  transition: all var(--trans);
+}
+
+.mes-btn:hover {
+  transform: translateY(-3px);
+  border-color: var(--verde-primario);
+  background: #f0fdf4;
+}
+
+.mes-btn.activo,
+.mes-btn:active {
+  background: var(--verde-primario);
+  color: #fff;
+  border-color: var(--verde-primario);
+  box-shadow: 0 8px 22px rgba(16, 185, 129, 0.12);
+}
+
+/* dias lista selector (cuando usas botones planos para días) */
+.dias-lista-selector {
+  display: flex;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+  margin-top: 0.5rem;
+}
+
+.dia-btn {
+  padding: 0.5rem 0.75rem;
+  border-radius: 10px;
+  border: 1.5px solid var(--gris-borde);
+  background: #fff;
+  cursor: pointer;
+  font-weight: 600;
+  min-width: 46px;
   text-align: center;
-  font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+  transition: all var(--trans);
 }
 
-.horario-btn.disponible {
-  background: white;
-  border-color: #10b981;
-  color: #10b981;
-}
-
-.horario-btn.disponible:hover {
-  background: #ecfdf5;
+.dia-btn:hover {
   transform: translateY(-2px);
-  box-shadow: 0 4px 6px rgba(16, 185, 129, 0.2);
+  border-color: var(--verde-primario);
+  background: #f0fdf4;
 }
 
-.horario-btn.selected {
-  background: #10b981;
-  border-color: #10b981;
-  color: white;
-  transform: scale(1.05);
-  box-shadow: 0 4px 8px rgba(16, 185, 129, 0.3);
+.dia-btn.activo {
+  background: var(--verde-primario);
+  color: #fff;
+  border-color: var(--verde-primario);
 }
 
-.horario-btn.ocupado {
-  background: #f3f4f6;
-  border-color: #d1d5db;
-  color: #9ca3af;
-  cursor: not-allowed;
+/* contenedor grande de horarios */
+.horarios-contenedor {
+  background: #fff;
+  border-radius: 10px;
+  padding: 1rem;
+  min-height: 180px;
+  border: 1px solid var(--gris-borde);
+}
+
+/* dias agrupados vertical (usado cuando traes horariosPorDia) */
+.dias-lista {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  max-height: 520px;
+  overflow-y: auto;
+  padding-right: 0.25rem;
+}
+
+/* custom scrollbar */
+.dias-lista::-webkit-scrollbar {
+  width: 7px;
+}
+.dias-lista::-webkit-scrollbar-track {
+  background: #f1f1f1;
+  border-radius: 10px;
+}
+.dias-lista::-webkit-scrollbar-thumb {
+  background: var(--verde-primario);
+  border-radius: 10px;
+}
+.dias-lista::-webkit-scrollbar-thumb:hover {
+  background: var(--verde-oscuro);
+}
+
+/* grupo de día */
+.dia-grupo {
+  background: #fafafa;
+  border: 1px solid var(--gris-borde);
+  border-radius: 12px;
+  padding: 1rem;
+  transition: box-shadow var(--trans), border-color var(--trans);
+}
+.dia-grupo:hover {
+  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.06);
+  border-color: var(--verde-primario);
+}
+
+/* header dentro de grupo */
+.dia-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 0.85rem;
+  padding-bottom: 0.6rem;
+  border-bottom: 1px solid #f3f4f6;
+}
+.dia-nombre {
+  font-size: 1.02rem;
+  font-weight: 700;
+  color: var(--texto);
+}
+.dia-fecha {
+  font-size: 0.95rem;
+  color: var(--texto-sec);
+  font-weight: 600;
+}
+
+/* horarios horizontales */
+.horarios-horizontal {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.6rem;
+}
+
+/* horario como radio-styled button */
+.horario-radio {
   position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0.6rem 1.05rem;
+  border: 2px solid #d1d5db;
+  border-radius: 10px;
+  background: #fff;
+  cursor: pointer;
+  transition: transform var(--trans), box-shadow var(--trans),
+    background var(--trans), border-color var(--trans);
+  user-select: none;
 }
 
-.horario-btn.ocupado::after {
-  content: "✕";
+.horario-radio input[type="radio"] {
   position: absolute;
-  top: 50%;
-  left: 50%;
-  transform: translate(-50%, -50%);
-  font-size: 1.2rem;
-  color: #ef4444;
+  opacity: 0;
+  width: 0;
+  height: 0;
+  pointer-events: none;
 }
 
-.horario-btn.ocupado:hover {
-  background: #f3f4f6;
-  transform: none;
+.horario-texto {
+  font-size: 0.95rem;
+  font-weight: 700;
+  color: var(--texto);
 }
 
-/* ============================================
-   BOTONES DE ACCIÓN
-   ============================================ */
+/* hover efecto */
+.horario-radio:hover {
+  border-color: var(--verde-primario);
+  background: #f0fdf4;
+  transform: translateY(-3px);
+  box-shadow: 0 8px 20px rgba(16, 185, 129, 0.12);
+}
 
+/* seleccionado */
+.horario-radio.seleccionado {
+  background: var(--verde-primario);
+  border-color: var(--verde-primario);
+  box-shadow: 0 10px 28px rgba(16, 185, 129, 0.18);
+}
+.horario-radio.seleccionado .horario-texto {
+  color: #fff;
+}
+
+/* =========== BOTONES DE ACCIÓN =========== */
 .form-actions {
   display: flex;
-  gap: 1rem;
+  gap: 0.85rem;
   justify-content: flex-end;
-  padding-top: 1rem;
-  border-top: 1px solid #e5e7eb;
+  padding-top: 0.9rem;
+  border-top: 1px solid #f3f4f6;
 }
 
+/* gen btn */
 .btn {
-  padding: 0.75rem 2rem;
+  padding: 0.7rem 1.8rem;
   border: none;
-  border-radius: 8px;
+  border-radius: 10px;
   font-size: 1rem;
-  font-weight: 600;
+  font-weight: 700;
   cursor: pointer;
-  transition: all 0.2s;
+  transition: transform var(--trans), box-shadow var(--trans),
+    background var(--trans);
 }
 
 .btn-primary {
-  background: #10b981;
-  color: white;
+  background: var(--verde-primario);
+  color: #fff;
+  box-shadow: 0 8px 20px rgba(16, 185, 129, 0.12);
 }
 
 .btn-primary:hover:not(:disabled) {
-  background: #059669;
-  transform: translateY(-1px);
-  box-shadow: 0 4px 6px rgba(16, 185, 129, 0.3);
+  background: var(--verde-oscuro);
+  transform: translateY(-3px);
 }
 
 .btn-secondary {
   background: #f3f4f6;
-  color: #374151;
+  color: var(--texto);
 }
 
 .btn-secondary:hover:not(:disabled) {
-  background: #e5e7eb;
+  background: #e9eef0;
 }
 
 .btn:disabled {
   opacity: 0.5;
   cursor: not-allowed;
+  transform: none;
+  box-shadow: none;
 }
 
-/* ============================================
-   ESTILOS PARA PACIENTE ENCONTRADO
-   ============================================ */
-
+/* =========== PACIENTE ENCONTRADO =========== */
 .paciente-encontrado {
   margin-top: 0.5rem;
-  border: 2px solid #10b981;
-  border-radius: 8px;
-  background: white;
-  box-shadow: 0 2px 8px rgba(16, 185, 129, 0.15);
+  border: 2px solid var(--verde-primario);
+  border-radius: 10px;
+  background: #fff;
+  box-shadow: 0 6px 18px rgba(16, 185, 129, 0.08);
   overflow: hidden;
 }
 
 .paciente-item {
-  padding: 1rem;
+  padding: 0.9rem;
   display: flex;
   align-items: center;
-  gap: 0.75rem;
+  gap: 0.85rem;
   cursor: pointer;
-  transition: all 0.2s;
+  transition: background var(--trans);
 }
 
 .paciente-item:hover {
@@ -429,154 +593,64 @@ input[type="date"]:focus {
 }
 
 .paciente-dni {
-  font-weight: 700;
-  color: #10b981;
+  font-weight: 800;
+  color: var(--verde-primario);
   font-size: 1rem;
   font-family: "Courier New", monospace;
 }
 
 .paciente-separador {
   color: #9ca3af;
-  font-weight: 600;
+  font-weight: 700;
 }
 
 .paciente-nombre {
-  color: #1a1a1a;
-  font-weight: 500;
+  color: var(--texto);
+  font-weight: 700;
   font-size: 1rem;
 }
 
-/* ============================================
-   BOTÓN NUEVO PACIENTE - PEQUEÑO Y COMPACTO
-   ============================================ */
-
+/* =========== BOTÓN NUEVO PACIENTE =========== */
 .btn-nuevo-paciente {
   margin-top: 0.5rem;
   background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
-  color: white;
+  color: #fff;
   border: none;
-  padding: 0.5rem 0.875rem;
-  border-radius: 6px;
-  font-size: 0.8rem;
-  font-weight: 600;
+  padding: 0.45rem 0.85rem;
+  border-radius: 8px;
+  font-size: 0.85rem;
+  font-weight: 700;
   cursor: pointer;
-  transition: all 0.2s;
+  transition: transform var(--trans), box-shadow var(--trans);
   display: inline-flex;
   align-items: center;
-  gap: 0.35rem;
-  box-shadow: 0 1px 3px rgba(59, 130, 246, 0.2);
+  gap: 0.4rem;
+  box-shadow: 0 6px 16px rgba(37, 99, 235, 0.12);
   white-space: nowrap;
-  width: fit-content; /* ⭐ Agregar esta línea */
 }
 
 .btn-nuevo-paciente:hover {
-  background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%);
-  transform: translateY(-1px);
-  box-shadow: 0 2px 4px rgba(59, 130, 246, 0.3);
+  transform: translateY(-2px);
+  box-shadow: 0 10px 26px rgba(37, 99, 235, 0.14);
 }
 
-.btn-nuevo-paciente:active {
-  transform: translateY(0);
-  box-shadow: 0 1px 2px rgba(59, 130, 246, 0.2);
-}
-
-/* ============================================
-   INPUT DESHABILITADO EN MODAL
-   ============================================ */
-
-.input-disabled-modal {
-  background: #f3f4f6 !important;
-  cursor: not-allowed !important;
-  color: #6b7280 !important;
-  font-weight: 600;
-}
-
-/* ============================================
-   RESPONSIVE
-   ============================================ */
-
-@media (max-width: 768px) {
-  .form-row {
-    grid-template-columns: 1fr;
-  }
-
-  .horarios-grid {
-    grid-template-columns: repeat(auto-fill, minmax(80px, 1fr));
-  }
-
-  .form-actions {
-    flex-direction: column-reverse;
-  }
-
-  .btn {
-    width: 100%;
-  }
-}
-
-/* Info de fecha límite */
-.fecha-info {
-  display: block;
-  margin-top: 0.5rem;
-  color: #6b7280;
-  font-size: 0.85rem;
-  font-style: italic;
-}
-
-/* ============================================
-   SELECTOR DE FECHA MEJORADO
-   ============================================ */
-
-.fecha-selector {
-  display: flex;
-  flex-direction: column;
-  gap: 0.5rem;
-}
-
-.input-date {
-  cursor: pointer;
-  font-family: inherit;
-}
-
-/* Mejorar apariencia del date picker nativo */
-.input-date::-webkit-calendar-picker-indicator {
-  cursor: pointer;
-  padding: 0.5rem;
-  border-radius: 4px;
-  transition: background 0.2s;
-}
-
-.input-date::-webkit-calendar-picker-indicator:hover {
-  background: #f3f4f6;
-}
-
-/* Info de fecha límite */
-.fecha-info {
-  display: block;
-  color: #6b7280;
-  font-size: 0.85rem;
-  font-style: italic;
-}
-
-/* ============================================
-   ESTADOS DE CARGA Y MENSAJES
-   ============================================ */
-
+/* =========== ESTADOS DE CARGA =========== */
 .horarios-loading {
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  padding: 2rem;
-  gap: 1rem;
+  padding: 2.4rem 1.2rem;
+  gap: 0.9rem;
 }
 
 .spinner-small {
-  width: 32px;
-  height: 32px;
-  border: 3px solid #e5e7eb;
-  border-top-color: #10b981;
+  width: 44px;
+  height: 44px;
+  border: 4px solid #e9eef0;
+  border-top-color: var(--verde-primario);
   border-radius: 50%;
-  animation: spin 0.8s linear infinite;
+  animation: spin 0.9s linear infinite;
 }
 
 @keyframes spin {
@@ -586,30 +660,80 @@ input[type="date"]:focus {
 }
 
 .horarios-loading p {
-  color: #6b7280;
+  color: var(--texto-sec);
   font-size: 0.95rem;
+  font-weight: 600;
 }
 
 .no-horarios {
   padding: 2rem;
   text-align: center;
   background: #fff7ed;
-  border: 1px solid #fed7aa;
-  border-radius: 8px;
-  margin-top: 1rem;
+  border: 2px solid #fed7aa;
+  border-radius: 10px;
 }
 
 .no-horarios p {
   margin: 0;
   color: #c2410c;
-  font-weight: 500;
+  font-weight: 700;
+  font-size: 0.98rem;
 }
 
-/* Mejorar título de horarios */
-.horarios-title {
-  font-weight: 600;
-  color: #374151;
-  margin-bottom: 1rem;
-  font-size: 1rem;
-  text-transform: capitalize;
+/* =========== INFO ADICIONAL =========== */
+.fecha-info {
+  display: block;
+  margin-top: 0.5rem;
+  color: var(--texto-sec);
+  font-size: 0.85rem;
+  font-style: italic;
 }
+
+/* =========== MODAL / INPUT DESHABILITADO =========== */
+.input-disabled-modal {
+  background: var(--gris-claro) !important;
+  cursor: not-allowed !important;
+  color: var(--texto-sec) !important;
+  font-weight: 700;
+}
+
+/* =========== RESPONSIVE =========== */
+@media (max-width: 900px) {
+  .form-row {
+    grid-template-columns: 1fr;
+  }
+  .reserva-cita {
+    padding: 0 0.75rem;
+  }
+  .card {
+    padding: 1.5rem;
+  }
+}
+
+@media (max-width: 600px) {
+  .step-header h3 {
+    font-size: 1rem;
+  }
+  .step-number {
+    width: 34px;
+    height: 34px;
+  }
+  .horario-texto {
+    font-size: 0.88rem;
+  }
+  .mes-btn,
+  .dia-btn {
+    padding: 0.5rem 0.7rem;
+    font-size: 0.95rem;
+  }
+  .btn {
+    width: 100%;
+  }
+  .form-actions {
+    flex-direction: column-reverse;
+    gap: 0.6rem;
+    align-items: stretch;
+  }
+}
+
+/* =========== FIN =========== */
