@@ -736,4 +736,187 @@ select:focus {
   }
 }
 
-/* =========== FIN =========== */
+.reserva-cita-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1rem; /* Ajusta según sea necesario */
+}
+
+/* Estilos para el botón 'X' */
+.btn-close-form {
+  background: transparent;
+  border: none;
+  font-size: 2.5rem; /* Tamaño grande para que sea fácil de clickear */
+  font-weight: bold;
+  cursor: pointer;
+  color: #888;
+  padding: 0 0.5rem;
+  line-height: 1;
+  transition: color 0.2s ease;
+}
+
+.btn-close-form:hover {
+  color: #333; /* Color más oscuro al pasar el mouse */
+}
+
+/* ===== ESTILOS PARA LAS NUEVAS FUNCIONALIDADES ===== */
+
+/* Contenedor del Título y Botón de Cerrar */
+.reserva-cita-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1rem;
+}
+
+/* Botón 'X' para cerrar/cancelar todo el formulario */
+.btn-close-form {
+  background: transparent;
+  border: none;
+  font-size: 2.5rem;
+  font-weight: bold;
+  cursor: pointer;
+  color: #888;
+  padding: 0 0.5rem;
+  line-height: 1;
+  transition: color 0.2s ease;
+}
+
+.btn-close-form:hover {
+  color: #333;
+}
+
+/* Estilo adicional para el input deshabilitado */
+.input-disabled {
+  background-color: #e9ecef; /* Un gris claro para indicar que está bloqueado */
+  cursor: not-allowed;
+}
+
+/* ===== Estilos para Notificaciones (Toast) ===== */
+.notification {
+  position: fixed; /* Se posiciona con respecto a la ventana del navegador */
+  top: 80px; /* Distancia desde arriba (ajusta si tienes una barra de navegación) */
+  right: 20px; /* Distancia desde la derecha */
+  padding: 16px 24px;
+  border-radius: 8px;
+  color: white;
+  font-size: 1rem;
+  font-weight: 500;
+  z-index: 1000; /* Asegura que esté por encima de otros elementos */
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  min-width: 300px;
+  text-align: center;
+  /* Animación de entrada */
+  animation: slideInFromRight 0.4s ease-out forwards;
+}
+
+/* Estilo para notificación de éxito */
+.notification.success {
+  background-color: #28a745; /* Verde */
+  border-left: 5px solid #218838;
+}
+
+/* Estilo para notificación de error */
+.notification.error {
+  background-color: #dc3545; /* Rojo */
+  border-left: 5px solid #c82333;
+}
+
+/* Animación para que la notificación aparezca desde la derecha */
+@keyframes slideInFromRight {
+  from {
+    transform: translateX(110%);
+    opacity: 0;
+  }
+  to {
+    transform: translateX(0);
+    opacity: 1;
+  }
+}
+
+/* =========================================================
+    Asegúrate que estos estilos estén incluidos en tu archivo
+    para la cabecera, el botón de cerrar, el input bloqueado,
+    y las notificaciones (Toast).
+========================================================= */
+
+/* --- Cabecera y Botón de Cerrar (Optimizado) --- */
+/*
+  Si usaste la versión optimizada, esta sección ya existe.
+  Verifica especialmente la clase .btn-close-form
+*/
+.reserva-cita-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  /* El margen inferior aquí reemplaza el margin-bottom del h1 */
+  margin-bottom: 1.75rem;
+}
+
+.btn-close-form {
+  background: transparent;
+  border: none;
+  font-size: 2.5rem;
+  font-weight: bold;
+  cursor: pointer;
+  color: #888;
+  padding: 0 0.5rem;
+  line-height: 1;
+  transition: color 0.2s ease;
+  flex-shrink: 0;
+}
+
+.btn-close-form:hover {
+  color: #333;
+}
+
+/* --- Estilos para inputs deshabilitados (Asegúrate de tener la variable) --- */
+/* Variable necesaria: --gris-inactivo: #e9ecef; */
+.input-disabled,
+.input-disabled-modal {
+  background: var(--gris-inactivo) !important;
+  cursor: not-allowed !important;
+  color: var(--texto-sec) !important;
+  font-weight: 700;
+  transform: none !important;
+  box-shadow: none !important;
+}
+
+/* --- Notificaciones (Toast) --- */
+.notification {
+  position: fixed;
+  top: 80px;
+  right: 20px;
+  padding: 16px 24px;
+  border-radius: 8px;
+  color: white;
+  font-size: 1rem;
+  font-weight: 500;
+  z-index: 1000;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  min-width: 300px;
+  text-align: center;
+  animation: slideInFromRight 0.4s ease-out forwards;
+}
+
+.notification.success {
+  background-color: #28a745; /* Verde de éxito */
+  border-left: 5px solid #218838;
+}
+
+.notification.error {
+  background-color: #dc3545; /* Rojo de error */
+  border-left: 5px solid #c82333;
+}
+
+@keyframes slideInFromRight {
+  from {
+    transform: translateX(110%);
+    opacity: 0;
+  }
+  to {
+    transform: translateX(0);
+    opacity: 1;
+  }
+}

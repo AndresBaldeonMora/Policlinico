@@ -16,6 +16,7 @@ import { CitaApiService } from "../../services/cita.service";
 import AgregarPacienteSimple from "./AgregarPacienteSimple";
 import "./ReservaCita.css";
 
+// --- Interfaces ---
 interface HorarioPorDia {
   fecha: string;
   fechaISO: string;
@@ -30,9 +31,17 @@ interface MesOption {
   anio: number;
 }
 
+// --- Componente Principal ---
 const ReservaCita = () => {
+  // --- Estados del Componente ---
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
+
+  const [notification, setNotification] = useState({
+    message: "",
+    type: "", // 'success' o 'error'
+    visible: false,
+  });
 
   const [searchDNI, setSearchDNI] = useState("");
   const [pacienteEncontrado, setPacienteEncontrado] =
@@ -65,10 +74,36 @@ const ReservaCita = () => {
   const [fechaSeleccionada, setFechaSeleccionada] = useState("");
   const [horaSeleccionada, setHoraSeleccionada] = useState("");
 
+  // --- Efectos ---
   useEffect(() => {
     cargarDatos();
     generarMesesDisponibles();
   }, []);
+
+  // --- Funciones y Handlers ---
+
+  const showNotification = (message: string, type: "success" | "error") => {
+    setNotification({ message, type, visible: true });
+    setTimeout(() => {
+      setNotification((prev) => ({ ...prev, visible: false }));
+    }, 3000);
+  };
+
+  const handleCancelarCita = () => {
+    setSearchDNI("");
+    setPacienteEncontrado(null);
+    setPacienteSeleccionado(null);
+    setEspecialidadSeleccionada(null);
+    setSearchEspecialidad("");
+    setDoctorSeleccionado(null);
+    setMesSeleccionado(null);
+    setDiaSeleccionado(null);
+    setDiasDelMes([]);
+    setHoraSeleccionada("");
+    setFechaSeleccionada("");
+    setHorariosPorDia([]);
+    setError("");
+  };
 
   const generarMesesDisponibles = () => {
     const meses: MesOption[] = [];
@@ -96,7 +131,6 @@ const ReservaCita = () => {
         anio: fecha.getFullYear(),
       });
     }
-
     setMesesDisponibles(meses);
   };
 
@@ -112,29 +146,7 @@ const ReservaCita = () => {
         dias.push(dia);
       }
     }
-
     return dias;
-  };
-
-  const handleMesSeleccionado = (mes: MesOption) => {
-    setMesSeleccionado(mes);
-    setDiaSeleccionado(null);
-    setHorariosPorDia([]);
-    setHoraSeleccionada("");
-    setFechaSeleccionada("");
-
-    const dias = generarDiasDelMes(mes);
-    setDiasDelMes(dias);
-  };
-
-  const handleDiaSeleccionado = async (dia: number) => {
-    if (!mesSeleccionado || !doctorSeleccionado) return;
-
-    setDiaSeleccionado(dia);
-    setHoraSeleccionada("");
-    setFechaSeleccionada("");
-
-    await cargarHorariosPorDia(mesSeleccionado, dia);
   };
 
   const cargarDatos = async () => {
@@ -147,7 +159,7 @@ const ReservaCita = () => {
       setTodosLosPacientes(pacientes);
       setEspecialidades(especialidades);
     } catch (err) {
-      setError("Error al cargar datos");
+      setError("Error al cargar datos iniciales");
       console.error(err);
     } finally {
       setLoading(false);
@@ -155,14 +167,11 @@ const ReservaCita = () => {
   };
 
   const handleBuscarPaciente = (dni: string) => {
-    if (dni && !/^\d*$/.test(dni)) return;
-    if (dni.length > 8) return;
-
+    if ((dni && !/^\d*$/.test(dni)) || dni.length > 8) return;
     setSearchDNI(dni);
     setError("");
     setPacienteEncontrado(null);
     setPacienteSeleccionado(null);
-
     if (dni.length === 8) {
       const paciente = todosLosPacientes.find((p) => p.dni === dni);
       setPacienteEncontrado(paciente || null);
@@ -171,23 +180,21 @@ const ReservaCita = () => {
 
   const handleSelectPaciente = (paciente: PacienteTransformado) => {
     setPacienteSeleccionado(paciente);
+    setSearchDNI(paciente.dni);
     setError("");
   };
 
   const handlePacienteCreado = async (dni: string) => {
     setMostrarNuevoPaciente(false);
     await cargarDatos();
-
-    setTimeout(async () => {
-      const pacientes = await PacienteApiService.listar();
-      setTodosLosPacientes(pacientes);
-      const pacienteNuevo = pacientes.find((p) => p.dni === dni);
-
-      if (pacienteNuevo) {
-        setPacienteEncontrado(pacienteNuevo);
-        setPacienteSeleccionado(pacienteNuevo);
-      }
-    }, 300);
+    const pacientes = await PacienteApiService.listar();
+    setTodosLosPacientes(pacientes);
+    const pacienteNuevo = pacientes.find((p) => p.dni === dni);
+    if (pacienteNuevo) {
+      setPacienteEncontrado(pacienteNuevo);
+      setPacienteSeleccionado(pacienteNuevo);
+      setSearchDNI(pacienteNuevo.dni);
+    }
   };
 
   const especialidadesFiltradas = especialidades.filter((esp) =>
@@ -207,7 +214,6 @@ const ReservaCita = () => {
       const doctores = await DoctorApiService.obtenerPorEspecialidad(
         especialidadId
       );
-
       if (doctores.length > 0) {
         setDoctorSeleccionado(doctores[0]);
       } else {
@@ -223,54 +229,62 @@ const ReservaCita = () => {
   };
 
   const formatearFechaCompleta = (fecha: Date): string => {
-    const dia = String(fecha.getDate()).padStart(2, "0");
-    const mes = String(fecha.getMonth() + 1).padStart(2, "0");
-    const anio = fecha.getFullYear();
-    return `${dia}/${mes}/${anio}`;
+    return new Intl.DateTimeFormat("es-PE", {
+      day: "2-digit",
+      month: "2-digit",
+      year: "numeric",
+    }).format(fecha);
   };
 
   const obtenerNombreDia = (fecha: Date): string => {
-    const dias = [
-      "Domingo",
-      "Lunes",
-      "Martes",
-      "Miércoles",
-      "Jueves",
-      "Viernes",
-      "Sábado",
-    ];
-    return dias[fecha.getDay()];
+    const nombre = new Intl.DateTimeFormat("es-PE", { weekday: "long" }).format(
+      fecha
+    );
+    return nombre.charAt(0).toUpperCase() + nombre.slice(1);
   };
 
   const cargarHorariosPorDia = async (mes: MesOption, dia: number) => {
     if (!doctorSeleccionado) return;
-
     setLoading(true);
-
     try {
       const fecha = new Date(mes.anio, mes.numero, dia);
       const fechaISO = fecha.toISOString().split("T")[0];
-
       const horariosDelDia = await DoctorApiService.obtenerHorariosDisponibles(
         doctorSeleccionado.id,
         fechaISO
       );
-
-      const horarioInfo: HorarioPorDia = {
-        fecha: formatearFechaCompleta(fecha),
-        fechaISO: fechaISO,
-        diaNombre: obtenerNombreDia(fecha),
-        diaNumero: dia,
-        horarios: horariosDelDia,
-      };
-
-      setHorariosPorDia([horarioInfo]);
+      setHorariosPorDia([
+        {
+          fecha: formatearFechaCompleta(fecha),
+          fechaISO,
+          diaNombre: obtenerNombreDia(fecha),
+          diaNumero: dia,
+          horarios: horariosDelDia,
+        },
+      ]);
     } catch (err) {
       setError("Error al cargar horarios");
       console.error(err);
     } finally {
       setLoading(false);
     }
+  };
+
+  const handleMesSeleccionado = (mes: MesOption) => {
+    setMesSeleccionado(mes);
+    setDiaSeleccionado(null);
+    setHorariosPorDia([]);
+    setHoraSeleccionada("");
+    setFechaSeleccionada("");
+    setDiasDelMes(generarDiasDelMes(mes));
+  };
+
+  const handleDiaSeleccionado = async (dia: number) => {
+    if (!mesSeleccionado || !doctorSeleccionado) return;
+    setDiaSeleccionado(dia);
+    setHoraSeleccionada("");
+    setFechaSeleccionada("");
+    await cargarHorariosPorDia(mesSeleccionado, dia);
   };
 
   const seleccionarHorario = (fechaISO: string, hora: string) => {
@@ -280,14 +294,13 @@ const ReservaCita = () => {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-
     if (
       !pacienteSeleccionado ||
       !doctorSeleccionado ||
       !horaSeleccionada ||
       !fechaSeleccionada
     ) {
-      setError("Por favor completa todos los campos");
+      setError("Por favor completa todos los campos requeridos.");
       return;
     }
 
@@ -299,38 +312,45 @@ const ReservaCita = () => {
         fecha: fechaSeleccionada,
         hora: horaSeleccionada,
       });
-
-      alert("✅ Cita registrada exitosamente");
-
-      setSearchDNI("");
-      setPacienteEncontrado(null);
-      setPacienteSeleccionado(null);
-      setEspecialidadSeleccionada(null);
-      setSearchEspecialidad("");
-      setDoctorSeleccionado(null);
-      setMesSeleccionado(null);
-      setDiaSeleccionado(null);
-      setDiasDelMes([]);
-      setHoraSeleccionada("");
-      setFechaSeleccionada("");
-      setHorariosPorDia([]);
-      setError("");
+      showNotification("✅ ¡Cita registrada exitosamente!", "success");
+      handleCancelarCita();
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Error al crear cita");
+      const errorMessage =
+        err instanceof Error
+          ? err.message
+          : "Ocurrió un error al crear la cita";
+      showNotification(`⚠️ ${errorMessage}`, "error");
       console.error(err);
     } finally {
       setLoading(false);
     }
   };
 
+  // --- Renderizado del Componente ---
   return (
     <div className="reserva-cita">
-      <h1>📅 Reservar Cita Médica</h1>
+      {notification.visible && (
+        <div className={`notification ${notification.type}`}>
+          {notification.message}
+        </div>
+      )}
+
+      <div className="reserva-cita-header">
+        <h1>📅 Reservar Cita Médica</h1>
+        <button
+          onClick={handleCancelarCita}
+          className="btn-close-form"
+          title="Cancelar Cita"
+        >
+          ×
+        </button>
+      </div>
 
       {error && <div className="error-message">⚠️ {error}</div>}
 
       <div className="card">
         <form onSubmit={handleSubmit} className="cita-form">
+          {/* --- Paso 1: Paciente --- */}
           <div className="form-step">
             <div className="step-header">
               <span className="step-number">1</span>
@@ -347,11 +367,13 @@ const ReservaCita = () => {
                   onChange={(e) => handleBuscarPaciente(e.target.value)}
                   placeholder="Ingrese 8 dígitos"
                   maxLength={8}
-                  disabled={loading}
-                  className="input-search"
+                  disabled={loading || !!pacienteSeleccionado}
+                  className={`input-search ${
+                    pacienteSeleccionado ? "input-disabled" : ""
+                  }`}
                 />
 
-                {pacienteEncontrado && (
+                {pacienteEncontrado && !pacienteSeleccionado && (
                   <div className="paciente-encontrado">
                     <div
                       className="paciente-item"
@@ -369,15 +391,17 @@ const ReservaCita = () => {
                   </div>
                 )}
 
-                {searchDNI.length === 8 && !pacienteEncontrado && (
-                  <button
-                    type="button"
-                    className="btn-nuevo-paciente"
-                    onClick={() => setMostrarNuevoPaciente(true)}
-                  >
-                    ➕ Nuevo Paciente
-                  </button>
-                )}
+                {searchDNI.length === 8 &&
+                  !pacienteEncontrado &&
+                  !pacienteSeleccionado && (
+                    <button
+                      type="button"
+                      className="btn-nuevo-paciente"
+                      onClick={() => setMostrarNuevoPaciente(true)}
+                    >
+                      ➕ Nuevo Paciente
+                    </button>
+                  )}
               </div>
 
               <div className="form-group">
@@ -398,13 +422,13 @@ const ReservaCita = () => {
             </div>
           </div>
 
+          {/* --- Paso 2: Especialidad --- */}
           {pacienteSeleccionado && (
             <div className="form-step">
               <div className="step-header">
                 <span className="step-number">2</span>
                 <h3>Especialidad Médica</h3>
               </div>
-
               <div className="form-group">
                 <label htmlFor="especialidad">Buscar Especialidad</label>
                 <div className="autocomplete-container">
@@ -421,7 +445,6 @@ const ReservaCita = () => {
                     disabled={loading}
                     className="input-search"
                   />
-
                   {showEspecialidadesSuggestions && searchEspecialidad && (
                     <div className="suggestions-list">
                       {especialidadesFiltradas.length > 0 ? (
@@ -442,7 +465,6 @@ const ReservaCita = () => {
                     </div>
                   )}
                 </div>
-
                 {especialidadSeleccionada && !showEspecialidadesSuggestions && (
                   <div className="selected-tag">
                     <span>🏥 {especialidadSeleccionada.nombre}</span>
@@ -454,10 +476,7 @@ const ReservaCita = () => {
                         setDoctorSeleccionado(null);
                         setMesSeleccionado(null);
                         setDiaSeleccionado(null);
-                        setDiasDelMes([]);
                         setHorariosPorDia([]);
-                        setHoraSeleccionada("");
-                        setFechaSeleccionada("");
                       }}
                       className="tag-close"
                     >
@@ -469,13 +488,13 @@ const ReservaCita = () => {
             </div>
           )}
 
+          {/* --- Paso 3: Médico Asignado --- */}
           {especialidadSeleccionada && doctorSeleccionado && (
             <div className="form-step">
               <div className="step-header">
                 <span className="step-number">3</span>
                 <h3>Médico Asignado</h3>
               </div>
-
               <div className="doctor-asignado">
                 <div className="doctor-avatar">👨‍⚕️</div>
                 <div className="doctor-info-text">
@@ -488,6 +507,7 @@ const ReservaCita = () => {
             </div>
           )}
 
+          {/* --- Paso 4: Fecha y Hora --- */}
           {doctorSeleccionado && (
             <div className="form-step">
               <div className="step-header">
@@ -543,13 +563,11 @@ const ReservaCita = () => {
                   {loading ? (
                     <div className="horarios-loading">
                       <div className="spinner-small"></div>
-                      <p>Cargando horarios disponibles...</p>
+                      <p>Cargando horarios...</p>
                     </div>
-                  ) : horariosPorDia.length === 0 ? (
-                    <div className="no-horarios">
-                      <p>😔 No hay horarios disponibles para este día</p>
-                    </div>
-                  ) : (
+                  ) : horariosPorDia.length > 0 &&
+                    horariosPorDia[0].horarios.filter((h) => h.disponible)
+                      .length > 0 ? (
                     <div className="dias-lista">
                       {horariosPorDia.map((dia) => (
                         <div key={dia.fechaISO} className="dia-grupo">
@@ -557,7 +575,6 @@ const ReservaCita = () => {
                             <span className="dia-nombre">{dia.diaNombre}</span>
                             <span className="dia-fecha">📅 {dia.fecha}</span>
                           </div>
-
                           <div className="horarios-horizontal">
                             {dia.horarios
                               .filter((h) => h.disponible)
@@ -595,48 +612,36 @@ const ReservaCita = () => {
                         </div>
                       ))}
                     </div>
+                  ) : (
+                    <div className="no-horarios">
+                      <p>😔 No hay horarios disponibles para este día.</p>
+                    </div>
                   )}
                 </div>
               )}
             </div>
           )}
 
-          {pacienteSeleccionado &&
-            especialidadSeleccionada &&
-            doctorSeleccionado &&
-            horaSeleccionada && (
-              <div className="form-actions">
-                <button
-                  type="button"
-                  className="btn btn-secondary"
-                  onClick={() => {
-                    setSearchDNI("");
-                    setPacienteEncontrado(null);
-                    setPacienteSeleccionado(null);
-                    setEspecialidadSeleccionada(null);
-                    setSearchEspecialidad("");
-                    setDoctorSeleccionado(null);
-                    setMesSeleccionado(null);
-                    setDiaSeleccionado(null);
-                    setDiasDelMes([]);
-                    setHoraSeleccionada("");
-                    setFechaSeleccionada("");
-                    setHorariosPorDia([]);
-                    setError("");
-                  }}
-                  disabled={loading}
-                >
-                  Cancelar
-                </button>
-                <button
-                  type="submit"
-                  className="btn btn-primary"
-                  disabled={loading}
-                >
-                  {loading ? "Registrando..." : "Confirmar Cita"}
-                </button>
-              </div>
-            )}
+          {/* --- Acciones Finales --- */}
+          {pacienteSeleccionado && doctorSeleccionado && horaSeleccionada && (
+            <div className="form-actions">
+              <button
+                type="button"
+                className="btn btn-secondary"
+                onClick={handleCancelarCita}
+                disabled={loading}
+              >
+                Cancelar
+              </button>
+              <button
+                type="submit"
+                className="btn btn-primary"
+                disabled={loading}
+              >
+                {loading ? "Registrando..." : "Confirmar Cita"}
+              </button>
+            </div>
+          )}
         </form>
       </div>
 
