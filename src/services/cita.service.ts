@@ -1,6 +1,16 @@
 // src/services/cita.service.ts
 import api from "./api";
 
+// ------------------- Función de Utilidad de Fecha -------------------
+
+// ❌ FUNCIÓN formatFechaDisplay ELIMINADA. 
+// El backend (cita.controller.ts) ahora se encarga de este formateo.
+/*
+const formatFechaDisplay = (dateString: string): string => { ... };
+*/
+
+// ------------------- Tipos y DTOs -------------------
+
 export interface Cita {
   _id?: string;
   id?: string;
@@ -16,8 +26,8 @@ export interface Cita {
 export interface CrearCitaDTO {
   pacienteId: string;
   doctorId: string;
-  fecha: string; // "2025-10-17"
-  hora: string;  // "08:00"
+  fecha: string; // "2025-10-17" (YYYY-MM-DD)
+  hora: string; // "08:00"
 }
 
 export interface CitaPopulada extends Omit<Cita, "pacienteId" | "doctorId"> {
@@ -38,6 +48,7 @@ export interface CitaPopulada extends Omit<Cita, "pacienteId" | "doctorId"> {
   };
 }
 
+// Tipo de CitaProcesada que ahora recibe la fecha formateada del backend
 export interface CitaProcesada {
   _id: string;
   id: number;
@@ -45,20 +56,24 @@ export interface CitaProcesada {
   paciente: string;
   doctor: string;
   especialidad: string;
-  fecha: string;
+  fecha: string; // ✅ Ahora es DD/MM/YYYY
   hora: string;
   estado: "pendiente" | "reprogramado" | "finalizado";
 }
 
+
+// ------------------- Servicio -------------------
+
 export class CitaApiService {
+
   // 🟢 Crear nueva cita
   static async crear(datos: CrearCitaDTO): Promise<Cita> {
     try {
-      const fechaISO = new Date(datos.fecha).toISOString();
+      // ✅ Se envía directamente YYYY-MM-DD. El Controller lo crea como Date() local.
       const payload = {
         pacienteId: datos.pacienteId,
         doctorId: datos.doctorId,
-        fecha: fechaISO,
+        fecha: datos.fecha,
         hora: datos.hora,
       };
 
@@ -86,14 +101,14 @@ export class CitaApiService {
       console.error("❌ Error al crear cita:", err.response?.data || err.message);
       throw new Error(
         err.response?.data?.message ||
-          err.response?.data?.error ||
-          err.message ||
-          "Error al crear la cita"
+        err.response?.data?.error ||
+        err.message ||
+        "Error al crear la cita"
       );
     }
   }
 
-  // 🟣 Listar todas las citas
+  // 🟣 Listar todas las citas (NO NECESITA FORMATO)
   static async listar(): Promise<CitaProcesada[]> {
     try {
       const response = await api.get<{ success: boolean; data: CitaProcesada[] }>(
@@ -101,6 +116,7 @@ export class CitaApiService {
       );
 
       if (response.data.success && response.data.data) {
+        // ✅ La data ya viene formateada (DD/MM/YYYY) y lista para usar del backend.
         return response.data.data;
       }
 
@@ -120,6 +136,7 @@ export class CitaApiService {
   // 🔵 Reprogramar cita
   static async reprogramar(id: string, nuevaFecha: string, nuevaHora: string): Promise<void> {
     try {
+      // NuevaFecha (YYYY-MM-DD) y nuevaHora se envían al backend
       const payload = { fecha: nuevaFecha, hora: nuevaHora };
       const response = await api.put<{ success: boolean; message: string }>(
         `/citas/${id}/reprogramar`,
@@ -141,47 +158,4 @@ export class CitaApiService {
     }
   }
 
-  // 🔴 Eliminar cita
-  static async eliminar(id: string): Promise<void> {
-    try {
-      const response = await api.delete<{ success: boolean; message: string }>(
-        `/citas/${id}`
-      );
-
-      if (!response.data.success) {
-        throw new Error(response.data.message || "Error al eliminar cita");
-      }
-    } catch (error: unknown) {
-      if (error instanceof Error) {
-        console.error("❌ Error al eliminar cita:", error.message);
-        throw error;
-      }
-
-      const err = error as { response?: { data?: { message?: string } } };
-      console.error("❌ Error al eliminar cita:", err.response?.data);
-      throw new Error(err.response?.data?.message || "Error al eliminar cita");
-    }
-  }
-
-  // 🔍 Buscar citas (por DNI o nombre del doctor)
-  static async buscar(filtro: string): Promise<CitaProcesada[]> {
-    try {
-      const todas = await this.listar();
-      if (!filtro.trim()) return todas;
-
-      const lower = filtro.toLowerCase();
-      return todas.filter(
-        (cita) =>
-          cita.dni.toLowerCase().includes(lower) ||
-          cita.doctor.toLowerCase().includes(lower)
-      );
-    } catch (error: unknown) {
-      if (error instanceof Error) {
-        console.error("❌ Error al buscar citas:", error.message);
-      } else {
-        console.error("❌ Error desconocido al buscar citas:", error);
-      }
-      return [];
-    }
-  }
 }

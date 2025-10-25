@@ -242,3 +242,48 @@
   color: white;
   transform: scale(1.05);
 }
+
+/* =========================================================
+    Estilos para Notificaciones (Toast)
+    Asegúrate de que 'var(--trans)' esté definido para la animación.
+========================================================= */
+.notification {
+  position: fixed; /* Se posiciona con respecto a la ventana del navegador */
+  top: 80px; /* Distancia desde arriba (ajusta si tienes una barra de navegación) */
+  right: 20px; /* Distancia desde la derecha */
+  padding: 16px 24px;
+  border-radius: 8px;
+  color: white;
+  font-size: 1rem;
+  font-weight: 500;
+  z-index: 1000; /* Asegura que esté por encima de otros elementos */
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  min-width: 300px;
+  text-align: center;
+  /* Animación de entrada */
+  animation: slideInFromRight 0.4s ease-out forwards;
+}
+
+/* Estilo para notificación de éxito */
+.notification.success {
+  background-color: #28a745; /* Verde */
+  border-left: 5px solid #218838;
+}
+
+/* Estilo para notificación de error */
+.notification.error {
+  background-color: #dc3545; /* Rojo */
+  border-left: 5px solid #c82333;
+}
+
+/* Animación para que la notificación aparezca desde la derecha */
+@keyframes slideInFromRight {
+  from {
+    transform: translateX(110%);
+    opacity: 0;
+  }
+  to {
+    transform: translateX(0);
+    opacity: 1;
+  }
+}

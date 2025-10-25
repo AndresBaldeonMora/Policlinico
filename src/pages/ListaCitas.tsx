@@ -2,17 +2,50 @@ import { useEffect, useState } from "react";
 import "./ListaCitas.css";
 import { CitaApiService } from "../services/cita.service";
 import type { CitaProcesada } from "../services/cita.service";
-import { Trash2, CalendarClock } from "lucide-react"; // 🧩 Íconos profesionales
+// ❌ IMPORTACIÓN DE Trash2 ELIMINADA. Solo CalendarClock es necesario.
+import { CalendarClock } from "lucide-react"; // 🧩 Íconos profesionales
+
+// --- Componente de Notificación Reutilizable (Se mantiene)
+interface NotificationProps {
+  message: string;
+  type: "success" | "error";
+  visible: boolean;
+}
+
+const Notification = ({ message, type, visible }: NotificationProps) => {
+  if (!visible) return null;
+  return (
+    <div className={`notification ${type}`}>
+      {type === "success" ? "✅ " : "❌ "}
+      {message}
+    </div>
+  );
+};
+// ----------------------------------------------------------------------------------
 
 const HORARIOS = [
-  "08:00", "08:30", "09:00", "09:30", "10:00", "10:30",
-  "11:00", "11:30", "12:00",
+  "08:00",
+  "08:30",
+  "09:00",
+  "09:30",
+  "10:00",
+  "10:30",
+  "11:00",
+  "11:30",
+  "12:00",
 ];
 
 const ListaCitas = () => {
   const [citas, setCitas] = useState<CitaProcesada[]>([]);
   const [busqueda, setBusqueda] = useState("");
   const [cargando, setCargando] = useState(true);
+
+  // --- Estado de la Notificación (Toast) ---
+  const [notification, setNotification] = useState({
+    message: "",
+    type: "", // 'success' o 'error'
+    visible: false,
+  });
 
   const [editando, setEditando] = useState<{
     id: string;
@@ -24,13 +57,24 @@ const ListaCitas = () => {
     hora: string;
   } | null>(null);
 
+  // --- Función para mostrar Notificación ---
+  const showNotification = (message: string, type: "success" | "error") => {
+    setNotification({ message, type, visible: true });
+    // Ocultar después de 3 segundos
+    setTimeout(() => {
+      setNotification((prev) => ({ ...prev, visible: false }));
+    }, 3000);
+  };
+
   const cargarCitas = async () => {
     try {
       setCargando(true);
+      // El servicio ahora retorna las fechas en formato DD/MM/YYYY
       const data = await CitaApiService.listar();
       setCitas(data);
     } catch (error) {
       console.error("❌ Error al cargar citas:", error);
+      showNotification("Error al cargar la lista de citas.", "error");
     } finally {
       setCargando(false);
     }
@@ -48,18 +92,10 @@ const ListaCitas = () => {
     );
   });
 
-  const eliminarCita = async (id: string) => {
-    if (confirm("¿Seguro que deseas eliminar esta cita?")) {
-      try {
-        await CitaApiService.eliminar(id);
-        alert("✅ Cita eliminada correctamente");
-        cargarCitas();
-      } catch (error) {
-        alert("❌ Error al eliminar cita");
-        console.error(error);
-      }
-    }
-  };
+  // ❌ FUNCIÓN eliminarCita ELIMINADA
+  /*
+  const eliminarCita = async (id: string) => { ... lógica de eliminación ... };
+  */
 
   const onReprogramar = (cita: CitaProcesada) => {
     setEditando({
@@ -68,14 +104,14 @@ const ListaCitas = () => {
       paciente: cita.paciente,
       especialidad: cita.especialidad,
       doctor: cita.doctor,
-      fecha: "",
+      fecha: "", // Se limpia para seleccionar nueva fecha
       hora: "",
     });
   };
 
   const confirmarReprogramar = async () => {
     if (!editando?.fecha || !editando?.hora) {
-      alert("Por favor selecciona nueva fecha y hora");
+      showNotification("Por favor selecciona una nueva fecha y hora.", "error");
       return;
     }
 
@@ -85,21 +121,28 @@ const ListaCitas = () => {
         editando.fecha,
         editando.hora
       );
-      alert("✅ Cita reprogramada correctamente");
+      showNotification("Cita reprogramada correctamente.", "success");
       setEditando(null);
       cargarCitas();
     } catch (error: unknown) {
+      let errorMessage = "Error desconocido al reprogramar cita.";
       if (error instanceof Error) {
-        alert(error.message || "❌ Error al reprogramar cita");
-      } else {
-        alert("❌ Error desconocido al reprogramar cita");
+        errorMessage = error.message || "Error al reprogramar cita.";
       }
+      showNotification(errorMessage, "error");
       console.error(error);
     }
   };
 
   return (
     <div className="lista-citas">
+      {/* 🔔 Notificación Toast */}
+      <Notification
+        message={notification.message}
+        type={notification.type as "success" | "error"}
+        visible={notification.visible}
+      />
+
       <h1>Lista de Citas Programadas</h1>
 
       {/* 🔍 Buscador */}
@@ -141,7 +184,8 @@ const ListaCitas = () => {
                       <td>{cita.paciente}</td>
                       <td>{cita.doctor}</td>
                       <td>{cita.especialidad}</td>
-                      <td>{cita.fecha}</td>
+                      <td>{cita.fecha}</td>{" "}
+                      {/* ✅ FECHA AHORA CORRECTA (DD/MM/YYYY) */}
                       <td>{cita.hora}</td>
                       <td>
                         <span
@@ -166,14 +210,7 @@ const ListaCitas = () => {
                         >
                           <CalendarClock size={20} strokeWidth={2} />
                         </button>
-                        <button
-                          className="btn-icon"
-                          title="Eliminar cita"
-                          aria-label="Eliminar cita"
-                          onClick={() => eliminarCita(cita._id)}
-                        >
-                          <Trash2 size={20} strokeWidth={2} color="#dc2626" />
-                        </button>
+                        {/* ❌ BOTÓN DE ELIMINAR ELIMINADO */}
                       </td>
                     </tr>
                   ))
@@ -190,7 +227,7 @@ const ListaCitas = () => {
         </div>
       )}
 
-      {/* 🟣 Modal Reprogramar */}
+      {/* 🟣 Modal Reprogramar (Se mantiene igual, solo se actualiza el className de los inputs) */}
       {editando && (
         <div className="modal-overlay">
           <div className="modal-card">
@@ -199,19 +236,39 @@ const ListaCitas = () => {
             <div className="modal-body">
               <div className="form-group">
                 <label>DNI</label>
-                <input type="text" value={editando.dni} disabled />
+                <input
+                  type="text"
+                  value={editando.dni}
+                  disabled
+                  className="input-disabled-modal"
+                />
               </div>
               <div className="form-group">
                 <label>Paciente</label>
-                <input type="text" value={editando.paciente} disabled />
+                <input
+                  type="text"
+                  value={editando.paciente}
+                  disabled
+                  className="input-disabled-modal"
+                />
               </div>
               <div className="form-group">
                 <label>Especialidad</label>
-                <input type="text" value={editando.especialidad} disabled />
+                <input
+                  type="text"
+                  value={editando.especialidad}
+                  disabled
+                  className="input-disabled-modal"
+                />
               </div>
               <div className="form-group">
                 <label>Doctor</label>
-                <input type="text" value={editando.doctor} disabled />
+                <input
+                  type="text"
+                  value={editando.doctor}
+                  disabled
+                  className="input-disabled-modal"
+                />
               </div>
 
               {/* 📅 Nueva fecha */}
