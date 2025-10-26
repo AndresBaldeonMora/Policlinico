@@ -1,0 +1,922 @@
+/* ============================================
+   ReservaCita.css - Estilos Sanna (unificado)
+   Autor: Victor Rodríguez (optimizado)
+   ============================================ */
+
+/* =========== VARIABLES =========== */
+:root {
+  --verde-primario: #10b981;
+  --verde-oscuro: #059669;
+  --azul-primario: #2563eb;
+  --gris-claro: #f3f4f6;
+  --gris-borde: #e5e7eb;
+  --texto: #1a1a1a;
+  --texto-sec: #6b7280;
+  --radio: 12px;
+  --trans: 0.18s ease;
+  --sombra: 0 4px 12px rgba(0, 0, 0, 0.06);
+}
+
+/* =========== CONTENEDOR PRINCIPAL =========== */
+.reserva-cita {
+  max-width: 980px;
+  margin: 2rem auto;
+  padding: 0 1rem;
+  color: var(--texto);
+  font-family: system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue",
+    Arial;
+}
+
+/* título */
+.reserva-cita h1 {
+  color: var(--texto);
+  margin-bottom: 1.75rem;
+  font-size: 1.9rem;
+  font-weight: 600;
+  text-align: left;
+}
+
+/* =========== CARD PRINCIPAL =========== */
+.card {
+  background: #fff;
+  border-radius: var(--radio);
+  box-shadow: var(--sombra);
+  padding: 2rem;
+}
+
+/* =========== MENSAJES =========== */
+.error-message {
+  background: #fff5f5;
+  color: #b91c1c;
+  padding: 1rem;
+  border-radius: 10px;
+  margin-bottom: 1.25rem;
+  border-left: 4px solid #b91c1c;
+}
+
+.loading-spinner {
+  text-align: center;
+  padding: 2rem;
+  color: var(--texto-sec);
+  font-size: 1.05rem;
+}
+
+/* =========== FORMULARIO =========== */
+.cita-form {
+  display: flex;
+  flex-direction: column;
+  gap: 1.75rem;
+}
+
+/* Step card */
+.form-step {
+  border: 1px solid var(--gris-borde);
+  border-radius: 10px;
+  padding: 1.5rem;
+  background: #fafafa;
+}
+
+/* Header step */
+.step-header {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  margin-bottom: 1.25rem;
+}
+
+.step-number {
+  background: var(--verde-primario);
+  color: #fff;
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 700;
+  font-size: 1rem;
+  flex: 0 0 36px;
+}
+
+.step-header h3 {
+  margin: 0;
+  color: var(--texto);
+  font-size: 1.15rem;
+  font-weight: 600;
+}
+
+/* =========== FORM GROUPS =========== */
+.form-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1rem 1.25rem;
+}
+
+.form-group {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.form-group label {
+  font-weight: 600;
+  color: var(--texto-sec);
+  font-size: 0.95rem;
+}
+
+/* =========== INPUTS =========== */
+input[type="text"],
+input[type="date"],
+textarea,
+select {
+  padding: 0.72rem 0.9rem;
+  border: 2px solid var(--gris-borde);
+  border-radius: 10px;
+  font-size: 1rem;
+  transition: box-shadow var(--trans), border-color var(--trans),
+    transform var(--trans);
+  background: #fff;
+  color: var(--texto);
+}
+
+input[type="text"]:focus,
+input[type="date"]:focus,
+textarea:focus,
+select:focus {
+  outline: none;
+  border-color: var(--verde-primario);
+  box-shadow: 0 0 0 6px rgba(16, 185, 129, 0.08);
+  transform: translateY(-1px);
+}
+
+.input-disabled {
+  background: var(--gris-claro);
+  cursor: not-allowed;
+  color: var(--texto-sec);
+}
+
+/* date picker indicator */
+.input-date::-webkit-calendar-picker-indicator {
+  cursor: pointer;
+  padding: 0.35rem;
+  border-radius: 6px;
+  transition: background var(--trans);
+}
+
+.input-date::-webkit-calendar-picker-indicator:hover {
+  background: #f3f4f6;
+}
+
+/* =========== AUTOCOMPLETE =========== */
+.autocomplete-container {
+  position: relative;
+}
+
+.suggestions-list {
+  position: absolute;
+  top: calc(100% + 0.4rem);
+  left: 0;
+  right: 0;
+  background: #fff;
+  border: 1px solid var(--gris-borde);
+  border-radius: 10px;
+  margin-top: 0.25rem;
+  max-height: 260px;
+  overflow-y: auto;
+  box-shadow: 0 8px 18px rgba(0, 0, 0, 0.06);
+  z-index: 30;
+}
+
+.suggestion-item {
+  padding: 0.7rem 0.95rem;
+  cursor: pointer;
+  transition: background var(--trans);
+  border-bottom: 1px solid #f3f4f6;
+  display: flex;
+  flex-direction: column;
+}
+
+.suggestion-item:hover {
+  background: #f9fafb;
+}
+
+.suggestion-dni {
+  font-weight: 700;
+  color: var(--texto);
+  margin-bottom: 0.15rem;
+}
+
+.suggestion-nombre {
+  font-size: 0.92rem;
+  color: var(--texto-sec);
+}
+
+.no-results {
+  color: #9ca3af;
+  text-align: center;
+  padding: 0.8rem;
+}
+
+/* =========== SELECTED TAG =========== */
+.selected-tag {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  background: #e6f6ff;
+  color: #024e73;
+  padding: 0.45rem 0.9rem;
+  border-radius: 8px;
+  font-weight: 600;
+  margin-top: 0.5rem;
+}
+
+.tag-close {
+  background: transparent;
+  border: none;
+  color: #024e73;
+  font-size: 1.25rem;
+  cursor: pointer;
+  padding: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  border-radius: 6px;
+}
+
+.tag-close:hover {
+  background: rgba(2, 78, 115, 0.06);
+}
+
+/* =========== DOCTOR ASIGNADO =========== */
+.doctor-asignado {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  background: #fff;
+  padding: 1rem;
+  border-radius: 10px;
+  border: 2px solid var(--verde-primario);
+}
+
+.doctor-avatar {
+  font-size: 2.4rem;
+  background: #ecfdf5;
+  width: 66px;
+  height: 66px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+}
+
+.doctor-info-text h4 {
+  margin: 0 0 0.2rem 0;
+  color: var(--texto);
+  font-size: 1.05rem;
+}
+
+.doctor-info-text p {
+  margin: 0;
+  color: var(--verde-primario);
+  font-weight: 600;
+}
+
+/* =========== FILTROS RANGO (chips) =========== */
+.filtros-rango {
+  display: flex;
+  gap: 0.6rem;
+  margin-bottom: 1rem;
+  flex-wrap: wrap;
+}
+
+.filtro-btn {
+  padding: 0.6rem 1.1rem;
+  border: 2px solid var(--gris-borde);
+  border-radius: 999px;
+  background: #fff;
+  color: var(--texto-sec);
+  font-size: 0.95rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all var(--trans);
+  white-space: nowrap;
+}
+
+.filtro-btn:hover {
+  border-color: var(--verde-primario);
+  color: var(--verde-primario);
+  background: #f0fdf4;
+}
+
+.filtro-btn.activo {
+  background: var(--verde-primario);
+  border-color: var(--verde-primario);
+  color: #fff;
+  box-shadow: 0 6px 18px rgba(16, 185, 129, 0.12);
+}
+
+/* =========== SELECCIÓN DE MES / DÍA / HORARIOS =========== */
+
+/* selector contenedores */
+.selector-mes,
+.selector-dia {
+  margin-top: 0.5rem;
+  margin-bottom: 0.75rem;
+}
+
+/* label pequeño para selectores */
+.selector-label {
+  display: block;
+  font-weight: 600;
+  color: var(--texto-sec);
+  margin-bottom: 0.5rem;
+}
+
+/* lista de meses (botones) */
+.meses-lista {
+  display: flex;
+  gap: 0.6rem;
+  flex-wrap: wrap;
+  align-items: center;
+}
+
+.mes-btn {
+  padding: 0.6rem 0.95rem;
+  border-radius: 12px;
+  border: 1.5px solid var(--gris-borde);
+  background: #fff;
+  cursor: pointer;
+  font-weight: 600;
+  transition: all var(--trans);
+}
+
+.mes-btn:hover {
+  transform: translateY(-3px);
+  border-color: var(--verde-primario);
+  background: #f0fdf4;
+}
+
+.mes-btn.activo,
+.mes-btn:active {
+  background: var(--verde-primario);
+  color: #fff;
+  border-color: var(--verde-primario);
+  box-shadow: 0 8px 22px rgba(16, 185, 129, 0.12);
+}
+
+/* dias lista selector (cuando usas botones planos para días) */
+.dias-lista-selector {
+  display: flex;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+  margin-top: 0.5rem;
+}
+
+.dia-btn {
+  padding: 0.5rem 0.75rem;
+  border-radius: 10px;
+  border: 1.5px solid var(--gris-borde);
+  background: #fff;
+  cursor: pointer;
+  font-weight: 600;
+  min-width: 46px;
+  text-align: center;
+  transition: all var(--trans);
+}
+
+.dia-btn:hover {
+  transform: translateY(-2px);
+  border-color: var(--verde-primario);
+  background: #f0fdf4;
+}
+
+.dia-btn.activo {
+  background: var(--verde-primario);
+  color: #fff;
+  border-color: var(--verde-primario);
+}
+
+/* contenedor grande de horarios */
+.horarios-contenedor {
+  background: #fff;
+  border-radius: 10px;
+  padding: 1rem;
+  min-height: 180px;
+  border: 1px solid var(--gris-borde);
+}
+
+/* dias agrupados vertical (usado cuando traes horariosPorDia) */
+.dias-lista {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  max-height: 520px;
+  overflow-y: auto;
+  padding-right: 0.25rem;
+}
+
+/* custom scrollbar */
+.dias-lista::-webkit-scrollbar {
+  width: 7px;
+}
+.dias-lista::-webkit-scrollbar-track {
+  background: #f1f1f1;
+  border-radius: 10px;
+}
+.dias-lista::-webkit-scrollbar-thumb {
+  background: var(--verde-primario);
+  border-radius: 10px;
+}
+.dias-lista::-webkit-scrollbar-thumb:hover {
+  background: var(--verde-oscuro);
+}
+
+/* grupo de día */
+.dia-grupo {
+  background: #fafafa;
+  border: 1px solid var(--gris-borde);
+  border-radius: 12px;
+  padding: 1rem;
+  transition: box-shadow var(--trans), border-color var(--trans);
+}
+.dia-grupo:hover {
+  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.06);
+  border-color: var(--verde-primario);
+}
+
+/* header dentro de grupo */
+.dia-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 0.85rem;
+  padding-bottom: 0.6rem;
+  border-bottom: 1px solid #f3f4f6;
+}
+.dia-nombre {
+  font-size: 1.02rem;
+  font-weight: 700;
+  color: var(--texto);
+}
+.dia-fecha {
+  font-size: 0.95rem;
+  color: var(--texto-sec);
+  font-weight: 600;
+}
+
+/* horarios horizontales */
+.horarios-horizontal {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.6rem;
+}
+
+/* horario como radio-styled button */
+.horario-radio {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0.6rem 1.05rem;
+  border: 2px solid #d1d5db;
+  border-radius: 10px;
+  background: #fff;
+  cursor: pointer;
+  transition: transform var(--trans), box-shadow var(--trans),
+    background var(--trans), border-color var(--trans);
+  user-select: none;
+}
+
+.horario-radio input[type="radio"] {
+  position: absolute;
+  opacity: 0;
+  width: 0;
+  height: 0;
+  pointer-events: none;
+}
+
+.horario-texto {
+  font-size: 0.95rem;
+  font-weight: 700;
+  color: var(--texto);
+}
+
+/* hover efecto */
+.horario-radio:hover {
+  border-color: var(--verde-primario);
+  background: #f0fdf4;
+  transform: translateY(-3px);
+  box-shadow: 0 8px 20px rgba(16, 185, 129, 0.12);
+}
+
+/* seleccionado */
+.horario-radio.seleccionado {
+  background: var(--verde-primario);
+  border-color: var(--verde-primario);
+  box-shadow: 0 10px 28px rgba(16, 185, 129, 0.18);
+}
+.horario-radio.seleccionado .horario-texto {
+  color: #fff;
+}
+
+/* =========== BOTONES DE ACCIÓN =========== */
+.form-actions {
+  display: flex;
+  gap: 0.85rem;
+  justify-content: flex-end;
+  padding-top: 0.9rem;
+  border-top: 1px solid #f3f4f6;
+}
+
+/* gen btn */
+.btn {
+  padding: 0.7rem 1.8rem;
+  border: none;
+  border-radius: 10px;
+  font-size: 1rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: transform var(--trans), box-shadow var(--trans),
+    background var(--trans);
+}
+
+.btn-primary {
+  background: var(--verde-primario);
+  color: #fff;
+  box-shadow: 0 8px 20px rgba(16, 185, 129, 0.12);
+}
+
+.btn-primary:hover:not(:disabled) {
+  background: var(--verde-oscuro);
+  transform: translateY(-3px);
+}
+
+.btn-secondary {
+  background: #f3f4f6;
+  color: var(--texto);
+}
+
+.btn-secondary:hover:not(:disabled) {
+  background: #e9eef0;
+}
+
+.btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  transform: none;
+  box-shadow: none;
+}
+
+/* =========== PACIENTE ENCONTRADO =========== */
+.paciente-encontrado {
+  margin-top: 0.5rem;
+  border: 2px solid var(--verde-primario);
+  border-radius: 10px;
+  background: #fff;
+  box-shadow: 0 6px 18px rgba(16, 185, 129, 0.08);
+  overflow: hidden;
+}
+
+.paciente-item {
+  padding: 0.9rem;
+  display: flex;
+  align-items: center;
+  gap: 0.85rem;
+  cursor: pointer;
+  transition: background var(--trans);
+}
+
+.paciente-item:hover {
+  background: #ecfdf5;
+}
+
+.paciente-dni {
+  font-weight: 800;
+  color: var(--verde-primario);
+  font-size: 1rem;
+  font-family: "Courier New", monospace;
+}
+
+.paciente-separador {
+  color: #9ca3af;
+  font-weight: 700;
+}
+
+.paciente-nombre {
+  color: var(--texto);
+  font-weight: 700;
+  font-size: 1rem;
+}
+
+/* =========== BOTÓN NUEVO PACIENTE =========== */
+.btn-nuevo-paciente {
+  margin-top: 0.5rem;
+  background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
+  color: #fff;
+  border: none;
+  padding: 0.45rem 0.85rem;
+  border-radius: 8px;
+  font-size: 0.85rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: transform var(--trans), box-shadow var(--trans);
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  box-shadow: 0 6px 16px rgba(37, 99, 235, 0.12);
+  white-space: nowrap;
+}
+
+.btn-nuevo-paciente:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 10px 26px rgba(37, 99, 235, 0.14);
+}
+
+/* =========== ESTADOS DE CARGA =========== */
+.horarios-loading {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 2.4rem 1.2rem;
+  gap: 0.9rem;
+}
+
+.spinner-small {
+  width: 44px;
+  height: 44px;
+  border: 4px solid #e9eef0;
+  border-top-color: var(--verde-primario);
+  border-radius: 50%;
+  animation: spin 0.9s linear infinite;
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.horarios-loading p {
+  color: var(--texto-sec);
+  font-size: 0.95rem;
+  font-weight: 600;
+}
+
+.no-horarios {
+  padding: 2rem;
+  text-align: center;
+  background: #fff7ed;
+  border: 2px solid #fed7aa;
+  border-radius: 10px;
+}
+
+.no-horarios p {
+  margin: 0;
+  color: #c2410c;
+  font-weight: 700;
+  font-size: 0.98rem;
+}
+
+/* =========== INFO ADICIONAL =========== */
+.fecha-info {
+  display: block;
+  margin-top: 0.5rem;
+  color: var(--texto-sec);
+  font-size: 0.85rem;
+  font-style: italic;
+}
+
+/* =========== MODAL / INPUT DESHABILITADO =========== */
+.input-disabled-modal {
+  background: var(--gris-claro) !important;
+  cursor: not-allowed !important;
+  color: var(--texto-sec) !important;
+  font-weight: 700;
+}
+
+/* =========== RESPONSIVE =========== */
+@media (max-width: 900px) {
+  .form-row {
+    grid-template-columns: 1fr;
+  }
+  .reserva-cita {
+    padding: 0 0.75rem;
+  }
+  .card {
+    padding: 1.5rem;
+  }
+}
+
+@media (max-width: 600px) {
+  .step-header h3 {
+    font-size: 1rem;
+  }
+  .step-number {
+    width: 34px;
+    height: 34px;
+  }
+  .horario-texto {
+    font-size: 0.88rem;
+  }
+  .mes-btn,
+  .dia-btn {
+    padding: 0.5rem 0.7rem;
+    font-size: 0.95rem;
+  }
+  .btn {
+    width: 100%;
+  }
+  .form-actions {
+    flex-direction: column-reverse;
+    gap: 0.6rem;
+    align-items: stretch;
+  }
+}
+
+.reserva-cita-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1rem; /* Ajusta según sea necesario */
+}
+
+/* Estilos para el botón 'X' */
+.btn-close-form {
+  background: transparent;
+  border: none;
+  font-size: 2.5rem; /* Tamaño grande para que sea fácil de clickear */
+  font-weight: bold;
+  cursor: pointer;
+  color: #888;
+  padding: 0 0.5rem;
+  line-height: 1;
+  transition: color 0.2s ease;
+}
+
+.btn-close-form:hover {
+  color: #333; /* Color más oscuro al pasar el mouse */
+}
+
+/* ===== ESTILOS PARA LAS NUEVAS FUNCIONALIDADES ===== */
+
+/* Contenedor del Título y Botón de Cerrar */
+.reserva-cita-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1rem;
+}
+
+/* Botón 'X' para cerrar/cancelar todo el formulario */
+.btn-close-form {
+  background: transparent;
+  border: none;
+  font-size: 2.5rem;
+  font-weight: bold;
+  cursor: pointer;
+  color: #888;
+  padding: 0 0.5rem;
+  line-height: 1;
+  transition: color 0.2s ease;
+}
+
+.btn-close-form:hover {
+  color: #333;
+}
+
+/* Estilo adicional para el input deshabilitado */
+.input-disabled {
+  background-color: #e9ecef; /* Un gris claro para indicar que está bloqueado */
+  cursor: not-allowed;
+}
+
+/* ===== Estilos para Notificaciones (Toast) ===== */
+.notification {
+  position: fixed; /* Se posiciona con respecto a la ventana del navegador */
+  top: 80px; /* Distancia desde arriba (ajusta si tienes una barra de navegación) */
+  right: 20px; /* Distancia desde la derecha */
+  padding: 16px 24px;
+  border-radius: 8px;
+  color: white;
+  font-size: 1rem;
+  font-weight: 500;
+  z-index: 1000; /* Asegura que esté por encima de otros elementos */
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  min-width: 300px;
+  text-align: center;
+  /* Animación de entrada */
+  animation: slideInFromRight 0.4s ease-out forwards;
+}
+
+/* Estilo para notificación de éxito */
+.notification.success {
+  background-color: #28a745; /* Verde */
+  border-left: 5px solid #218838;
+}
+
+/* Estilo para notificación de error */
+.notification.error {
+  background-color: #dc3545; /* Rojo */
+  border-left: 5px solid #c82333;
+}
+
+/* Animación para que la notificación aparezca desde la derecha */
+@keyframes slideInFromRight {
+  from {
+    transform: translateX(110%);
+    opacity: 0;
+  }
+  to {
+    transform: translateX(0);
+    opacity: 1;
+  }
+}
+
+/* =========================================================
+    Asegúrate que estos estilos estén incluidos en tu archivo
+    para la cabecera, el botón de cerrar, el input bloqueado,
+    y las notificaciones (Toast).
+========================================================= */
+
+/* --- Cabecera y Botón de Cerrar (Optimizado) --- */
+/*
+  Si usaste la versión optimizada, esta sección ya existe.
+  Verifica especialmente la clase .btn-close-form
+*/
+.reserva-cita-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  /* El margen inferior aquí reemplaza el margin-bottom del h1 */
+  margin-bottom: 1.75rem;
+}
+
+.btn-close-form {
+  background: transparent;
+  border: none;
+  font-size: 2.5rem;
+  font-weight: bold;
+  cursor: pointer;
+  color: #888;
+  padding: 0 0.5rem;
+  line-height: 1;
+  transition: color 0.2s ease;
+  flex-shrink: 0;
+}
+
+.btn-close-form:hover {
+  color: #333;
+}
+
+/* --- Estilos para inputs deshabilitados (Asegúrate de tener la variable) --- */
+/* Variable necesaria: --gris-inactivo: #e9ecef; */
+.input-disabled,
+.input-disabled-modal {
+  background: var(--gris-inactivo) !important;
+  cursor: not-allowed !important;
+  color: var(--texto-sec) !important;
+  font-weight: 700;
+  transform: none !important;
+  box-shadow: none !important;
+}
+
+/* --- Notificaciones (Toast) --- */
+.notification {
+  position: fixed;
+  top: 80px;
+  right: 20px;
+  padding: 16px 24px;
+  border-radius: 8px;
+  color: white;
+  font-size: 1rem;
+  font-weight: 500;
+  z-index: 1000;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  min-width: 300px;
+  text-align: center;
+  animation: slideInFromRight 0.4s ease-out forwards;
+}
+
+.notification.success {
+  background-color: #28a745; /* Verde de éxito */
+  border-left: 5px solid #218838;
+}
+
+.notification.error {
+  background-color: #dc3545; /* Rojo de error */
+  border-left: 5px solid #c82333;
+}
+
+@keyframes slideInFromRight {
+  from {
+    transform: translateX(110%);
+    opacity: 0;
+  }
+  to {
+    transform: translateX(0);
+    opacity: 1;
+  }
+}

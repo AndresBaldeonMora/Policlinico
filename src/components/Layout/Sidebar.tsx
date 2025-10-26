@@ -1,50 +1,56 @@
-import { Link, useLocation } from 'react-router-dom';
-import './Sidebar.css';
+import { Link, useLocation } from "react-router-dom";
+import "./Sidebar.css";
 
 const Sidebar = () => {
   const location = useLocation();
 
   const menuItems = [
-    { 
-      path: '/', 
-      label: 'Inicio', 
-      icon: '🏠',
-      description: 'Dashboard principal'
+    {
+      path: "/",
+      label: "Inicio",
+      icon: "🏠",
+      description: "Dashboard principal",
     },
-    { 
-      path: '/reserva-cita', 
-      label: 'Solicitar citas', 
-      icon: '📅',
-      description: 'Agendar nueva cita'
+    {
+      path: "/reserva-cita",
+      label: "Solicitar Cita",
+      icon: "📅",
+      description: "Agendar nueva cita médica",
     },
-    { 
-      path: '/lista-citas', 
-      label: 'Gestión de citas', 
-      icon: '📋',
-      description: 'Ver todas las citas'
+    {
+      path: "/lista-citas",
+      label: "Gestión de Citas",
+      icon: "📋",
+      description: "Ver y administrar todas las citas",
     },
-    { 
-      path: '/doctores', 
-      label: 'Médicos', 
-      icon: '👨‍⚕️',
-      description: 'Directorio médico'
+    {
+      path: "/medicos",
+      label: "Médicos",
+      icon: "👨‍⚕️",
+      description: "Directorio de doctores por especialidad",
     },
-    { 
-      path: '/pacientes', 
-      label: 'Pacientes', 
-      icon: '👥',
-      description: 'Gestión de pacientes'
+    {
+      path: "/pacientes",
+      label: "Pacientes",
+      icon: "👥",
+      description: "Listado y gestión de pacientes",
     },
   ];
 
   return (
     <aside className="sidebar">
+      {/* 🔹 Encabezado del sidebar */}
       <div className="sidebar-header">
         <div className="logo">
           <div className="logo-icon">
             <svg width="32" height="32" viewBox="0 0 32 32" fill="none">
-              <rect width="32" height="32" rx="8" fill="#22c55e"/>
-              <path d="M16 8V24M24 16H8" stroke="white" strokeWidth="3" strokeLinecap="round"/>
+              <rect width="32" height="32" rx="8" fill="#22c55e" />
+              <path
+                d="M16 8V24M24 16H8"
+                stroke="white"
+                strokeWidth="3"
+                strokeLinecap="round"
+              />
             </svg>
           </div>
           <div>
@@ -54,33 +60,46 @@ const Sidebar = () => {
         </div>
       </div>
 
+      {/* 🔹 Navegación */}
       <nav className="sidebar-nav">
         <div className="nav-section">
           <p className="nav-section-title">MENÚ PRINCIPAL</p>
-          {menuItems.map((item) => (
-            <Link
-              key={item.path}
-              to={item.path}
-              className={`sidebar-link ${location.pathname === item.path ? 'active' : ''}`}
-            >
-              <span className="sidebar-icon">{item.icon}</span>
-              <span className="sidebar-label">{item.label}</span>
-            </Link>
-          ))}
+
+          {menuItems.map((item) => {
+            const isActive = location.pathname === item.path;
+            return (
+              <Link
+                key={item.path}
+                to={item.path}
+                className={`sidebar-link ${isActive ? "active" : ""}`}
+                title={item.description}
+              >
+                <span className="sidebar-icon">{item.icon}</span>
+                <span className="sidebar-label">{item.label}</span>
+              </Link>
+            );
+          })}
         </div>
 
+        {/* 🔹 Sección inferior: perfil */}
         <div className="nav-section">
           <p className="nav-section-title">CONFIGURACIÓN</p>
-          <Link to="/perfil" className="sidebar-link">
+          <Link
+            to="/perfil"
+            className={`sidebar-link ${
+              location.pathname === "/perfil" ? "active" : ""
+            }`}
+          >
             <span className="sidebar-icon">👤</span>
             <span className="sidebar-label">Mi Perfil</span>
           </Link>
         </div>
       </nav>
 
+      {/* 🔹 Footer */}
       <div className="sidebar-footer">
         <button className="btn-logout">
-          <span>🚪</span>
+          <span className="logout-icon">🚪</span>
           <span>Cerrar Sesión</span>
         </button>
       </div>
