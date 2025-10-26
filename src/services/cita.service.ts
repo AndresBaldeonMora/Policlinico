@@ -1,13 +1,6 @@
 // src/services/cita.service.ts
+
 import api from "./api";
-
-// ------------------- Función de Utilidad de Fecha -------------------
-
-// ❌ FUNCIÓN formatFechaDisplay ELIMINADA. 
-// El backend (cita.controller.ts) ahora se encarga de este formateo.
-/*
-const formatFechaDisplay = (dateString: string): string => { ... };
-*/
 
 // ------------------- Tipos y DTOs -------------------
 
@@ -48,15 +41,16 @@ export interface CitaPopulada extends Omit<Cita, "pacienteId" | "doctorId"> {
   };
 }
 
-// Tipo de CitaProcesada que ahora recibe la fecha formateada del backend
+// src/services/cita.service.ts
 export interface CitaProcesada {
   _id: string;
   id: number;
   dni: string;
   paciente: string;
   doctor: string;
+  doctorId: string; // ✅ AGREGAR ESTA LÍNEA
   especialidad: string;
-  fecha: string; // ✅ Ahora es DD/MM/YYYY
+  fecha: string;
   hora: string;
   estado: "pendiente" | "reprogramado" | "finalizado";
 }
@@ -69,7 +63,7 @@ export class CitaApiService {
   // 🟢 Crear nueva cita
   static async crear(datos: CrearCitaDTO): Promise<Cita> {
     try {
-      // ✅ Se envía directamente YYYY-MM-DD. El Controller lo crea como Date() local.
+      // Se envía directamente YYYY-MM-DD. El Controller lo procesa.
       const payload = {
         pacienteId: datos.pacienteId,
         doctorId: datos.doctorId,
@@ -108,7 +102,7 @@ export class CitaApiService {
     }
   }
 
-  // 🟣 Listar todas las citas (NO NECESITA FORMATO)
+  // 🟣 Listar todas las citas
   static async listar(): Promise<CitaProcesada[]> {
     try {
       const response = await api.get<{ success: boolean; data: CitaProcesada[] }>(
@@ -116,7 +110,7 @@ export class CitaApiService {
       );
 
       if (response.data.success && response.data.data) {
-        // ✅ La data ya viene formateada (DD/MM/YYYY) y lista para usar del backend.
+        // La data ya viene ordenada (más reciente primero) y formateada del backend.
         return response.data.data;
       }
 
@@ -157,5 +151,4 @@ export class CitaApiService {
       throw new Error(err.response?.data?.message || "Error al reprogramar cita");
     }
   }
-
 }
