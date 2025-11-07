@@ -1,47 +1,158 @@
-.lista-medicos {
-  max-width: 900px;
-  margin: 2rem auto;
+/* ============================================
+   LISTAS (Médicos / Pacientes) - Estilo base
+   ============================================ */
+
+:root {
+  --lp-text-dark: #111827;
+  --lp-text-gray: #4b5563;
+  --lp-border: #e5e7eb;
+  --lp-bg-light: #f9fafb;
+  --lp-bg-hover: #f3f4f6;
+  --lp-green: #10b981;
 }
 
-.lista-medicos h1 {
-  font-size: 1.8rem;
-  margin-bottom: 1.5rem;
-  color: #1a1a1a;
+/* Contenedor general */
+.lista-registros {
+  padding: 2rem;
+  max-width: 1400px;
+  margin: 0 auto;
 }
 
+.lista-registros h1 {
+  font-size: 1.6rem;
+  font-weight: 600;
+  color: var(--lp-text-dark);
+  margin-bottom: 1rem;
+}
+
+/* Buscador */
 .buscador-container {
   margin-bottom: 1rem;
 }
 
-.input-busqueda {
+.busqueda-input {
   width: 100%;
-  padding: 0.8rem;
-  border: 2px solid #e5e7eb;
-  border-radius: 8px;
-  font-size: 1rem;
-}
-
-.card {
-  background: white;
-  padding: 1.5rem;
+  max-width: 420px;
+  padding: 0.9rem 1rem;
   border-radius: 12px;
-  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
+  border: 1px solid var(--lp-border);
+  font-size: 0.95rem;
+  transition: all 0.18s ease;
 }
 
-.tabla-medicos {
+.busqueda-input:focus {
+  outline: none;
+  box-shadow: 0 0 0 2px rgba(16, 185, 129, 0.15);
+  border-color: var(--lp-green);
+}
+
+/* Card tabla */
+.card-registros {
+  background: #fff;
+  border-radius: 16px;
+  box-shadow: 0 4px 14px rgba(15, 23, 42, 0.06);
+  padding: 0;
+  overflow: hidden;
+}
+
+.tabla-registros {
   width: 100%;
   border-collapse: collapse;
 }
 
-.tabla-medicos th,
-.tabla-medicos td {
+/* Cabecera y celdas */
+.tabla-registros th,
+.tabla-registros td {
+  padding: 1rem 1.4rem;
   text-align: left;
-  padding: 0.75rem;
-  border-bottom: 1px solid #e5e7eb;
+  border-bottom: 1px solid var(--lp-border);
+  font-size: 0.95rem;
+  color: var(--lp-text-gray);
 }
 
-.tabla-medicos th {
-  background: #f9fafb;
-  color: #374151;
+/* Cabecera */
+.tabla-registros th {
+  background-color: var(--lp-bg-light);
   font-weight: 600;
+}
+
+/* Filas hover */
+.tabla-registros tbody tr:hover {
+  background-color: var(--lp-bg-hover);
+}
+
+/* === Columnas específicas === */
+
+/* Nombre completo: que NO se corte */
+.tabla-registros th.col-nombre,
+.tabla-registros td.col-nombre {
+  max-width: 260px;
+  white-space: normal;      /* permite varias líneas */
+  overflow: visible;
+}
+
+/* Para DNI, CMP, Teléfono, CV: una línea y centrado mejor */
+.tabla-registros th.col-dni,
+.tabla-registros td.col-dni,
+.tabla-registros th.col-cmp,
+.tabla-registros td.col-cmp,
+.tabla-registros th.col-telefono,
+.tabla-registros td.col-telefono,
+.tabla-registros th.col-cv,
+.tabla-registros td.col-cv {
+  white-space: nowrap;
+}
+
+/* Especialidad un poco más amplia */
+.tabla-registros th.col-especialidad,
+.tabla-registros td.col-especialidad {
+  max-width: 180px;
+}
+
+/* Botón CV */
+.btn-cv {
+  padding: 0.35rem 1.2rem;
+  border-radius: 999px;
+  border: none;
+  background: var(--lp-green);
+  color: #fff;
+  font-size: 0.85rem;
+  font-weight: 600;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.25rem;
+  transition: all 0.18s ease;
+}
+
+.btn-cv:hover {
+  background: #059669;
+  box-shadow: 0 4px 10px rgba(16, 185, 129, 0.25);
+  transform: translateY(-1px);
+}
+
+/* Texto cuando no hay datos */
+.sin-resultados {
+  text-align: center;
+  padding: 1.5rem;
+  color: #9ca3af;
+  font-size: 0.9rem;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .lista-registros {
+    padding: 1.25rem;
+  }
+
+  .tabla-registros th,
+  .tabla-registros td {
+    padding: 0.75rem 0.9rem;
+    font-size: 0.85rem;
+  }
+
+  .busqueda-input {
+    max-width: 100%;
+  }
 }

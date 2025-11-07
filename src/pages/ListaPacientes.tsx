@@ -1,94 +1,130 @@
 import { useEffect, useState } from "react";
+import "./ListaCitas.css";
 import {
   PacienteApiService,
   type PacienteTransformado,
 } from "../services/paciente.service";
-import "./ListaPacientes.css";
+
+const normalizeString = (str: string): string =>
+  (str || "")
+    .toLowerCase()
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "");
+
+interface NotificationState {
+  message: string;
+  type: "success" | "error" | "";
+  visible: boolean;
+}
 
 const ListaPacientes = () => {
   const [pacientes, setPacientes] = useState<PacienteTransformado[]>([]);
   const [busqueda, setBusqueda] = useState("");
+  const [cargando, setCargando] = useState(true);
+  const [notification, setNotification] = useState<NotificationState>({
+    message: "",
+    type: "",
+    visible: false,
+  });
+
+  const showNotification = (message: string, type: "success" | "error") => {
+    setNotification({ message, type, visible: true });
+    setTimeout(
+      () => setNotification((prev) => ({ ...prev, visible: false })),
+      2500
+    );
+  };
+
+  const cargarPacientes = async () => {
+    try {
+      setCargando(true);
+      const data = await PacienteApiService.listar();
+      setPacientes(data);
+    } catch (error) {
+      console.error("Error al cargar pacientes:", error);
+      showNotification("Error al cargar la lista de pacientes.", "error");
+    } finally {
+      setCargando(false);
+    }
+  };
 
   useEffect(() => {
     cargarPacientes();
   }, []);
 
-  const cargarPacientes = async () => {
-    try {
-      const data = await PacienteApiService.listar();
-      setPacientes(data);
-    } catch (error) {
-      console.error("❌ Error al cargar pacientes:", error);
-    }
-  };
-
-  // 🔹 Calcular edad desde fecha de nacimiento
-  const calcularEdad = (fechaNacimiento: string | undefined) => {
-    if (!fechaNacimiento) return "—";
-    const fechaNac = new Date(fechaNacimiento);
-    const hoy = new Date();
-    let edad = hoy.getFullYear() - fechaNac.getFullYear();
-    const mes = hoy.getMonth() - fechaNac.getMonth();
-    if (mes < 0 || (mes === 0 && hoy.getDate() < fechaNac.getDate())) {
-      edad--;
-    }
-    return `${edad} años`;
-  };
-
-  const filtrados = pacientes.filter((p) =>
-    `${p.nombres} ${p.apellidos} ${p.dni} ${p.correo}`
-      .toLowerCase()
-      .includes(busqueda.toLowerCase())
-  );
+  const pacientesFiltrados = pacientes.filter((p) => {
+    const filtro = normalizeString(busqueda);
+    const nombreCompleto = normalizeString(
+      `${p.nombres ?? ""} ${p.apellidos ?? ""}`
+    );
+    const dni = normalizeString(p.dni || "");
+    const telefono = normalizeString(p.telefono || "");
+    return (
+      nombreCompleto.includes(filtro) ||
+      dni.includes(filtro) ||
+      telefono.includes(filtro)
+    );
+  });
 
   return (
-    <div className="lista-pacientes">
-      <h1>👥 Lista de Pacientes</h1>
+    <div className="lista-citas">
+      {notification.visible && (
+        <div className={`notification ${notification.type}`}>
+          {notification.type === "success" ? "✅ " : "❌ "}
+          {notification.message}
+        </div>
+      )}
+
+      <h1>Pacientes Registrados</h1>
 
       <div className="buscador-container">
         <input
           type="text"
-          placeholder="Buscar paciente por nombre o DNI..."
+          placeholder="Buscar por DNI, nombre o teléfono..."
           value={busqueda}
           onChange={(e) => setBusqueda(e.target.value)}
           className="input-busqueda"
         />
       </div>
 
-      <div className="card">
-        <table className="tabla-pacientes">
-          <thead>
-            <tr>
-              <th>DNI</th>
-              <th>Nombre</th>
-              <th>Teléfono</th>
-              <th>Correo</th>
-              <th>Edad</th>
-            </tr>
-          </thead>
-          <tbody>
-            {filtrados.length > 0 ? (
-              filtrados.map((p) => (
-                <tr key={p.id}>
-                  <td>{p.dni}</td>
-                  <td>
-                    {p.nombres} {p.apellidos}
-                  </td>
-                  <td>{p.telefono || "—"}</td>
-                  <td>{p.correo || "—"}</td>
-                  <td>{calcularEdad(p.fechaNacimiento)}</td>
+      {cargando ? (
+        <p className="texto-cargando">Cargando pacientes...</p>
+      ) : (
+        <div className="card">
+          <div className="table-container">
+            <table className="citas-table citas-table-pacientes">
+              <thead>
+                <tr>
+                  <th className="col-dni">DNI</th>
+                  <th className="col-nombre">Nombre Completo</th>
+                  <th className="col-telefono">Teléfono</th>
+                  <th>Correo</th>
                 </tr>
-              ))
-            ) : (
-              <tr>
-                <td colSpan={5} className="sin-resultados">
-                  No se encontraron pacientes
-                </td>
-              </tr>
-            )}
-          </tbody>
-        </table>
-      </div>
+              </thead>
+              <tbody>
+                {pacientesFiltrados.length > 0 ? (
+                  pacientesFiltrados.map((p) => (
+                    <tr key={p.id}>
+                      <td className="col-dni">{p.dni}</td>
+                      <td className="col-nombre">
+                        {p.nombres} {p.apellidos}
+                      </td>
+                      <td className="col-telefono">{p.telefono || "-"}</td>
+                      <td>{p.correo || "-"}</td>
+                    </tr>
+                  ))
+                ) : (
+                  <tr>
+                    <td colSpan={4} className="sin-resultados">
+                      No se encontraron pacientes.
+                    </td>
+                  </tr>
+                )}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
