@@ -17,6 +17,7 @@
   color: var(--texto);
   font-family: system-ui, -apple-system, BlinkMacSystemFont, "SF Pro Text",
     -system-ui, sans-serif;
+  min-height: 100vh;
 }
 
 /* ===== Hero ===== */

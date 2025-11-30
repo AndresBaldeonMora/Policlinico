@@ -1,4 +1,5 @@
 import { useNavigate } from "react-router-dom";
+import { useAuth } from "../hooks/userAuth";
 import "./Dashboard.css";
 
 interface QuickAction {
@@ -12,6 +13,7 @@ interface QuickAction {
 
 const Dashboard = () => {
   const navigate = useNavigate();
+  const { user } = useAuth();
 
   const quickActions: QuickAction[] = [
     {
@@ -61,7 +63,9 @@ const Dashboard = () => {
         </div>
         <div className="hero-card">
           <div className="hero-icon">🏥</div>
-          <p className="hero-label">Módulo Recepción</p>
+          <p className="hero-label">
+            {user ? `Módulo ${user.rol}` : "Módulo Recepción"}
+          </p>
         </div>
       </section>
 

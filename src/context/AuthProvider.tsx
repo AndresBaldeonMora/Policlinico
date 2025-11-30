@@ -6,10 +6,14 @@ import { AuthContext } from "./AuthContext";
 
 export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [user, setUser] = useState<AuthUser | null>(null);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const stored = AuthService.getStoredUser();
-    if (stored) setUser(stored);
+    const storedUser = AuthService.getStoredUser();
+    if (storedUser) {
+      setUser(storedUser);
+    }
+    setLoading(false);
   }, []);
 
   const login = async (correo: string, password: string) => {
@@ -26,6 +30,10 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     if (!user) return false;
     return roles.includes(user.rol);
   };
+
+  if (loading) {
+    return <div>Cargando sesión...</div>;
+  }
 
   return (
     <AuthContext.Provider

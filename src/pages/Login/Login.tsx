@@ -20,11 +20,11 @@ const Login = () => {
       return;
     }
 
+    setCargando(true);
+
     try {
-      setCargando(true);
       await login(correo, password);
 
-      // Redirección según rol
       const rawUser = localStorage.getItem("user");
       if (rawUser) {
         const user = JSON.parse(rawUser);
@@ -38,10 +38,12 @@ const Login = () => {
       }
     } catch (err) {
       if (err instanceof Error) {
-        setError(err.message);
+        setError(err.message || "Error al iniciar sesión.");
       } else {
         setError("Error al iniciar sesión.");
       }
+    } finally {
+      setCargando(false);
     }
   };
 

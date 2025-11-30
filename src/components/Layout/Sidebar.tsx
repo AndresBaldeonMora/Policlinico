@@ -1,8 +1,11 @@
-import { Link, useLocation } from "react-router-dom";
+import { Link, useLocation, useNavigate } from "react-router-dom";
+import { useAuth } from "../../hooks/userAuth";
 import "./Sidebar.css";
 
 const Sidebar = () => {
   const location = useLocation();
+  const navigate = useNavigate();
+  const { logout } = useAuth();
 
   const menuItems = [
     {
@@ -36,6 +39,11 @@ const Sidebar = () => {
       description: "Listado y gestión de pacientes",
     },
   ];
+
+  const handleLogout = () => {
+    logout();
+    navigate("/login", { replace: true });
+  };
 
   return (
     <aside className="sidebar">
@@ -98,8 +106,7 @@ const Sidebar = () => {
 
       {/* 🔹 Footer */}
       <div className="sidebar-footer">
-        <button className="btn-logout">
-          <span className="logout-icon">🚪</span>
+        <button className="btn-logout" onClick={handleLogout}>
           <span>Cerrar Sesión</span>
         </button>
       </div>
