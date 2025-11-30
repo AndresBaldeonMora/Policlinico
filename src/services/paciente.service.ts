@@ -1,9 +1,9 @@
 // src/services/paciente.service.ts
-import api from './api';
+import api from "./api";
 
 export interface Paciente {
   _id: string;
-  id: string;
+  id?: string;
   dni: string;
   nombres: string;
   apellidos: string;
@@ -11,6 +11,7 @@ export interface Paciente {
   telefono: string;
   correo: string;
   direccion: string;
+  edad?: number; // ✅ si viene del virtual, lo aprovechamos
   createdAt?: string;
   updatedAt?: string;
 }
@@ -22,14 +23,12 @@ export interface PacienteTransformado {
   nombres: string;
   apellidos: string;
   fechaNacimiento: string;
-  edad?: number; // ✅ 
   telefono: string;
   correo: string;
   direccion: string;
+  edad?: number;
 }
 
-
-// ⭐ Type helper para errores
 interface AxiosErrorResponse {
   response?: {
     data?: {
@@ -39,10 +38,9 @@ interface AxiosErrorResponse {
   message?: string;
 }
 
-// ⭐ Transformar paciente
 const transformarPaciente = (paciente: Paciente): PacienteTransformado => ({
-  id: paciente._id || paciente.id,
-  _id: paciente._id || paciente.id, // ⭐ Mantener _id también
+  id: paciente._id || paciente.id || "",
+  _id: paciente._id || paciente.id || "",
   dni: paciente.dni,
   nombres: paciente.nombres,
   apellidos: paciente.apellidos,
@@ -50,14 +48,16 @@ const transformarPaciente = (paciente: Paciente): PacienteTransformado => ({
   telefono: paciente.telefono,
   correo: paciente.correo,
   direccion: paciente.direccion,
+  edad: paciente.edad,
 });
 
 export class PacienteApiService {
-  // Crear paciente
-  static async crear(datos: Omit<Paciente, '_id' | 'id'>): Promise<PacienteTransformado> {
+  static async crear(
+    datos: Omit<Paciente, "_id" | "id" | "edad">
+  ): Promise<PacienteTransformado> {
     try {
       const response = await api.post<{ success: boolean; data: Paciente }>(
-        '/pacientes',
+        "/pacientes",
         datos
       );
 
@@ -65,19 +65,23 @@ export class PacienteApiService {
         return transformarPaciente(response.data.data);
       }
 
-      throw new Error('Respuesta inesperada del servidor');
+      throw new Error("Respuesta inesperada del servidor");
     } catch (error: unknown) {
       const err = error as AxiosErrorResponse;
-      console.error('❌ Error al crear paciente:', err.response?.data || err.message);
-      throw new Error(err.response?.data?.message || 'Error al crear paciente');
+      console.error(
+        "❌ Error al crear paciente:",
+        err.response?.data || err.message
+      );
+      throw new Error(
+        err.response?.data?.message || "Error al crear paciente"
+      );
     }
   }
 
-  // Listar pacientes
   static async listar(): Promise<PacienteTransformado[]> {
     try {
       const response = await api.get<{ success: boolean; data: Paciente[] }>(
-        '/pacientes'
+        "/pacientes"
       );
 
       if (response.data.success && response.data.data) {
@@ -87,13 +91,19 @@ export class PacienteApiService {
       return [];
     } catch (error: unknown) {
       const err = error as AxiosErrorResponse;
-      console.error('❌ Error al listar pacientes:', err.response?.data || err.message);
-      throw new Error(err.response?.data?.message || 'Error al listar pacientes');
+      console.error(
+        "❌ Error al listar pacientes:",
+        err.response?.data || err.message
+      );
+      throw new Error(
+        err.response?.data?.message || "Error al listar pacientes"
+      );
     }
   }
 
-  // Buscar por DNI
-  static async buscarPorDni(dni: string): Promise<PacienteTransformado | null> {
+  static async buscarPorDni(
+    dni: string
+  ): Promise<PacienteTransformado | null> {
     try {
       const response = await api.get<{ success: boolean; data: Paciente }>(
         `/pacientes/dni/${dni}`
@@ -106,7 +116,10 @@ export class PacienteApiService {
       return null;
     } catch (error: unknown) {
       const err = error as AxiosErrorResponse;
-      console.error('❌ Error al buscar paciente:', err.response?.data || err.message);
+      console.error(
+        "❌ Error al buscar paciente por DNI:",
+        err.response?.data || err.message
+      );
       return null;
     }
   }

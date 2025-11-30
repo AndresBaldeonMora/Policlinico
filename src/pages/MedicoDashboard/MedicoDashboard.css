@@ -1,0 +1,153 @@
+:root {
+  --verde: #10b981;
+  --texto: #111827;
+  --texto-suave: #6b7280;
+  --fondo: #f9fafb;
+  --borde: #e5e7eb;
+  --radius-xl: 18px;
+  --shadow-soft: 0 8px 24px rgba(15, 23, 42, 0.06);
+  --shadow-hover: 0 14px 40px rgba(15, 23, 42, 0.12);
+  --transition-fast: 0.18s ease;
+}
+
+.medico-dashboard {
+  padding: 2rem 2.5rem;
+  background-color: var(--fondo);
+  color: var(--texto);
+  font-family: system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
+}
+
+/* Hero */
+
+.medico-hero {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background: #ffffff;
+  padding: 1.8rem 1.6rem;
+  border-radius: var(--radius-xl);
+  box-shadow: var(--shadow-soft);
+  border: 1px solid rgba(148, 163, 253, 0.14);
+  margin-bottom: 2rem;
+  gap: 1.5rem;
+}
+
+.medico-title {
+  margin: 0 0 0.3rem;
+  font-size: 1.5rem;
+  font-weight: 600;
+  color: var(--verde);
+}
+
+.medico-subtitle {
+  margin: 0;
+  font-size: 0.95rem;
+  color: var(--texto-suave);
+}
+
+.medico-hero-icon {
+  width: 58px;
+  height: 58px;
+  border-radius: 18px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #ecfdf5;
+  color: var(--verde);
+  font-size: 2rem;
+}
+
+/* Secciones */
+
+.medico-section {
+  margin-bottom: 2rem;
+}
+
+.medico-section-title {
+  font-size: 1.05rem;
+  font-weight: 600;
+  color: var(--texto);
+  margin: 0 0 1rem;
+}
+
+/* Grid tarjetas */
+
+.medico-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 1.2rem;
+}
+
+.medico-card {
+  background: #ffffff;
+  padding: 1rem 0.95rem;
+  border-radius: 16px;
+  box-shadow: var(--shadow-soft);
+  border: 1px solid var(--borde);
+  transition: transform var(--transition-fast), box-shadow var(--transition-fast),
+    border-color var(--transition-fast), background-color var(--transition-fast);
+}
+
+.medico-card:hover {
+  transform: translateY(-3px);
+  box-shadow: var(--shadow-hover);
+  border-color: rgba(16, 185, 129, 0.38);
+  background-color: #fdfdfd;
+}
+
+.medico-card-icon {
+  width: 34px;
+  height: 34px;
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #ecfdf5;
+  color: var(--verde);
+  font-size: 1.2rem;
+  margin-bottom: 0.4rem;
+}
+
+.medico-card h3 {
+  margin: 0 0 0.25rem;
+  font-size: 0.95rem;
+  font-weight: 600;
+}
+
+.medico-card p {
+  margin: 0;
+  font-size: 0.8rem;
+  color: var(--texto-suave);
+}
+
+/* Info */
+
+.medico-info {
+  background: #ffffff;
+  padding: 0.9rem 0.9rem;
+  border-radius: 14px;
+  border: 1px solid var(--borde);
+  box-shadow: var(--shadow-soft);
+  font-size: 0.83rem;
+  color: var(--texto-suave);
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+}
+
+/* Responsive */
+
+@media (max-width: 768px) {
+  .medico-dashboard {
+    padding: 1.5rem;
+  }
+
+  .medico-hero {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .medico-hero-icon {
+    align-self: flex-start;
+  }
+}

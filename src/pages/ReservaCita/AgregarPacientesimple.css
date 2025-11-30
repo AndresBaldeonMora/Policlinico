@@ -13,14 +13,18 @@
 }
 
 @keyframes fadeIn {
-  from { opacity: 0; }
-  to { opacity: 1; }
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
 }
 
 .modal-content-simple {
   background: white;
   border-radius: 12px;
-  max-width: 450px;
+  max-width: 520px;
   width: 90%;
   box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
   animation: slideUp 0.3s ease-out;
@@ -88,13 +92,19 @@
   padding: 1.5rem;
   display: flex;
   flex-direction: column;
-  gap: 1.25rem;
+  gap: 1.1rem;
 }
 
 .form-group-simple {
   display: flex;
   flex-direction: column;
-  gap: 0.5rem;
+  gap: 0.45rem;
+}
+
+.form-row-simple {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.9rem;
 }
 
 .form-group-simple label {
@@ -107,24 +117,35 @@
   color: #ef4444;
 }
 
-.form-group-simple input {
-  padding: 0.75rem;
+.form-group-simple input,
+.textarea-simple {
+  padding: 0.7rem 0.75rem;
   border: 2px solid #e5e7eb;
   border-radius: 8px;
-  font-size: 1rem;
+  font-size: 0.95rem;
   transition: all 0.2s;
+  width: 100%;
+  resize: vertical;
 }
 
-.form-group-simple input:focus {
+.form-group-simple input:focus,
+.textarea-simple:focus {
   outline: none;
   border-color: #10b981;
   box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.1);
 }
 
+.input-disabled-modal {
+  background-color: #f3f4f6 !important;
+  color: #6b7280 !important;
+  cursor: not-allowed !important;
+  font-weight: 600;
+}
+
 .buttons-simple {
   display: flex;
   gap: 0.75rem;
-  margin-top: 0.5rem;
+  margin-top: 0.75rem;
 }
 
 .btn-cancelar-simple,
@@ -133,7 +154,7 @@
   padding: 0.75rem 1.5rem;
   border: none;
   border-radius: 8px;
-  font-size: 1rem;
+  font-size: 0.98rem;
   font-weight: 600;
   cursor: pointer;
   transition: all 0.2s;
@@ -144,6 +165,10 @@
   color: #374151;
 }
 
+.btn-cancelar-simple:hover:not(:disabled) {
+  background: #e5e7eb;
+}
+
 .btn-guardar-simple {
   background: linear-gradient(135deg, #10b981 0%, #059669 100%);
   color: white;
@@ -152,9 +177,17 @@
 .btn-guardar-simple:hover:not(:disabled) {
   background: linear-gradient(135deg, #059669 0%, #047857 100%);
   transform: translateY(-2px);
+  box-shadow: 0 6px 14px rgba(16, 185, 129, 0.35);
 }
 
 .btn-guardar-simple:disabled {
   opacity: 0.5;
   cursor: not-allowed;
+}
+
+/* Responsive */
+@media (max-width: 480px) {
+  .form-row-simple {
+    grid-template-columns: 1fr;
+  }
 }
