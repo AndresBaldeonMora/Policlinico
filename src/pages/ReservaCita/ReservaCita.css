@@ -622,79 +622,160 @@ select:focus {
   color: #fff;
 }
 
-/* =========== PACIENTE ENCONTRADO =========== */
-.paciente-encontrado {
-  margin-top: 0.5rem;
-  border: 2px solid var(--verde-primario);
-  border-radius: 10px;
-  background: #fff;
-  box-shadow: 0 6px 18px rgba(16, 185, 129, 0.08);
-  overflow: hidden;
-}
+/* ====================================================
+   ESTILOS NUEVOS: BUSQUEDA PACIENTE (TARJETA VERDE)
+   ==================================================== */
 
-.paciente-item {
-  padding: 0.9rem;
+.search-input-wrapper {
+  position: relative;
   display: flex;
   align-items: center;
-  gap: 0.85rem;
+}
+
+/* Input específico para búsqueda con espacio para icono */
+.search-input-wrapper input {
+  width: 100%;
+  padding-right: 40px;
+}
+
+.search-icon-spinner {
+  position: absolute;
+  right: 12px;
+  color: var(--texto-sec);
+  font-size: 1.2rem;
+  animation: spin 1s linear infinite;
+  cursor: default;
+}
+
+/* Tarjeta de Paciente Encontrado (Reemplaza estilos viejos) */
+.paciente-result-card {
+  margin-top: 1rem;
+  background-color: #f0fdf4; /* Verde muy suave */
+  border: 1px solid rgba(16, 185, 129, 0.4);
+  border-radius: 12px;
+  padding: 1rem;
+  display: flex;
+  align-items: center;
+  gap: 15px;
   cursor: pointer;
-  transition: background var(--trans);
+  transition: all var(--trans);
+  position: relative;
 }
 
-.paciente-item:hover {
-  background: #ecfdf5;
+.paciente-result-card:hover {
+  background-color: #dcfce7;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(16, 185, 129, 0.15);
+  border-color: var(--verde-primario);
 }
 
-.paciente-dni {
-  font-weight: 800;
-  color: var(--verde-primario);
-  font-size: 1rem;
-  font-family: "Courier New", monospace;
-}
-
-.paciente-separador {
-  color: #9ca3af;
+.paciente-avatar-placeholder {
+  width: 48px;
+  height: 48px;
+  background-color: var(--verde-primario);
+  color: white;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
   font-weight: 700;
+  font-size: 1.3rem;
+  flex-shrink: 0;
+}
+
+.paciente-info {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
 }
 
 .paciente-nombre {
-  color: var(--texto);
   font-weight: 700;
-  font-size: 1rem;
+  color: var(--texto);
+  font-size: 1.05rem;
 }
 
-/* =========== BOTÓN NUEVO PACIENTE (versión verde mejorada) =========== */
+.paciente-meta {
+  font-size: 0.85rem;
+  color: var(--texto-sec);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+/* Etiquetas (Badges) */
+.badge-reniec {
+  background-color: var(--azul-primario);
+  color: white;
+  font-size: 0.7rem;
+  padding: 2px 8px;
+  border-radius: 6px;
+  font-weight: 700;
+  letter-spacing: 0.5px;
+  text-transform: uppercase;
+}
+
+.badge-bd {
+  background-color: #8b5cf6; /* Morado */
+  color: white;
+  font-size: 0.7rem;
+  padding: 2px 8px;
+  border-radius: 6px;
+  font-weight: 700;
+  letter-spacing: 0.5px;
+  text-transform: uppercase;
+}
+
+/* Estado de no encontrado */
+.not-found-container {
+  margin-top: 1.5rem;
+  background: #fff;
+  border: 2px dashed var(--gris-borde);
+  border-radius: 12px;
+  padding: 1.5rem;
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1rem;
+}
+
+.not-found-text {
+  color: var(--texto-sec);
+  font-size: 0.95rem;
+}
+
+/* Botón Nuevo Paciente mejorado */
 .btn-nuevo-paciente {
-  margin-top: 0.5rem;
   background: linear-gradient(135deg, #22c55e 0%, #16a34a 100%);
   color: #fff;
   border: none;
-  padding: 0.5rem 1.1rem;
+  padding: 0.6rem 1.2rem;
   border-radius: 10px;
-  font-size: 0.88rem;
+  font-size: 0.9rem;
   font-weight: 700;
   cursor: pointer;
-  transition: transform var(--trans), box-shadow var(--trans),
-    background var(--trans);
+  transition: transform var(--trans), box-shadow var(--trans);
   display: inline-flex;
   align-items: center;
   justify-content: center;
   gap: 0.4rem;
-  box-shadow: 0 6px 14px rgba(22, 163, 74, 0.22);
-  white-space: nowrap;
-  width: auto; /* hace que no ocupe todo el ancho del input */
-  min-width: 150px; /* tamaño compacto controlado */
+  box-shadow: 0 4px 10px rgba(22, 163, 74, 0.2);
 }
 
 .btn-nuevo-paciente:hover {
   transform: translateY(-2px);
-  box-shadow: 0 10px 22px rgba(22, 163, 74, 0.28);
+  box-shadow: 0 8px 18px rgba(22, 163, 74, 0.25);
   background: linear-gradient(135deg, #16a34a 0%, #15803d 100%);
 }
 
-.btn-nuevo-paciente:active {
-  transform: translateY(0);
-  box-shadow: 0 4px 10px rgba(22, 163, 74, 0.25);
+@keyframes spin {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
 }
 
 /* =========== BOTONES NAVEGACIÓN (Stepper) =========== */

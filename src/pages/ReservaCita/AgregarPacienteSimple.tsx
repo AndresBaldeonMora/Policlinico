@@ -1,6 +1,7 @@
 // src/pages/ReservaCita/AgregarPacienteSimple.tsx
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { PacienteApiService } from "../../services/paciente.service";
+import api from "../../services/api";
 import "./AgregarPacienteSimple.css";
 
 interface AgregarPacienteSimpleProps {
@@ -9,12 +10,26 @@ interface AgregarPacienteSimpleProps {
   onCancelar: () => void;
 }
 
+interface ReniecResponse {
+  success: boolean;
+  data?: {
+    dni: string;
+    nombres: string;
+    apellidoPaterno: string;
+    apellidoMaterno: string;
+  };
+}
+
 const AgregarPacienteSimple = ({
   dniInicial,
   onPacienteCreado,
   onCancelar,
 }: AgregarPacienteSimpleProps) => {
   const [loading, setLoading] = useState(false);
+
+  const [loadingReniec, setLoadingReniec] = useState(false);
+  const [errorReniec, setErrorReniec] = useState("");
+
   const [error, setError] = useState("");
 
   const [formData, setFormData] = useState({
@@ -27,19 +42,52 @@ const AgregarPacienteSimple = ({
     direccion: "",
   });
 
+  // -------------------------
+  // 🔍 AUTOCOMPLETE RENIEC
+  // -------------------------
+  useEffect(() => {
+    const buscarReniec = async () => {
+      if (!dniInicial || dniInicial.length !== 8) return;
+
+      setLoadingReniec(true);
+      setErrorReniec("");
+
+      try {
+        const res = await api.get<ReniecResponse>(`/reniec/${dniInicial}`);
+
+        if (res.data.success && res.data.data) {
+          const d = res.data.data;
+
+          setFormData((prev) => ({
+            ...prev,
+            nombres: d.nombres ?? "",
+            apellidos: `${d.apellidoPaterno ?? ""} ${
+              d.apellidoMaterno ?? ""
+            }`.trim(),
+          }));
+        } else {
+          setErrorReniec("No se encontraron datos en RENIEC.");
+        }
+      } catch {
+        setErrorReniec("No se pudo consultar RENIEC.");
+      } finally {
+        setLoadingReniec(false);
+      }
+    };
+
+    buscarReniec();
+  }, [dniInicial]);
+
+  // -------------------------
+  // 🔄 HANDLE CHANGE
+  // -------------------------
   const handleChange = (
     e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
   ) => {
     const { name, value } = e.target;
 
-    if (name === "dni") {
-      // Está deshabilitado, pero por si acaso
-      if (value.length > 8 || (value && !/^\d*$/.test(value))) return;
-    }
-
     if (name === "telefono") {
-      // Solo números, máx 9–15 (ajustable)
-      if (value && !/^\d*$/.test(value)) return;
+      if (!/^\d*$/.test(value)) return;
       if (value.length > 15) return;
     }
 
@@ -47,14 +95,16 @@ const AgregarPacienteSimple = ({
     setError("");
   };
 
-  const isValidEmail = (email: string) => {
-    if (!email) return false;
-    // Validación sencilla
-    return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
-  };
+  // -------------------------
+  // 📧 Validación de email
+  // -------------------------
+  const isValidEmail = (email: string) =>
+    /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
 
+  // -------------------------
+  // 🎂 Validación edad
+  // -------------------------
   const validarEdad = (fechaStr: string) => {
-    if (!fechaStr) return false;
     const fecha = new Date(fechaStr);
     if (Number.isNaN(fecha.getTime())) return false;
 
@@ -63,35 +113,25 @@ const AgregarPacienteSimple = ({
 
     let edad = hoy.getFullYear() - fecha.getFullYear();
     const m = hoy.getMonth() - fecha.getMonth();
-    if (m < 0 || (m === 0 && hoy.getDate() < fecha.getDate())) {
-      edad--;
-    }
+    if (m < 0 || (m === 0 && hoy.getDate() < fecha.getDate())) edad--;
 
     return edad >= 0 && edad <= 110;
   };
 
+  // -------------------------
+  // 💾 GUARDAR
+  // -------------------------
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError("");
 
-    // 🧾 Validaciones
-    if (formData.dni.length !== 8) {
-      setError("El DNI debe tener 8 dígitos.");
-      return;
-    }
-
-    if (!formData.nombres.trim()) {
+    if (formData.nombres.trim() === "") {
       setError("Los nombres son obligatorios.");
       return;
     }
 
-    if (!formData.apellidos.trim()) {
+    if (formData.apellidos.trim() === "") {
       setError("Los apellidos son obligatorios.");
-      return;
-    }
-
-    if (!formData.telefono.trim()) {
-      setError("El teléfono es obligatorio.");
       return;
     }
 
@@ -100,18 +140,8 @@ const AgregarPacienteSimple = ({
       return;
     }
 
-    if (!formData.correo.trim()) {
-      setError("El correo es obligatorio.");
-      return;
-    }
-
     if (!isValidEmail(formData.correo.trim())) {
-      setError("Ingrese un correo electrónico válido.");
-      return;
-    }
-
-    if (!formData.fechaNacimiento) {
-      setError("La fecha de nacimiento es obligatoria.");
+      setError("Ingrese un correo válido.");
       return;
     }
 
@@ -135,12 +165,9 @@ const AgregarPacienteSimple = ({
 
       onPacienteCreado(formData.dni);
     } catch (err) {
-      console.error(err);
-      setError(
-        err instanceof Error
-          ? err.message
-          : "Error al registrar paciente. Intente nuevamente."
-      );
+      const msg =
+        err instanceof Error ? err.message : "Error al registrar paciente.";
+      setError(msg);
     } finally {
       setLoading(false);
     }
@@ -155,7 +182,6 @@ const AgregarPacienteSimple = ({
         <div className="modal-header-simple">
           <h3>👤 Nuevo Paciente</h3>
           <button
-            type="button"
             className="close-btn-simple"
             onClick={onCancelar}
             disabled={loading}
@@ -165,99 +191,74 @@ const AgregarPacienteSimple = ({
         </div>
 
         {error && <div className="error-message-simple">⚠️ {error}</div>}
+        {errorReniec && (
+          <div className="error-message-simple">🔎 {errorReniec}</div>
+        )}
 
         <form onSubmit={handleSubmit} className="form-simple">
-          {/* DNI (bloqueado porque viene del flujo de búsqueda) */}
           <div className="form-group-simple">
-            <label htmlFor="dni">
-              DNI <span className="required">*</span>
-            </label>
+            <label>DNI</label>
             <input
               type="text"
-              id="dni"
-              name="dni"
               value={formData.dni}
-              onChange={handleChange}
-              maxLength={8}
               disabled
               className="input-disabled-modal"
             />
+            {loadingReniec && <small>Consultando RENIEC...</small>}
           </div>
 
-          {/* Nombres y Apellidos */}
           <div className="form-row-simple">
             <div className="form-group-simple">
-              <label htmlFor="nombres">
-                Nombres <span className="required">*</span>
-              </label>
+              <label>Nombres *</label>
               <input
-                type="text"
-                id="nombres"
                 name="nombres"
                 value={formData.nombres}
                 onChange={handleChange}
-                placeholder="Juan Carlos"
                 disabled={loading}
+                placeholder="Juan Carlos"
               />
             </div>
 
             <div className="form-group-simple">
-              <label htmlFor="apellidos">
-                Apellidos <span className="required">*</span>
-              </label>
+              <label>Apellidos *</label>
               <input
-                type="text"
-                id="apellidos"
                 name="apellidos"
                 value={formData.apellidos}
                 onChange={handleChange}
-                placeholder="Pérez García"
                 disabled={loading}
+                placeholder="Pérez García"
               />
             </div>
           </div>
 
-          {/* Teléfono y Correo */}
           <div className="form-row-simple">
             <div className="form-group-simple">
-              <label htmlFor="telefono">
-                Teléfono / Celular <span className="required">*</span>
-              </label>
+              <label>Teléfono *</label>
               <input
-                type="text"
-                id="telefono"
                 name="telefono"
                 value={formData.telefono}
                 onChange={handleChange}
-                placeholder="987654321"
                 disabled={loading}
+                placeholder="987654321"
               />
             </div>
 
             <div className="form-group-simple">
-              <label htmlFor="correo">
-                Correo electrónico <span className="required">*</span>
-              </label>
+              <label>Correo *</label>
               <input
-                type="email"
-                id="correo"
                 name="correo"
                 value={formData.correo}
                 onChange={handleChange}
-                placeholder="correo@ejemplo.com"
                 disabled={loading}
+                placeholder="correo@ejemplo.com"
               />
             </div>
           </div>
 
-          {/* Fecha de nacimiento */}
           <div className="form-group-simple">
-            <label htmlFor="fechaNacimiento">
-              Fecha de nacimiento <span className="required">*</span>
-            </label>
+            <label>Fecha de nacimiento *</label>
             <input
               type="date"
-              id="fechaNacimiento"
               name="fechaNacimiento"
               value={formData.fechaNacimiento}
               onChange={handleChange}
@@ -265,18 +266,14 @@ const AgregarPacienteSimple = ({
             />
           </div>
 
-          {/* Dirección (opcional) */}
           <div className="form-group-simple">
-            <label htmlFor="direccion">Dirección (opcional)</label>
+            <label>Dirección</label>
             <textarea
-              id="direccion"
               name="direccion"
+              rows={2}
               value={formData.direccion}
               onChange={handleChange}
-              placeholder="Calle, número, referencia..."
-              rows={2}
               disabled={loading}
-              className="textarea-simple"
             />
           </div>
 
@@ -285,7 +282,6 @@ const AgregarPacienteSimple = ({
               type="button"
               className="btn-cancelar-simple"
               onClick={onCancelar}
-              disabled={loading}
             >
               Cancelar
             </button>

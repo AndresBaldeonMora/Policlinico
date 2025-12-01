@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+// SERVICIOS
 import {
   PacienteApiService,
   type PacienteTransformado,
@@ -8,15 +9,20 @@ import {
   type Especialidad,
 } from "../../services/especialidad.service";
 import {
-  DoctorApiService,
+  DoctorApiService, // <--- Asegúrate de exportar esto en doctor.service
   type DoctorTransformado as Doctor,
   type HorarioDisponible,
 } from "../../services/doctor.service";
 import { CitaApiService } from "../../services/cita.service";
+import { ReniecService } from "../../services/reniec.service"; // <--- Importamos el servicio
+
+// COMPONENTES Y ESTILOS
 import AgregarPacienteSimple from "./AgregarPacienteSimple";
 import "./ReservaCita.css";
 
-// --- Interfaces (Sin cambios) ---
+// ===============================
+// INTERFACES AUXILIARES
+// ===============================
 interface HorarioPorDia {
   fecha: string;
   fechaISO: string;
@@ -31,7 +37,9 @@ interface MesOption {
   anio: number;
 }
 
-// --- Componente Header del Stepper (MODIFICADO) ---
+// ===============================
+// STEPPER HEADER
+// ===============================
 const StepperHeader = ({
   pasoActual,
   irAlPaso,
@@ -39,15 +47,14 @@ const StepperHeader = ({
   pasoActual: number;
   irAlPaso: (paso: number) => void;
 }) => {
-  // --- CAMBIO: Actualizado a 7 pasos ---
   const pasos = [
-    "Especialidad", // 1
-    "Médico", // 2
-    "Mes", // 3
-    "Día", // 4
-    "Hora", // 5
-    "Paciente", // 6
-    "Confirmar", // 7
+    "Especialidad",
+    "Médico",
+    "Mes",
+    "Día",
+    "Hora",
+    "Paciente",
+    "Confirmar",
   ];
 
   const getIconoPaso = (paso: number) => {
@@ -87,12 +94,14 @@ const StepperHeader = ({
   );
 };
 
-// --- Componente Principal (Lógica Modificada) ---
+// ===============================
+// COMPONENTE PRINCIPAL
+// ===============================
 const ReservaCita = () => {
-  // --- Estados del Componente (Sin cambios) ---
   const [loading, setLoading] = useState(false);
+  const [reniecLoading, setReniecLoading] = useState(false); // Loading específico para DNI
   const [error, setError] = useState("");
-  const [pasoActual, setPasoActual] = useState(1); // Sigue empezando en 1
+  const [pasoActual, setPasoActual] = useState(1);
 
   const [notification, setNotification] = useState({
     message: "",
@@ -100,18 +109,19 @@ const ReservaCita = () => {
     visible: false,
   });
 
-  // Estados (Paso 6: Paciente)
+  // PACIENTE
   const [searchDNI, setSearchDNI] = useState("");
   const [pacienteEncontrado, setPacienteEncontrado] =
     useState<PacienteTransformado | null>(null);
   const [pacienteSeleccionado, setPacienteSeleccionado] =
     useState<PacienteTransformado | null>(null);
+
   const [todosLosPacientes, setTodosLosPacientes] = useState<
     PacienteTransformado[]
   >([]);
   const [mostrarNuevoPaciente, setMostrarNuevoPaciente] = useState(false);
 
-  // Estados (Paso 1: Especialidad)
+  // ESPECIALIDADES
   const [searchEspecialidad, setSearchEspecialidad] = useState("");
   const [especialidades, setEspecialidades] = useState<Especialidad[]>([]);
   const [especialidadSeleccionada, setEspecialidadSeleccionada] =
@@ -119,13 +129,14 @@ const ReservaCita = () => {
   const [showEspecialidadesSuggestions, setShowEspecialidadesSuggestions] =
     useState(false);
 
-  // Estados (Paso 2: Doctor)
-  const [doctoresDisponibles, setDoctoresDisponibles] = useState<Doctor[]>([]);
+  // DOCTOR
+  const [todosLosDoctores, setTodosLosDoctores] = useState<Doctor[]>([]); // Lista maestra
+  const [doctoresDisponibles, setDoctoresDisponibles] = useState<Doctor[]>([]); // Lista filtrada
   const [doctorSeleccionado, setDoctorSeleccionado] = useState<Doctor | null>(
     null
   );
 
-  // Estados (Pasos 3, 4, 5: Fecha y Hora)
+  // FECHAS
   const [mesesDisponibles, setMesesDisponibles] = useState<MesOption[]>([]);
   const [mesSeleccionado, setMesSeleccionado] = useState<MesOption | null>(
     null
@@ -136,56 +147,148 @@ const ReservaCita = () => {
   const [fechaSeleccionada, setFechaSeleccionada] = useState("");
   const [horaSeleccionada, setHoraSeleccionada] = useState("");
 
-  // --- Efectos (Sin cambios) ---
+  // ===============================
+  // INICIO
+  // ===============================
   useEffect(() => {
     cargarDatos();
     generarMesesDisponibles();
   }, []);
 
-  // --- Funciones de Navegación (MODIFICADAS) ---
-  const siguientePaso = () => {
+  // ===============================
+  // FILTRADO DE DOCTORES (CORRECCIÓN)
+  // ===============================
+  useEffect(() => {
+    if (especialidadSeleccionada) {
+      // Filtramos la lista maestra basándonos en la especialidad seleccionada
+      // Asumiendo que doctor.especialidad es el nombre (string) o compara IDs si tienes doctor.especialidadId
+      const filtrados = todosLosDoctores.filter(
+        (doc) =>
+          // Opción A: Si doctor.especialidad es un string
+          doc.especialidad === especialidadSeleccionada.nombre
+        // Opción B: Si tienes IDs, sería: doc.especialidadId === especialidadSeleccionada.id
+      );
+
+      setDoctoresDisponibles(filtrados);
+      setDoctorSeleccionado(null); // Reseteamos selección si cambia la especialidad
+    } else {
+      setDoctoresDisponibles([]);
+    }
+  }, [especialidadSeleccionada, todosLosDoctores]);
+
+  // =====================================================================
+  // CONSULTAR PACIENTE (BD + RENIEC SERVICE)
+  // =====================================================================
+  const handleBuscarPaciente = async (dni: string) => {
+    // Validación básica de entrada
+    if ((dni && !/^\d*$/.test(dni)) || dni.length > 8) return;
+
+    setSearchDNI(dni);
     setError("");
-    // --- CAMBIO: Límite 5 -> 7 ---
-    setPasoActual((p) => (p < 7 ? p + 1 : p));
-  };
+    setPacienteEncontrado(null);
+    setPacienteSeleccionado(null);
 
-  const pasoAnterior = () => {
-    setPasoActual((p) => (p > 1 ? p - 1 : p));
-  };
+    if (dni.length === 8) {
+      // 1. Buscar en BD Local
+      const pacienteLocal = todosLosPacientes.find((p) => p.dni === dni);
+      if (pacienteLocal) {
+        setPacienteEncontrado(pacienteLocal);
+        return;
+      }
 
-  const irAlPaso = (paso: number) => {
-    if (paso < pasoActual) {
-      setPasoActual(paso);
+      // 2. Buscar en RENIEC (Si no está en local)
+      try {
+        setReniecLoading(true);
+        const dataReniec = await ReniecService.buscarPorDNI(dni);
+
+        // Transformar data de Reniec a formato PacienteTransformado para la UI
+        const pacienteReniec: PacienteTransformado = {
+          _id: "temp_reniec", // ID temporal
+          id: "temp_reniec",
+          dni: dataReniec.dni,
+          nombres: dataReniec.nombres,
+          apellidos: `${dataReniec.apellidoPaterno} ${dataReniec.apellidoMaterno}`,
+          telefono: "",
+          correo: "",
+          direccion: "",
+          fechaNacimiento: "",
+        };
+
+        setPacienteEncontrado(pacienteReniec);
+      } catch (err: unknown) {
+        // Extraemos el mensaje de forma segura
+        const mensaje =
+          err instanceof Error ? err.message : "Error desconocido";
+
+        console.warn("DNI no encontrado en Reniec:", mensaje);
+        setPacienteEncontrado(null);
+      } finally {
+        setReniecLoading(false);
+      }
     }
   };
 
-  // --- Funciones y Handlers (Sin cambios en su lógica interna) ---
-
-  const showNotification = (message: string, type: "success" | "error") => {
-    setNotification({ message, type, visible: true });
-    setTimeout(() => {
-      setNotification((prev) => ({ ...prev, visible: false }));
-    }, 3000);
-  };
-
-  const handleCancelarCita = () => {
-    setSearchDNI("");
-    setPacienteEncontrado(null);
-    setPacienteSeleccionado(null);
-    setEspecialidadSeleccionada(null);
-    setSearchEspecialidad("");
-    setDoctorSeleccionado(null);
-    setDoctoresDisponibles([]);
-    setMesSeleccionado(null);
-    setDiaSeleccionado(null);
-    setDiasDelMes([]);
-    setHoraSeleccionada("");
-    setFechaSeleccionada("");
-    setHorariosPorDia([]);
+  const handleSelectPaciente = (paciente: PacienteTransformado) => {
+    setPacienteSeleccionado(paciente);
+    setSearchDNI(paciente.dni);
     setError("");
-    setPasoActual(1);
   };
 
+  const handlePacienteCreado = async (dni: string) => {
+    setMostrarNuevoPaciente(false);
+    await cargarDatos(); // Recargar lista completa
+
+    // Buscar el recién creado en la lista actualizada (esto podría optimizarse retornándolo desde el modal)
+    const pacientes = await PacienteApiService.listar();
+    setTodosLosPacientes(pacientes);
+
+    const pacienteNuevo = pacientes.find((p) => p.dni === dni);
+    if (pacienteNuevo) {
+      setPacienteEncontrado(pacienteNuevo);
+      setPacienteSeleccionado(pacienteNuevo);
+      setSearchDNI(pacienteNuevo.dni);
+    }
+  };
+
+  // ===============================
+  // CARGA INICIAL
+  // ===============================
+  const cargarDatos = async () => {
+    try {
+      setLoading(true);
+      const [pacientes, especialidadesData, doctoresData] = await Promise.all([
+        PacienteApiService.listar(),
+        EspecialidadApiService.listar(),
+        DoctorApiService.listar(), // <--- Cargamos todos los doctores aquí
+      ]);
+      setTodosLosPacientes(pacientes);
+      setEspecialidades(especialidadesData);
+      setTodosLosDoctores(doctoresData); // Guardamos en la lista maestra
+    } catch (e) {
+      console.error("Error cargando datos iniciales", e);
+      setError("Error de conexión al cargar datos.");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // ===============================
+  // STEPS
+  // ===============================
+  const siguientePaso = () => {
+    setError("");
+    setPasoActual((p) => (p < 7 ? p + 1 : p));
+  };
+
+  const pasoAnterior = () => setPasoActual((p) => (p > 1 ? p - 1 : p));
+
+  const irAlPaso = (paso: number) => {
+    if (paso < pasoActual) setPasoActual(paso);
+  };
+
+  // ===============================
+  // FECHAS Y HORARIOS
+  // ===============================
   const generarMesesDisponibles = () => {
     const meses: MesOption[] = [];
     const hoy = new Date();
@@ -223,210 +326,67 @@ const ReservaCita = () => {
 
     for (let dia = 1; dia <= ultimoDia.getDate(); dia++) {
       const fecha = new Date(mes.anio, mes.numero, dia);
-      if (fecha >= hoy) {
-        dias.push(dia);
-      }
+      if (fecha >= hoy) dias.push(dia);
     }
+
     return dias;
   };
 
-  const cargarDatos = async () => {
-    try {
-      setLoading(true);
-      const [pacientes, especialidadesData] = await Promise.all([
-        PacienteApiService.listar(),
-        EspecialidadApiService.listar(),
-      ]);
-      setTodosLosPacientes(pacientes);
-      setEspecialidades(especialidadesData);
-    } catch (err) {
-      setError("Error al cargar datos iniciales");
-      console.error(err);
-    } finally {
-      setLoading(false);
-    }
-  };
+  useEffect(() => {
+    const obtenerHorarios = async () => {
+      // Solo buscamos si tenemos todos los datos necesarios
+      if (diaSeleccionado && mesSeleccionado && doctorSeleccionado) {
+        // 1. Construir fecha formato ISO (YYYY-MM-DD) para el Backend
+        const fechaObj = new Date(
+          mesSeleccionado.anio,
+          mesSeleccionado.numero,
+          diaSeleccionado
+        );
 
-  // Handlers Paso 6: Paciente
-  const handleBuscarPaciente = (dni: string) => {
-    if ((dni && !/^\d*$/.test(dni)) || dni.length > 8) return;
+        // Ajuste para formatear YYYY-MM-DD correctamente
+        const anio = fechaObj.getFullYear();
+        const mesStr = String(fechaObj.getMonth() + 1).padStart(2, "0");
+        const diaStr = String(fechaObj.getDate()).padStart(2, "0");
+        const fechaISO = `${anio}-${mesStr}-${diaStr}`;
 
-    setSearchDNI(dni);
-    setError("");
-    setPacienteEncontrado(null);
-    setPacienteSeleccionado(null);
+        try {
+          // 2. LLAMADA A TU SERVICIO REAL
+          const horariosData =
+            await DoctorApiService.obtenerHorariosDisponibles(
+              doctorSeleccionado.id,
+              fechaISO
+            );
 
-    if (dni.length === 8) {
-      const paciente = todosLosPacientes.find((p) => p.dni === dni);
-      setPacienteEncontrado(paciente || null);
-    }
-  };
-
-  const handleSelectPaciente = (paciente: PacienteTransformado) => {
-    setPacienteSeleccionado(paciente);
-    setSearchDNI(paciente.dni);
-    setError("");
-  };
-
-  const handlePacienteCreado = async (dni: string) => {
-    setMostrarNuevoPaciente(false);
-    await cargarDatos();
-    const pacientes = await PacienteApiService.listar();
-    setTodosLosPacientes(pacientes);
-    const pacienteNuevo = pacientes.find((p) => p.dni === dni);
-    if (pacienteNuevo) {
-      setPacienteEncontrado(pacienteNuevo);
-      setPacienteSeleccionado(pacienteNuevo);
-      setSearchDNI(pacienteNuevo.dni);
-    }
-  };
-
-  // Handlers Paso 1: Especialidad
-  const especialidadesFiltradas = especialidades.filter((esp) =>
-    esp.nombre.toLowerCase().includes(searchEspecialidad.toLowerCase())
-  );
-
-  const handleSelectEspecialidad = async (especialidad: Especialidad) => {
-    setEspecialidadSeleccionada(especialidad);
-    setSearchEspecialidad(especialidad.nombre);
-    setShowEspecialidadesSuggestions(false);
-
-    // Resetea todo lo que depende de la especialidad
-    setDoctorSeleccionado(null);
-    setDoctoresDisponibles([]);
-    setMesSeleccionado(null);
-    setDiaSeleccionado(null);
-    setDiasDelMes([]);
-    setHorariosPorDia([]);
-    setFechaSeleccionada("");
-    setHoraSeleccionada("");
-
-    await cargarDoctoresPorEspecialidad(especialidad.id);
-  };
-
-  // Handlers Paso 2: Doctor
-  const cargarDoctoresPorEspecialidad = async (especialidadId: string) => {
-    try {
-      setLoading(true);
-      const doctores = await DoctorApiService.obtenerPorEspecialidad(
-        especialidadId
-      );
-      setDoctoresDisponibles(doctores);
-
-      if (doctores.length === 0) {
-        setError("No hay doctores disponibles para esta especialidad");
-        setDoctorSeleccionado(null);
-      } else if (doctores.length === 1) {
-        // Opcional: auto-seleccionar si solo hay uno
-        setDoctorSeleccionado(doctores[0]);
-      } else {
-        setDoctorSeleccionado(null);
+          // 3. Guardar en el estado
+          setHorariosPorDia([
+            {
+              fecha: fechaObj.toLocaleDateString(),
+              fechaISO: fechaISO,
+              diaNombre: fechaObj.toLocaleDateString("es-ES", {
+                weekday: "long",
+              }),
+              diaNumero: diaSeleccionado,
+              horarios: horariosData,
+            },
+          ]);
+        } catch (error) {
+          console.error("Error cargando horarios", error);
+          setHorariosPorDia([]);
+        }
       }
-    } catch (err) {
-      setError("Error al cargar doctores");
-      console.error(err);
-    } finally {
-      setLoading(false);
-    }
-  };
+    };
 
-  const handleSelectDoctor = (doctor: Doctor) => {
-    setDoctorSeleccionado(doctor);
+    obtenerHorarios();
 
-    // Resetea todo lo que depende del doctor
-    setMesSeleccionado(null);
-    setDiaSeleccionado(null);
-    setDiasDelMes([]);
+    // Limpiamos la selección de hora previa si el usuario cambia de día
     setHoraSeleccionada("");
     setFechaSeleccionada("");
-    setHorariosPorDia([]);
-  };
+  }, [diaSeleccionado, mesSeleccionado, doctorSeleccionado]);
 
-  // Handlers Pasos 3, 4, 5: Fecha y Hora
-  const formatearFechaCompleta = (fecha: Date): string => {
-    return new Intl.DateTimeFormat("es-PE", {
-      day: "2-digit",
-      month: "2-digit",
-      year: "numeric",
-    }).format(fecha);
-  };
-
-  const obtenerNombreDia = (fecha: Date): string => {
-    const nombre = new Intl.DateTimeFormat("es-PE", {
-      weekday: "long",
-    }).format(fecha);
-    return nombre.charAt(0).toUpperCase() + nombre.slice(1);
-  };
-
-  const cargarHorariosPorDia = async (mes: MesOption, dia: number) => {
-    if (!doctorSeleccionado) return;
-    setLoading(true);
-    try {
-      const fecha = new Date(mes.anio, mes.numero, dia);
-      const fechaISO = fecha.toISOString().split("T")[0];
-      const horariosDelDia = await DoctorApiService.obtenerHorariosDisponibles(
-        doctorSeleccionado.id,
-        fechaISO
-      );
-      setHorariosPorDia([
-        {
-          fecha: formatearFechaCompleta(fecha),
-          fechaISO,
-          diaNombre: obtenerNombreDia(fecha),
-          diaNumero: dia,
-          horarios: horariosDelDia,
-        },
-      ]);
-    } catch (err) {
-      setError("Error al cargar horarios");
-      console.error(err);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const handleMesSeleccionado = (mes: MesOption) => {
-    setMesSeleccionado(mes);
-
-    // Resetea lo que depende del mes
-    setDiaSeleccionado(null);
-    setHorariosPorDia([]);
-    setHoraSeleccionada("");
-    setFechaSeleccionada("");
-    setDiasDelMes(generarDiasDelMes(mes));
-  };
-
-  const handleDiaSeleccionado = async (dia: number) => {
-    if (!mesSeleccionado || !doctorSeleccionado) return;
-    setDiaSeleccionado(dia);
-
-    // Resetea lo que depende del día
-    setHoraSeleccionada("");
-    setFechaSeleccionada("");
-    await cargarHorariosPorDia(mesSeleccionado, dia);
-  };
-
-  const seleccionarHorario = (fechaISO: string, hora: string) => {
-    setFechaSeleccionada(fechaISO);
-    setHoraSeleccionada(hora);
-  };
-
-  // Handlers Paso 7: Confirmación
-  const formatearFechaResumen = (fechaISO: string) => {
-    if (!fechaISO) return "";
-    const [anio, mes, dia] = fechaISO.split("-");
-    const fecha = new Date(Number(anio), Number(mes) - 1, Number(dia));
-    const nombreDia = new Intl.DateTimeFormat("es-PE", {
-      weekday: "long",
-    }).format(fecha);
-    return `${
-      nombreDia.charAt(0).toUpperCase() + nombreDia.slice(1)
-    } ${dia}/${mes}/${anio}`;
-  };
-
-  // --- CAMBIO: Lógica de confirmación actualizada ---
+  // ===============================
+  // CONFIRMAR CITA (CORREGIDO)
+  // ===============================
   const handleConfirmarCita = async () => {
-    // --- CAMBIO: 5 -> 7 ---
     if (pasoActual !== 7) {
       setPasoActual(7);
       return;
@@ -438,37 +398,89 @@ const ReservaCita = () => {
       !horaSeleccionada ||
       !fechaSeleccionada
     ) {
-      setError("Datos incompletos. Por favor, revise el resumen de la cita.");
+      setError("Datos incompletos.");
       return;
     }
 
     try {
       setLoading(true);
+
+      let pacienteIdFinal = pacienteSeleccionado.id;
+
+      // 🚨 PASO CRÍTICO: Si el paciente viene de RENIEC (ID temporal),
+      // primero debemos guardarlo en la Base de Datos para obtener un ID real.
+      if (pacienteIdFinal === "temp_reniec") {
+        try {
+          // Registramos al paciente con los datos que tenemos de RENIEC
+          const nuevoPaciente = await PacienteApiService.crear({
+            dni: pacienteSeleccionado.dni,
+            nombres: pacienteSeleccionado.nombres,
+            apellidos: pacienteSeleccionado.apellidos,
+            // Llenamos con vacíos los datos que no trae RENIEC
+            telefono: "",
+            correo: "",
+            direccion: "",
+            fechaNacimiento: "",
+          });
+
+          // Actualizamos el ID con el que nos devuelve la base de datos
+          pacienteIdFinal = nuevoPaciente.id;
+        } catch (err: unknown) {
+          const msg = err instanceof Error ? err.message : "Error desconocido";
+          throw new Error(`Error al registrar el paciente nuevo: ${msg}`);
+        }
+      }
+
+      // Ahora sí creamos la cita con un ID válido (ObjectId)
       await CitaApiService.crear({
-        pacienteId: pacienteSeleccionado.id,
+        pacienteId: pacienteIdFinal, // <--- Usamos el ID real (ya sea el existente o el nuevo)
         doctorId: doctorSeleccionado.id,
         fecha: fechaSeleccionada,
         hora: horaSeleccionada,
-        // estado: 'PENDIENTE'
       });
-      showNotification("✅ ¡Cita registrada exitosamente!", "success");
-      handleCancelarCita();
-    } catch (err) {
-      const errorMessage =
-        err instanceof Error
-          ? err.message
-          : "Ocurrió un error al crear la cita";
-      showNotification(`⚠️ ${errorMessage}`, "error");
-      console.error(err);
+
+      setNotification({
+        message: "Cita registrada exitosamente",
+        type: "success",
+        visible: true,
+      });
+
+      setTimeout(() => {
+        setNotification((prev) => ({ ...prev, visible: false }));
+        handleCancelarCita();
+      }, 2000);
+    } catch (e: unknown) {
+      const mensaje = e instanceof Error ? e.message : "Error al crear la cita";
+      setError(mensaje);
     } finally {
       setLoading(false);
     }
   };
 
-  // --- Renderizado por Pasos (REORDENADO) ---
+  const handleCancelarCita = () => {
+    setSearchDNI("");
+    setPacienteEncontrado(null);
+    setPacienteSeleccionado(null);
+    setEspecialidadSeleccionada(null);
+    setSearchEspecialidad("");
+    setDoctorSeleccionado(null);
+    setDoctoresDisponibles([]); // Se limpiará solo por el useEffect de especialidad, pero por seguridad
+    setMesSeleccionado(null);
+    setDiaSeleccionado(null);
+    setDiasDelMes([]);
+    setHoraSeleccionada("");
+    setFechaSeleccionada("");
+    setHorariosPorDia([]);
+    setError("");
+    setPasoActual(1);
+  };
+
+  // ============================================================
+  // =============== RENDER PRINCIPAL ===========================
+  // ============================================================
   const renderPasoActual = () => {
     switch (pasoActual) {
-      // --- CAMBIO: Antes PASO 2 ---
+      // ================= PASO 1 =================
       case 1:
         return (
           <div className="form-step">
@@ -476,8 +488,10 @@ const ReservaCita = () => {
               <span className="step-number">1</span>
               <h3>Especialidad Médica</h3>
             </div>
+
             <div className="form-group">
               <label htmlFor="especialidad">Buscar Especialidad</label>
+
               <div className="autocomplete-container">
                 <input
                   type="text"
@@ -492,27 +506,40 @@ const ReservaCita = () => {
                   disabled={loading}
                   className="input-search"
                 />
-                {showEspecialidadesSuggestions && searchEspecialidad && (
-                  <div className="suggestions-list">
-                    {especialidadesFiltradas.length > 0 ? (
-                      especialidadesFiltradas.map((esp) => (
-                        <div
-                          key={esp.id}
-                          className="suggestion-item"
-                          onClick={() => handleSelectEspecialidad(esp)}
-                        >
-                          🏥 {esp.nombre}
-                        </div>
-                      ))
-                    ) : (
-                      <div className="suggestion-item no-results">
-                        No se encontraron especialidades
-                      </div>
-                    )}
-                  </div>
-                )}
+
+                {showEspecialidadesSuggestions &&
+                  searchEspecialidad &&
+                  especialidades.filter((e) =>
+                    e.nombre
+                      .toLowerCase()
+                      .includes(searchEspecialidad.toLowerCase())
+                  ).length > 0 && (
+                    <div className="suggestions-list">
+                      {especialidades
+                        .filter((esp) =>
+                          esp.nombre
+                            .toLowerCase()
+                            .includes(searchEspecialidad.toLowerCase())
+                        )
+                        .map((esp) => (
+                          <div
+                            key={esp.id}
+                            className="suggestion-item"
+                            onClick={() => {
+                              setEspecialidadSeleccionada(esp);
+                              setSearchEspecialidad(esp.nombre);
+                              setShowEspecialidadesSuggestions(false);
+                              //   setDoctorSeleccionado(null); // Esto ahora lo maneja el useEffect
+                            }}
+                          >
+                            🏥 {esp.nombre}
+                          </div>
+                        ))}
+                    </div>
+                  )}
               </div>
-              {especialidadSeleccionada && !showEspecialidadesSuggestions && (
+
+              {especialidadSeleccionada && (
                 <div className="selected-tag">
                   <span>🏥 {especialidadSeleccionada.nombre}</span>
                   <button
@@ -520,10 +547,6 @@ const ReservaCita = () => {
                     onClick={() => {
                       setEspecialidadSeleccionada(null);
                       setSearchEspecialidad("");
-                      setDoctorSeleccionado(null);
-                      setMesSeleccionado(null);
-                      setDiaSeleccionado(null);
-                      setHorariosPorDia([]);
                     }}
                     className="tag-close"
                   >
@@ -535,7 +558,7 @@ const ReservaCita = () => {
           </div>
         );
 
-      // --- CAMBIO: Antes PASO 3 ---
+      // ================= PASO 2 =================
       case 2:
         return (
           <div className="form-step">
@@ -543,38 +566,42 @@ const ReservaCita = () => {
               <span className="step-number">2</span>
               <h3>Médico Asignado</h3>
             </div>
-            {loading && <p>Cargando doctores...</p>}
-            {!loading && doctoresDisponibles.length === 0 && (
-              <div className="no-horarios">
-                <p>😔 No hay doctores disponibles para esta especialidad.</p>
+
+            {doctoresDisponibles.length === 0 ? (
+              <div className="empty-state">
+                <p>
+                  No hay médicos disponibles para la especialidad{" "}
+                  <b>{especialidadSeleccionada?.nombre}</b>.
+                </p>
+              </div>
+            ) : (
+              <div className="doctor-lista-seleccion">
+                {doctoresDisponibles.map((doctor) => (
+                  <div
+                    key={doctor.id}
+                    className={`doctor-asignado-selectable ${
+                      doctorSeleccionado?.id === doctor.id ? "seleccionado" : ""
+                    }`}
+                    onClick={() => setDoctorSeleccionado(doctor)}
+                  >
+                    <div className="doctor-avatar">👨‍⚕️</div>
+                    <div className="doctor-info-text">
+                      <h4>
+                        {doctor.nombres} {doctor.apellidos}
+                      </h4>
+                      <p>{doctor.especialidad}</p>
+                    </div>
+                    {doctorSeleccionado?.id === doctor.id && (
+                      <span className="doctor-check-mark">✓</span>
+                    )}
+                  </div>
+                ))}
               </div>
             )}
-            <div className="doctor-lista-seleccion">
-              {doctoresDisponibles.map((doctor) => (
-                <div
-                  key={doctor.id}
-                  className={`doctor-asignado-selectable ${
-                    doctorSeleccionado?.id === doctor.id ? "seleccionado" : ""
-                  }`}
-                  onClick={() => handleSelectDoctor(doctor)}
-                >
-                  <div className="doctor-avatar">👨‍⚕️</div>
-                  <div className="doctor-info-text">
-                    <h4>
-                      {doctor.nombres} {doctor.apellidos}
-                    </h4>
-                    <p>{doctor.especialidad}</p>
-                  </div>
-                  {doctorSeleccionado?.id === doctor.id && (
-                    <span className="doctor-check-mark">✓</span>
-                  )}
-                </div>
-              ))}
-            </div>
           </div>
         );
 
-      // --- CAMBIO: NUEVO PASO 3 (Parte del antiguo 4) ---
+      // ================= PASO 3 =================
       case 3:
         return (
           <div className="form-step">
@@ -584,30 +611,27 @@ const ReservaCita = () => {
             </div>
 
             <div className="selector-mes">
-              <label className="selector-label">Seleccionar Mes:</label>
-              <div className="meses-lista">
-                {mesesDisponibles.map((mes) => (
-                  <button
-                    key={`${mes.anio}-${mes.numero}`}
-                    type="button"
-                    className={`mes-btn ${
-                      mesSeleccionado?.numero === mes.numero &&
-                      mesSeleccionado?.anio === mes.anio
-                        ? "activo"
-                        : ""
-                    }`}
-                    onClick={() => handleMesSeleccionado(mes)}
-                    disabled={loading}
-                  >
-                    {mes.nombre} {mes.anio}
-                  </button>
-                ))}
-              </div>
+              {mesesDisponibles.map((mes) => (
+                <button
+                  key={mes.numero}
+                  type="button"
+                  className={`mes-btn ${
+                    mesSeleccionado?.numero === mes.numero ? "activo" : ""
+                  }`}
+                  onClick={() => {
+                    setMesSeleccionado(mes);
+                    setDiasDelMes(generarDiasDelMes(mes));
+                    setDiaSeleccionado(null);
+                  }}
+                >
+                  {mes.nombre}
+                </button>
+              ))}
             </div>
           </div>
         );
 
-      // --- CAMBIO: NUEVO PASO 4 (Parte del antiguo 4) ---
+      // ================= PASO 4 =================
       case 4:
         return (
           <div className="form-step">
@@ -616,36 +640,21 @@ const ReservaCita = () => {
               <h3>Seleccionar Día</h3>
             </div>
 
-            {!mesSeleccionado && (
-              <div className="no-horarios">
-                <p>Por favor, seleccione un mes en el paso anterior.</p>
-              </div>
-            )}
-
-            {mesSeleccionado && diasDelMes.length > 0 && (
-              <div className="selector-dia">
-                <label className="selector-label">Seleccionar Día:</label>
-                <div className="dias-lista-selector">
-                  {diasDelMes.map((dia) => (
-                    <button
-                      key={dia}
-                      type="button"
-                      className={`dia-btn ${
-                        diaSeleccionado === dia ? "activo" : ""
-                      }`}
-                      onClick={() => handleDiaSeleccionado(dia)}
-                      disabled={loading}
-                    >
-                      {dia}
-                    </button>
-                  ))}
-                </div>
-              </div>
-            )}
+            <div className="selector-dia">
+              {diasDelMes.map((d) => (
+                <button
+                  key={d}
+                  className={`dia-btn ${diaSeleccionado === d ? "activo" : ""}`}
+                  onClick={() => setDiaSeleccionado(d)}
+                >
+                  {d}
+                </button>
+              ))}
+            </div>
           </div>
         );
 
-      // --- CAMBIO: NUEVO PASO 5 (Parte del antiguo 4) ---
+      // ================= PASO 5 =================
       case 5:
         return (
           <div className="form-step">
@@ -654,77 +663,39 @@ const ReservaCita = () => {
               <h3>Seleccionar Hora</h3>
             </div>
 
-            {!diaSeleccionado && (
-              <div className="no-horarios">
-                <p>Por favor, seleccione un día en el paso anterior.</p>
-              </div>
-            )}
-
-            {diaSeleccionado && (
-              <div className="horarios-contenedor">
-                {loading && horariosPorDia.length === 0 ? (
-                  <div className="horarios-loading">
-                    <div className="spinner-small"></div>
-                    <p>Cargando horarios...</p>
+            <div className="horarios-contenedor">
+              {horariosPorDia.map((dia) => (
+                <div key={dia.fechaISO} className="dia-grupo">
+                  <div className="horarios-horizontal">
+                    {dia.horarios
+                      .filter((h) => h.disponible)
+                      .map((h) => (
+                        <label
+                          key={h.hora}
+                          className={`horario-radio ${
+                            h.hora === horaSeleccionada ? "seleccionado" : ""
+                          }`}
+                        >
+                          <input
+                            type="radio"
+                            name="horario"
+                            value={h.hora}
+                            onChange={() => {
+                              setHoraSeleccionada(h.hora);
+                              setFechaSeleccionada(dia.fechaISO);
+                            }}
+                          />
+                          <span>{h.hora} hs</span>
+                        </label>
+                      ))}
                   </div>
-                ) : horariosPorDia.length > 0 &&
-                  horariosPorDia[0].horarios.filter((h) => h.disponible)
-                    .length > 0 ? (
-                  <div className="dias-lista">
-                    {horariosPorDia.map((dia) => (
-                      <div key={dia.fechaISO} className="dia-grupo">
-                        <div className="dia-header">
-                          <span className="dia-nombre">{dia.diaNombre}</span>
-                          <span className="dia-fecha">📅 {dia.fecha}</span>
-                        </div>
-                        <div className="horarios-horizontal">
-                          {dia.horarios
-                            .filter((h) => h.disponible)
-                            .map((horario) => (
-                              <label
-                                key={horario.hora}
-                                className={`horario-radio ${
-                                  fechaSeleccionada === dia.fechaISO &&
-                                  horaSeleccionada === horario.hora
-                                    ? "seleccionado"
-                                    : ""
-                                }`}
-                              >
-                                <input
-                                  type="radio"
-                                  name="horario"
-                                  value={horario.hora}
-                                  checked={
-                                    fechaSeleccionada === dia.fechaISO &&
-                                    horaSeleccionada === horario.hora
-                                  }
-                                  onChange={() =>
-                                    seleccionarHorario(
-                                      dia.fechaISO,
-                                      horario.hora
-                                    )
-                                  }
-                                />
-                                <span className="horario-texto">
-                                  {horario.hora} hs
-                                </span>
-                              </label>
-                            ))}
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                ) : (
-                  <div className="no-horarios">
-                    <p>😔 No hay horarios disponibles para este día.</p>
-                  </div>
-                )}
-              </div>
-            )}
+                </div>
+              ))}
+            </div>
           </div>
         );
 
-      // --- CAMBIO: Antes PASO 1 ---
+      // ================= PASO 6 (DISEÑO MEJORADO) =================
       case 6:
         return (
           <div className="form-step">
@@ -732,71 +703,105 @@ const ReservaCita = () => {
               <span className="step-number">6</span>
               <h3>Buscar Paciente</h3>
             </div>
-            <div className="form-row">
-              <div className="form-group">
-                <label htmlFor="dni">DNI del Paciente</label>
+
+            <div className="form-group">
+              <label htmlFor="dni">DNI del Paciente</label>
+
+              <div className="search-input-wrapper">
                 <input
                   type="text"
                   id="dni"
                   value={searchDNI}
                   onChange={(e) => handleBuscarPaciente(e.target.value)}
-                  placeholder="Ingrese 8 dígitos"
                   maxLength={8}
-                  disabled={loading || !!pacienteSeleccionado}
-                  className={`input-search ${
-                    pacienteSeleccionado ? "input-disabled" : ""
-                  }`}
+                  placeholder="Ingrese los 8 dígitos..."
+                  disabled={reniecLoading}
                 />
-                {pacienteEncontrado && !pacienteSeleccionado && (
-                  <div className="paciente-encontrado">
-                    <div
-                      className="paciente-item"
-                      onClick={() => handleSelectPaciente(pacienteEncontrado)}
-                    >
-                      <span className="paciente-dni">
-                        {pacienteEncontrado.dni}
-                      </span>
-                      <span className="paciente-separador">-</span>
-                      <span className="paciente-nombre">
-                        {pacienteEncontrado.nombres}{" "}
-                        {pacienteEncontrado.apellidos}
-                      </span>
-                    </div>
-                  </div>
-                )}
-                {searchDNI.length === 8 &&
-                  !pacienteEncontrado &&
-                  !pacienteSeleccionado && (
-                    <button
-                      type="button"
-                      className="btn-nuevo-paciente"
-                      onClick={() => setMostrarNuevoPaciente(true)}
-                    >
-                      ➕ Nuevo Paciente
-                    </button>
-                  )}
+                {reniecLoading && <div className="search-icon-spinner">⌛</div>}
               </div>
 
-              <div className="form-group">
-                <label htmlFor="nombrePaciente">Nombre Completo</label>
-                <input
-                  type="text"
-                  id="nombrePaciente"
-                  value={
-                    pacienteSeleccionado
-                      ? `${pacienteSeleccionado.nombres} ${pacienteSeleccionado.apellidos}`
-                      : ""
-                  }
-                  disabled
-                  placeholder="Se completa automáticamente"
-                  className="input-disabled"
-                />
-              </div>
+              {/* === TARJETA DE RESULTADO === */}
+              {pacienteEncontrado && !pacienteSeleccionado && (
+                <div
+                  className="paciente-result-card"
+                  onClick={() => handleSelectPaciente(pacienteEncontrado)}
+                >
+                  {/* Avatar con inicial */}
+                  <div className="paciente-avatar-placeholder">
+                    {pacienteEncontrado.nombres.charAt(0)}
+                  </div>
+
+                  <div className="paciente-info">
+                    <span className="paciente-nombre">
+                      {pacienteEncontrado.nombres}{" "}
+                      {pacienteEncontrado.apellidos}
+                    </span>
+                    <div className="paciente-meta">
+                      <span>DNI: {pacienteEncontrado.dni}</span>
+                      {pacienteEncontrado.id === "temp_reniec" ? (
+                        <span className="badge-reniec">Reniec</span>
+                      ) : (
+                        <span className="badge-bd">Registrado</span>
+                      )}
+                    </div>
+                  </div>
+
+                  {/* Icono de flecha o check sutil a la derecha */}
+                  <div
+                    style={{
+                      marginLeft: "auto",
+                      color: "#16a34a",
+                      fontSize: "1.2rem",
+                    }}
+                  >
+                    👉
+                  </div>
+                </div>
+              )}
+
+              {/* === ESTADO NO ENCONTRADO === */}
+              {searchDNI.length === 8 &&
+                !reniecLoading &&
+                !pacienteEncontrado &&
+                !pacienteSeleccionado && (
+                  <div className="not-found-container">
+                    <p className="not-found-text">
+                      No encontramos resultados para este DNI.
+                    </p>
+                    <button
+                      type="button"
+                      onClick={() => setMostrarNuevoPaciente(true)}
+                      className="btn-nuevo-paciente"
+                    >
+                      ➕ Registrar Nuevo Paciente
+                    </button>
+                  </div>
+                )}
+            </div>
+
+            {/* Input "Nombre Completo" (Solo visible si ya seleccionamos, para confirmar visualmente) */}
+            <div className="form-group" style={{ marginTop: "1.5rem" }}>
+              <label>Paciente Seleccionado</label>
+              <input
+                type="text"
+                disabled
+                placeholder="Busque un DNI arriba..."
+                value={
+                  pacienteSeleccionado
+                    ? `${pacienteSeleccionado.nombres} ${pacienteSeleccionado.apellidos}`
+                    : ""
+                }
+                className="input-disabled"
+                style={{
+                  // Si ya seleccionó, ponemos borde verde para indicar éxito
+                  borderColor: pacienteSeleccionado ? "#86efac" : "",
+                }}
+              />
             </div>
           </div>
         );
 
-      // --- CAMBIO: Antes PASO 5 ---
+      // ================= PASO 7 =================
       case 7:
         return (
           <div className="form-step step-resumen">
@@ -804,47 +809,42 @@ const ReservaCita = () => {
               <span className="step-number">7</span>
               <h3>Resumen de la Cita</h3>
             </div>
+
             <div className="resumen-grid">
-              {/* Paciente */}
               <div className="resumen-item">
                 <label>Paciente</label>
                 <strong>
                   {pacienteSeleccionado
                     ? `${pacienteSeleccionado.nombres} ${pacienteSeleccionado.apellidos}`
-                    : "N/A"}
+                    : ""}
                 </strong>
-                <span>DNI: {pacienteSeleccionado?.dni || "N/A"}</span>
+                <span>DNI: {pacienteSeleccionado?.dni}</span>
               </div>
 
-              {/* Médico */}
               <div className="resumen-item">
                 <label>Médico</label>
                 <strong>
                   {doctorSeleccionado
                     ? `${doctorSeleccionado.nombres} ${doctorSeleccionado.apellidos}`
-                    : "N/A"}
+                    : ""}
                 </strong>
-                <span>
-                  {especialidadSeleccionada?.nombre || "Especialidad N/A"}
-                </span>
+                <span>Especialidad: {especialidadSeleccionada?.nombre}</span>
               </div>
 
-              {/* Fecha y Hora */}
               <div className="resumen-item">
                 <label>Fecha y Hora</label>
-                <strong>{formatearFechaResumen(fechaSeleccionada)}</strong>
+                <strong>{fechaSeleccionada}</strong>
                 <span>{horaSeleccionada} hs</span>
               </div>
             </div>
           </div>
         );
-
-      default:
-        return null;
     }
   };
 
-  // --- Renderizado Principal (MODIFICADO) ---
+  // ============================================================
+  // UI PRINCIPAL
+  // ============================================================
   return (
     <div className="reserva-cita">
       {notification.visible && (
@@ -867,7 +867,7 @@ const ReservaCita = () => {
       <div className="card">
         <StepperHeader pasoActual={pasoActual} irAlPaso={irAlPaso} />
 
-        {error && <div className="error-message">⚠️ {error}</div>}
+        {error && <div className="error-message">{error}</div>}
 
         <form
           className="cita-form"
@@ -877,7 +877,6 @@ const ReservaCita = () => {
         >
           <div className="paso-content">{renderPasoActual()}</div>
 
-          {/* --- CAMBIO: Lógica de navegación actualizada --- */}
           <div className="stepper-navigation">
             <button
               type="button"
@@ -888,13 +887,11 @@ const ReservaCita = () => {
               Anterior
             </button>
 
-            {/* --- CAMBIO: 5 -> 7 --- */}
             {pasoActual < 7 ? (
               <button
                 type="button"
                 className="btn btn-primary"
                 onClick={siguientePaso}
-                // --- CAMBIO: Lógica de disabled actualizada ---
                 disabled={
                   (pasoActual === 1 && !especialidadSeleccionada) ||
                   (pasoActual === 2 && !doctorSeleccionado) ||
@@ -902,8 +899,7 @@ const ReservaCita = () => {
                   (pasoActual === 4 && !diaSeleccionado) ||
                   (pasoActual === 5 &&
                     (!fechaSeleccionada || !horaSeleccionada)) ||
-                  (pasoActual === 6 && !pacienteSeleccionado) ||
-                  loading
+                  (pasoActual === 6 && !pacienteSeleccionado)
                 }
               >
                 Siguiente
@@ -911,11 +907,10 @@ const ReservaCita = () => {
             ) : (
               <button
                 type="button"
-                className="btn btn-primary btn-confirmar"
+                className="btn btn-primary"
                 onClick={handleConfirmarCita}
-                disabled={loading}
               >
-                {loading ? "Registrando..." : "Confirmar Cita"}
+                Confirmar Cita
               </button>
             )}
           </div>
