@@ -55,6 +55,23 @@ export interface CitaProcesada {
   estado: "pendiente" | "reprogramado" | "finalizado";
 }
 
+export interface CitaTransformada {
+  _id: string;
+  pacienteId: {
+    nombres: string;
+    apellidos: string;
+    dni: string;
+  };
+  doctorId: {
+    _id: string;
+    nombres: string;
+    apellidos: string;
+  };
+  fecha: string;
+  hora: string;
+  estado: string;
+}
+
 
 // ------------------- Servicio -------------------
 
@@ -101,6 +118,11 @@ export class CitaApiService {
       );
     }
   }
+
+static async obtenerCalendario(fecha: string, vista: string): Promise<CitaTransformada[]> {
+  const r = await api.get(`/citas/calendario?fecha=${fecha}&vista=${vista}`);
+  return r.data.data;
+}
 
   // 🟣 Listar todas las citas
   static async listar(): Promise<CitaProcesada[]> {

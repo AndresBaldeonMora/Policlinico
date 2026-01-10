@@ -1,7 +1,7 @@
 import { Navigate } from "react-router-dom";
-import type { ReactNode } from "react"; // 👈 import type
+import type { ReactNode } from "react";
 import { useAuth } from "../hooks/userAuth";
-import type { UserRole } from "../services/auth.service"; // 👈 import type
+import type { UserRole } from "../services/auth.service";
 
 interface ProtectedRouteProps {
   children: ReactNode;
@@ -16,7 +16,10 @@ export const ProtectedRoute = ({ children, roles }: ProtectedRouteProps) => {
   }
 
   if (roles && !roles.includes(user.rol)) {
-    return <Navigate to="/login" replace />;
+    if (user.rol === "MEDICO") {
+      return <Navigate to="/medico" replace />;
+    }
+    return <Navigate to="/" replace />;
   }
 
   return <>{children}</>;

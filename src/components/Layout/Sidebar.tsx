@@ -5,19 +5,19 @@ import "./Sidebar.css";
 const Sidebar = () => {
   const location = useLocation();
   const navigate = useNavigate();
-  const { logout } = useAuth();
+  const { logout, user } = useAuth();
 
-  const menuItems = [
+  const adminMenu = [
     {
       path: "/",
-      label: "Inicio",
-      icon: "🏠",
-      description: "Dashboard principal",
+      label: "Calendario",
+      icon: "📅",
+      description: "Vista principal de citas",
     },
     {
       path: "/reserva-cita",
       label: "Solicitar Cita",
-      icon: "📅",
+      icon: "📝",
       description: "Agendar nueva cita médica",
     },
     {
@@ -30,15 +30,26 @@ const Sidebar = () => {
       path: "/medicos",
       label: "Médicos",
       icon: "👨‍⚕️",
-      description: "Directorio de doctores por especialidad",
+      description: "Directorio de doctores",
     },
     {
       path: "/pacientes",
       label: "Pacientes",
       icon: "👥",
-      description: "Listado y gestión de pacientes",
+      description: "Listado de pacientes",
     },
   ];
+
+  const medicoMenu = [
+    {
+      path: "/medico",
+      label: "Mi Tablero",
+      icon: "📊",
+      description: "Resumen de mis citas",
+    },
+  ];
+
+  const menuItems = user?.rol === "MEDICO" ? medicoMenu : adminMenu;
 
   const handleLogout = () => {
     logout();
@@ -47,7 +58,6 @@ const Sidebar = () => {
 
   return (
     <aside className="sidebar">
-      {/* 🔹 Encabezado del sidebar */}
       <div className="sidebar-header">
         <div className="logo">
           <div className="logo-icon">
@@ -63,12 +73,13 @@ const Sidebar = () => {
           </div>
           <div>
             <h2 className="logo-text">Policlínico</h2>
-            <p className="logo-subtitle">Sistema Interno</p>
+            <p className="logo-subtitle">
+              {user?.rol === "MEDICO" ? "Portal Médico" : "Administración"}
+            </p>
           </div>
         </div>
       </div>
 
-      {/* 🔹 Navegación */}
       <nav className="sidebar-nav">
         <div className="nav-section">
           <p className="nav-section-title">MENÚ PRINCIPAL</p>
@@ -89,7 +100,6 @@ const Sidebar = () => {
           })}
         </div>
 
-        {/* 🔹 Sección inferior: perfil */}
         <div className="nav-section">
           <p className="nav-section-title">CONFIGURACIÓN</p>
           <Link
@@ -104,8 +114,18 @@ const Sidebar = () => {
         </div>
       </nav>
 
-      {/* 🔹 Footer */}
       <div className="sidebar-footer">
+        {user && (
+          <div
+            style={{
+              marginBottom: "10px",
+              fontSize: "0.8rem",
+              color: "#6b7280",
+            }}
+          >
+            {user.nombres}
+          </div>
+        )}
         <button className="btn-logout" onClick={handleLogout}>
           <span>Cerrar Sesión</span>
         </button>

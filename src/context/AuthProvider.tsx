@@ -32,7 +32,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   };
 
   if (loading) {
-    return <div>Cargando sesión...</div>;
+    return null;
   }
 
   return (

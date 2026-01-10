@@ -1,0 +1,245 @@
+:root {
+  --border: #e5e7eb;
+  --text-gray: #374151;
+  --green: #10b981;
+  --bg-light: #f9fafb;
+}
+
+/* ================= CONTENEDOR ================= */
+
+.calendario-container {
+  padding: 1rem;
+  height: 100vh;
+}
+
+/* ================= LAYOUT ================= */
+
+.calendario-layout {
+  display: grid;
+  grid-template-columns: 300px 1fr;
+  gap: 1rem;
+  height: calc(100vh - 120px);
+}
+
+.calendario-left {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.calendario-main {
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
+
+/* ================= TOP BAR ================= */
+
+.calendario-topbar {
+  display: grid;
+  grid-template-columns: auto 1fr auto auto;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.5rem 0.75rem;
+  border-bottom: 1px solid var(--border);
+  background: white;
+}
+
+.calendario-topbar button {
+  border: 1px solid var(--border);
+  background: white;
+  border-radius: 6px;
+  padding: 0.3rem 0.6rem;
+  cursor: pointer;
+}
+
+.calendario-topbar button:hover {
+  background: var(--bg-light);
+}
+
+.calendario-topbar h2 {
+  text-align: center;
+  font-size: 1.4rem;
+  font-weight: 700;
+  text-transform: capitalize;
+  margin: 0;
+}
+
+/* ================= SELECTOR VISTA ================= */
+
+.vista-selector {
+  display: flex;
+  gap: 0.25rem;
+}
+
+.vista-selector button {
+  padding: 0.35rem 0.7rem;
+  border-radius: 6px;
+  border: 1px solid var(--border);
+  background: white;
+  font-size: 0.75rem;
+  cursor: pointer;
+}
+
+.vista-selector button.active {
+  background: var(--green);
+  color: white;
+  border-color: var(--green);
+}
+
+/* ================= DOCTOR BAR ================= */
+
+.doctor-bar {
+  background: #2563eb;
+  color: white;
+  padding: 0.45rem 0.75rem;
+  font-weight: 600;
+  font-size: 0.8rem;
+  border-bottom: 1px solid var(--border);
+}
+
+/* ================= MES ================= */
+
+.calendario-grid {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+}
+
+.calendario-col-header {
+  background: var(--bg-light);
+  text-align: center;
+  font-weight: 600;
+  padding: 0.5rem;
+  border-bottom: 1px solid var(--border);
+  border-right: 1px solid var(--border);
+}
+
+.calendario-col-header:last-child {
+  border-right: none;
+}
+
+.calendario-celda {
+  min-height: 110px;
+  border-right: 1px solid var(--border);
+  border-bottom: 1px solid var(--border);
+  padding: 0.35rem;
+}
+
+.calendario-celda:nth-child(7n) {
+  border-right: none;
+}
+
+.dia-numero {
+  font-size: 0.75rem;
+  font-weight: 700;
+}
+
+.cita-chip {
+  background: #ecfdf5;
+  border-left: 3px solid var(--green);
+  padding: 0.2rem 0.35rem;
+  margin-top: 0.25rem;
+  font-size: 0.7rem;
+  border-radius: 4px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* ================= SEMANA / DÍA ================= */
+
+.agenda-semana,
+.agenda-dia {
+  flex: 1;
+  overflow-y: auto;
+}
+
+.agenda-header {
+  display: grid;
+  grid-template-columns: 80px repeat(7, 1fr);
+  background: var(--bg-light);
+  border-bottom: 1px solid var(--border);
+}
+
+.agenda-dia-header {
+  text-align: center;
+  font-weight: 600;
+  font-size: 0.75rem;
+  padding: 0.5rem;
+  border-left: 1px solid var(--border);
+}
+
+.agenda-row {
+  display: grid;
+  grid-template-columns: 80px repeat(7, 1fr);
+  min-height: 36px;
+}
+
+.agenda-linea {
+  display: grid;
+  grid-template-columns: 80px 1fr;
+  min-height: 36px;
+}
+
+.agenda-hora {
+  font-size: 0.7rem;
+  padding: 0.3rem;
+  border-right: 1px solid var(--border);
+  color: var(--text-gray);
+  background: white;
+}
+
+.agenda-celda {
+  border-left: 1px solid var(--border);
+  border-top: 1px solid var(--border);
+  position: relative;
+}
+
+.agenda-cita {
+  background: #bae6fd;
+  font-size: 0.7rem;
+  margin: 2px;
+  padding: 0.2rem 0.35rem;
+  border-radius: 4px;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+/* ================= DOCTORES ================= */
+
+.doctores-panel {
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 0.75rem;
+  overflow-y: auto;
+}
+
+.doctores-panel h4 {
+  font-size: 0.8rem;
+  margin-bottom: 0.5rem;
+}
+
+.doctores-lista {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.doctor-item {
+  padding: 0.45rem 0.6rem;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 0.75rem;
+}
+
+.doctor-item:hover {
+  background: var(--bg-light);
+}
+
+.doctor-item.activo {
+  background: var(--green);
+  color: white;
+}

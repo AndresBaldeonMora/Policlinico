@@ -1,12 +1,12 @@
 import { useEffect, useState } from "react";
 import "./ListaCitas.css";
-import { CitaApiService } from "../services/cita.service";
-import type { CitaProcesada } from "../services/cita.service";
+import { CitaApiService } from "../../services/cita.service";
+import type { CitaProcesada } from "../../services/cita.service";
 import { CalendarClock } from "lucide-react";
 import {
   DoctorApiService,
   type HorarioDisponible,
-} from "../services/doctor.service";
+} from "../../services/doctor.service";
 
 const normalizeString = (str: string): string => {
   return str
