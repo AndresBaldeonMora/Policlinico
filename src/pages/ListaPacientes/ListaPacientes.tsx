@@ -1,9 +1,9 @@
 import { useEffect, useState } from "react";
-import "./ListaCitas.css";
+import "../ListaCitas/ListaCitas.css";
 import {
   PacienteApiService,
   type PacienteTransformado,
-} from "../services/paciente.service";
+} from "../../services/paciente.service";
 
 const normalizeString = (str: string): string =>
   (str || "")

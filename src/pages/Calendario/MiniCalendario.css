@@ -1,0 +1,62 @@
+.mini-cal {
+  border: 1px solid #e5e7eb;
+  border-radius: 10px;
+  padding: 0.75rem;
+  background: white;
+}
+
+/* HEADER */
+.mini-cal-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-weight: 700;
+  font-size: 0.85rem;
+  margin-bottom: 0.5rem;
+  text-transform: capitalize;
+}
+
+.mini-cal-header button {
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  font-size: 0.9rem;
+  padding: 0.2rem 0.4rem;
+}
+
+.mini-cal-header button:hover {
+  background: #f3f4f6;
+  border-radius: 4px;
+}
+
+/* GRID */
+.mini-cal-grid {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 0.25rem;
+}
+
+.mini-cal-dia-header {
+  font-size: 0.65rem;
+  text-align: center;
+  font-weight: 600;
+  color: #6b7280;
+}
+
+.mini-cal-dia {
+  font-size: 0.7rem;
+  font-weight: 600;
+  border-radius: 6px;
+  padding: 0.3rem 0;
+  text-align: center;
+  cursor: pointer;
+}
+
+.mini-cal-dia:hover {
+  background: #f3f4f6;
+}
+
+.mini-cal-dia.activo {
+  background: #10b981;
+  color: white;
+}

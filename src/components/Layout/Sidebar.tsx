@@ -5,21 +5,19 @@ import "./Sidebar.css";
 const Sidebar = () => {
   const location = useLocation();
   const navigate = useNavigate();
-  // 1. Necesitamos el objeto 'user' para saber el rol
   const { logout, user } = useAuth();
 
-  // 2. Definimos los menús por rol
   const adminMenu = [
     {
       path: "/",
-      label: "Inicio",
-      icon: "🏠",
-      description: "Dashboard principal",
+      label: "Calendario",
+      icon: "📅",
+      description: "Vista principal de citas",
     },
     {
       path: "/reserva-cita",
       label: "Solicitar Cita",
-      icon: "📅",
+      icon: "📝",
       description: "Agendar nueva cita médica",
     },
     {
@@ -44,32 +42,14 @@ const Sidebar = () => {
 
   const medicoMenu = [
     {
-      path: "/medico", // Este es el dashboard que acabamos de arreglar
+      path: "/medico",
       label: "Mi Tablero",
       icon: "📊",
       description: "Resumen de mis citas",
     },
-    {
-      path: "/medico/historial", // Ejemplo de ruta futura
-      label: "Historial",
-      icon: "📁",
-      description: "Historial de pacientes atendidos",
-    },
-    // Los médicos usualmente no necesitan ver la lista completa de otros médicos o gestionar pacientes globales
   ];
 
-  // 3. Función para determinar qué menú mostrar
-  const getMenuItems = () => {
-    // Asegúrate de que tu backend devuelve el rol como "MEDICO" o "ADMIN"
-    // Ajusta estos strings según tu base de datos
-    if (user?.rol === "MEDICO") {
-      return medicoMenu;
-    }
-    // Por defecto (o si es ADMIN) mostramos el menú completo
-    return adminMenu;
-  };
-
-  const menuItems = getMenuItems();
+  const menuItems = user?.rol === "MEDICO" ? medicoMenu : adminMenu;
 
   const handleLogout = () => {
     logout();
@@ -78,7 +58,6 @@ const Sidebar = () => {
 
   return (
     <aside className="sidebar">
-      {/* 🔹 Encabezado */}
       <div className="sidebar-header">
         <div className="logo">
           <div className="logo-icon">
@@ -94,7 +73,6 @@ const Sidebar = () => {
           </div>
           <div>
             <h2 className="logo-text">Policlínico</h2>
-            {/* Opcional: Mostrar el rol debajo del logo */}
             <p className="logo-subtitle">
               {user?.rol === "MEDICO" ? "Portal Médico" : "Administración"}
             </p>
@@ -102,7 +80,6 @@ const Sidebar = () => {
         </div>
       </div>
 
-      {/* 🔹 Navegación Dinámica */}
       <nav className="sidebar-nav">
         <div className="nav-section">
           <p className="nav-section-title">MENÚ PRINCIPAL</p>
@@ -123,7 +100,6 @@ const Sidebar = () => {
           })}
         </div>
 
-        {/* 🔹 Configuración */}
         <div className="nav-section">
           <p className="nav-section-title">CONFIGURACIÓN</p>
           <Link
@@ -138,9 +114,7 @@ const Sidebar = () => {
         </div>
       </nav>
 
-      {/* 🔹 Footer */}
       <div className="sidebar-footer">
-        {/* Opcional: Mostrar quién está logueado */}
         {user && (
           <div
             style={{

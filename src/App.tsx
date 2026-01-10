@@ -1,35 +1,33 @@
 import { BrowserRouter, Routes, Route, Outlet } from "react-router-dom";
 import Header from "./components/Layout/Header";
 import Sidebar from "./components/Layout/Sidebar";
-import Dashboard from "./pages/Dashboard";
 import ReservaCita from "./pages/ReservaCita/ReservaCita";
-import ListaCitas from "./pages/ListaCitas";
-import ListaMedicos from "./pages/ListaMedicos";
-import ListaPacientes from "./pages/ListaPacientes";
+import ListaCitas from "./pages/ListaCitas/ListaCitas";
+import ListaMedicos from "./pages/ListaMedicos/ListaMedicos";
+import ListaPacientes from "./pages/ListaPacientes/ListaPacientes";
 import Login from "./pages/Login/Login";
 import MedicoDashboard from "./pages/MedicoDashboard/MedicoDashboard";
-import { AuthProvider } from "./context/AuthProvider"; // 👈 IMPORT CORRECTO
+import { AuthProvider } from "./context/AuthProvider";
 import { ProtectedRoute } from "./routes/ProtectedRoute";
+import Calendario from "./pages/Calendario/Calendario";
 
 function App() {
   return (
     <AuthProvider>
       <BrowserRouter>
         <Routes>
-          {/* Login sin layout */}
           <Route path="/login" element={<Login />} />
 
-          {/* Rutas protegidas con layout (Sidebar + Header) */}
           <Route element={<ProtectedLayout />}>
-            {/* Panel Recepcionista */}
             <Route
               path="/"
               element={
                 <ProtectedRoute roles={["RECEPCIONISTA"]}>
-                  <Dashboard />
+                  <Calendario />
                 </ProtectedRoute>
               }
             />
+
             <Route
               path="/reserva-cita"
               element={
@@ -38,6 +36,7 @@ function App() {
                 </ProtectedRoute>
               }
             />
+
             <Route
               path="/lista-citas"
               element={
@@ -46,6 +45,7 @@ function App() {
                 </ProtectedRoute>
               }
             />
+
             <Route
               path="/medicos"
               element={
@@ -54,6 +54,7 @@ function App() {
                 </ProtectedRoute>
               }
             />
+
             <Route
               path="/pacientes"
               element={
@@ -63,7 +64,6 @@ function App() {
               }
             />
 
-            {/* Panel Médico */}
             <Route
               path="/medico"
               element={
@@ -79,8 +79,6 @@ function App() {
   );
 }
 
-/* ========= Layout general protegido ========= */
-/* Envuelve solo las rutas autenticadas y usa <Outlet /> */
 function ProtectedLayout() {
   return (
     <div className="app">
