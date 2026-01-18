@@ -130,4 +130,32 @@ export class CitaApiService {
       throw new Error(err.response?.data?.message || err.message || "Error al reprogramar cita");
     }
   }
+
+static async obtenerPorId(id: string): Promise<CitaTransformada> {
+  try {
+    const response = await api.get<{
+      success: boolean;
+      data: CitaTransformada;
+      message?: string;
+    }>(`/citas/${id}`);
+
+    if (response.data.success && response.data.data) {
+      return response.data.data;
+    }
+
+    throw new Error(response.data.message || "No se pudo obtener la cita");
+  } catch (error: unknown) {
+    const err = error as {
+      response?: { data?: { message?: string } };
+      message?: string;
+    };
+    throw new Error(
+      err.response?.data?.message ||
+        err.message ||
+        "Error al obtener la cita"
+    );
+  }
 }
+
+}
+

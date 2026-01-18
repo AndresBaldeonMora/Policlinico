@@ -384,9 +384,9 @@ const ListaCitas = () => {
                       <td>
                         <span
                           className={`badge ${
-                            cita.estado === "pendiente"
+                            cita.estado === "PENDIENTE"
                               ? "badge-warning"
-                              : cita.estado === "reprogramado"
+                              : cita.estado === "REPROGRAMADA"
                               ? "badge-info"
                               : "badge-success"
                           }`}

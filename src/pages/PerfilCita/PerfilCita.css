@@ -1,0 +1,102 @@
+.perfil-cita {
+  padding: 2rem;
+  max-width: 1200px;
+  margin: 0 auto;
+}
+
+.perfil-cita-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 1.5rem;
+}
+
+.perfil-cita-header h1 {
+  margin: 0;
+  font-size: 1.6rem;
+}
+
+.subtitulo {
+  color: #6b7280;
+  font-size: 0.9rem;
+}
+
+.header-datos {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  text-align: right;
+}
+
+.perfil-cita-grid {
+  display: grid;
+  grid-template-columns: 2fr 1fr;
+  gap: 1.5rem;
+}
+
+.card {
+  background: #fff;
+  border-radius: 12px;
+  padding: 1.5rem;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+}
+
+.card h3 {
+  margin-top: 0;
+  margin-bottom: 1rem;
+}
+
+.label {
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: #9ca3af;
+}
+
+.placeholder {
+  color: #6b7280;
+  font-style: italic;
+}
+
+.perfil-cita-actions {
+  margin-top: 2rem;
+  display: flex;
+  justify-content: flex-end;
+}
+
+/* ===== Estados ===== */
+.badge {
+  padding: 0.25rem 0.75rem;
+  border-radius: 12px;
+  font-size: 0.8rem;
+  font-weight: 600;
+  display: inline-block;
+}
+
+.estado-pendiente {
+  background: #fef3c7;
+  color: #92400e;
+}
+
+.estado-atendida {
+  background: #d1fae5;
+  color: #065f46;
+}
+
+.estado-cancelada {
+  background: #fee2e2;
+  color: #991b1b;
+}
+
+.estado-reprogramada {
+  background: #bfdbfe;
+  color: #1e40af;
+}
+
+/* ===== Loading / Error ===== */
+
+.perfil-cita-loading,
+.perfil-cita-error {
+  padding: 2rem;
+  text-align: center;
+  color: #6b7280;
+}

@@ -1,5 +1,6 @@
-import { useState, useEffect } from "react";
-// SERVICIOS
+import { useEffect, useMemo, useState, useCallback } from "react";
+import { useSearchParams } from "react-router-dom";
+
 import {
   PacienteApiService,
   type PacienteTransformado,
@@ -9,20 +10,20 @@ import {
   type Especialidad,
 } from "../../services/especialidad.service";
 import {
-  DoctorApiService, // <--- Asegúrate de exportar esto en doctor.service
+  DoctorApiService,
   type DoctorTransformado as Doctor,
   type HorarioDisponible,
 } from "../../services/doctor.service";
 import { CitaApiService } from "../../services/cita.service";
-import { ReniecService } from "../../services/reniec.service"; // <--- Importamos el servicio
+import { ReniecService } from "../../services/reniec.service";
 
-// COMPONENTES Y ESTILOS
 import AgregarPacienteSimple from "./AgregarPacienteSimple";
 import "./ReservaCita.css";
 
-// ===============================
-// INTERFACES AUXILIARES
-// ===============================
+// ============================================================================
+// TYPES & CONSTANTS
+// ============================================================================
+
 interface HorarioPorDia {
   fecha: string;
   fechaISO: string;
@@ -37,34 +38,107 @@ interface MesOption {
   anio: number;
 }
 
-// ===============================
-// STEPPER HEADER
-// ===============================
-const StepperHeader = ({
-  pasoActual,
-  irAlPaso,
-}: {
+interface NotificationState {
+  message: string;
+  type: "success" | "error" | "";
+  visible: boolean;
+}
+
+const PASOS_TOTALES = 7;
+const DNI_LENGTH = 8;
+const NOTIFICATION_DURATION = 2000;
+
+const nombresMeses = [
+  "Enero",
+  "Febrero",
+  "Marzo",
+  "Abril",
+  "Mayo",
+  "Junio",
+  "Julio",
+  "Agosto",
+  "Septiembre",
+  "Octubre",
+  "Noviembre",
+  "Diciembre",
+] as const;
+
+const PASOS_LABELS = [
+  "Especialidad",
+  "Médico",
+  "Mes",
+  "Día",
+  "Hora",
+  "Paciente",
+  "Confirmar",
+] as const;
+
+// ============================================================================
+// UTILITY FUNCTIONS
+// ============================================================================
+
+const parseISODate = (
+  iso: string
+): { y: number; m: number; d: number } | null => {
+  const [y, m, d] = iso.split("-").map(Number);
+  if (!y || !m || !d || m < 1 || m > 12 || d < 1 || d > 31) return null;
+  return { y, m, d };
+};
+
+const esDNIValido = (dni: string): boolean => {
+  return /^\d{8}$/.test(dni);
+};
+
+const generarMesesDisponibles = (mesesAdelante = 3): MesOption[] => {
+  const meses: MesOption[] = [];
+  const hoy = new Date();
+
+  for (let i = 0; i < mesesAdelante; i++) {
+    const fecha = new Date(hoy.getFullYear(), hoy.getMonth() + i, 1);
+    meses.push({
+      numero: fecha.getMonth(),
+      nombre: nombresMeses[fecha.getMonth()],
+      anio: fecha.getFullYear(),
+    });
+  }
+
+  return meses;
+};
+
+const generarDiasDelMes = (mes: MesOption): number[] => {
+  const hoy = new Date();
+  hoy.setHours(0, 0, 0, 0);
+
+  const ultimoDia = new Date(mes.anio, mes.numero + 1, 0);
+  const dias: number[] = [];
+
+  for (let dia = 1; dia <= ultimoDia.getDate(); dia++) {
+    const fecha = new Date(mes.anio, mes.numero, dia);
+    if (fecha >= hoy) {
+      dias.push(dia);
+    }
+  }
+
+  return dias;
+};
+
+// ============================================================================
+// STEPPER COMPONENT
+// ============================================================================
+
+interface StepperHeaderProps {
   pasoActual: number;
   irAlPaso: (paso: number) => void;
-}) => {
-  const pasos = [
-    "Especialidad",
-    "Médico",
-    "Mes",
-    "Día",
-    "Hora",
-    "Paciente",
-    "Confirmar",
-  ];
+}
 
-  const getIconoPaso = (paso: number) => {
-    if (paso < pasoActual) return "✓";
-    return paso;
+const StepperHeader = ({ pasoActual, irAlPaso }: StepperHeaderProps) => {
+  const getIconoPaso = (paso: number): string | number => {
+    return paso < pasoActual ? "✓" : paso;
   };
 
   return (
     <div className="stepper-header">
-      {pasos.map((titulo, index) => {
+      {PASOS_LABELS.map((titulo, index) => {
         const numeroPaso = index + 1;
         const esActivo = numeroPaso === pasoActual;
         const esCompletado = numeroPaso < pasoActual;
@@ -75,8 +149,14 @@ const StepperHeader = ({
             className={`stepper-item-wrapper ${
               esCompletado ? "clickable" : ""
             }`}
-            onClick={() => {
-              if (esCompletado) irAlPaso(numeroPaso);
+            onClick={() => esCompletado && irAlPaso(numeroPaso)}
+            role={esCompletado ? "button" : undefined}
+            tabIndex={esCompletado ? 0 : undefined}
+            onKeyDown={(e) => {
+              if (esCompletado && (e.key === "Enter" || e.key === " ")) {
+                e.preventDefault();
+                irAlPaso(numeroPaso);
+              }
             }}
           >
             <div
@@ -94,34 +174,36 @@ const StepperHeader = ({
   );
 };
 
-// ===============================
-// COMPONENTE PRINCIPAL
-// ===============================
-const ReservaCita = () => {
-  const [loading, setLoading] = useState(false);
-  const [reniecLoading, setReniecLoading] = useState(false); // Loading específico para DNI
-  const [error, setError] = useState("");
-  const [pasoActual, setPasoActual] = useState(1);
+// ============================================================================
+// MAIN COMPONENT
+// ============================================================================
 
-  const [notification, setNotification] = useState({
+const ReservaCita = () => {
+  // State: Loading & Errors
+  const [loading, setLoading] = useState(false);
+  const [reniecLoading, setReniecLoading] = useState(false);
+  const [error, setError] = useState("");
+  const [notification, setNotification] = useState<NotificationState>({
     message: "",
     type: "",
     visible: false,
   });
 
-  // PACIENTE
+  // State: Navigation
+  const [pasoActual, setPasoActual] = useState(1);
+
+  // State: Paciente
   const [searchDNI, setSearchDNI] = useState("");
   const [pacienteEncontrado, setPacienteEncontrado] =
     useState<PacienteTransformado | null>(null);
   const [pacienteSeleccionado, setPacienteSeleccionado] =
     useState<PacienteTransformado | null>(null);
-
   const [todosLosPacientes, setTodosLosPacientes] = useState<
     PacienteTransformado[]
   >([]);
   const [mostrarNuevoPaciente, setMostrarNuevoPaciente] = useState(false);
 
-  // ESPECIALIDADES
+  // State: Especialidad
   const [searchEspecialidad, setSearchEspecialidad] = useState("");
   const [especialidades, setEspecialidades] = useState<Especialidad[]>([]);
   const [especialidadSeleccionada, setEspecialidadSeleccionada] =
@@ -129,14 +211,14 @@ const ReservaCita = () => {
   const [showEspecialidadesSuggestions, setShowEspecialidadesSuggestions] =
     useState(false);
 
-  // DOCTOR
-  const [todosLosDoctores, setTodosLosDoctores] = useState<Doctor[]>([]); // Lista maestra
-  const [doctoresDisponibles, setDoctoresDisponibles] = useState<Doctor[]>([]); // Lista filtrada
+  // State: Doctor
+  const [todosLosDoctores, setTodosLosDoctores] = useState<Doctor[]>([]);
+  const [doctoresDisponibles, setDoctoresDisponibles] = useState<Doctor[]>([]);
   const [doctorSeleccionado, setDoctorSeleccionado] = useState<Doctor | null>(
     null
   );
 
-  // FECHAS
+  // State: Fecha y Hora
   const [mesesDisponibles, setMesesDisponibles] = useState<MesOption[]>([]);
   const [mesSeleccionado, setMesSeleccionado] = useState<MesOption | null>(
     null
@@ -147,63 +229,217 @@ const ReservaCita = () => {
   const [fechaSeleccionada, setFechaSeleccionada] = useState("");
   const [horaSeleccionada, setHoraSeleccionada] = useState("");
 
-  // ===============================
-  // INICIO
-  // ===============================
-  useEffect(() => {
-    cargarDatos();
-    generarMesesDisponibles();
+  // URL Params
+  const [searchParams] = useSearchParams();
+  const fechaParam = searchParams.get("fecha") || "";
+  const doctorIdParam = searchParams.get("doctorId") || "";
+
+  const prefillHasFecha = useMemo(
+    () => !!parseISODate(fechaParam),
+    [fechaParam]
+  );
+  const prefillHasDoctor = useMemo(() => !!doctorIdParam, [doctorIdParam]);
+
+  // ============================================================================
+  // DATA LOADING
+  // ============================================================================
+
+  const cargarDatos = useCallback(async () => {
+    try {
+      setLoading(true);
+      const [pacientes, especialidadesData, doctoresData] = await Promise.all([
+        PacienteApiService.listar(),
+        EspecialidadApiService.listar(),
+        DoctorApiService.listar(),
+      ]);
+
+      setTodosLosPacientes(pacientes);
+      setEspecialidades(especialidadesData);
+      setTodosLosDoctores(doctoresData);
+    } catch (err) {
+      console.error("Error cargando datos:", err);
+      setError("Error de conexión al cargar datos.");
+    } finally {
+      setLoading(false);
+    }
   }, []);
 
-  // ===============================
-  // FILTRADO DE DOCTORES (CORRECCIÓN)
-  // ===============================
+  // Initial data load
   useEffect(() => {
-    if (especialidadSeleccionada) {
-      // Filtramos la lista maestra basándonos en la especialidad seleccionada
-      // Asumiendo que doctor.especialidad es el nombre (string) o compara IDs si tienes doctor.especialidadId
-      const filtrados = todosLosDoctores.filter(
-        (doc) =>
-          // Opción A: Si doctor.especialidad es un string
-          doc.especialidad === especialidadSeleccionada.nombre
-        // Opción B: Si tienes IDs, sería: doc.especialidadId === especialidadSeleccionada.id
-      );
+    cargarDatos();
+    setMesesDisponibles(generarMesesDisponibles());
+  }, [cargarDatos]);
 
-      setDoctoresDisponibles(filtrados);
-      setDoctorSeleccionado(null); // Reseteamos selección si cambia la especialidad
-    } else {
-      setDoctoresDisponibles([]);
+  // ============================================================================
+  // URL PREFILL LOGIC
+  // ============================================================================
+
+  // Prefill fecha from URL
+  useEffect(() => {
+    if (!prefillHasFecha) return;
+
+    const parsed = parseISODate(fechaParam);
+    if (!parsed) return;
+
+    const mesOpt: MesOption = {
+      numero: parsed.m - 1,
+      nombre: nombresMeses[parsed.m - 1],
+      anio: parsed.y,
+    };
+
+    setMesSeleccionado(mesOpt);
+    setDiasDelMes(generarDiasDelMes(mesOpt));
+    setDiaSeleccionado(parsed.d);
+    setFechaSeleccionada(fechaParam);
+
+    setPasoActual((prev) => Math.max(prev, 4));
+  }, [fechaParam, prefillHasFecha]);
+
+  // Prefill doctor from URL
+  useEffect(() => {
+    if (!prefillHasDoctor || todosLosDoctores.length === 0) return;
+
+    const doctor = todosLosDoctores.find((d) => d.id === doctorIdParam);
+    if (!doctor) return;
+
+    setDoctorSeleccionado(doctor);
+
+    if (especialidades.length > 0) {
+      const esp = especialidades.find((e) => e.nombre === doctor.especialidad);
+      if (esp) {
+        setEspecialidadSeleccionada(esp);
+        setSearchEspecialidad(esp.nombre);
+      }
     }
+
+    setPasoActual((prev) => Math.max(prev, prefillHasFecha ? 5 : 2));
+  }, [
+    doctorIdParam,
+    prefillHasDoctor,
+    todosLosDoctores,
+    especialidades,
+    prefillHasFecha,
+  ]);
+
+  // ============================================================================
+  // ESPECIALIDAD & DOCTOR LOGIC
+  // ============================================================================
+
+  useEffect(() => {
+    if (!especialidadSeleccionada) {
+      setDoctoresDisponibles([]);
+      setDoctorSeleccionado(null);
+      return;
+    }
+
+    const filtrados = todosLosDoctores.filter(
+      (doc) => doc.especialidad === especialidadSeleccionada.nombre
+    );
+
+    setDoctoresDisponibles(filtrados);
+
+    // Reset doctor if not in filtered list
+    setDoctorSeleccionado((prev) => {
+      if (!prev) return null;
+      return filtrados.some((d) => d.id === prev.id) ? prev : null;
+    });
   }, [especialidadSeleccionada, todosLosDoctores]);
 
-  // =====================================================================
-  // CONSULTAR PACIENTE (BD + RENIEC SERVICE)
-  // =====================================================================
-  const handleBuscarPaciente = async (dni: string) => {
-    // Validación básica de entrada
-    if ((dni && !/^\d*$/.test(dni)) || dni.length > 8) return;
+  // ============================================================================
+  // HORARIOS LOGIC
+  // ============================================================================
 
-    setSearchDNI(dni);
-    setError("");
-    setPacienteEncontrado(null);
-    setPacienteSeleccionado(null);
+  useEffect(() => {
+    const obtenerHorarios = async () => {
+      if (!diaSeleccionado || !mesSeleccionado || !doctorSeleccionado) {
+        setHorariosPorDia([]);
+        return;
+      }
 
-    if (dni.length === 8) {
-      // 1. Buscar en BD Local
+      const anio = mesSeleccionado.anio;
+      const mesStr = String(mesSeleccionado.numero + 1).padStart(2, "0");
+      const diaStr = String(diaSeleccionado).padStart(2, "0");
+      const fechaISO = `${anio}-${mesStr}-${diaStr}`;
+
+      try {
+        const horariosData = await DoctorApiService.obtenerHorariosDisponibles(
+          doctorSeleccionado.id,
+          fechaISO
+        );
+
+        const fechaObj = new Date(
+          anio,
+          mesSeleccionado.numero,
+          diaSeleccionado
+        );
+
+        setHorariosPorDia([
+          {
+            fecha: fechaObj.toLocaleDateString(),
+            fechaISO,
+            diaNombre: fechaObj.toLocaleDateString("es-ES", {
+              weekday: "long",
+            }),
+            diaNumero: diaSeleccionado,
+            horarios: horariosData,
+          },
+        ]);
+
+        if (!horaSeleccionada && !prefillHasFecha) {
+          setFechaSeleccionada(fechaISO);
+        }
+      } catch (err) {
+        console.error("Error obteniendo horarios:", err);
+        setHorariosPorDia([]);
+      }
+    };
+
+    obtenerHorarios();
+
+    // Reset hora when día/mes/doctor changes (unless prefilled)
+    if (!prefillHasFecha) {
+      setHoraSeleccionada("");
+      setFechaSeleccionada("");
+    }
+  }, [
+    diaSeleccionado,
+    mesSeleccionado,
+    doctorSeleccionado,
+    horaSeleccionada,
+    prefillHasFecha,
+  ]);
+
+  // ============================================================================
+  // PACIENTE HANDLERS
+  // ============================================================================
+
+  const handleBuscarPaciente = useCallback(
+    async (dni: string) => {
+      // Validar input
+      if (dni && !/^\d*$/.test(dni)) return;
+      if (dni.length > DNI_LENGTH) return;
+
+      setSearchDNI(dni);
+      setError("");
+      setPacienteEncontrado(null);
+      setPacienteSeleccionado(null);
+
+      if (!esDNIValido(dni)) return;
+
+      // Buscar en pacientes locales primero
       const pacienteLocal = todosLosPacientes.find((p) => p.dni === dni);
       if (pacienteLocal) {
         setPacienteEncontrado(pacienteLocal);
         return;
       }
 
-      // 2. Buscar en RENIEC (Si no está en local)
+      // Buscar en RENIEC
       try {
         setReniecLoading(true);
         const dataReniec = await ReniecService.buscarPorDNI(dni);
 
-        // Transformar data de Reniec a formato PacienteTransformado para la UI
         const pacienteReniec: PacienteTransformado = {
-          _id: "temp_reniec", // ID temporal
+          _id: "temp_reniec",
           id: "temp_reniec",
           dni: dataReniec.dni,
           nombres: dataReniec.nombres,
@@ -215,30 +451,25 @@ const ReservaCita = () => {
         };
 
         setPacienteEncontrado(pacienteReniec);
-      } catch (err: unknown) {
-        // Extraemos el mensaje de forma segura
-        const mensaje =
-          err instanceof Error ? err.message : "Error desconocido";
-
-        console.warn("DNI no encontrado en Reniec:", mensaje);
+      } catch (err) {
+        console.error("Error buscando en RENIEC:", err);
         setPacienteEncontrado(null);
       } finally {
         setReniecLoading(false);
       }
-    }
-  };
+    },
+    [todosLosPacientes]
+  );
 
-  const handleSelectPaciente = (paciente: PacienteTransformado) => {
+  const handleSelectPaciente = useCallback((paciente: PacienteTransformado) => {
     setPacienteSeleccionado(paciente);
     setSearchDNI(paciente.dni);
     setError("");
-  };
+  }, []);
 
-  const handlePacienteCreado = async (dni: string) => {
+  const handlePacienteCreado = useCallback(async (dni: string) => {
     setMostrarNuevoPaciente(false);
-    await cargarDatos(); // Recargar lista completa
 
-    // Buscar el recién creado en la lista actualizada (esto podría optimizarse retornándolo desde el modal)
     const pacientes = await PacienteApiService.listar();
     setTodosLosPacientes(pacientes);
 
@@ -248,147 +479,37 @@ const ReservaCita = () => {
       setPacienteSeleccionado(pacienteNuevo);
       setSearchDNI(pacienteNuevo.dni);
     }
-  };
+  }, []);
 
-  // ===============================
-  // CARGA INICIAL
-  // ===============================
-  const cargarDatos = async () => {
-    try {
-      setLoading(true);
-      const [pacientes, especialidadesData, doctoresData] = await Promise.all([
-        PacienteApiService.listar(),
-        EspecialidadApiService.listar(),
-        DoctorApiService.listar(), // <--- Cargamos todos los doctores aquí
-      ]);
-      setTodosLosPacientes(pacientes);
-      setEspecialidades(especialidadesData);
-      setTodosLosDoctores(doctoresData); // Guardamos en la lista maestra
-    } catch (e) {
-      console.error("Error cargando datos iniciales", e);
-      setError("Error de conexión al cargar datos.");
-    } finally {
-      setLoading(false);
-    }
-  };
+  // ============================================================================
+  // NAVIGATION HANDLERS
+  // ============================================================================
 
-  // ===============================
-  // STEPS
-  // ===============================
-  const siguientePaso = () => {
+  const siguientePaso = useCallback(() => {
     setError("");
-    setPasoActual((p) => (p < 7 ? p + 1 : p));
-  };
+    setPasoActual((prev) => Math.min(prev + 1, PASOS_TOTALES));
+  }, []);
 
-  const pasoAnterior = () => setPasoActual((p) => (p > 1 ? p - 1 : p));
+  const pasoAnterior = useCallback(() => {
+    setPasoActual((prev) => Math.max(prev - 1, 1));
+  }, []);
 
-  const irAlPaso = (paso: number) => {
-    if (paso < pasoActual) setPasoActual(paso);
-  };
-
-  // ===============================
-  // FECHAS Y HORARIOS
-  // ===============================
-  const generarMesesDisponibles = () => {
-    const meses: MesOption[] = [];
-    const hoy = new Date();
-    const nombresMeses = [
-      "Enero",
-      "Febrero",
-      "Marzo",
-      "Abril",
-      "Mayo",
-      "Junio",
-      "Julio",
-      "Agosto",
-      "Septiembre",
-      "Octubre",
-      "Noviembre",
-      "Diciembre",
-    ];
-
-    for (let i = 0; i < 3; i++) {
-      const fecha = new Date(hoy.getFullYear(), hoy.getMonth() + i, 1);
-      meses.push({
-        numero: fecha.getMonth(),
-        nombre: nombresMeses[fecha.getMonth()],
-        anio: fecha.getFullYear(),
-      });
-    }
-    setMesesDisponibles(meses);
-  };
-
-  const generarDiasDelMes = (mes: MesOption) => {
-    const hoy = new Date();
-    hoy.setHours(0, 0, 0, 0);
-    const ultimoDia = new Date(mes.anio, mes.numero + 1, 0);
-    const dias: number[] = [];
-
-    for (let dia = 1; dia <= ultimoDia.getDate(); dia++) {
-      const fecha = new Date(mes.anio, mes.numero, dia);
-      if (fecha >= hoy) dias.push(dia);
-    }
-
-    return dias;
-  };
-
-  useEffect(() => {
-    const obtenerHorarios = async () => {
-      // Solo buscamos si tenemos todos los datos necesarios
-      if (diaSeleccionado && mesSeleccionado && doctorSeleccionado) {
-        // 1. Construir fecha formato ISO (YYYY-MM-DD) para el Backend
-        const fechaObj = new Date(
-          mesSeleccionado.anio,
-          mesSeleccionado.numero,
-          diaSeleccionado
-        );
-
-        // Ajuste para formatear YYYY-MM-DD correctamente
-        const anio = fechaObj.getFullYear();
-        const mesStr = String(fechaObj.getMonth() + 1).padStart(2, "0");
-        const diaStr = String(fechaObj.getDate()).padStart(2, "0");
-        const fechaISO = `${anio}-${mesStr}-${diaStr}`;
-
-        try {
-          // 2. LLAMADA A TU SERVICIO REAL
-          const horariosData =
-            await DoctorApiService.obtenerHorariosDisponibles(
-              doctorSeleccionado.id,
-              fechaISO
-            );
-
-          // 3. Guardar en el estado
-          setHorariosPorDia([
-            {
-              fecha: fechaObj.toLocaleDateString(),
-              fechaISO: fechaISO,
-              diaNombre: fechaObj.toLocaleDateString("es-ES", {
-                weekday: "long",
-              }),
-              diaNumero: diaSeleccionado,
-              horarios: horariosData,
-            },
-          ]);
-        } catch (error) {
-          console.error("Error cargando horarios", error);
-          setHorariosPorDia([]);
-        }
+  const irAlPaso = useCallback(
+    (paso: number) => {
+      if (paso < pasoActual) {
+        setPasoActual(paso);
       }
-    };
+    },
+    [pasoActual]
+  );
 
-    obtenerHorarios();
+  // ============================================================================
+  // CONFIRM & CANCEL HANDLERS
+  // ============================================================================
 
-    // Limpiamos la selección de hora previa si el usuario cambia de día
-    setHoraSeleccionada("");
-    setFechaSeleccionada("");
-  }, [diaSeleccionado, mesSeleccionado, doctorSeleccionado]);
-
-  // ===============================
-  // CONFIRMAR CITA (CORREGIDO)
-  // ===============================
-  const handleConfirmarCita = async () => {
-    if (pasoActual !== 7) {
-      setPasoActual(7);
+  const handleConfirmarCita = useCallback(async () => {
+    if (pasoActual !== PASOS_TOTALES) {
+      setPasoActual(PASOS_TOTALES);
       return;
     }
 
@@ -398,7 +519,7 @@ const ReservaCita = () => {
       !horaSeleccionada ||
       !fechaSeleccionada
     ) {
-      setError("Datos incompletos.");
+      setError("Datos incompletos para confirmar la cita.");
       return;
     }
 
@@ -407,33 +528,23 @@ const ReservaCita = () => {
 
       let pacienteIdFinal = pacienteSeleccionado.id;
 
-      // 🚨 PASO CRÍTICO: Si el paciente viene de RENIEC (ID temporal),
-      // primero debemos guardarlo en la Base de Datos para obtener un ID real.
+      // Crear paciente si es de RENIEC
       if (pacienteIdFinal === "temp_reniec") {
-        try {
-          // Registramos al paciente con los datos que tenemos de RENIEC
-          const nuevoPaciente = await PacienteApiService.crear({
-            dni: pacienteSeleccionado.dni,
-            nombres: pacienteSeleccionado.nombres,
-            apellidos: pacienteSeleccionado.apellidos,
-            // Llenamos con vacíos los datos que no trae RENIEC
-            telefono: "",
-            correo: "",
-            direccion: "",
-            fechaNacimiento: "",
-          });
+        const nuevoPaciente = await PacienteApiService.crear({
+          dni: pacienteSeleccionado.dni,
+          nombres: pacienteSeleccionado.nombres,
+          apellidos: pacienteSeleccionado.apellidos,
+          telefono: "",
+          correo: "",
+          direccion: "",
+          fechaNacimiento: "",
+        });
 
-          // Actualizamos el ID con el que nos devuelve la base de datos
-          pacienteIdFinal = nuevoPaciente.id;
-        } catch (err: unknown) {
-          const msg = err instanceof Error ? err.message : "Error desconocido";
-          throw new Error(`Error al registrar el paciente nuevo: ${msg}`);
-        }
+        pacienteIdFinal = nuevoPaciente.id;
       }
 
-      // Ahora sí creamos la cita con un ID válido (ObjectId)
       await CitaApiService.crear({
-        pacienteId: pacienteIdFinal, // <--- Usamos el ID real (ya sea el existente o el nuevo)
+        pacienteId: pacienteIdFinal,
         doctorId: doctorSeleccionado.id,
         fecha: fechaSeleccionada,
         hora: horaSeleccionada,
@@ -448,23 +559,33 @@ const ReservaCita = () => {
       setTimeout(() => {
         setNotification((prev) => ({ ...prev, visible: false }));
         handleCancelarCita();
-      }, 2000);
-    } catch (e: unknown) {
-      const mensaje = e instanceof Error ? e.message : "Error al crear la cita";
+      }, NOTIFICATION_DURATION);
+    } catch (err) {
+      const mensaje =
+        err instanceof Error ? err.message : "Error al crear la cita";
       setError(mensaje);
+      console.error("Error confirmando cita:", err);
     } finally {
       setLoading(false);
     }
-  };
+  }, [
+    pasoActual,
+    pacienteSeleccionado,
+    doctorSeleccionado,
+    horaSeleccionada,
+    fechaSeleccionada,
+  ]);
 
-  const handleCancelarCita = () => {
+  const handleCancelarCita = useCallback(() => {
+    // Reset all states
     setSearchDNI("");
     setPacienteEncontrado(null);
     setPacienteSeleccionado(null);
     setEspecialidadSeleccionada(null);
     setSearchEspecialidad("");
+    setShowEspecialidadesSuggestions(false);
     setDoctorSeleccionado(null);
-    setDoctoresDisponibles([]); // Se limpiará solo por el useEffect de especialidad, pero por seguridad
+    setDoctoresDisponibles([]);
     setMesSeleccionado(null);
     setDiaSeleccionado(null);
     setDiasDelMes([]);
@@ -473,14 +594,48 @@ const ReservaCita = () => {
     setHorariosPorDia([]);
     setError("");
     setPasoActual(1);
-  };
+  }, []);
 
-  // ============================================================
-  // =============== RENDER PRINCIPAL ===========================
-  // ============================================================
+  // ============================================================================
+  // VALIDATION HELPERS
+  // ============================================================================
+
+  const isPasoValido = useCallback(
+    (paso: number): boolean => {
+      switch (paso) {
+        case 1:
+          return !!especialidadSeleccionada;
+        case 2:
+          return !!doctorSeleccionado;
+        case 3:
+          return !!mesSeleccionado;
+        case 4:
+          return !!diaSeleccionado;
+        case 5:
+          return !!fechaSeleccionada && !!horaSeleccionada;
+        case 6:
+          return !!pacienteSeleccionado;
+        default:
+          return true;
+      }
+    },
+    [
+      especialidadSeleccionada,
+      doctorSeleccionado,
+      mesSeleccionado,
+      diaSeleccionado,
+      fechaSeleccionada,
+      horaSeleccionada,
+      pacienteSeleccionado,
+    ]
+  );
+
+  // ============================================================================
+  // RENDER STEPS
+  // ============================================================================
+
   const renderPasoActual = () => {
     switch (pasoActual) {
-      // ================= PASO 1 =================
       case 1:
         return (
           <div className="form-step">
@@ -529,7 +684,6 @@ const ReservaCita = () => {
                               setEspecialidadSeleccionada(esp);
                               setSearchEspecialidad(esp.nombre);
                               setShowEspecialidadesSuggestions(false);
-                              //   setDoctorSeleccionado(null); // Esto ahora lo maneja el useEffect
                             }}
                           >
                             🏥 {esp.nombre}
@@ -549,6 +703,7 @@ const ReservaCita = () => {
                       setSearchEspecialidad("");
                     }}
                     className="tag-close"
+                    aria-label="Deseleccionar especialidad"
                   >
                     ×
                   </button>
@@ -558,7 +713,6 @@ const ReservaCita = () => {
           </div>
         );
 
-      // ================= PASO 2 =================
       case 2:
         return (
           <div className="form-step">
@@ -583,6 +737,14 @@ const ReservaCita = () => {
                       doctorSeleccionado?.id === doctor.id ? "seleccionado" : ""
                     }`}
                     onClick={() => setDoctorSeleccionado(doctor)}
+                    role="button"
+                    tabIndex={0}
+                    onKeyDown={(e) => {
+                      if (e.key === "Enter" || e.key === " ") {
+                        e.preventDefault();
+                        setDoctorSeleccionado(doctor);
+                      }
+                    }}
                   >
                     <div className="doctor-avatar">👨‍⚕️</div>
                     <div className="doctor-info-text">
@@ -601,7 +763,6 @@ const ReservaCita = () => {
           </div>
         );
 
-      // ================= PASO 3 =================
       case 3:
         return (
           <div className="form-step">
@@ -613,10 +774,13 @@ const ReservaCita = () => {
             <div className="selector-mes">
               {mesesDisponibles.map((mes) => (
                 <button
-                  key={mes.numero}
+                  key={`${mes.anio}-${mes.numero}`}
                   type="button"
                   className={`mes-btn ${
-                    mesSeleccionado?.numero === mes.numero ? "activo" : ""
+                    mesSeleccionado?.numero === mes.numero &&
+                    mesSeleccionado?.anio === mes.anio
+                      ? "activo"
+                      : ""
                   }`}
                   onClick={() => {
                     setMesSeleccionado(mes);
@@ -631,7 +795,6 @@ const ReservaCita = () => {
           </div>
         );
 
-      // ================= PASO 4 =================
       case 4:
         return (
           <div className="form-step">
@@ -644,6 +807,7 @@ const ReservaCita = () => {
               {diasDelMes.map((d) => (
                 <button
                   key={d}
+                  type="button"
                   className={`dia-btn ${diaSeleccionado === d ? "activo" : ""}`}
                   onClick={() => setDiaSeleccionado(d)}
                 >
@@ -654,7 +818,6 @@ const ReservaCita = () => {
           </div>
         );
 
-      // ================= PASO 5 =================
       case 5:
         return (
           <div className="form-step">
@@ -680,6 +843,7 @@ const ReservaCita = () => {
                             type="radio"
                             name="horario"
                             value={h.hora}
+                            checked={h.hora === horaSeleccionada}
                             onChange={() => {
                               setHoraSeleccionada(h.hora);
                               setFechaSeleccionada(dia.fechaISO);
@@ -695,7 +859,6 @@ const ReservaCita = () => {
           </div>
         );
 
-      // ================= PASO 6 (DISEÑO MEJORADO) =================
       case 6:
         return (
           <div className="form-step">
@@ -713,20 +876,26 @@ const ReservaCita = () => {
                   id="dni"
                   value={searchDNI}
                   onChange={(e) => handleBuscarPaciente(e.target.value)}
-                  maxLength={8}
+                  maxLength={DNI_LENGTH}
                   placeholder="Ingrese los 8 dígitos..."
                   disabled={reniecLoading}
                 />
                 {reniecLoading && <div className="search-icon-spinner">⌛</div>}
               </div>
 
-              {/* === TARJETA DE RESULTADO === */}
               {pacienteEncontrado && !pacienteSeleccionado && (
                 <div
                   className="paciente-result-card"
                   onClick={() => handleSelectPaciente(pacienteEncontrado)}
+                  role="button"
+                  tabIndex={0}
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter" || e.key === " ") {
+                      e.preventDefault();
+                      handleSelectPaciente(pacienteEncontrado);
+                    }
+                  }}
                 >
-                  {/* Avatar con inicial */}
                   <div className="paciente-avatar-placeholder">
                     {pacienteEncontrado.nombres.charAt(0)}
                   </div>
@@ -746,7 +915,6 @@ const ReservaCita = () => {
                     </div>
                   </div>
 
-                  {/* Icono de flecha o check sutil a la derecha */}
                   <div
                     style={{
                       marginLeft: "auto",
@@ -759,8 +927,7 @@ const ReservaCita = () => {
                 </div>
               )}
 
-              {/* === ESTADO NO ENCONTRADO === */}
-              {searchDNI.length === 8 &&
+              {esDNIValido(searchDNI) &&
                 !reniecLoading &&
                 !pacienteEncontrado &&
                 !pacienteSeleccionado && (
@@ -779,7 +946,6 @@ const ReservaCita = () => {
                 )}
             </div>
 
-            {/* Input "Nombre Completo" (Solo visible si ya seleccionamos, para confirmar visualmente) */}
             <div className="form-group" style={{ marginTop: "1.5rem" }}>
               <label>Paciente Seleccionado</label>
               <input
@@ -792,16 +958,12 @@ const ReservaCita = () => {
                     : ""
                 }
                 className="input-disabled"
-                style={{
-                  // Si ya seleccionó, ponemos borde verde para indicar éxito
-                  borderColor: pacienteSeleccionado ? "#86efac" : "",
-                }}
+                style={{ borderColor: pacienteSeleccionado ? "#86efac" : "" }}
               />
             </div>
           </div>
         );
 
-      // ================= PASO 7 =================
       case 7:
         return (
           <div className="form-step step-resumen">
@@ -839,12 +1001,16 @@ const ReservaCita = () => {
             </div>
           </div>
         );
+
+      default:
+        return null;
     }
   };
 
-  // ============================================================
-  // UI PRINCIPAL
-  // ============================================================
+  // ============================================================================
+  // MAIN RENDER
+  // ============================================================================
+
   return (
     <div className="reserva-cita">
       {notification.visible && (
@@ -859,6 +1025,7 @@ const ReservaCita = () => {
           onClick={handleCancelarCita}
           className="btn-close-form"
           title="Cancelar y Reiniciar"
+          aria-label="Cancelar y reiniciar formulario"
         >
           ×
         </button>
@@ -887,20 +1054,12 @@ const ReservaCita = () => {
               Anterior
             </button>
 
-            {pasoActual < 7 ? (
+            {pasoActual < PASOS_TOTALES ? (
               <button
                 type="button"
                 className="btn btn-primary"
                 onClick={siguientePaso}
-                disabled={
-                  (pasoActual === 1 && !especialidadSeleccionada) ||
-                  (pasoActual === 2 && !doctorSeleccionado) ||
-                  (pasoActual === 3 && !mesSeleccionado) ||
-                  (pasoActual === 4 && !diaSeleccionado) ||
-                  (pasoActual === 5 &&
-                    (!fechaSeleccionada || !horaSeleccionada)) ||
-                  (pasoActual === 6 && !pacienteSeleccionado)
-                }
+                disabled={!isPasoValido(pasoActual)}
               >
                 Siguiente
               </button>
@@ -909,6 +1068,7 @@ const ReservaCita = () => {
                 type="button"
                 className="btn btn-primary"
                 onClick={handleConfirmarCita}
+                disabled={loading}
               >
                 Confirmar Cita
               </button>

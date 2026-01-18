@@ -1,23 +1,29 @@
 import { BrowserRouter, Routes, Route, Outlet } from "react-router-dom";
 import Header from "./components/Layout/Header";
 import Sidebar from "./components/Layout/Sidebar";
+
 import ReservaCita from "./pages/ReservaCita/ReservaCita";
 import ListaCitas from "./pages/ListaCitas/ListaCitas";
 import ListaMedicos from "./pages/ListaMedicos/ListaMedicos";
 import ListaPacientes from "./pages/ListaPacientes/ListaPacientes";
-import Login from "./pages/Login/Login";
+import Calendario from "./pages/Calendario/Calendario";
 import MedicoDashboard from "./pages/MedicoDashboard/MedicoDashboard";
+import PerfilCita from "./pages/PerfilCita/PerfilCita";
+
+import Login from "./pages/Login/Login";
+
 import { AuthProvider } from "./context/AuthProvider";
 import { ProtectedRoute } from "./routes/ProtectedRoute";
-import Calendario from "./pages/Calendario/Calendario";
 
 function App() {
   return (
     <AuthProvider>
       <BrowserRouter>
         <Routes>
+          {/* ================== PUBLIC ================== */}
           <Route path="/login" element={<Login />} />
 
+          {/* ================== PROTECTED ================== */}
           <Route element={<ProtectedLayout />}>
             <Route
               path="/"
@@ -42,6 +48,16 @@ function App() {
               element={
                 <ProtectedRoute roles={["RECEPCIONISTA"]}>
                   <ListaCitas />
+                </ProtectedRoute>
+              }
+            />
+
+            {/* 👇 RUTA PERFIL DE CITA */}
+            <Route
+              path="/citas/:citaId"
+              element={
+                <ProtectedRoute roles={["RECEPCIONISTA"]}>
+                  <PerfilCita />
                 </ProtectedRoute>
               }
             />

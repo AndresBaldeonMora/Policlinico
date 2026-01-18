@@ -1,4 +1,5 @@
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState, useCallback } from "react";
+import { useNavigate } from "react-router-dom";
 import { CitaApiService } from "../../services/cita.service";
 import { DoctorApiService } from "../../services/doctor.service";
 import type { CitaTransformada } from "../../services/cita.service";
@@ -6,58 +7,200 @@ import type { DoctorTransformado } from "../../services/doctor.service";
 import MiniCalendario from "./MiniCalendario";
 import "./Calendario.css";
 
+// ============================================================================
+// TYPES & CONSTANTS
+// ============================================================================
+
 type Vista = "dia" | "semana" | "mes";
 
-const diasSemana = ["Lun", "Mar", "Mié", "Jue", "Vie", "Sáb", "Dom"];
+const DIAS_SEMANA = ["Lun", "Mar", "Mié", "Jue", "Vie", "Sáb", "Dom"] as const;
+const VISTAS: readonly Vista[] = ["dia", "semana", "mes"] as const;
+const DOCTOR_TODOS_ID = "ALL";
 
-const HORAS_LABORALES = Array.from({ length: 36 }, (_, i) => {
-  const total = 8 * 60 + i * 15;
-  const h = Math.floor(total / 60);
-  const m = total % 60;
-  return `${h.toString().padStart(2, "0")}:${m.toString().padStart(2, "0")}`;
-});
+const HORA_INICIO = 8; // 8:00 AM
+const HORA_FIN = 17; // 5:00 PM
+const INTERVALO_MINUTOS = 15;
+const DIAS_POR_SEMANA = 7;
+
+// ============================================================================
+// UTILITY FUNCTIONS
+// ============================================================================
+
+/**
+ * Genera array de horas laborales en formato HH:MM
+ */
+const generarHorasLaborales = (): string[] => {
+  const totalMinutos = (HORA_FIN - HORA_INICIO) * 60;
+  const totalIntervalos = Math.ceil(totalMinutos / INTERVALO_MINUTOS);
+
+  return Array.from({ length: totalIntervalos }, (_, i) => {
+    const minutosDesdeInicio = HORA_INICIO * 60 + i * INTERVALO_MINUTOS;
+    const horas = Math.floor(minutosDesdeInicio / 60);
+    const minutos = minutosDesdeInicio % 60;
+    return `${horas.toString().padStart(2, "0")}:${minutos
+      .toString()
+      .padStart(2, "0")}`;
+  });
+};
+
+const HORAS_LABORALES = generarHorasLaborales();
+
+/**
+ * Convierte Date a formato ISO YYYY-MM-DD
+ */
+const toISODateLocal = (d: Date): string => {
+  const y = d.getFullYear();
+  const m = String(d.getMonth() + 1).padStart(2, "0");
+  const day = String(d.getDate()).padStart(2, "0");
+  return `${y}-${m}-${day}`;
+};
+
+/**
+ * Obtiene el inicio de la semana (Lunes)
+ */
+const obtenerInicioSemana = (d: Date): Date => {
+  const inicio = new Date(d);
+  const offset = (inicio.getDay() + 6) % 7; // Lunes = 0
+  inicio.setDate(inicio.getDate() - offset);
+  inicio.setHours(0, 0, 0, 0);
+  return inicio;
+};
+
+/**
+ * Compara dos fechas por día (ignora hora)
+ */
+const esMismoDia = (d1: Date, d2: Date): boolean => {
+  return (
+    d1.getFullYear() === d2.getFullYear() &&
+    d1.getMonth() === d2.getMonth() &&
+    d1.getDate() === d2.getDate()
+  );
+};
+
+/**
+ * Valida si una fecha es válida
+ */
+const esFechaValida = (d: Date): boolean => {
+  return !isNaN(d.getTime());
+};
+
+// ============================================================================
+// MAIN COMPONENT
+// ============================================================================
 
 const Calendario = () => {
+  // State
   const [vista, setVista] = useState<Vista>("mes");
   const [fecha, setFecha] = useState<Date>(new Date());
   const [citas, setCitas] = useState<CitaTransformada[]>([]);
   const [doctores, setDoctores] = useState<DoctorTransformado[]>([]);
-  const [doctorId, setDoctorId] = useState<string>("ALL");
+  const [doctorId, setDoctorId] = useState<string>(DOCTOR_TODOS_ID);
+  const [loading, setLoading] = useState(false);
+
+  const navigate = useNavigate();
+
+  // ============================================================================
+  // DATA LOADING
+  // ============================================================================
+
+  const cargarDoctores = useCallback(async () => {
+    try {
+      const data = await DoctorApiService.listar();
+      setDoctores(data);
+    } catch (error) {
+      console.error("Error cargando doctores:", error);
+      setDoctores([]);
+    }
+  }, []);
+
+  const cargarCitas = useCallback(async () => {
+    try {
+      setLoading(true);
+      const fechaStr = toISODateLocal(fecha);
+      const data = await CitaApiService.obtenerCalendario(
+        fechaStr,
+        vista,
+        doctorId
+      );
+      setCitas(data);
+    } catch (error) {
+      console.error("Error cargando citas:", error);
+      setCitas([]);
+    } finally {
+      setLoading(false);
+    }
+  }, [fecha, vista, doctorId]);
 
   useEffect(() => {
-    DoctorApiService.listar().then(setDoctores);
-  }, []);
+    cargarDoctores();
+  }, [cargarDoctores]);
 
   useEffect(() => {
     cargarCitas();
-  }, [fecha, vista, doctorId]);
+  }, [cargarCitas]);
 
-  const cargarCitas = async () => {
-    const fechaStr = fecha.toISOString().split("T")[0];
-    const data = await CitaApiService.obtenerCalendario(
-      fechaStr,
-      vista,
-      doctorId
-    );
-    setCitas(data);
-  };
+  // ============================================================================
+  // NAVIGATION HANDLERS
+  // ============================================================================
 
-  const cambiarFecha = (delta: number) => {
-    const f = new Date(fecha);
-    if (vista === "mes") f.setMonth(f.getMonth() + delta);
-    if (vista === "semana") f.setDate(f.getDate() + delta * 7);
-    if (vista === "dia") f.setDate(f.getDate() + delta);
-    setFecha(f);
-  };
+  const cambiarFecha = useCallback(
+    (delta: number) => {
+      setFecha((prevFecha) => {
+        const nuevaFecha = new Date(prevFecha);
 
-  const inicioSemana = (d: Date) => {
-    const i = new Date(d);
-    const day = (i.getDay() + 6) % 7;
-    i.setDate(i.getDate() - day);
-    return i;
-  };
+        switch (vista) {
+          case "mes":
+            nuevaFecha.setMonth(nuevaFecha.getMonth() + delta);
+            break;
+          case "semana":
+            nuevaFecha.setDate(nuevaFecha.getDate() + delta * DIAS_POR_SEMANA);
+            break;
+          case "dia":
+            nuevaFecha.setDate(nuevaFecha.getDate() + delta);
+            break;
+        }
 
-  const tituloCalendario = () => {
+        return nuevaFecha;
+      });
+    },
+    [vista]
+  );
+
+  const irAReserva = useCallback(
+    (fechaISO: string, doctorIdArg?: string) => {
+      const params = new URLSearchParams();
+      params.set("fecha", fechaISO);
+
+      if (doctorIdArg && doctorIdArg !== DOCTOR_TODOS_ID) {
+        params.set("doctorId", doctorIdArg);
+      }
+
+      navigate(`/reservar-cita?${params.toString()}`);
+    },
+    [navigate]
+  );
+
+  const irADetalleCita = useCallback(
+    (e: React.MouseEvent | React.KeyboardEvent, citaId: string) => {
+      e.stopPropagation();
+      navigate(`/citas/${citaId}`);
+    },
+    [navigate]
+  );
+
+  // ============================================================================
+  // COMPUTED VALUES
+  // ============================================================================
+
+  const doctorSeleccionado = useMemo(
+    () =>
+      doctorId === DOCTOR_TODOS_ID
+        ? null
+        : doctores.find((d) => d.id === doctorId),
+    [doctorId, doctores]
+  );
+
+  const tituloCalendario = useMemo(() => {
     if (vista === "mes") {
       return fecha.toLocaleDateString("es-PE", {
         month: "long",
@@ -74,93 +217,208 @@ const Calendario = () => {
       });
     }
 
-    const ini = inicioSemana(fecha);
-    const fin = new Date(ini);
-    fin.setDate(ini.getDate() + 6);
+    // Vista semana
+    const inicio = obtenerInicioSemana(fecha);
+    const fin = new Date(inicio);
+    fin.setDate(inicio.getDate() + 6);
 
-    return `${ini.toLocaleDateString("es-PE")} – ${fin.toLocaleDateString(
+    return `${inicio.toLocaleDateString("es-PE")} – ${fin.toLocaleDateString(
       "es-PE"
     )}`;
-  };
+  }, [vista, fecha]);
 
-  const doctorSeleccionado =
-    doctorId === "ALL" ? null : doctores.find((d) => d.id === doctorId);
-
-  const generarDiasMes = () => {
+  const diasDelMes = useMemo(() => {
     const inicio = new Date(fecha.getFullYear(), fecha.getMonth(), 1);
     const fin = new Date(fecha.getFullYear(), fecha.getMonth() + 1, 0);
     const dias: Date[] = [];
+
+    // Días vacíos antes del primer día del mes
     const offset = (inicio.getDay() + 6) % 7;
+    for (let i = 0; i < offset; i++) {
+      dias.push(new Date(NaN)); // Fecha inválida para días vacíos
+    }
 
-    for (let i = 0; i < offset; i++) dias.push(new Date(NaN));
-    for (let d = 1; d <= fin.getDate(); d++)
+    // Días del mes
+    for (let d = 1; d <= fin.getDate(); d++) {
       dias.push(new Date(fecha.getFullYear(), fecha.getMonth(), d));
+    }
+
     return dias;
-  };
+  }, [fecha.getFullYear(), fecha.getMonth()]);
 
-  const citasPorFecha = (d: Date) =>
-    citas.filter((c) => new Date(c.fecha).toDateString() === d.toDateString());
+  const inicioSemana = useMemo(() => obtenerInicioSemana(fecha), [fecha]);
 
-  const citaPorHora = (d: Date, h: string) =>
-    citas.find(
-      (c) =>
-        new Date(c.fecha).toDateString() === d.toDateString() && c.hora === h
-    );
+  // ============================================================================
+  // CITA FILTERING HELPERS
+  // ============================================================================
 
-  const renderMes = () => (
-    <div className="calendario-grid">
-      {diasSemana.map((d) => (
-        <div key={d} className="calendario-col-header">
-          {d}
-        </div>
-      ))}
-
-      {generarDiasMes().map((dia, i) => (
-        <div key={i} className="calendario-celda">
-          {!isNaN(dia.getTime()) && (
-            <>
-              <span className="dia-numero">{dia.getDate()}</span>
-              {citasPorFecha(dia).map((c) => (
-                <div key={c._id} className="cita-chip">
-                  {c.hora} {c.pacienteId?.nombres ?? "Sin paciente"}
-                </div>
-              ))}
-            </>
-          )}
-        </div>
-      ))}
-    </div>
+  const obtenerCitasPorFecha = useCallback(
+    (d: Date): CitaTransformada[] => {
+      return citas.filter((c) => {
+        const fechaCita = new Date(c.fecha);
+        return esMismoDia(fechaCita, d);
+      });
+    },
+    [citas]
   );
 
-  const renderSemana = () => {
-    const inicio = inicioSemana(fecha);
+  const obtenerCitaPorHora = useCallback(
+    (d: Date, hora: string): CitaTransformada | undefined => {
+      return citas.find((c) => {
+        const fechaCita = new Date(c.fecha);
+        return esMismoDia(fechaCita, d) && c.hora === hora;
+      });
+    },
+    [citas]
+  );
 
-    return (
+  // ============================================================================
+  // RENDER: VISTA MES
+  // ============================================================================
+
+  const renderMes = useCallback(
+    () => (
+      <div className="calendario-grid">
+        {DIAS_SEMANA.map((dia) => (
+          <div key={dia} className="calendario-col-header">
+            {dia}
+          </div>
+        ))}
+
+        {diasDelMes.map((dia, index) => {
+          const esValido = esFechaValida(dia);
+          const citasDelDia = esValido ? obtenerCitasPorFecha(dia) : [];
+          const fechaISO = esValido ? toISODateLocal(dia) : "";
+
+          return (
+            <div
+              key={index}
+              className={`calendario-celda ${esValido ? "clickable" : ""}`}
+              onClick={() => {
+                if (esValido) {
+                  const doctorParam =
+                    doctorId !== DOCTOR_TODOS_ID ? doctorId : undefined;
+                  irAReserva(fechaISO, doctorParam);
+                }
+              }}
+              role={esValido ? "button" : undefined}
+              tabIndex={esValido ? 0 : undefined}
+              aria-label={
+                esValido ? `Agregar cita para ${fechaISO}` : undefined
+              }
+              onKeyDown={(e) => {
+                if (esValido && (e.key === "Enter" || e.key === " ")) {
+                  e.preventDefault();
+                  const doctorParam =
+                    doctorId !== DOCTOR_TODOS_ID ? doctorId : undefined;
+                  irAReserva(fechaISO, doctorParam);
+                }
+              }}
+            >
+              {esValido && (
+                <>
+                  <span className="dia-numero">{dia.getDate()}</span>
+
+                  {citasDelDia.map((cita) => (
+                    <div
+                      key={cita._id}
+                      className="cita-chip clickable"
+                      onClick={(e) => irADetalleCita(e, cita._id)}
+                      role="button"
+                      tabIndex={0}
+                      aria-label={`Ver cita de ${
+                        cita.pacienteId?.nombres || "Sin paciente"
+                      } a las ${cita.hora}`}
+                      onKeyDown={(e) => {
+                        if (e.key === "Enter" || e.key === " ") {
+                          e.preventDefault();
+                          irADetalleCita(e, cita._id);
+                        }
+                      }}
+                    >
+                      {cita.hora} {cita.pacienteId?.nombres ?? "Sin paciente"}
+                    </div>
+                  ))}
+                </>
+              )}
+            </div>
+          );
+        })}
+      </div>
+    ),
+    [diasDelMes, obtenerCitasPorFecha, doctorId, irAReserva, irADetalleCita]
+  );
+
+  // ============================================================================
+  // RENDER: VISTA SEMANA
+  // ============================================================================
+
+  const renderSemana = useCallback(
+    () => (
       <div className="agenda-semana">
         <div className="agenda-header">
-          <div />
-          {Array.from({ length: 7 }).map((_, i) => {
-            const d = new Date(inicio);
-            d.setDate(inicio.getDate() + i);
+          <div className="agenda-hora-header">Hora</div>
+          {Array.from({ length: DIAS_POR_SEMANA }).map((_, i) => {
+            const dia = new Date(inicioSemana);
+            dia.setDate(inicioSemana.getDate() + i);
+
             return (
               <div key={i} className="agenda-dia-header">
-                {diasSemana[i]} {d.getDate()}
+                {DIAS_SEMANA[i]} {dia.getDate()}
               </div>
             );
           })}
         </div>
 
-        {HORAS_LABORALES.map((h) => (
-          <div key={h} className="agenda-row">
-            <div className="agenda-hora">{h}</div>
-            {Array.from({ length: 7 }).map((_, i) => {
-              const d = new Date(inicio);
-              d.setDate(inicio.getDate() + i);
-              const cita = citaPorHora(d, h);
+        {HORAS_LABORALES.map((hora) => (
+          <div key={hora} className="agenda-row">
+            <div className="agenda-hora">{hora}</div>
+
+            {Array.from({ length: DIAS_POR_SEMANA }).map((_, i) => {
+              const dia = new Date(inicioSemana);
+              dia.setDate(inicioSemana.getDate() + i);
+              const cita = obtenerCitaPorHora(dia, hora);
+              const fechaISO = toISODateLocal(dia);
+
               return (
-                <div key={i} className="agenda-celda">
+                <div
+                  key={i}
+                  className="agenda-celda clickable"
+                  onClick={() => {
+                    const doctorParam =
+                      doctorId !== DOCTOR_TODOS_ID ? doctorId : undefined;
+                    irAReserva(fechaISO, doctorParam);
+                  }}
+                  role="button"
+                  tabIndex={0}
+                  aria-label={`Agregar cita ${
+                    DIAS_SEMANA[i]
+                  } ${dia.getDate()} a las ${hora}`}
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter" || e.key === " ") {
+                      e.preventDefault();
+                      const doctorParam =
+                        doctorId !== DOCTOR_TODOS_ID ? doctorId : undefined;
+                      irAReserva(fechaISO, doctorParam);
+                    }
+                  }}
+                >
                   {cita?.pacienteId && (
-                    <div className="agenda-cita">{cita.pacienteId.nombres}</div>
+                    <div
+                      className="agenda-cita clickable"
+                      onClick={(e) => irADetalleCita(e, cita._id)}
+                      role="button"
+                      tabIndex={0}
+                      aria-label={`Ver cita de ${cita.pacienteId.nombres}`}
+                      onKeyDown={(e) => {
+                        if (e.key === "Enter" || e.key === " ") {
+                          e.preventDefault();
+                          irADetalleCita(e, cita._id);
+                        }
+                      }}
+                    >
+                      {cita.pacienteId.nombres}
+                    </div>
                   )}
                 </div>
               );
@@ -168,32 +426,77 @@ const Calendario = () => {
           </div>
         ))}
       </div>
-    );
-  };
-
-  const renderDia = () => (
-    <div className="agenda-dia">
-      {HORAS_LABORALES.map((h) => {
-        const cita = citaPorHora(fecha, h);
-        return (
-          <div key={h} className="agenda-linea">
-            <div className="agenda-hora">{h}</div>
-            <div className="agenda-celda">
-              {cita?.pacienteId && (
-                <div className="agenda-cita">
-                  {cita.pacienteId.nombres} {cita.pacienteId.apellidos}
-                </div>
-              )}
-            </div>
-          </div>
-        );
-      })}
-    </div>
+    ),
+    [inicioSemana, obtenerCitaPorHora, doctorId, irAReserva, irADetalleCita]
   );
+
+  // ============================================================================
+  // RENDER: VISTA DÍA
+  // ============================================================================
+
+  const renderDia = useCallback(
+    () => (
+      <div className="agenda-dia">
+        {HORAS_LABORALES.map((hora) => {
+          const cita = obtenerCitaPorHora(fecha, hora);
+          const fechaISO = toISODateLocal(fecha);
+
+          return (
+            <div key={hora} className="agenda-linea">
+              <div className="agenda-hora">{hora}</div>
+              <div
+                className="agenda-celda clickable"
+                onClick={() => {
+                  const doctorParam =
+                    doctorId !== DOCTOR_TODOS_ID ? doctorId : undefined;
+                  irAReserva(fechaISO, doctorParam);
+                }}
+                role="button"
+                tabIndex={0}
+                aria-label={`Agregar cita a las ${hora}`}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter" || e.key === " ") {
+                    e.preventDefault();
+                    const doctorParam =
+                      doctorId !== DOCTOR_TODOS_ID ? doctorId : undefined;
+                    irAReserva(fechaISO, doctorParam);
+                  }
+                }}
+              >
+                {cita?.pacienteId && (
+                  <div
+                    className="agenda-cita clickable"
+                    onClick={(e) => irADetalleCita(e, cita._id)}
+                    role="button"
+                    tabIndex={0}
+                    aria-label={`Ver cita de ${cita.pacienteId.nombres} ${cita.pacienteId.apellidos}`}
+                    onKeyDown={(e) => {
+                      if (e.key === "Enter" || e.key === " ") {
+                        e.preventDefault();
+                        irADetalleCita(e, cita._id);
+                      }
+                    }}
+                  >
+                    {cita.pacienteId.nombres} {cita.pacienteId.apellidos}
+                  </div>
+                )}
+              </div>
+            </div>
+          );
+        })}
+      </div>
+    ),
+    [fecha, obtenerCitaPorHora, doctorId, irAReserva, irADetalleCita]
+  );
+
+  // ============================================================================
+  // MAIN RENDER
+  // ============================================================================
 
   return (
     <div className="calendario-container">
       <div className="calendario-layout">
+        {/* Panel Izquierdo */}
         <div className="calendario-left">
           <MiniCalendario fecha={fecha} onChange={setFecha} />
 
@@ -202,39 +505,78 @@ const Calendario = () => {
 
             <div className="doctores-lista">
               <div
-                className={`doctor-item ${doctorId === "ALL" ? "activo" : ""}`}
-                onClick={() => setDoctorId("ALL")}
+                className={`doctor-item ${
+                  doctorId === DOCTOR_TODOS_ID ? "activo" : ""
+                }`}
+                onClick={() => setDoctorId(DOCTOR_TODOS_ID)}
+                role="button"
+                tabIndex={0}
+                aria-label="Ver todos los doctores"
+                onKeyDown={(e) => {
+                  if (e.key === "Enter" || e.key === " ") {
+                    e.preventDefault();
+                    setDoctorId(DOCTOR_TODOS_ID);
+                  }
+                }}
               >
                 Todos los doctores
               </div>
 
-              {doctores.map((d) => (
+              {doctores.map((doctor) => (
                 <div
-                  key={d.id}
-                  className={`doctor-item ${doctorId === d.id ? "activo" : ""}`}
-                  onClick={() => setDoctorId(d.id)}
+                  key={doctor.id}
+                  className={`doctor-item ${
+                    doctorId === doctor.id ? "activo" : ""
+                  }`}
+                  onClick={() => setDoctorId(doctor.id)}
+                  role="button"
+                  tabIndex={0}
+                  aria-label={`Ver calendario de ${doctor.apellidos}, ${doctor.nombres}`}
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter" || e.key === " ") {
+                      e.preventDefault();
+                      setDoctorId(doctor.id);
+                    }
+                  }}
                 >
-                  {d.apellidos}, {d.nombres}
+                  {doctor.apellidos}, {doctor.nombres}
                 </div>
               ))}
             </div>
           </div>
         </div>
 
+        {/* Panel Principal */}
         <div className="calendario-main">
           <div className="calendario-topbar">
-            <button onClick={() => cambiarFecha(-1)}>◀</button>
-            <h2>{tituloCalendario()}</h2>
-            <button onClick={() => cambiarFecha(1)}>▶</button>
+            <button
+              onClick={() => cambiarFecha(-1)}
+              aria-label="Período anterior"
+            >
+              ◀
+            </button>
+            <h2>{tituloCalendario}</h2>
+            <button
+              onClick={() => cambiarFecha(1)}
+              aria-label="Período siguiente"
+            >
+              ▶
+            </button>
 
-            <div className="vista-selector">
-              {(["dia", "semana", "mes"] as Vista[]).map((v) => (
+            <div
+              className="vista-selector"
+              role="group"
+              aria-label="Selector de vista"
+            >
+              {VISTAS.map((v) => (
                 <button
                   key={v}
                   className={vista === v ? "active" : ""}
                   onClick={() => setVista(v)}
+                  aria-pressed={vista === v}
+                  aria-label={`Vista ${v}`}
                 >
-                  {v}
+                  {v.charAt(0).toUpperCase() + v.slice(1)}
                 </button>
               ))}
             </div>
@@ -247,9 +589,17 @@ const Calendario = () => {
             </div>
           )}
 
-          {vista === "mes" && renderMes()}
-          {vista === "semana" && renderSemana()}
-          {vista === "dia" && renderDia()}
+          {loading && (
+            <div className="loading-indicator">Cargando citas...</div>
+          )}
+
+          {!loading && (
+            <>
+              {vista === "mes" && renderMes()}
+              {vista === "semana" && renderSemana()}
+              {vista === "dia" && renderDia()}
+            </>
+          )}
         </div>
       </div>
     </div>
