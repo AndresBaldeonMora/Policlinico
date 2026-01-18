@@ -1,86 +1,60 @@
-// src/services/cita.service.ts
-
 import api from "./api";
 
-// ------------------- Tipos y DTOs -------------------
-
-export interface Cita {
-  _id?: string;
-  id?: string;
-  pacienteId: string;
-  doctorId: string;
-  fecha: Date | string;
-  hora: string;
-  estado?: "pendiente" | "reprogramado" | "finalizado";
-  createdAt?: string;
-  updatedAt?: string;
-}
+export type EstadoCita = "PENDIENTE" | "ATENDIDA" | "CANCELADA" | "REPROGRAMADA";
 
 export interface CrearCitaDTO {
   pacienteId: string;
   doctorId: string;
-  fecha: string; // "2025-10-17" (YYYY-MM-DD)
-  hora: string; // "08:00"
+  fecha: string;
+  hora: string;
 }
 
-export interface CitaPopulada extends Omit<Cita, "pacienteId" | "doctorId"> {
-  paciente: {
-    _id: string;
-    nombres: string;
-    apellidos: string;
-    dni: string;
-  };
-  doctor: {
-    _id: string;
-    nombres: string;
-    apellidos: string;
-    especialidadId: {
-      _id: string;
-      nombre: string;
-    };
-  };
+export interface Cita {
+  _id: string;
+  pacienteId: string;
+  doctorId: string;
+  fecha: string;
+  hora: string;
+  estado: EstadoCita;
+  createdAt?: string;
+  updatedAt?: string;
 }
 
-// src/services/cita.service.ts
 export interface CitaProcesada {
   _id: string;
   id: number;
   dni: string;
   paciente: string;
   doctor: string;
-  doctorId: string; // ✅ AGREGAR ESTA LÍNEA
+  doctorId: string;
   especialidad: string;
   fecha: string;
   hora: string;
-  estado: "pendiente" | "reprogramado" | "finalizado";
+  estado: EstadoCita;
 }
 
 export interface CitaTransformada {
   _id: string;
   pacienteId: {
+    _id?: string;
     nombres: string;
     apellidos: string;
     dni: string;
-  };
+    telefono?: string;
+  } | null;
   doctorId: {
     _id: string;
     nombres: string;
     apellidos: string;
-  };
+  } | null;
   fecha: string;
   hora: string;
-  estado: string;
+  estado: EstadoCita;
 }
 
-
-// ------------------- Servicio -------------------
-
 export class CitaApiService {
-
-  // 🟢 Crear nueva cita
   static async crear(datos: CrearCitaDTO): Promise<Cita> {
     try {
-      // Se envía directamente YYYY-MM-DD. El Controller lo procesa.
       const payload = {
         pacienteId: datos.pacienteId,
         doctorId: datos.doctorId,
@@ -88,73 +62,62 @@ export class CitaApiService {
         hora: datos.hora,
       };
 
-      const response = await api.post<{ success: boolean; data: Cita }>(
+      const response = await api.post<{ success: boolean; data: Cita; message?: string; error?: string }>(
         "/citas",
         payload
       );
 
-      if (response.data.success && response.data.data) {
-        return response.data.data;
-      }
+      if (response.data.success && response.data.data) return response.data.data;
 
-      throw new Error("Respuesta inesperada del servidor");
+      throw new Error(response.data.message || response.data.error || "Respuesta inesperada del servidor");
     } catch (error: unknown) {
-      if (error instanceof Error) {
-        console.error("❌ Error al crear cita:", error.message);
-        throw error;
-      }
-
       const err = error as {
         response?: { data?: { message?: string; error?: string } };
         message?: string;
       };
 
-      console.error("❌ Error al crear cita:", err.response?.data || err.message);
       throw new Error(
         err.response?.data?.message ||
-        err.response?.data?.error ||
-        err.message ||
-        "Error al crear la cita"
+          err.response?.data?.error ||
+          err.message ||
+          "Error al crear la cita"
       );
     }
   }
 
-static async obtenerCalendario(fecha: string, vista: string): Promise<CitaTransformada[]> {
-  const r = await api.get(`/citas/calendario?fecha=${fecha}&vista=${vista}`);
-  return r.data.data;
-}
+  static async obtenerCalendario(
+    fecha: string,
+    vista: "dia" | "semana" | "mes",
+    medicoId?: string
+  ): Promise<CitaTransformada[]> {
+    const params = new URLSearchParams({ fecha, vista });
+    if (medicoId && medicoId !== "ALL") params.set("medicoId", medicoId);
 
-  // 🟣 Listar todas las citas
+    const r = await api.get<{ success: boolean; data: CitaTransformada[]; message?: string }>(
+      `/citas/calendario?${params.toString()}`
+    );
+
+    return r.data.data || [];
+  }
+
   static async listar(): Promise<CitaProcesada[]> {
     try {
-      const response = await api.get<{ success: boolean; data: CitaProcesada[] }>(
+      const response = await api.get<{ success: boolean; data: CitaProcesada[]; message?: string }>(
         "/citas"
       );
-
-      if (response.data.success && response.data.data) {
-        // La data ya viene ordenada (más reciente primero) y formateada del backend.
-        return response.data.data;
-      }
-
+      if (response.data.success && response.data.data) return response.data.data;
       return [];
     } catch (error: unknown) {
-      if (error instanceof Error) {
-        console.error("❌ Error al listar citas:", error.message);
-        throw error;
-      }
-
-      const err = error as { response?: { data?: { message?: string } } };
-      console.error("❌ Error al listar citas:", err.response?.data);
-      throw new Error(err.response?.data?.message || "Error al listar citas");
+      const err = error as { response?: { data?: { message?: string } }; message?: string };
+      throw new Error(err.response?.data?.message || err.message || "Error al listar citas");
     }
   }
 
-  // 🔵 Reprogramar cita
   static async reprogramar(id: string, nuevaFecha: string, nuevaHora: string): Promise<void> {
     try {
-      // NuevaFecha (YYYY-MM-DD) y nuevaHora se envían al backend
       const payload = { fecha: nuevaFecha, hora: nuevaHora };
-      const response = await api.put<{ success: boolean; message: string }>(
+
+      const response = await api.put<{ success: boolean; message?: string }>(
         `/citas/${id}/reprogramar`,
         payload
       );
@@ -163,14 +126,8 @@ static async obtenerCalendario(fecha: string, vista: string): Promise<CitaTransf
         throw new Error(response.data.message || "Error al reprogramar cita");
       }
     } catch (error: unknown) {
-      if (error instanceof Error) {
-        console.error("❌ Error al reprogramar cita:", error.message);
-        throw error;
-      }
-
-      const err = error as { response?: { data?: { message?: string } } };
-      console.error("❌ Error al reprogramar cita:", err.response?.data);
-      throw new Error(err.response?.data?.message || "Error al reprogramar cita");
+      const err = error as { response?: { data?: { message?: string } }; message?: string };
+      throw new Error(err.response?.data?.message || err.message || "Error al reprogramar cita");
     }
   }
 }

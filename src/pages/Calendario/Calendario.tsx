@@ -10,7 +10,6 @@ type Vista = "dia" | "semana" | "mes";
 
 const diasSemana = ["Lun", "Mar", "Mié", "Jue", "Vie", "Sáb", "Dom"];
 
-/* 08:00 – 17:00 cada 15 min */
 const HORAS_LABORALES = Array.from({ length: 36 }, (_, i) => {
   const total = 8 * 60 + i * 15;
   const h = Math.floor(total / 60);
@@ -25,7 +24,6 @@ const Calendario = () => {
   const [doctores, setDoctores] = useState<DoctorTransformado[]>([]);
   const [doctorId, setDoctorId] = useState<string>("ALL");
 
-  /* ======================= CARGA ======================= */
   useEffect(() => {
     DoctorApiService.listar().then(setDoctores);
   }, []);
@@ -36,15 +34,14 @@ const Calendario = () => {
 
   const cargarCitas = async () => {
     const fechaStr = fecha.toISOString().split("T")[0];
-    const data = await CitaApiService.obtenerCalendario(fechaStr, vista);
-    setCitas(
-      doctorId === "ALL"
-        ? data
-        : data.filter((c) => c.doctorId._id === doctorId)
+    const data = await CitaApiService.obtenerCalendario(
+      fechaStr,
+      vista,
+      doctorId
     );
+    setCitas(data);
   };
 
-  /* ======================= FECHAS ======================= */
   const cambiarFecha = (delta: number) => {
     const f = new Date(fecha);
     if (vista === "mes") f.setMonth(f.getMonth() + delta);
@@ -89,7 +86,6 @@ const Calendario = () => {
   const doctorSeleccionado =
     doctorId === "ALL" ? null : doctores.find((d) => d.id === doctorId);
 
-  /* ======================= MES ======================= */
   const generarDiasMes = () => {
     const inicio = new Date(fecha.getFullYear(), fecha.getMonth(), 1);
     const fin = new Date(fecha.getFullYear(), fecha.getMonth() + 1, 0);
@@ -97,9 +93,8 @@ const Calendario = () => {
     const offset = (inicio.getDay() + 6) % 7;
 
     for (let i = 0; i < offset; i++) dias.push(new Date(NaN));
-    for (let d = 1; d <= fin.getDate(); d++) {
+    for (let d = 1; d <= fin.getDate(); d++)
       dias.push(new Date(fecha.getFullYear(), fecha.getMonth(), d));
-    }
     return dias;
   };
 
@@ -127,7 +122,7 @@ const Calendario = () => {
               <span className="dia-numero">{dia.getDate()}</span>
               {citasPorFecha(dia).map((c) => (
                 <div key={c._id} className="cita-chip">
-                  {c.hora} {c.pacienteId.nombres}
+                  {c.hora} {c.pacienteId?.nombres ?? "Sin paciente"}
                 </div>
               ))}
             </>
@@ -137,7 +132,6 @@ const Calendario = () => {
     </div>
   );
 
-  /* ======================= SEMANA ======================= */
   const renderSemana = () => {
     const inicio = inicioSemana(fecha);
 
@@ -165,7 +159,7 @@ const Calendario = () => {
               const cita = citaPorHora(d, h);
               return (
                 <div key={i} className="agenda-celda">
-                  {cita && (
+                  {cita?.pacienteId && (
                     <div className="agenda-cita">{cita.pacienteId.nombres}</div>
                   )}
                 </div>
@@ -177,7 +171,6 @@ const Calendario = () => {
     );
   };
 
-  /* ======================= DÍA ======================= */
   const renderDia = () => (
     <div className="agenda-dia">
       {HORAS_LABORALES.map((h) => {
@@ -186,7 +179,7 @@ const Calendario = () => {
           <div key={h} className="agenda-linea">
             <div className="agenda-hora">{h}</div>
             <div className="agenda-celda">
-              {cita && (
+              {cita?.pacienteId && (
                 <div className="agenda-cita">
                   {cita.pacienteId.nombres} {cita.pacienteId.apellidos}
                 </div>
@@ -198,11 +191,9 @@ const Calendario = () => {
     </div>
   );
 
-  /* ======================= JSX ======================= */
   return (
     <div className="calendario-container">
       <div className="calendario-layout">
-        {/* IZQUIERDA */}
         <div className="calendario-left">
           <MiniCalendario fecha={fecha} onChange={setFecha} />
 
@@ -210,7 +201,6 @@ const Calendario = () => {
             <h4>Doctores</h4>
 
             <div className="doctores-lista">
-              {/* TODOS */}
               <div
                 className={`doctor-item ${doctorId === "ALL" ? "activo" : ""}`}
                 onClick={() => setDoctorId("ALL")}
@@ -218,7 +208,6 @@ const Calendario = () => {
                 Todos los doctores
               </div>
 
-              {/* INDIVIDUALES */}
               {doctores.map((d) => (
                 <div
                   key={d.id}
@@ -232,7 +221,6 @@ const Calendario = () => {
           </div>
         </div>
 
-        {/* DERECHA */}
         <div className="calendario-main">
           <div className="calendario-topbar">
             <button onClick={() => cambiarFecha(-1)}>◀</button>
