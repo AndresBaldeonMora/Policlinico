@@ -7,53 +7,76 @@ import {
 } from "../../services/cita.service";
 
 // ============================================================================
-// TYPES & CONSTANTS
+// TYPES
 // ============================================================================
 
-interface NotificationState {
-  message: string;
-  type: "success" | "error";
-  visible: boolean;
+type TabPrincipal = "dashboard" | "historial" | "documentos";
+type TabDemografico = "quien" | "contacto";
+
+interface Alergia {
+  id: string;
+  sustancia: string;
+  reaccion: string;
+  severidad: "leve" | "moderada" | "severa";
 }
 
-const NOTIFICATION_DURATION = 3000;
+interface ProblemaMedico {
+  id: string;
+  descripcion: string;
+  estado: "activo" | "resuelto";
+  fechaInicio: string;
+}
 
-const ESTADOS_CITA = {
-  PENDIENTE: "Pendiente",
-  ATENDIDA: "Atendida",
-  CANCELADA: "Cancelada",
-  REPROGRAMADA: "Reprogramada",
-} as const;
+interface Medicamento {
+  id: string;
+  nombre: string;
+  dosis: string;
+  frecuencia: string;
+  activo: boolean;
+}
+
+// ============================================================================
+// CONSTANTS
+// ============================================================================
+
+const TABS_PRINCIPALES: { id: TabPrincipal; label: string; icon: string }[] = [
+  { id: "dashboard", label: "Dashboard", icon: "📊" },
+  { id: "historial", label: "Histórico de Visitas", icon: "📋" },
+  { id: "documentos", label: "Documentos", icon: "📄" },
+];
+
+const TABS_DEMOGRAFICOS: { id: TabDemografico; label: string }[] = [
+  { id: "quien", label: "Quién" },
+  { id: "contacto", label: "Contacto" },
+];
 
 // ============================================================================
 // UTILS
 // ============================================================================
 
-const formatearFecha = (fechaISO: string): string => {
+const formatearFechaCorta = (fechaISO?: string) => {
+  if (!fechaISO) return "—";
   const fecha = new Date(fechaISO);
-  return new Intl.DateTimeFormat("es-PE", {
-    day: "2-digit",
-    month: "long",
-    year: "numeric",
-  }).format(fecha);
+  if (isNaN(fecha.getTime())) return "—";
+  return new Intl.DateTimeFormat("es-PE").format(fecha);
+};
+
+const calcularEdad = (fechaNacimiento?: string) => {
+  if (!fechaNacimiento) return null;
+  const hoy = new Date();
+  const nac = new Date(fechaNacimiento);
+  let edad = hoy.getFullYear() - nac.getFullYear();
+  if (
+    hoy.getMonth() < nac.getMonth() ||
+    (hoy.getMonth() === nac.getMonth() && hoy.getDate() < nac.getDate())
+  ) {
+    edad--;
+  }
+  return edad;
 };
 
 // ============================================================================
-// NOTIFICATION
-// ============================================================================
-
-const Notification = ({ message, type, visible }: NotificationState) => {
-  if (!visible) return null;
-  return (
-    <div className={`notification ${type}`} role="alert">
-      {type === "success" ? "✅ " : "❌ "}
-      {message}
-    </div>
-  );
-};
-
-// ============================================================================
-// COMPONENT
+// MAIN
 // ============================================================================
 
 const PerfilCita = () => {
@@ -63,105 +86,228 @@ const PerfilCita = () => {
   const [cita, setCita] = useState<CitaTransformada | null>(null);
   const [cargando, setCargando] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [notification, setNotification] = useState<NotificationState>({
-    message: "",
-    type: "success",
-    visible: false,
-  });
 
-  const showNotification = useCallback(
-    (message: string, type: "success" | "error") => {
-      setNotification({ message, type, visible: true });
-      setTimeout(
-        () => setNotification((n) => ({ ...n, visible: false })),
-        NOTIFICATION_DURATION
-      );
-    },
-    []
-  );
+  const [tabActiva, setTabActiva] = useState<TabPrincipal>("dashboard");
+  const [tabDemo, setTabDemo] = useState<TabDemografico>("quien");
+
+  // Mock (luego API)
+  const [alergias] = useState<Alergia[]>([]);
+  const [problemasMedicos] = useState<ProblemaMedico[]>([]);
+  const [medicamentos] = useState<Medicamento[]>([]);
+  const [citasPaciente] = useState<CitaTransformada[]>([]);
+
+  // ============================================================================
 
   const cargarCita = useCallback(async () => {
+    if (!citaId) {
+      setError("ID de cita no proporcionado");
+      setCargando(false);
+      return;
+    }
+
     try {
-      if (!citaId) throw new Error("ID inválido");
+      setCargando(true);
       const data = await CitaApiService.obtenerPorId(citaId);
       setCita(data);
-    } catch (err) {
-      const msg = err instanceof Error ? err.message : "Error al cargar cita";
-      setError(msg);
-      showNotification(msg, "error");
+    } catch {
+      setError("No se pudo cargar la cita");
     } finally {
       setCargando(false);
     }
-  }, [citaId, showNotification]);
+  }, [citaId]);
 
   useEffect(() => {
     cargarCita();
   }, [cargarCita]);
 
+  // ============================================================================
+
   const paciente = useMemo(() => cita?.pacienteId, [cita]);
-  const doctor = useMemo(() => cita?.doctorId, [cita]);
+  const edad = useMemo(
+    () => calcularEdad(paciente?.fechaNacimiento),
+    [paciente?.fechaNacimiento]
+  );
 
   if (cargando) {
-    return <p className="perfil-cita-loading">Cargando cita...</p>;
+    return (
+      <div className="perfil-loading">
+        <div className="spinner" />
+        <p>Cargando información del paciente...</p>
+      </div>
+    );
   }
 
-  if (!cita || error) {
+  if (error || !cita || !paciente) {
     return (
-      <div className="perfil-cita-error">
-        <p>No se pudo cargar la cita.</p>
-        <button className="btn btn-secondary" onClick={() => navigate(-1)}>
-          Volver
+      <div className="perfil-error">
+        <h2>No se pudo cargar la información</h2>
+        <p>{error}</p>
+        <button
+          className="btn btn-secondary"
+          onClick={() => navigate("/calendario")}
+        >
+          Volver al Calendario
         </button>
       </div>
     );
   }
 
+  // ============================================================================
+
   return (
-    <div className="perfil-cita">
-      <Notification {...notification} />
-
+    <div className="perfil-clinico">
       {/* HEADER */}
-      <div className="perfil-cita-header">
-        <div>
-          <h1>
-            {paciente?.nombres} {paciente?.apellidos}
-          </h1>
-          <span>DNI: {paciente?.dni}</span>
+      <div className="perfil-header-global">
+        <div className="paciente-contexto">
+          <div className="avatar-grande">
+            {paciente.nombres.charAt(0)}
+            {paciente.apellidos.charAt(0)}
+          </div>
+
+          <div className="paciente-info-principal">
+            <h1>
+              {paciente.nombres} {paciente.apellidos}
+            </h1>
+            <div className="datos-basicos">
+              <span>DNI: {paciente.dni}</span>
+              <span>
+                F.Nac: {formatearFechaCorta(paciente.fechaNacimiento)}
+              </span>
+              {edad !== null && <span>{edad} años</span>}
+            </div>
+          </div>
         </div>
 
-        <div className="header-datos">
-          <span>📅 {formatearFecha(cita.fecha)}</span>
-          <span>⏰ {cita.hora} hs</span>
-          <span>
-            👨‍⚕️ Dr. {doctor?.nombres} {doctor?.apellidos}
-          </span>
-          <span className={`badge estado-${cita.estado.toLowerCase()}`}>
-            {ESTADOS_CITA[cita.estado]}
-          </span>
+        <div className="encounter-selector">
+          <label>Cita actual</label>
+          <select disabled>
+            <option>
+              {formatearFechaCorta(cita.fecha)} - {cita.hora}
+            </option>
+          </select>
+
+          <button
+            className="btn btn-primary btn-nueva-cita"
+            onClick={() =>
+              navigate(`/reservar-cita?pacienteId=${paciente._id}`)
+            }
+          >
+            + Nueva Cita
+          </button>
         </div>
       </div>
 
-      {/* GRID */}
-      <div className="perfil-cita-grid">
-        <div className="card">
-          <h3>Detalle de la Cita</h3>
-          <p>Estado: {ESTADOS_CITA[cita.estado]}</p>
-          <p>Fecha: {formatearFecha(cita.fecha)}</p>
-          <p>Hora: {cita.hora} hs</p>
-        </div>
-
-        <div className="card">
-          <h3>Paciente</h3>
-          <p>DNI: {paciente?.dni}</p>
-          <p>Teléfono: {paciente?.telefono || "—"}</p>
-        </div>
+      {/* TABS */}
+      <div className="tabs-principales">
+        {TABS_PRINCIPALES.map((t) => (
+          <button
+            key={t.id}
+            className={`tab ${tabActiva === t.id ? "activa" : ""}`}
+            onClick={() => setTabActiva(t.id)}
+          >
+            {t.icon} {t.label}
+          </button>
+        ))}
       </div>
 
-      <div className="perfil-cita-actions">
-        <button className="btn btn-secondary" onClick={() => navigate(-1)}>
-          Volver
-        </button>
-      </div>
+      {/* DASHBOARD */}
+      {tabActiva === "dashboard" && (
+        <div className="dashboard-layout">
+          <div className="columna-principal">
+            <div className="card-clinica">
+              <div className="card-header">
+                <h3>🚨 Alergias</h3>
+              </div>
+              <div className="card-body">
+                {alergias.length === 0 ? "Nada grabado" : "—"}
+              </div>
+            </div>
+
+            <div className="card-clinica">
+              <div className="card-header">
+                <h3>🏥 Problemas Médicos</h3>
+              </div>
+              <div className="card-body">
+                {problemasMedicos.length === 0 ? "Nada grabado" : "—"}
+              </div>
+            </div>
+
+            <div className="card-clinica">
+              <div className="card-header">
+                <h3>💊 Medicamentos</h3>
+              </div>
+              <div className="card-body">
+                {medicamentos.length === 0 ? "Nada grabado" : "—"}
+              </div>
+            </div>
+
+            <div className="card-clinica">
+              <div className="card-header">
+                <h3>📊 Datos Demográficos</h3>
+              </div>
+
+              <div className="tabs-demograficos">
+                {TABS_DEMOGRAFICOS.map((t) => (
+                  <button
+                    key={t.id}
+                    className={`tab-demo ${tabDemo === t.id ? "activa" : ""}`}
+                    onClick={() => setTabDemo(t.id)}
+                  >
+                    {t.label}
+                  </button>
+                ))}
+              </div>
+
+              <div className="card-body">
+                {tabDemo === "quien" && (
+                  <>
+                    <strong>Nombre:</strong> {paciente.nombres}{" "}
+                    {paciente.apellidos}
+                    <br />
+                    <strong>DNI:</strong> {paciente.dni}
+                  </>
+                )}
+
+                {tabDemo === "contacto" && (
+                  <>
+                    <strong>Teléfono:</strong> {paciente.telefono || "—"}
+                    <br />
+                    <strong>Correo:</strong> {paciente.correo || "—"}
+                  </>
+                )}
+              </div>
+            </div>
+          </div>
+
+          <div className="columna-lateral">
+            <div className="widget">
+              <div className="widget-header">
+                <h4>📅 Citas</h4>
+              </div>
+              <div className="widget-body">
+                {citasPaciente.length === 0
+                  ? "Sin citas"
+                  : citasPaciente.map((c) => (
+                      <div
+                        key={c._id}
+                        onClick={() => navigate(`/citas/${c._id}`)}
+                      >
+                        {formatearFechaCorta(c.fecha)} - {c.hora}
+                      </div>
+                    ))}
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {tabActiva === "historial" && (
+        <div className="card-clinica">No hay visitas anteriores</div>
+      )}
+
+      {tabActiva === "documentos" && (
+        <div className="card-clinica">No hay documentos cargados</div>
+      )}
     </div>
   );
 };
