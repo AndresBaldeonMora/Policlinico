@@ -143,30 +143,40 @@ const StepperHeader = ({ pasoActual, irAlPaso }: StepperHeaderProps) => {
         const esActivo = numeroPaso === pasoActual;
         const esCompletado = numeroPaso < pasoActual;
 
-        return (
+        const inner = (
           <div
-            key={numeroPaso}
-            className={`stepper-item-wrapper ${
-              esCompletado ? "clickable" : ""
+            className={`stepper-item ${esActivo ? "activo" : ""} ${
+              esCompletado ? "completado" : ""
             }`}
-            onClick={() => esCompletado && irAlPaso(numeroPaso)}
-            role={esCompletado ? "button" : undefined}
-            tabIndex={esCompletado ? 0 : undefined}
-            onKeyDown={(e) => {
-              if (esCompletado && (e.key === "Enter" || e.key === " ")) {
-                e.preventDefault();
-                irAlPaso(numeroPaso);
-              }
-            }}
           >
+            <div className="stepper-circulo">{getIconoPaso(numeroPaso)}</div>
+            <div className="stepper-titulo">{titulo}</div>
+          </div>
+        );
+
+        if (esCompletado) {
+          return (
             <div
-              className={`stepper-item ${esActivo ? "activo" : ""} ${
-                esCompletado ? "completado" : ""
-              }`}
+              key={numeroPaso}
+              className="stepper-item-wrapper clickable"
+              role="button"
+              tabIndex={0}
+              onClick={() => irAlPaso(numeroPaso)}
+              onKeyDown={(e) => {
+                if (e.key === "Enter" || e.key === " ") {
+                  e.preventDefault();
+                  irAlPaso(numeroPaso);
+                }
+              }}
             >
-              <div className="stepper-circulo">{getIconoPaso(numeroPaso)}</div>
-              <div className="stepper-titulo">{titulo}</div>
+              {inner}
             </div>
+          );
+        }
+
+        return (
+          <div key={numeroPaso} className="stepper-item-wrapper">
+            {inner}
           </div>
         );
       })}
@@ -680,10 +690,20 @@ const ReservaCita = () => {
                           <div
                             key={esp.id}
                             className="suggestion-item"
+                            role="button"
+                            tabIndex={0}
                             onClick={() => {
                               setEspecialidadSeleccionada(esp);
                               setSearchEspecialidad(esp.nombre);
                               setShowEspecialidadesSuggestions(false);
+                            }}
+                            onKeyDown={(e) => {
+                              if (e.key === "Enter" || e.key === " ") {
+                                e.preventDefault();
+                                setEspecialidadSeleccionada(esp);
+                                setSearchEspecialidad(esp.nombre);
+                                setShowEspecialidadesSuggestions(false);
+                              }
                             }}
                           >
                             🏥 {esp.nombre}
@@ -947,9 +967,10 @@ const ReservaCita = () => {
             </div>
 
             <div className="form-group" style={{ marginTop: "1.5rem" }}>
-              <label>Paciente Seleccionado</label>
+              <label htmlFor="paciente-seleccionado">Paciente Seleccionado</label>
               <input
                 type="text"
+                id="paciente-seleccionado"
                 disabled
                 placeholder="Busque un DNI arriba..."
                 value={
@@ -974,7 +995,7 @@ const ReservaCita = () => {
 
             <div className="resumen-grid">
               <div className="resumen-item">
-                <label>Paciente</label>
+                <span>Paciente</span>
                 <strong>
                   {pacienteSeleccionado
                     ? `${pacienteSeleccionado.nombres} ${pacienteSeleccionado.apellidos}`
@@ -984,7 +1005,7 @@ const ReservaCita = () => {
               </div>
 
               <div className="resumen-item">
-                <label>Médico</label>
+                <span>Médico</span>
                 <strong>
                   {doctorSeleccionado
                     ? `${doctorSeleccionado.nombres} ${doctorSeleccionado.apellidos}`
@@ -994,7 +1015,7 @@ const ReservaCita = () => {
               </div>
 
               <div className="resumen-item">
-                <label>Fecha y Hora</label>
+                <span>Fecha y Hora</span>
                 <strong>{fechaSeleccionada}</strong>
                 <span>{horaSeleccionada} hs</span>
               </div>

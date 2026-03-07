@@ -179,8 +179,8 @@ const PerfilCita = () => {
         </div>
 
         <div className="encounter-selector">
-          <label>Cita actual</label>
-          <select disabled>
+          <label htmlFor="cita-actual">Cita actual</label>
+          <select id="cita-actual" disabled>
             <option>
               {formatearFechaCorta(cita.fecha)} - {cita.hora}
             </option>
@@ -290,7 +290,15 @@ const PerfilCita = () => {
                   : citasPaciente.map((c) => (
                       <div
                         key={c._id}
+                        role="button"
+                        tabIndex={0}
                         onClick={() => navigate(`/citas/${c._id}`)}
+                        onKeyDown={(e) => {
+                          if (e.key === "Enter" || e.key === " ") {
+                            e.preventDefault();
+                            navigate(`/citas/${c._id}`);
+                          }
+                        }}
                       >
                         {formatearFechaCorta(c.fecha)} - {c.hora}
                       </div>

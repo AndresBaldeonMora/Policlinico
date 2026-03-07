@@ -174,11 +174,17 @@ const AgregarPacienteSimple = ({
   };
 
   return (
-    <div className="modal-overlay-simple" onClick={onCancelar}>
-      <div
-        className="modal-content-simple"
-        onClick={(e) => e.stopPropagation()}
-      >
+    <div
+      className="modal-overlay-simple"
+      role="presentation"
+      onClick={(e) => {
+        if (e.target === e.currentTarget) onCancelar();
+      }}
+      onKeyDown={(e) => {
+        if (e.key === "Escape") onCancelar();
+      }}
+    >
+      <div className="modal-content-simple">
         <div className="modal-header-simple">
           <h3>👤 Nuevo Paciente</h3>
           <button
@@ -197,8 +203,9 @@ const AgregarPacienteSimple = ({
 
         <form onSubmit={handleSubmit} className="form-simple">
           <div className="form-group-simple">
-            <label>DNI</label>
+            <label htmlFor="form-dni">DNI</label>
             <input
+              id="form-dni"
               type="text"
               value={formData.dni}
               disabled
@@ -209,8 +216,9 @@ const AgregarPacienteSimple = ({
 
           <div className="form-row-simple">
             <div className="form-group-simple">
-              <label>Nombres *</label>
+              <label htmlFor="form-nombres">Nombres *</label>
               <input
+                id="form-nombres"
                 name="nombres"
                 value={formData.nombres}
                 onChange={handleChange}
@@ -220,8 +228,9 @@ const AgregarPacienteSimple = ({
             </div>
 
             <div className="form-group-simple">
-              <label>Apellidos *</label>
+              <label htmlFor="form-apellidos">Apellidos *</label>
               <input
+                id="form-apellidos"
                 name="apellidos"
                 value={formData.apellidos}
                 onChange={handleChange}
@@ -233,8 +242,9 @@ const AgregarPacienteSimple = ({
 
           <div className="form-row-simple">
             <div className="form-group-simple">
-              <label>Teléfono *</label>
+              <label htmlFor="form-telefono">Teléfono *</label>
               <input
+                id="form-telefono"
                 name="telefono"
                 value={formData.telefono}
                 onChange={handleChange}
@@ -244,8 +254,9 @@ const AgregarPacienteSimple = ({
             </div>
 
             <div className="form-group-simple">
-              <label>Correo *</label>
+              <label htmlFor="form-correo">Correo *</label>
               <input
+                id="form-correo"
                 name="correo"
                 value={formData.correo}
                 onChange={handleChange}
@@ -256,8 +267,9 @@ const AgregarPacienteSimple = ({
           </div>
 
           <div className="form-group-simple">
-            <label>Fecha de nacimiento *</label>
+            <label htmlFor="form-fechaNacimiento">Fecha de nacimiento *</label>
             <input
+              id="form-fechaNacimiento"
               type="date"
               name="fechaNacimiento"
               value={formData.fechaNacimiento}
@@ -267,8 +279,9 @@ const AgregarPacienteSimple = ({
           </div>
 
           <div className="form-group-simple">
-            <label>Dirección</label>
+            <label htmlFor="form-direccion">Dirección</label>
             <textarea
+              id="form-direccion"
               name="direccion"
               rows={2}
               value={formData.direccion}

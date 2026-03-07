@@ -453,7 +453,7 @@ const ListaCitas = () => {
               {pasoModal === 1 && (
                 <>
                   <div className="selector-mes">
-                    <label className="selector-label">Seleccionar Mes:</label>
+                    <span className="selector-label">Seleccionar Mes:</span>
                     <div className="meses-lista">
                       {mesesDisponibles.map((mes) => (
                         <button
@@ -475,7 +475,7 @@ const ListaCitas = () => {
 
                   {mesSeleccionado && diasDelMes.length > 0 && (
                     <div className="selector-dia">
-                      <label className="selector-label">Seleccionar Día:</label>
+                      <span className="selector-label">Seleccionar Día:</span>
                       <div className="dias-lista-selector">
                         {diasDelMes.map((dia) => (
                           <button
@@ -563,22 +563,22 @@ const ListaCitas = () => {
                   <h4>Confirmar nueva programación</h4>
                   <div className="modal-resumen-grid">
                     <div className="modal-resumen-item">
-                      <label>Paciente</label>
+                      <span>Paciente</span>
                       <strong>{editando.paciente}</strong>
                       <span>DNI: {editando.dni}</span>
                     </div>
                     <div className="modal-resumen-item">
-                      <label>Médico</label>
+                      <span>Médico</span>
                       <strong>{editando.doctor}</strong>
                       <span>{editando.especialidad}</span>
                     </div>
                     <div className="modal-resumen-item">
-                      <label>Fecha y hora original</label>
+                      <span>Fecha y hora original</span>
                       <strong>{editando.fechaOriginal}</strong>
                       <span>{editando.horaOriginal} hs</span>
                     </div>
                     <div className="modal-resumen-item destacado">
-                      <label>Nueva fecha y hora</label>
+                      <span>Nueva fecha y hora</span>
                       <strong>{formatearFechaResumen(editando.fecha)}</strong>
                       <span>{editando.hora} hs</span>
                     </div>

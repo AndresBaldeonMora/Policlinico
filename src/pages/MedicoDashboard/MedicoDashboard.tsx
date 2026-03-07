@@ -172,7 +172,15 @@ const MedicoDashboard = () => {
                 <div
                   key={cita._id}
                   className="cita-card"
+                  role="button"
+                  tabIndex={0}
                   onClick={() => setCitaSeleccionada(cita)}
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter" || e.key === " ") {
+                      e.preventDefault();
+                      setCitaSeleccionada(cita);
+                    }
+                  }}
                 >
                   <div className="cita-card-content">
                     <div className="cita-paciente-info">

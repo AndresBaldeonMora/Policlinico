@@ -286,61 +286,52 @@ const Calendario = () => {
         ))}
 
         {diasDelMes.map((dia, index) => {
-          const esValido = esFechaValida(dia);
-          const citasDelDia = esValido ? obtenerCitasPorFecha(dia) : [];
-          const fechaISO = esValido ? toISODateLocal(dia) : "";
+          if (!esFechaValida(dia)) {
+            return <div key={`empty-${index}`} className="calendario-celda" />;
+          }
+
+          const fechaISO = toISODateLocal(dia);
+          const citasDelDia = obtenerCitasPorFecha(dia);
+          const doctorParam =
+            doctorId !== DOCTOR_TODOS_ID ? doctorId : undefined;
 
           return (
             <div
-              key={index}
-              className={`calendario-celda ${esValido ? "clickable" : ""}`}
-              onClick={() => {
-                if (esValido) {
-                  const doctorParam =
-                    doctorId !== DOCTOR_TODOS_ID ? doctorId : undefined;
-                  irAReserva(fechaISO, doctorParam);
-                }
-              }}
-              role={esValido ? "button" : undefined}
-              tabIndex={esValido ? 0 : undefined}
-              aria-label={
-                esValido ? `Agregar cita para ${fechaISO}` : undefined
-              }
+              key={fechaISO}
+              className="calendario-celda clickable"
+              onClick={() => irAReserva(fechaISO, doctorParam)}
+              role="button"
+              tabIndex={0}
+              aria-label={`Agregar cita para ${fechaISO}`}
               onKeyDown={(e) => {
-                if (esValido && (e.key === "Enter" || e.key === " ")) {
+                if (e.key === "Enter" || e.key === " ") {
                   e.preventDefault();
-                  const doctorParam =
-                    doctorId !== DOCTOR_TODOS_ID ? doctorId : undefined;
                   irAReserva(fechaISO, doctorParam);
                 }
               }}
             >
-              {esValido && (
-                <>
-                  <span className="dia-numero">{dia.getDate()}</span>
+              <span className="dia-numero">{dia.getDate()}</span>
 
-                  {citasDelDia.map((cita) => (
-                    <div
-                      key={cita._id}
-                      className="cita-chip clickable"
-                      onClick={(e) => irADetalleCita(e, cita._id)}
-                      role="button"
-                      tabIndex={0}
-                      aria-label={`Ver cita de ${
-                        cita.pacienteId?.nombres || "Sin paciente"
-                      } a las ${cita.hora}`}
-                      onKeyDown={(e) => {
-                        if (e.key === "Enter" || e.key === " ") {
-                          e.preventDefault();
-                          irADetalleCita(e, cita._id);
-                        }
-                      }}
-                    >
-                      {cita.hora} {cita.pacienteId?.nombres ?? "Sin paciente"}
-                    </div>
-                  ))}
-                </>
-              )}
+              {citasDelDia.map((cita) => (
+                <div
+                  key={cita._id}
+                  className="cita-chip clickable"
+                  onClick={(e) => irADetalleCita(e, cita._id)}
+                  role="button"
+                  tabIndex={0}
+                  aria-label={`Ver cita de ${
+                    cita.pacienteId?.nombres || "Sin paciente"
+                  } a las ${cita.hora}`}
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter" || e.key === " ") {
+                      e.preventDefault();
+                      irADetalleCita(e, cita._id);
+                    }
+                  }}
+                >
+                  {cita.hora} {cita.pacienteId?.nombres ?? "Sin paciente"}
+                </div>
+              ))}
             </div>
           );
         })}
