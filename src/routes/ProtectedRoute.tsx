@@ -16,9 +16,7 @@ export const ProtectedRoute = ({ children, roles }: ProtectedRouteProps) => {
   }
 
   if (roles && !roles.includes(user.rol)) {
-    if (user.rol === "MEDICO") {
-      return <Navigate to="/medico" replace />;
-    }
+    if (user.rol === "MEDICO") return <Navigate to="/medico" replace />;
     return <Navigate to="/" replace />;
   }
 
