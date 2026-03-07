@@ -37,10 +37,15 @@ const VistaMes = ({ diasDelMes, citas, doctorId, onReservar, onVerCita }: Props)
         <div key={dia} className="calendario-col-header">{dia}</div>
       ))}
 
-      {diasDelMes.map((dia, index) => {
+      {diasDelMes.map((dia) => {
         if (!esFechaValida(dia)) {
-          // ✅ Key estable para celdas vacías: posición fija en el grid, nunca se reordena
-          return <div key={`empty-${index}`} className="calendario-celda" />;
+          // Empty padding cells: keyed by their ISO-like timestamp string.
+          // Invalid Date objects have a stable NaN time but differ by reference;
+          // toISODateLocal would produce "NaN-NaN-NaN" for all of them, so we
+          // use the numeric position encoded in the Date object itself instead —
+          // casting to number gives NaN for invalid dates, so we fall back to
+          // the string representation of the Date which is unique per object.
+          return <div key={String(dia)} className="calendario-celda" />;
         }
 
         const fechaISO = toISODateLocal(dia);
@@ -49,7 +54,7 @@ const VistaMes = ({ diasDelMes, citas, doctorId, onReservar, onVerCita }: Props)
 
         return (
           <div
-            key={fechaISO}  // ✅ Key estable: fecha única por celda
+            key={fechaISO}
             className="calendario-celda clickable"
             onClick={() => onReservar(fechaISO, doctorParam)}
             role="button"
@@ -65,7 +70,7 @@ const VistaMes = ({ diasDelMes, citas, doctorId, onReservar, onVerCita }: Props)
             <span className="dia-numero">{dia.getDate()}</span>
             {citasDelDia.map((cita) => (
               <div
-                key={cita._id}  // ✅ Ya era correcto
+                key={cita._id}
                 className="cita-chip clickable"
                 onClick={(e) => onVerCita(e, cita._id)}
                 role="button"
