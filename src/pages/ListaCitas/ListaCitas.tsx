@@ -263,7 +263,6 @@ const ListaCitas = () => {
               <tbody>
                 {filtrarCitas.length > 0 ? (
                   filtrarCitas.map((cita) => (
-                    /* ✅ Stable key: cita._id — never an array index */
                     <tr key={cita._id}>
                       <td>{cita.id}</td>
                       <td>{cita.dni}</td>
