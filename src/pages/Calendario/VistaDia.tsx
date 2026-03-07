@@ -1,0 +1,82 @@
+import type { CitaTransformada } from "../../services/cita.service";
+
+const DOCTOR_TODOS_ID = "ALL";
+
+const toISODateLocal = (d: Date): string => {
+  const y = d.getFullYear();
+  const m = String(d.getMonth() + 1).padStart(2, "0");
+  const day = String(d.getDate()).padStart(2, "0");
+  return `${y}-${m}-${day}`;
+};
+
+interface Props {
+  fecha: Date;
+  horas: string[];
+  citas: CitaTransformada[];
+  doctorId: string;
+  onReservar: (fechaISO: string, doctorId?: string) => void;
+  onVerCita: (e: React.MouseEvent | React.KeyboardEvent, citaId: string) => void;
+}
+
+const VistaDia = ({ fecha, horas, citas, doctorId, onReservar, onVerCita }: Props) => {
+  const fechaISO = toISODateLocal(fecha);
+  const doctorParam = doctorId !== DOCTOR_TODOS_ID ? doctorId : undefined;
+
+  const obtenerCitaPorHora = (hora: string) =>
+    citas.find((c) => {
+      const fc = new Date(c.fecha);
+      return (
+        fc.getFullYear() === fecha.getFullYear() &&
+        fc.getMonth() === fecha.getMonth() &&
+        fc.getDate() === fecha.getDate() &&
+        c.hora === hora
+      );
+    });
+
+  return (
+    <div className="agenda-dia">
+      {horas.map((hora) => {
+        const cita = obtenerCitaPorHora(hora);
+
+        return (
+          <div key={hora} className="agenda-linea">
+            <div className="agenda-hora">{hora}</div>
+            <div
+              className="agenda-celda clickable"
+              onClick={() => onReservar(fechaISO, doctorParam)}
+              role="button"
+              tabIndex={0}
+              aria-label={`Agregar cita a las ${hora}`}
+              onKeyDown={(e) => {
+                if (e.key === "Enter" || e.key === " ") {
+                  e.preventDefault();
+                  onReservar(fechaISO, doctorParam);
+                }
+              }}
+            >
+              {cita?.pacienteId && (
+                <div
+                  className="agenda-cita clickable"
+                  onClick={(e) => onVerCita(e, cita._id)}
+                  role="button"
+                  tabIndex={0}
+                  aria-label={`Ver cita de ${cita.pacienteId.nombres} ${cita.pacienteId.apellidos}`}
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter" || e.key === " ") {
+                      e.preventDefault();
+                      onVerCita(e, cita._id);
+                    }
+                  }}
+                >
+                  {cita.pacienteId.nombres} {cita.pacienteId.apellidos}
+                </div>
+              )}
+            </div>
+          </div>
+        );
+      })}
+    </div>
+  );
+};
+
+export default VistaDia;
