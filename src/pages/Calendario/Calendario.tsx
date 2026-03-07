@@ -1,4 +1,4 @@
-import { useEffect, useState, useCallback, useMemo } from "react";
+import { useEffect, useReducer, useCallback, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
 import { CitaApiService } from "../../services/cita.service";
 import { DoctorApiService } from "../../services/doctor.service";
@@ -12,9 +12,10 @@ import VistaSemana from "./VistaSemana";
 import VistaDia from "./VistaDia";
 import "./Calendario.css";
 
-
+// ─── Types ────────────────────────────────────────────────
 type Vista = "dia" | "semana" | "mes";
 
+// ─── Constantes ───────────────────────────────────────────
 const DOCTOR_TODOS_ID = "ALL";
 const HORA_INICIO = 8;
 const HORA_FIN = 17;
@@ -44,33 +45,69 @@ const HORAS_LABORALES = (() => {
   });
 })();
 
+// ─── Estado ───────────────────────────────────────────────
+interface CalendarioState {
+  vista: Vista;
+  fecha: Date;
+  citas: CitaTransformada[];
+  doctores: DoctorTransformado[];
+  doctorId: string;
+  loading: boolean;
+}
+
+type CalendarioAction =
+  | { type: "SET_VISTA"; vista: Vista }
+  | { type: "SET_FECHA"; fecha: Date }
+  | { type: "SET_CITAS"; citas: CitaTransformada[] }
+  | { type: "SET_DOCTORES"; doctores: DoctorTransformado[] }
+  | { type: "SET_DOCTOR_ID"; doctorId: string }
+  | { type: "SET_LOADING"; value: boolean };
+
+const initialState: CalendarioState = {
+  vista: "mes",
+  fecha: new Date(),
+  citas: [],
+  doctores: [],
+  doctorId: DOCTOR_TODOS_ID,
+  loading: false,
+};
+
+function calendarioReducer(state: CalendarioState, action: CalendarioAction): CalendarioState {
+  switch (action.type) {
+    case "SET_VISTA":    return { ...state, vista: action.vista };
+    case "SET_FECHA":    return { ...state, fecha: action.fecha };
+    case "SET_CITAS":    return { ...state, citas: action.citas };
+    case "SET_DOCTORES": return { ...state, doctores: action.doctores };
+    case "SET_DOCTOR_ID":return { ...state, doctorId: action.doctorId };
+    case "SET_LOADING":  return { ...state, loading: action.value };
+    default:             return state;
+  }
+}
+
+// ─── Componente ───────────────────────────────────────────
 const Calendario = () => {
-  const [vista, setVista] = useState<Vista>("mes");
-  const [fecha, setFecha] = useState<Date>(new Date());
-  const [citas, setCitas] = useState<CitaTransformada[]>([]);
-  const [doctores, setDoctores] = useState<DoctorTransformado[]>([]);
-  const [doctorId, setDoctorId] = useState<string>(DOCTOR_TODOS_ID);
-  const [loading, setLoading] = useState(false);
+  const [state, dispatch] = useReducer(calendarioReducer, initialState);
+  const { vista, fecha, citas, doctores, doctorId, loading } = state;
 
   const navigate = useNavigate();
 
   // ── Data loading ───────────────────────────────────────
   const cargarDoctores = useCallback(async () => {
     try {
-      setDoctores(await DoctorApiService.listar());
+      dispatch({ type: "SET_DOCTORES", doctores: await DoctorApiService.listar() });
     } catch {
-      setDoctores([]);
+      dispatch({ type: "SET_DOCTORES", doctores: [] });
     }
   }, []);
 
   const cargarCitas = useCallback(async () => {
     try {
-      setLoading(true);
-      setCitas(await CitaApiService.obtenerCalendario(toISODateLocal(fecha), vista, doctorId));
+      dispatch({ type: "SET_LOADING", value: true });
+      dispatch({ type: "SET_CITAS", citas: await CitaApiService.obtenerCalendario(toISODateLocal(fecha), vista, doctorId) });
     } catch {
-      setCitas([]);
+      dispatch({ type: "SET_CITAS", citas: [] });
     } finally {
-      setLoading(false);
+      dispatch({ type: "SET_LOADING", value: false });
     }
   }, [fecha, vista, doctorId]);
 
@@ -79,14 +116,14 @@ const Calendario = () => {
 
   // ── Handlers ───────────────────────────────────────────
   const cambiarFecha = useCallback((delta: number) => {
-    setFecha((prev) => {
-      const nueva = new Date(prev);
+    dispatch({ type: "SET_FECHA", fecha: (() => {
+      const nueva = new Date(fecha);
       if (vista === "mes") nueva.setMonth(nueva.getMonth() + delta);
       else if (vista === "semana") nueva.setDate(nueva.getDate() + delta * DIAS_POR_SEMANA);
       else nueva.setDate(nueva.getDate() + delta);
       return nueva;
-    });
-  }, [vista]);
+    })()});
+  }, [fecha, vista]);
 
   const irAReserva = useCallback((fechaISO: string, doctorIdArg?: string) => {
     const params = new URLSearchParams({ fecha: fechaISO });
@@ -100,29 +137,24 @@ const Calendario = () => {
   }, [navigate]);
 
   // ── Computed ───────────────────────────────────────────
-  // ✅ JUSTIFICADO: itera el mes entero para construir array de Dates
-const diasDelMes = useMemo(() => {
-  const anio = fecha.getFullYear();
-  const mes = fecha.getMonth();
-  const inicio = new Date(anio, mes, 1);
-  const fin = new Date(anio, mes + 1, 0);
-  const dias: Date[] = [];
-  const offset = (inicio.getDay() + 6) % 7;
-  for (let i = 0; i < offset; i++) dias.push(new Date(NaN));
-  for (let d = 1; d <= fin.getDate(); d++) dias.push(new Date(anio, mes, d));
-  return dias;
-}, [fecha]); // ✅ fecha como dependencia directa
+  const diasDelMes = useMemo(() => {
+    const anio = fecha.getFullYear();
+    const mes = fecha.getMonth();
+    const inicio = new Date(anio, mes, 1);
+    const fin = new Date(anio, mes + 1, 0);
+    const dias: Date[] = [];
+    const offset = (inicio.getDay() + 6) % 7;
+    for (let i = 0; i < offset; i++) dias.push(new Date(NaN));
+    for (let d = 1; d <= fin.getDate(); d++) dias.push(new Date(anio, mes, d));
+    return dias;
+  }, [fecha]);
 
-  // ✅ JUSTIFICADO: cálculo de offset de semana
   const inicioSemana = useMemo(() => obtenerInicioSemana(fecha), [fecha]);
 
-  // ❌ ELIMINADOS los useMemo triviales:
-  // doctorSeleccionado → derivado directo
   const doctorSeleccionado = doctorId === DOCTOR_TODOS_ID
     ? null
     : doctores.find((d) => d.id === doctorId);
 
-  // tituloCalendario → derivado directo
   const tituloCalendario = (() => {
     if (vista === "mes") return fecha.toLocaleDateString("es-PE", { month: "long", year: "numeric" });
     if (vista === "dia") return fecha.toLocaleDateString("es-PE", { weekday: "long", day: "numeric", month: "long", year: "numeric" });
@@ -136,8 +168,12 @@ const diasDelMes = useMemo(() => {
     <div className="calendario-container">
       <div className="calendario-layout">
         <div className="calendario-left">
-          <MiniCalendario fecha={fecha} onChange={setFecha} />
-          <DoctoresPanel doctores={doctores} doctorId={doctorId} onSeleccionar={setDoctorId} />
+          <MiniCalendario fecha={fecha} onChange={(f) => dispatch({ type: "SET_FECHA", fecha: f })} />
+          <DoctoresPanel
+            doctores={doctores}
+            doctorId={doctorId}
+            onSeleccionar={(id) => dispatch({ type: "SET_DOCTOR_ID", doctorId: id })}
+          />
         </div>
 
         <div className="calendario-main">
@@ -145,7 +181,7 @@ const diasDelMes = useMemo(() => {
             titulo={tituloCalendario}
             vista={vista}
             onCambiarFecha={cambiarFecha}
-            onCambiarVista={setVista}
+            onCambiarVista={(v) => dispatch({ type: "SET_VISTA", vista: v })}
           />
 
           {doctorSeleccionado && (
