@@ -8,7 +8,7 @@ import { CitaApiService } from "../../services/cita.service";
 import { ReniecService } from "../../services/reniec.service";
 
 import { reservaReducer, initialState, generarMesesDisponibles, generarDiasDelMes } from "./reservaCitaReducer";
-import type { MesOption } from "./reservaCitaReducer";
+import type { MesOption, ReservaAction } from "./reservaCitaReducer";
 
 import StepperHeader from "./StepperHeader";
 import PasoEspecialidad from "./PasoEspecialidad";
@@ -37,7 +37,82 @@ const nombresMeses = [
   "Julio","Agosto","Septiembre","Octubre","Noviembre","Diciembre",
 ] as const;
 
-// ─── Componente ───────────────────────────────────────────
+// ─── Componente dispatcher de pasos ──────────────────────
+interface PasoActualProps {
+  state: ReturnType<typeof reservaReducer>;
+  dispatch: React.Dispatch<ReservaAction>;
+  handleBuscarPaciente: (dni: string) => void;
+}
+
+const PasoActual = ({ state, dispatch, handleBuscarPaciente }: PasoActualProps) => {
+  switch (state.pasoActual) {
+    case 1: return (
+      <PasoEspecialidad
+        searchEspecialidad={state.searchEspecialidad}
+        especialidades={state.especialidades}
+        especialidadSeleccionada={state.especialidadSeleccionada}
+        showSuggestions={state.showEspecialidadesSuggestions}
+        loading={state.loading}
+        onSearchChange={(v) => dispatch({ type: "SET_SEARCH_ESPECIALIDAD", value: v })}
+        onToggleSuggestions={(v) => dispatch({ type: "TOGGLE_SUGERENCIAS_ESPECIALIDAD", visible: v })}
+        onSeleccionar={(esp) => dispatch({ type: "SELECCIONAR_ESPECIALIDAD", especialidad: esp })}
+        onDeseleccionar={() => dispatch({ type: "SELECCIONAR_ESPECIALIDAD", especialidad: null })}
+      />
+    );
+    case 2: return (
+      <PasoDoctor
+        doctoresDisponibles={state.doctoresDisponibles}
+        doctorSeleccionado={state.doctorSeleccionado}
+        especialidadSeleccionada={state.especialidadSeleccionada}
+        onSeleccionar={(d) => dispatch({ type: "SELECCIONAR_DOCTOR", doctor: d })}
+      />
+    );
+    case 3: return (
+      <PasoMes
+        mesesDisponibles={state.mesesDisponibles}
+        mesSeleccionado={state.mesSeleccionado}
+        onSeleccionar={(mes) => dispatch({ type: "SELECCIONAR_MES", mes, dias: generarDiasDelMes(mes) })}
+      />
+    );
+    case 4: return (
+      <PasoDia
+        diasDelMes={state.diasDelMes}
+        diaSeleccionado={state.diaSeleccionado}
+        onSeleccionar={(dia) => dispatch({ type: "SELECCIONAR_DIA", dia })}
+      />
+    );
+    case 5: return (
+      <PasoHora
+        horariosPorDia={state.horariosPorDia}
+        horaSeleccionada={state.horaSeleccionada}
+        onSeleccionar={(hora, fechaISO) => dispatch({ type: "SELECCIONAR_HORA", hora, fechaISO })}
+      />
+    );
+    case 6: return (
+      <PasoPaciente
+        searchDNI={state.searchDNI}
+        pacienteEncontrado={state.pacienteEncontrado}
+        pacienteSeleccionado={state.pacienteSeleccionado}
+        reniecLoading={state.reniecLoading}
+        onBuscar={handleBuscarPaciente}
+        onSeleccionar={(p) => dispatch({ type: "SELECCIONAR_PACIENTE", paciente: p })}
+        onNuevoPaciente={() => dispatch({ type: "TOGGLE_NUEVO_PACIENTE", visible: true })}
+      />
+    );
+    case 7: return (
+      <PasoResumen
+        pacienteSeleccionado={state.pacienteSeleccionado}
+        doctorSeleccionado={state.doctorSeleccionado}
+        especialidadSeleccionada={state.especialidadSeleccionada}
+        fechaSeleccionada={state.fechaSeleccionada}
+        horaSeleccionada={state.horaSeleccionada}
+      />
+    );
+    default: return null;
+  }
+};
+
+// ─── Componente principal ─────────────────────────────────
 const ReservaCita = () => {
   const [state, dispatch] = useReducer(reservaReducer, initialState);
   const [searchParams] = useSearchParams();
@@ -45,7 +120,6 @@ const ReservaCita = () => {
   const fechaParam = searchParams.get("fecha") || "";
   const doctorIdParam = searchParams.get("doctorId") || "";
 
-  // ✅ Eliminados los useMemo triviales — derivados directos
   const prefillHasFecha = !!parseISODate(fechaParam);
   const prefillHasDoctor = !!doctorIdParam;
 
@@ -58,13 +132,7 @@ const ReservaCita = () => {
         EspecialidadApiService.listar(),
         DoctorApiService.listar(),
       ]);
-      dispatch({
-        type: "CARGA_EXITO",
-        pacientes,
-        especialidades,
-        doctores,
-        meses: generarMesesDisponibles(),
-      });
+      dispatch({ type: "CARGA_EXITO", pacientes, especialidades, doctores, meses: generarMesesDisponibles() });
     } catch {
       dispatch({ type: "CARGA_ERROR", message: "Error de conexión al cargar datos." });
     }
@@ -84,22 +152,14 @@ const ReservaCita = () => {
       anio: parsed.y,
     };
 
-    dispatch({
-      type: "PREFILL_FECHA",
-      mes,
-      dias: generarDiasDelMes(mes),
-      dia: parsed.d,
-      fechaISO: fechaParam,
-    });
+    dispatch({ type: "PREFILL_FECHA", mes, dias: generarDiasDelMes(mes), dia: parsed.d, fechaISO: fechaParam });
   }, [fechaParam, prefillHasFecha]);
 
   // ── Prefill doctor desde URL ──────────────────────────
   useEffect(() => {
     if (!prefillHasDoctor || state.todosLosDoctores.length === 0) return;
-
     const doctor = state.todosLosDoctores.find((d) => d.id === doctorIdParam);
     if (!doctor) return;
-
     const especialidad = state.especialidades.find((e) => e.nombre === doctor.especialidad);
     dispatch({ type: "PREFILL_DOCTOR", doctor, especialidad });
   }, [doctorIdParam, prefillHasDoctor, state.todosLosDoctores, state.especialidades]);
@@ -131,9 +191,7 @@ const ReservaCita = () => {
       const fechaISO = `${mesSeleccionado.anio}-${mesStr}-${diaStr}`;
 
       try {
-        const horariosData = await DoctorApiService.obtenerHorariosDisponibles(
-          doctorSeleccionado.id, fechaISO
-        );
+        const horariosData = await DoctorApiService.obtenerHorariosDisponibles(doctorSeleccionado.id, fechaISO);
         const fechaObj = new Date(mesSeleccionado.anio, mesSeleccionado.numero, diaSeleccionado);
 
         dispatch({
@@ -174,8 +232,7 @@ const ReservaCita = () => {
         type: "SET_PACIENTE_ENCONTRADO",
         paciente: {
           _id: "temp_reniec", id: "temp_reniec",
-          dni: data.dni,
-          nombres: data.nombres,
+          dni: data.dni, nombres: data.nombres,
           apellidos: `${data.apellidoPaterno} ${data.apellidoMaterno}`,
           telefono: "", correo: "", direccion: "", fechaNacimiento: "",
         },
@@ -255,76 +312,6 @@ const ReservaCita = () => {
     }
   };
 
-  // ── Render paso actual ────────────────────────────────
-  // ✅ Extraído a componentes — eliminado renderPasoActual() inline
-  const renderPaso = () => {
-    switch (state.pasoActual) {
-      case 1: return (
-        <PasoEspecialidad
-          searchEspecialidad={state.searchEspecialidad}
-          especialidades={state.especialidades}
-          especialidadSeleccionada={state.especialidadSeleccionada}
-          showSuggestions={state.showEspecialidadesSuggestions}
-          loading={state.loading}
-          onSearchChange={(v) => dispatch({ type: "SET_SEARCH_ESPECIALIDAD", value: v })}
-          onToggleSuggestions={(v) => dispatch({ type: "TOGGLE_SUGERENCIAS_ESPECIALIDAD", visible: v })}
-          onSeleccionar={(esp) => dispatch({ type: "SELECCIONAR_ESPECIALIDAD", especialidad: esp })}
-          onDeseleccionar={() => dispatch({ type: "SELECCIONAR_ESPECIALIDAD", especialidad: null })}
-        />
-      );
-      case 2: return (
-        <PasoDoctor
-          doctoresDisponibles={state.doctoresDisponibles}
-          doctorSeleccionado={state.doctorSeleccionado}
-          especialidadSeleccionada={state.especialidadSeleccionada}
-          onSeleccionar={(d) => dispatch({ type: "SELECCIONAR_DOCTOR", doctor: d })}
-        />
-      );
-      case 3: return (
-        <PasoMes
-          mesesDisponibles={state.mesesDisponibles}
-          mesSeleccionado={state.mesSeleccionado}
-          onSeleccionar={(mes) => dispatch({ type: "SELECCIONAR_MES", mes, dias: generarDiasDelMes(mes) })}
-        />
-      );
-      case 4: return (
-        <PasoDia
-          diasDelMes={state.diasDelMes}
-          diaSeleccionado={state.diaSeleccionado}
-          onSeleccionar={(dia) => dispatch({ type: "SELECCIONAR_DIA", dia })}
-        />
-      );
-      case 5: return (
-        <PasoHora
-          horariosPorDia={state.horariosPorDia}
-          horaSeleccionada={state.horaSeleccionada}
-          onSeleccionar={(hora, fechaISO) => dispatch({ type: "SELECCIONAR_HORA", hora, fechaISO })}
-        />
-      );
-      case 6: return (
-        <PasoPaciente
-          searchDNI={state.searchDNI}
-          pacienteEncontrado={state.pacienteEncontrado}
-          pacienteSeleccionado={state.pacienteSeleccionado}
-          reniecLoading={state.reniecLoading}
-          onBuscar={handleBuscarPaciente}
-          onSeleccionar={(p) => dispatch({ type: "SELECCIONAR_PACIENTE", paciente: p })}
-          onNuevoPaciente={() => dispatch({ type: "TOGGLE_NUEVO_PACIENTE", visible: true })}
-        />
-      );
-      case 7: return (
-        <PasoResumen
-          pacienteSeleccionado={state.pacienteSeleccionado}
-          doctorSeleccionado={state.doctorSeleccionado}
-          especialidadSeleccionada={state.especialidadSeleccionada}
-          fechaSeleccionada={state.fechaSeleccionada}
-          horaSeleccionada={state.horaSeleccionada}
-        />
-      );
-      default: return null;
-    }
-  };
-
   // ── Main render ───────────────────────────────────────
   return (
     <div className="reserva-cita">
@@ -355,7 +342,13 @@ const ReservaCita = () => {
         {state.error && <div className="error-message">{state.error}</div>}
 
         <div className="cita-form">
-          <div className="paso-content">{renderPaso()}</div>
+          <div className="paso-content">
+            <PasoActual   // ✅ componente real, no función inline
+              state={state}
+              dispatch={dispatch}
+              handleBuscarPaciente={handleBuscarPaciente}
+            />
+          </div>
 
           <div className="stepper-navigation">
             <button
