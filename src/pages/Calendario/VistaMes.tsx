@@ -1,7 +1,6 @@
 import type { CitaTransformada } from "../../services/cita.service";
 
 const DIAS_SEMANA = ["Lun", "Mar", "Mié", "Jue", "Vie", "Sáb", "Dom"] as const;
-const DOCTOR_TODOS_ID = "ALL";
 
 const toISODateLocal = (d: Date): string => {
   const y = d.getFullYear();
@@ -20,7 +19,7 @@ interface Props {
   onVerCita: (e: React.MouseEvent | React.KeyboardEvent, citaId: string) => void;
 }
 
-const VistaMes = ({ diasDelMes, citas, doctorId, onReservar, onVerCita }: Props) => {
+const VistaMes = ({ diasDelMes, citas, onVerCita }: Props) => {
   const obtenerCitasPorFecha = (d: Date) =>
     citas.filter((c) => {
       const fc = new Date(c.fecha);
@@ -39,34 +38,15 @@ const VistaMes = ({ diasDelMes, citas, doctorId, onReservar, onVerCita }: Props)
 
       {diasDelMes.map((dia) => {
         if (!esFechaValida(dia)) {
-          // Empty padding cells: keyed by their ISO-like timestamp string.
-          // Invalid Date objects have a stable NaN time but differ by reference;
-          // toISODateLocal would produce "NaN-NaN-NaN" for all of them, so we
-          // use the numeric position encoded in the Date object itself instead —
-          // casting to number gives NaN for invalid dates, so we fall back to
-          // the string representation of the Date which is unique per object.
           return <div key={String(dia)} className="calendario-celda" />;
         }
 
         const fechaISO = toISODateLocal(dia);
         const citasDelDia = obtenerCitasPorFecha(dia);
-        const doctorParam = doctorId !== DOCTOR_TODOS_ID ? doctorId : undefined;
 
         return (
-          <div
-            key={fechaISO}
-            className="calendario-celda clickable"
-            onClick={() => onReservar(fechaISO, doctorParam)}
-            role="button"
-            tabIndex={0}
-            aria-label={`Agregar cita para ${fechaISO}`}
-            onKeyDown={(e) => {
-              if (e.key === "Enter" || e.key === " ") {
-                e.preventDefault();
-                onReservar(fechaISO, doctorParam);
-              }
-            }}
-          >
+          // ✅ Celda sin onClick — no navega al hacer clic en vacío
+          <div key={fechaISO} className="calendario-celda">
             <span className="dia-numero">{dia.getDate()}</span>
             {citasDelDia.map((cita) => (
               <div
@@ -75,7 +55,7 @@ const VistaMes = ({ diasDelMes, citas, doctorId, onReservar, onVerCita }: Props)
                 onClick={(e) => onVerCita(e, cita._id)}
                 role="button"
                 tabIndex={0}
-                aria-label={`Ver cita de ${cita.pacienteId?.nombres || "Sin paciente"} a las ${cita.hora}`}
+                aria-label={`Ver cita de ${cita.pacienteId?.nombres ?? "Sin paciente"} a las ${cita.hora}`}
                 onKeyDown={(e) => {
                   if (e.key === "Enter" || e.key === " ") {
                     e.preventDefault();

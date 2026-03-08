@@ -1,14 +1,5 @@
 import type { CitaTransformada } from "../../services/cita.service";
 
-const DOCTOR_TODOS_ID = "ALL";
-
-const toISODateLocal = (d: Date): string => {
-  const y = d.getFullYear();
-  const m = String(d.getMonth() + 1).padStart(2, "0");
-  const day = String(d.getDate()).padStart(2, "0");
-  return `${y}-${m}-${day}`;
-};
-
 interface Props {
   fecha: Date;
   horas: string[];
@@ -18,10 +9,7 @@ interface Props {
   onVerCita: (e: React.MouseEvent | React.KeyboardEvent, citaId: string) => void;
 }
 
-const VistaDia = ({ fecha, horas, citas, doctorId, onReservar, onVerCita }: Props) => {
-  const fechaISO = toISODateLocal(fecha);
-  const doctorParam = doctorId !== DOCTOR_TODOS_ID ? doctorId : undefined;
-
+const VistaDia = ({ fecha, horas, citas, onVerCita }: Props) => {
   const obtenerCitaPorHora = (hora: string) =>
     citas.find((c) => {
       const fc = new Date(c.fecha);
@@ -41,19 +29,8 @@ const VistaDia = ({ fecha, horas, citas, doctorId, onReservar, onVerCita }: Prop
         return (
           <div key={hora} className="agenda-linea">
             <div className="agenda-hora">{hora}</div>
-            <div
-              className="agenda-celda clickable"
-              onClick={() => onReservar(fechaISO, doctorParam)}
-              role="button"
-              tabIndex={0}
-              aria-label={`Agregar cita a las ${hora}`}
-              onKeyDown={(e) => {
-                if (e.key === "Enter" || e.key === " ") {
-                  e.preventDefault();
-                  onReservar(fechaISO, doctorParam);
-                }
-              }}
-            >
+
+            <div className="agenda-celda">
               {cita?.pacienteId && (
                 <div
                   className="agenda-cita clickable"

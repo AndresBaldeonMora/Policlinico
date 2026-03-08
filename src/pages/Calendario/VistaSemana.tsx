@@ -1,7 +1,6 @@
 import type { CitaTransformada } from "../../services/cita.service";
 
 const DIAS_SEMANA = ["Lun", "Mar", "Mié", "Jue", "Vie", "Sáb", "Dom"] as const;
-const DOCTOR_TODOS_ID = "ALL";
 const DIAS_POR_SEMANA = 7;
 
 const toISODateLocal = (d: Date): string => {
@@ -20,7 +19,13 @@ interface Props {
   onVerCita: (e: React.MouseEvent | React.KeyboardEvent, citaId: string) => void;
 }
 
-const VistaSemana = ({ inicioSemana, horas, citas, doctorId, onReservar, onVerCita }: Props) => {
+const VistaSemana = ({ inicioSemana, horas, citas, onVerCita }: Props) => {
+  const diasSemana = Array.from({ length: DIAS_POR_SEMANA }, (_, i) => {
+    const dia = new Date(inicioSemana);
+    dia.setDate(inicioSemana.getDate() + i);
+    return dia;
+  });
+
   const obtenerCitaPorHora = (d: Date, hora: string) =>
     citas.find((c) => {
       const fc = new Date(c.fecha);
@@ -32,19 +37,11 @@ const VistaSemana = ({ inicioSemana, horas, citas, doctorId, onReservar, onVerCi
       );
     });
 
-  // Precalcular los días de la semana una sola vez
-  const diasSemana = Array.from({ length: DIAS_POR_SEMANA }, (_, i) => {
-    const dia = new Date(inicioSemana);
-    dia.setDate(inicioSemana.getDate() + i);
-    return dia;
-  });
-
   return (
     <div className="agenda-semana">
       <div className="agenda-header">
         <div className="agenda-hora-header">Hora</div>
         {diasSemana.map((dia, i) => (
-          // ✅ Key estable: nombre del día + fecha — nunca se reordena
           <div key={`${DIAS_SEMANA[i]}-${toISODateLocal(dia)}`} className="agenda-dia-header">
             {DIAS_SEMANA[i]} {dia.getDate()}
           </div>
@@ -58,23 +55,12 @@ const VistaSemana = ({ inicioSemana, horas, citas, doctorId, onReservar, onVerCi
           {diasSemana.map((dia, i) => {
             const cita = obtenerCitaPorHora(dia, hora);
             const fechaISO = toISODateLocal(dia);
-            const doctorParam = doctorId !== DOCTOR_TODOS_ID ? doctorId : undefined;
 
             return (
-              // ✅ Key estable: hora + fecha — combinación única
+              // ✅ Celda sin onClick — no navega al hacer clic en vacío
               <div
                 key={`${hora}-${fechaISO}`}
-                className="agenda-celda clickable"
-                onClick={() => onReservar(fechaISO, doctorParam)}
-                role="button"
-                tabIndex={0}
-                aria-label={`Agregar cita ${DIAS_SEMANA[i]} ${dia.getDate()} a las ${hora}`}
-                onKeyDown={(e) => {
-                  if (e.key === "Enter" || e.key === " ") {
-                    e.preventDefault();
-                    onReservar(fechaISO, doctorParam);
-                  }
-                }}
+                className="agenda-celda"
               >
                 {cita?.pacienteId && (
                   <div
@@ -82,7 +68,7 @@ const VistaSemana = ({ inicioSemana, horas, citas, doctorId, onReservar, onVerCi
                     onClick={(e) => onVerCita(e, cita._id)}
                     role="button"
                     tabIndex={0}
-                    aria-label={`Ver cita de ${cita.pacienteId.nombres}`}
+                    aria-label={`Ver cita de ${cita.pacienteId.nombres} — ${DIAS_SEMANA[i]} ${dia.getDate()} a las ${hora}`}
                     onKeyDown={(e) => {
                       if (e.key === "Enter" || e.key === " ") {
                         e.preventDefault();
