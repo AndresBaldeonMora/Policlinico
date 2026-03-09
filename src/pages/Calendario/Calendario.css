@@ -2,6 +2,9 @@
   --border: #e5e7eb;
   --text-gray: #374151;
   --green: #10b981;
+  --green-dark: #059669;
+  --blue: #0ea5e9;
+  --blue-dark: #0284c7;
   --bg-light: #f9fafb;
 }
 
@@ -134,18 +137,52 @@
 .dia-numero {
   font-size: 0.75rem;
   font-weight: 700;
+  color: #6b7280;
 }
 
+/* ================= CHIP DE CITA (Vista Mes) ================= */
+
 .cita-chip {
-  background: #ecfdf5;
-  border-left: 3px solid var(--green);
-  padding: 0.2rem 0.35rem;
+  display: flex;
+  align-items: center;
+  gap: 0.3rem;
+  background: var(--green);
+  color: white;
+  border-left: 3px solid var(--green-dark);
+  padding: 0.25rem 0.4rem;
   margin-top: 0.25rem;
-  font-size: 0.7rem;
+  font-size: 0.68rem;
+  font-weight: 500;
   border-radius: 4px;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
+  cursor: pointer;
+  transition: background 0.15s, transform 0.1s, box-shadow 0.15s;
+  box-shadow: 0 1px 3px rgba(16, 185, 129, 0.25);
+  user-select: none;
+}
+
+.cita-chip:hover {
+  background: var(--green-dark);
+  transform: translateY(-1px);
+  box-shadow: 0 3px 8px rgba(16, 185, 129, 0.4);
+}
+
+.cita-chip:active {
+  transform: translateY(0);
+  box-shadow: 0 1px 2px rgba(16, 185, 129, 0.2);
+}
+
+/* Punto decorativo antes del nombre */
+.cita-chip::before {
+  content: "";
+  display: inline-block;
+  width: 5px;
+  height: 5px;
+  background: rgba(255, 255, 255, 0.7);
+  border-radius: 50%;
+  flex-shrink: 0;
 }
 
 /* ================= SEMANA / DÍA ================= */
@@ -161,6 +198,16 @@
   grid-template-columns: 80px repeat(7, 1fr);
   background: var(--bg-light);
   border-bottom: 1px solid var(--border);
+  position: sticky;
+  top: 0;
+  z-index: 1;
+}
+
+.agenda-hora-header {
+  font-size: 0.7rem;
+  padding: 0.5rem;
+  color: #9ca3af;
+  border-right: 1px solid var(--border);
 }
 
 .agenda-dia-header {
@@ -187,25 +234,61 @@
   font-size: 0.7rem;
   padding: 0.3rem;
   border-right: 1px solid var(--border);
-  color: var(--text-gray);
+  color: #9ca3af;
   background: white;
+  text-align: right;
+  padding-right: 0.5rem;
 }
 
 .agenda-celda {
   border-left: 1px solid var(--border);
   border-top: 1px solid var(--border);
   position: relative;
+  padding: 2px;
 }
 
+/* ================= BLOQUE DE CITA (Vista Semana / Día) ================= */
+
 .agenda-cita {
-  background: #bae6fd;
-  font-size: 0.7rem;
-  margin: 2px;
-  padding: 0.2rem 0.35rem;
+  background: var(--blue);
+  color: white;
+  font-size: 0.68rem;
+  font-weight: 500;
+  padding: 0.25rem 0.4rem;
   border-radius: 4px;
+  border-left: 3px solid var(--blue-dark);
   overflow: hidden;
   white-space: nowrap;
   text-overflow: ellipsis;
+  cursor: pointer;
+  transition: background 0.15s, transform 0.1s, box-shadow 0.15s;
+  box-shadow: 0 1px 3px rgba(14, 165, 233, 0.25);
+  user-select: none;
+  display: flex;
+  align-items: center;
+  gap: 0.3rem;
+}
+
+.agenda-cita:hover {
+  background: var(--blue-dark);
+  transform: translateY(-1px);
+  box-shadow: 0 3px 8px rgba(14, 165, 233, 0.4);
+}
+
+.agenda-cita:active {
+  transform: translateY(0);
+  box-shadow: 0 1px 2px rgba(14, 165, 233, 0.2);
+}
+
+/* Punto decorativo */
+.agenda-cita::before {
+  content: "";
+  display: inline-block;
+  width: 5px;
+  height: 5px;
+  background: rgba(255, 255, 255, 0.7);
+  border-radius: 50%;
+  flex-shrink: 0;
 }
 
 /* ================= DOCTORES ================= */
@@ -233,6 +316,7 @@
   border-radius: 6px;
   cursor: pointer;
   font-size: 0.75rem;
+  transition: background 0.15s;
 }
 
 .doctor-item:hover {

@@ -1,9 +1,8 @@
+/* AgregarPacienteSimple.css — mantiene estilos existentes + agrega nuevos */
+
 .modal-overlay-simple {
   position: fixed;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
+  top: 0; left: 0; right: 0; bottom: 0;
   background: rgba(0, 0, 0, 0.5);
   display: flex;
   align-items: center;
@@ -13,92 +12,81 @@
 }
 
 @keyframes fadeIn {
-  from {
-    opacity: 0;
-  }
-  to {
-    opacity: 1;
-  }
+  from { opacity: 0; }
+  to   { opacity: 1; }
 }
 
 .modal-content-simple {
   background: white;
   border-radius: 12px;
-  max-width: 520px;
+  max-width: 480px;
   width: 90%;
   box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
   animation: slideUp 0.3s ease-out;
+  overflow: hidden;
 }
 
 @keyframes slideUp {
-  from {
-    transform: translateY(50px);
-    opacity: 0;
-  }
-  to {
-    transform: translateY(0);
-    opacity: 1;
-  }
+  from { transform: translateY(40px); opacity: 0; }
+  to   { transform: translateY(0);    opacity: 1; }
 }
 
 .modal-header-simple {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 1.25rem 1.5rem;
-  border-bottom: 2px solid #e5e7eb;
+  padding: 1.1rem 1.5rem;
   background: linear-gradient(135deg, #10b981 0%, #059669 100%);
   color: white;
-  border-radius: 12px 12px 0 0;
 }
 
 .modal-header-simple h3 {
   margin: 0;
-  font-size: 1.25rem;
+  font-size: 1.1rem;
   font-weight: 600;
 }
 
 .close-btn-simple {
-  background: rgba(255, 255, 255, 0.2);
+  background: rgba(255,255,255,0.2);
   border: none;
   color: white;
-  font-size: 1.5rem;
-  width: 32px;
-  height: 32px;
+  font-size: 1.2rem;
+  width: 30px;
+  height: 30px;
   border-radius: 50%;
   cursor: pointer;
   display: flex;
   align-items: center;
   justify-content: center;
-  transition: all 0.2s;
+  transition: background 0.15s, transform 0.15s;
 }
 
 .close-btn-simple:hover:not(:disabled) {
-  background: rgba(255, 255, 255, 0.3);
+  background: rgba(255,255,255,0.3);
   transform: rotate(90deg);
 }
 
 .error-message-simple {
-  background: #fee;
-  color: #c33;
-  padding: 0.875rem;
-  margin: 1rem 1.5rem 0;
-  border-radius: 8px;
-  border-left: 4px solid #ef4444;
-  font-size: 0.9rem;
+  background: #fef2f2;
+  color: #b91c1c;
+  padding: 0.7rem 1rem;
+  border-radius: 6px;
+  border-left: 3px solid #ef4444;
+  font-size: 0.85rem;
+  font-weight: 500;
 }
 
 .form-simple {
-  padding: 1.5rem;
+  padding: 1.25rem 1.5rem;
   display: flex;
   flex-direction: column;
-  gap: 1.1rem;
+  gap: 1rem;
 }
 
 .form-group-simple {
   display: flex;
   flex-direction: column;
-  gap: 0.45rem;
+  gap: 0.4rem;
 }
 
 .form-row-simple {
@@ -110,59 +98,73 @@
 .form-group-simple label {
   font-weight: 600;
   color: #374151;
-  font-size: 0.95rem;
+  font-size: 0.85rem;
 }
 
-.required {
-  color: #ef4444;
-}
-
-.form-group-simple input,
-.textarea-simple {
-  padding: 0.7rem 0.75rem;
-  border: 2px solid #e5e7eb;
+.form-group-simple input {
+  padding: 0.65rem 0.75rem;
+  border: 1.5px solid #e2e8f0;
   border-radius: 8px;
-  font-size: 0.95rem;
-  transition: all 0.2s;
+  font-size: 0.9rem;
+  transition: border-color 0.15s, box-shadow 0.15s;
+  outline: none;
   width: 100%;
-  resize: vertical;
+  box-sizing: border-box;
 }
 
-.form-group-simple input:focus,
-.textarea-simple:focus {
-  outline: none;
+.form-group-simple input:focus {
   border-color: #10b981;
   box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.1);
 }
 
 .input-disabled-modal {
-  background-color: #f3f4f6 !important;
+  background: #f3f4f6 !important;
   color: #6b7280 !important;
   cursor: not-allowed !important;
   font-weight: 600;
+  font-family: 'Courier New', monospace;
+  letter-spacing: 0.05em;
+}
+
+/* RENIEC feedback */
+.aps-reniec-loading { color: #64748b; font-size: 0.76rem; }
+.aps-reniec-warn    { color: #d97706; font-size: 0.76rem; }
+.aps-reniec-ok      { color: #10b981; font-size: 0.76rem; font-weight: 600; }
+
+/* Nota */
+.aps-nota {
+  font-size: 0.78rem;
+  color: #64748b;
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  border-radius: 6px;
+  padding: 0.6rem 0.75rem;
+  margin: 0;
+  line-height: 1.5;
 }
 
 .buttons-simple {
   display: flex;
   gap: 0.75rem;
-  margin-top: 0.75rem;
+  margin-top: 0.25rem;
 }
 
 .btn-cancelar-simple,
 .btn-guardar-simple {
   flex: 1;
-  padding: 0.75rem 1.5rem;
+  padding: 0.7rem 1rem;
   border: none;
   border-radius: 8px;
-  font-size: 0.98rem;
+  font-size: 0.9rem;
   font-weight: 600;
   cursor: pointer;
-  transition: all 0.2s;
+  transition: all 0.15s;
 }
 
 .btn-cancelar-simple {
   background: #f3f4f6;
   color: #374151;
+  border: 1.5px solid #e2e8f0;
 }
 
 .btn-cancelar-simple:hover:not(:disabled) {
@@ -170,24 +172,23 @@
 }
 
 .btn-guardar-simple {
-  background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+  background: linear-gradient(135deg, #10b981, #059669);
   color: white;
+  box-shadow: 0 2px 8px rgba(16, 185, 129, 0.3);
 }
 
 .btn-guardar-simple:hover:not(:disabled) {
-  background: linear-gradient(135deg, #059669 0%, #047857 100%);
-  transform: translateY(-2px);
-  box-shadow: 0 6px 14px rgba(16, 185, 129, 0.35);
+  transform: translateY(-1px);
+  box-shadow: 0 4px 14px rgba(16, 185, 129, 0.4);
 }
 
 .btn-guardar-simple:disabled {
-  opacity: 0.5;
+  opacity: 0.55;
   cursor: not-allowed;
+  transform: none;
 }
 
-/* Responsive */
 @media (max-width: 480px) {
-  .form-row-simple {
-    grid-template-columns: 1fr;
-  }
+  .form-row-simple { grid-template-columns: 1fr; }
+  .buttons-simple  { flex-direction: column; }
 }
