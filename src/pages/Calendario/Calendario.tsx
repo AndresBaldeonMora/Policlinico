@@ -1,3 +1,4 @@
+// src/pages/Calendario/Calendario.tsx
 import { useEffect, useReducer, useCallback, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
 import { CitaApiService } from "../../services/cita.service";
@@ -12,15 +13,12 @@ import VistaSemana from "./VistaSemana";
 import VistaDia from "./VistaDia";
 import "./Calendario.css";
 
-// ─── Types ────────────────────────────────────────────────
 type Vista = "dia" | "semana" | "mes";
 
-// ─── Constantes ───────────────────────────────────────────
 const DOCTOR_TODOS_ID = "ALL";
 const HORA_INICIO = 8;
 const HORA_FIN = 17;
 const INTERVALO_MINUTOS = 15;
-const DIAS_POR_SEMANA = 7;
 
 const toISODateLocal = (d: Date): string => {
   const y = d.getFullYear();
@@ -45,7 +43,6 @@ const HORAS_LABORALES = (() => {
   });
 })();
 
-// ─── Estado ───────────────────────────────────────────────
 interface CalendarioState {
   vista: Vista;
   fecha: Date;
@@ -63,8 +60,9 @@ type CalendarioAction =
   | { type: "SET_DOCTOR_ID"; doctorId: string }
   | { type: "SET_LOADING"; value: boolean };
 
+// ✅ DEFAULT: vista día
 const initialState: CalendarioState = {
-  vista: "mes",
+  vista: "dia",
   fecha: new Date(),
   citas: [],
   doctores: [],
@@ -74,24 +72,21 @@ const initialState: CalendarioState = {
 
 function calendarioReducer(state: CalendarioState, action: CalendarioAction): CalendarioState {
   switch (action.type) {
-    case "SET_VISTA":    return { ...state, vista: action.vista };
-    case "SET_FECHA":    return { ...state, fecha: action.fecha };
-    case "SET_CITAS":    return { ...state, citas: action.citas };
-    case "SET_DOCTORES": return { ...state, doctores: action.doctores };
-    case "SET_DOCTOR_ID":return { ...state, doctorId: action.doctorId };
-    case "SET_LOADING":  return { ...state, loading: action.value };
-    default:             return state;
+    case "SET_VISTA":     return { ...state, vista: action.vista };
+    case "SET_FECHA":     return { ...state, fecha: action.fecha };
+    case "SET_CITAS":     return { ...state, citas: action.citas };
+    case "SET_DOCTORES":  return { ...state, doctores: action.doctores };
+    case "SET_DOCTOR_ID": return { ...state, doctorId: action.doctorId };
+    case "SET_LOADING":   return { ...state, loading: action.value };
+    default:              return state;
   }
 }
 
-// ─── Componente ───────────────────────────────────────────
 const Calendario = () => {
   const [state, dispatch] = useReducer(calendarioReducer, initialState);
   const { vista, fecha, citas, doctores, doctorId, loading } = state;
-
   const navigate = useNavigate();
 
-  // ── Data loading ───────────────────────────────────────
   const cargarDoctores = useCallback(async () => {
     try {
       dispatch({ type: "SET_DOCTORES", doctores: await DoctorApiService.listar() });
@@ -103,7 +98,10 @@ const Calendario = () => {
   const cargarCitas = useCallback(async () => {
     try {
       dispatch({ type: "SET_LOADING", value: true });
-      dispatch({ type: "SET_CITAS", citas: await CitaApiService.obtenerCalendario(toISODateLocal(fecha), vista, doctorId) });
+      dispatch({
+        type: "SET_CITAS",
+        citas: await CitaApiService.obtenerCalendario(toISODateLocal(fecha), vista, doctorId),
+      });
     } catch {
       dispatch({ type: "SET_CITAS", citas: [] });
     } finally {
@@ -114,15 +112,12 @@ const Calendario = () => {
   useEffect(() => { cargarDoctores(); }, [cargarDoctores]);
   useEffect(() => { cargarCitas(); }, [cargarCitas]);
 
-  // ── Handlers ───────────────────────────────────────────
   const cambiarFecha = useCallback((delta: number) => {
-    dispatch({ type: "SET_FECHA", fecha: (() => {
-      const nueva = new Date(fecha);
-      if (vista === "mes") nueva.setMonth(nueva.getMonth() + delta);
-      else if (vista === "semana") nueva.setDate(nueva.getDate() + delta * DIAS_POR_SEMANA);
-      else nueva.setDate(nueva.getDate() + delta);
-      return nueva;
-    })()});
+    const nueva = new Date(fecha);
+    if (vista === "mes")    nueva.setMonth(nueva.getMonth() + delta);
+    else if (vista === "semana") nueva.setDate(nueva.getDate() + delta * 7);
+    else                    nueva.setDate(nueva.getDate() + delta);
+    dispatch({ type: "SET_FECHA", fecha: nueva });
   }, [fecha, vista]);
 
   const irAReserva = useCallback((fechaISO: string, doctorIdArg?: string) => {
@@ -136,7 +131,6 @@ const Calendario = () => {
     navigate(`/citas/${citaId}`);
   }, [navigate]);
 
-  // ── Computed ───────────────────────────────────────────
   const diasDelMes = useMemo(() => {
     const anio = fecha.getFullYear();
     const mes = fecha.getMonth();
@@ -150,10 +144,6 @@ const Calendario = () => {
   }, [fecha]);
 
   const inicioSemana = useMemo(() => obtenerInicioSemana(fecha), [fecha]);
-
-  const doctorSeleccionado = doctorId === DOCTOR_TODOS_ID
-    ? null
-    : doctores.find((d) => d.id === doctorId);
 
   const tituloCalendario = (() => {
     if (vista === "mes") return fecha.toLocaleDateString("es-PE", { month: "long", year: "numeric" });
@@ -184,20 +174,16 @@ const Calendario = () => {
             onCambiarVista={(v) => dispatch({ type: "SET_VISTA", vista: v })}
           />
 
-          {doctorSeleccionado && (
-            <div className="doctor-bar">
-              Calendario de: {doctorSeleccionado.apellidos}, {doctorSeleccionado.nombres}
-            </div>
-          )}
-
           {loading && <div className="loading-indicator">Cargando citas...</div>}
 
           {!loading && (
             <>
-              {vista === "mes" && (
-                <VistaMes
-                  diasDelMes={diasDelMes}
+              {vista === "dia" && (
+                <VistaDia
+                  fecha={fecha}
+                  horas={HORAS_LABORALES}
                   citas={citas}
+                  doctores={doctores}
                   doctorId={doctorId}
                   onReservar={irAReserva}
                   onVerCita={irADetalleCita}
@@ -208,16 +194,17 @@ const Calendario = () => {
                   inicioSemana={inicioSemana}
                   horas={HORAS_LABORALES}
                   citas={citas}
+                  doctores={doctores}
                   doctorId={doctorId}
                   onReservar={irAReserva}
                   onVerCita={irADetalleCita}
                 />
               )}
-              {vista === "dia" && (
-                <VistaDia
-                  fecha={fecha}
-                  horas={HORAS_LABORALES}
+              {vista === "mes" && (
+                <VistaMes
+                  diasDelMes={diasDelMes}
                   citas={citas}
+                  doctores={doctores}
                   doctorId={doctorId}
                   onReservar={irAReserva}
                   onVerCita={irADetalleCita}

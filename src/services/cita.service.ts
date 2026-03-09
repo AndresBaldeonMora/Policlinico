@@ -1,18 +1,7 @@
+// src/services/cita.service.ts
 import api from "./api";
 
-// ============================================================================
-// ESTADOS
-// ============================================================================
-
-export type EstadoCita =
-  | "PENDIENTE"
-  | "ATENDIDA"
-  | "CANCELADA"
-  | "REPROGRAMADA";
-
-// ============================================================================
-// DTOs
-// ============================================================================
+export type EstadoCita = "PENDIENTE" | "ATENDIDA" | "CANCELADA" | "REPROGRAMADA";
 
 export interface CrearCitaDTO {
   pacienteId: string;
@@ -21,10 +10,6 @@ export interface CrearCitaDTO {
   hora: string;
 }
 
-// ============================================================================
-// MODELOS BASE
-// ============================================================================
-
 export interface PacienteDTO {
   _id: string;
   nombres: string;
@@ -32,8 +17,8 @@ export interface PacienteDTO {
   dni: string;
   telefono?: string;
   correo?: string;
-  fechaNacimiento?: string; // ISO string
-  edad?: number;            // virtual del backend
+  fechaNacimiento?: string;
+  edad?: number;
 }
 
 export interface DoctorDTO {
@@ -41,10 +26,6 @@ export interface DoctorDTO {
   nombres: string;
   apellidos: string;
 }
-
-// ============================================================================
-// CITA
-// ============================================================================
 
 export interface Cita {
   _id: string;
@@ -57,7 +38,6 @@ export interface Cita {
   updatedAt?: string;
 }
 
-// Para listados simples
 export interface CitaProcesada {
   _id: string;
   id: number;
@@ -71,34 +51,31 @@ export interface CitaProcesada {
   estado: EstadoCita;
 }
 
-// ✅ ESTA ES LA CLAVE
+// ✅ doctorId puede ser objeto populado o string (sin populate)
 export interface CitaTransformada {
   _id: string;
   fecha: string;
   hora: string;
   estado: EstadoCita;
-
   pacienteId: PacienteDTO;
-  doctorId?: DoctorDTO;
+  doctorId?: DoctorDTO | string;
 }
 
-// ============================================================================
-// API SERVICE
-// ============================================================================
+// ✅ Helper sin any — extrae el _id del doctorId sea objeto o string
+export const getDoctorIdString = (doctorId?: DoctorDTO | string): string => {
+  if (!doctorId) return "";
+  if (typeof doctorId === "string") return doctorId;
+  return doctorId._id;
+};
 
 export class CitaApiService {
   static async crear(datos: CrearCitaDTO): Promise<Cita> {
-    const response = await api.post<{
-      success: boolean;
-      data: Cita;
-      message?: string;
-      error?: string;
-    }>("/citas", datos);
-
+    const response = await api.post<{ success: boolean; data: Cita; message?: string }>(
+      "/citas", datos
+    );
     if (!response.data.success || !response.data.data) {
       throw new Error(response.data.message || "Error al crear la cita");
     }
-
     return response.data.data;
   }
 
@@ -109,53 +86,33 @@ export class CitaApiService {
   ): Promise<CitaTransformada[]> {
     const params = new URLSearchParams({ fecha, vista });
     if (medicoId && medicoId !== "ALL") params.set("medicoId", medicoId);
-
-    const response = await api.get<{
-      success: boolean;
-      data: CitaTransformada[];
-    }>(`/citas/calendario?${params.toString()}`);
-
+    const response = await api.get<{ success: boolean; data: CitaTransformada[] }>(
+      `/citas/calendario?${params.toString()}`
+    );
     return response.data.data ?? [];
   }
 
   static async listar(): Promise<CitaProcesada[]> {
-    const response = await api.get<{
-      success: boolean;
-      data: CitaProcesada[];
-    }>("/citas");
-
+    const response = await api.get<{ success: boolean; data: CitaProcesada[] }>("/citas");
     return response.data.data ?? [];
   }
 
-  static async reprogramar(
-    id: string,
-    nuevaFecha: string,
-    nuevaHora: string
-  ): Promise<void> {
-    const response = await api.put<{
-      success: boolean;
-      message?: string;
-    }>(`/citas/${id}/reprogramar`, {
-      fecha: nuevaFecha,
-      hora: nuevaHora,
-    });
-
+  static async reprogramar(id: string, nuevaFecha: string, nuevaHora: string): Promise<void> {
+    const response = await api.put<{ success: boolean; message?: string }>(
+      `/citas/${id}/reprogramar`, { fecha: nuevaFecha, hora: nuevaHora }
+    );
     if (!response.data.success) {
       throw new Error(response.data.message || "Error al reprogramar cita");
     }
   }
 
   static async obtenerPorId(id: string): Promise<CitaTransformada> {
-    const response = await api.get<{
-      success: boolean;
-      data: CitaTransformada;
-      message?: string;
-    }>(`/citas/${id}`);
-
+    const response = await api.get<{ success: boolean; data: CitaTransformada; message?: string }>(
+      `/citas/${id}`
+    );
     if (!response.data.success || !response.data.data) {
       throw new Error(response.data.message || "No se pudo obtener la cita");
     }
-
     return response.data.data;
   }
 }

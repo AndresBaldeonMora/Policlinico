@@ -8,26 +8,31 @@
   --bg-light: #f9fafb;
 }
 
-/* ================= CONTENEDOR ================= */
+/* ═══════════════════════════════════════════
+   LAYOUT PRINCIPAL
+═══════════════════════════════════════════ */
 
 .calendario-container {
   padding: 1rem;
   height: 100vh;
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
 }
-
-/* ================= LAYOUT ================= */
 
 .calendario-layout {
   display: grid;
-  grid-template-columns: 300px 1fr;
+  grid-template-columns: 240px 1fr;
   gap: 1rem;
-  height: calc(100vh - 120px);
+  flex: 1;
+  min-height: 0; /* ✅ crítico para que flex funcione */
 }
 
 .calendario-left {
   display: flex;
   flex-direction: column;
   gap: 1rem;
+  overflow-y: auto;
 }
 
 .calendario-main {
@@ -36,9 +41,13 @@
   overflow: hidden;
   display: flex;
   flex-direction: column;
+  background: white;
+  min-height: 0; /* ✅ crítico */
 }
 
-/* ================= TOP BAR ================= */
+/* ═══════════════════════════════════════════
+   TOP BAR
+═══════════════════════════════════════════ */
 
 .calendario-topbar {
   display: grid;
@@ -48,6 +57,7 @@
   padding: 0.5rem 0.75rem;
   border-bottom: 1px solid var(--border);
   background: white;
+  flex-shrink: 0; /* ✅ no se encoge */
 }
 
 .calendario-topbar button {
@@ -58,19 +68,15 @@
   cursor: pointer;
 }
 
-.calendario-topbar button:hover {
-  background: var(--bg-light);
-}
+.calendario-topbar button:hover { background: var(--bg-light); }
 
 .calendario-topbar h2 {
   text-align: center;
-  font-size: 1.4rem;
+  font-size: 1.1rem;
   font-weight: 700;
   text-transform: capitalize;
   margin: 0;
 }
-
-/* ================= SELECTOR VISTA ================= */
 
 .vista-selector {
   display: flex;
@@ -92,66 +98,246 @@
   border-color: var(--green);
 }
 
-/* ================= DOCTOR BAR ================= */
+/* ═══════════════════════════════════════════
+   LOADING
+═══════════════════════════════════════════ */
 
-.doctor-bar {
-  background: #2563eb;
-  color: white;
-  padding: 0.45rem 0.75rem;
-  font-weight: 600;
-  font-size: 0.8rem;
-  border-bottom: 1px solid var(--border);
+.loading-indicator {
+  padding: 32px;
+  text-align: center;
+  color: #6b7280;
+  font-size: 14px;
 }
 
-/* ================= MES ================= */
+/* ═══════════════════════════════════════════
+   VISTA DÍA — Multi columnas por médico
+═══════════════════════════════════════════ */
 
+.multi-dia-wrapper {
+  flex: 1;
+  overflow: auto;
+  min-height: 0;
+}
+
+.multi-dia-grid {
+  display: grid;
+  /* gridTemplateColumns se define inline */
+}
+
+.multi-hora-cell {
+  background: white;
+  border-bottom: 2px solid var(--border);
+  border-right: 1px solid var(--border);
+  position: sticky;
+  top: 0;
+  left: 0;
+  z-index: 4;
+  min-width: 70px;
+}
+
+.multi-doctor-header {
+  background: #2563eb;
+  color: white;
+  padding: 10px 12px;
+  text-align: center;
+  border-bottom: 2px solid #1d4ed8;
+  border-right: 1px solid #1d4ed8;
+  position: sticky;
+  top: 0;
+  z-index: 3;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 180px;
+}
+
+.multi-doctor-nombre {
+  font-weight: 700;
+  font-size: 13px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.multi-doctor-esp {
+  font-size: 11px;
+  opacity: 0.85;
+  font-weight: 400;
+}
+
+.multi-hora-label {
+  background: white;
+  border-bottom: 1px solid #f3f4f6;
+  border-right: 1px solid var(--border);
+  padding: 0 8px;
+  font-size: 11px;
+  color: #9ca3af;
+  text-align: right;
+  display: flex;
+  align-items: flex-start;
+  justify-content: flex-end;
+  padding-top: 3px;
+  min-height: 40px;
+  min-width: 70px;
+  position: sticky;
+  left: 0;
+  z-index: 2;
+}
+
+.multi-celda {
+  border-bottom: 1px solid #f3f4f6;
+  border-right: 1px solid #f0f0f0;
+  padding: 2px 3px;
+  min-height: 40px;
+  min-width: 180px;
+  cursor: pointer;
+  transition: background 0.1s;
+}
+
+.multi-celda:hover { background: #f0fdf4; }
+
+/* ═══════════════════════════════════════════
+   VISTA SEMANA — Bloques por médico
+═══════════════════════════════════════════ */
+
+.multi-semana-wrapper {
+  flex: 1;
+  overflow-y: auto;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  padding: 12px;
+}
+
+.multi-semana-bloque {
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  overflow: hidden;
+  flex-shrink: 0; /* ✅ no se comprime */
+}
+
+.multi-semana-doctor-header {
+  background: #2563eb;
+  color: white;
+  padding: 10px 16px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.multi-semana-grid {
+  display: grid;
+  overflow-x: auto;
+}
+
+.agenda-dia-header {
+  background: var(--bg-light);
+  text-align: center;
+  font-weight: 600;
+  font-size: 12px;
+  color: var(--text-gray);
+  padding: 6px 4px;
+  border-bottom: 1px solid var(--border);
+  border-right: 1px solid var(--border);
+}
+
+.agenda-dia-header--hoy {
+  background: #dbeafe;
+  color: #1d4ed8;
+}
+
+/* ═══════════════════════════════════════════
+   VISTA MES — Bloques por médico
+═══════════════════════════════════════════ */
+
+.multi-mes-wrapper {
+  flex: 1;
+  overflow-y: auto;
+  min-height: 0; /* ✅ crítico para scroll */
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  padding: 12px;
+}
+
+.multi-mes-bloque {
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  overflow: hidden;
+  flex-shrink: 0; /* ✅ no se comprime — muestra completo */
+}
+
+/* Grid mes */
 .calendario-grid {
   display: grid;
   grid-template-columns: repeat(7, 1fr);
+  width: 100%;
 }
 
 .calendario-col-header {
   background: var(--bg-light);
   text-align: center;
   font-weight: 600;
-  padding: 0.5rem;
+  padding: 6px;
   border-bottom: 1px solid var(--border);
   border-right: 1px solid var(--border);
-}
-
-.calendario-col-header:last-child {
-  border-right: none;
-}
-
-.calendario-celda {
-  min-height: 110px;
-  border-right: 1px solid var(--border);
-  border-bottom: 1px solid var(--border);
-  padding: 0.35rem;
-}
-
-.calendario-celda:nth-child(7n) {
-  border-right: none;
-}
-
-.dia-numero {
-  font-size: 0.75rem;
-  font-weight: 700;
+  font-size: 12px;
   color: #6b7280;
 }
 
-/* ================= CHIP DE CITA (Vista Mes) ================= */
+.calendario-col-header:last-child { border-right: none; }
+
+.calendario-celda {
+  min-height: 75px; /* ✅ reducido para que quepan más semanas */
+  border-right: 1px solid var(--border);
+  border-bottom: 1px solid var(--border);
+  padding: 4px;
+  cursor: pointer;
+  transition: background 0.1s;
+  overflow: hidden;
+}
+
+.calendario-celda:hover         { background: #f0fdf4; }
+.calendario-celda--vacia        { background: #fafafa; cursor: default; }
+.calendario-celda--vacia:hover  { background: #fafafa; }
+.calendario-celda--hoy          { background: #f0fdf4; }
+.calendario-celda:nth-child(7n) { border-right: none; }
+
+.dia-numero {
+  font-size: 12px;
+  font-weight: 700;
+  color: #6b7280;
+  display: block;
+  margin-bottom: 2px;
+}
+
+.dia-numero--hoy {
+  background: var(--green);
+  color: white;
+  border-radius: 50%;
+  width: 20px;
+  height: 20px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 11px;
+}
+
+/* ═══════════════════════════════════════════
+   CHIPS DE CITA — Vista Mes
+═══════════════════════════════════════════ */
 
 .cita-chip {
   display: flex;
   align-items: center;
-  gap: 0.3rem;
+  gap: 4px;
   background: var(--green);
   color: white;
   border-left: 3px solid var(--green-dark);
-  padding: 0.25rem 0.4rem;
-  margin-top: 0.25rem;
-  font-size: 0.68rem;
+  padding: 2px 5px;
+  margin-top: 2px;
+  font-size: 10px;
   font-weight: 500;
   border-radius: 4px;
   white-space: nowrap;
@@ -159,102 +345,38 @@
   text-overflow: ellipsis;
   cursor: pointer;
   transition: background 0.15s, transform 0.1s, box-shadow 0.15s;
-  box-shadow: 0 1px 3px rgba(16, 185, 129, 0.25);
+  box-shadow: 0 1px 3px rgba(16,185,129,0.25);
   user-select: none;
 }
 
-.cita-chip:hover {
-  background: var(--green-dark);
-  transform: translateY(-1px);
-  box-shadow: 0 3px 8px rgba(16, 185, 129, 0.4);
-}
-
-.cita-chip:active {
-  transform: translateY(0);
-  box-shadow: 0 1px 2px rgba(16, 185, 129, 0.2);
-}
-
-/* Punto decorativo antes del nombre */
 .cita-chip::before {
   content: "";
   display: inline-block;
   width: 5px;
   height: 5px;
-  background: rgba(255, 255, 255, 0.7);
+  background: rgba(255,255,255,0.7);
   border-radius: 50%;
   flex-shrink: 0;
 }
 
-/* ================= SEMANA / DÍA ================= */
+.cita-chip.clickable:hover  { background: var(--green-dark); transform: translateY(-1px); box-shadow: 0 3px 8px rgba(16,185,129,0.4); }
+.cita-chip.clickable:active { transform: translateY(0); }
 
-.agenda-semana,
-.agenda-dia {
-  flex: 1;
-  overflow-y: auto;
-}
+.cita-chip--pendiente    { background: var(--green);  border-left-color: var(--green-dark); }
+.cita-chip--atendida     { background: #3b82f6;        border-left-color: #1d4ed8; }
+.cita-chip--cancelada    { background: #ef4444;        border-left-color: #b91c1c; }
+.cita-chip--reprogramada { background: #f59e0b;        border-left-color: #b45309; }
 
-.agenda-header {
-  display: grid;
-  grid-template-columns: 80px repeat(7, 1fr);
-  background: var(--bg-light);
-  border-bottom: 1px solid var(--border);
-  position: sticky;
-  top: 0;
-  z-index: 1;
-}
-
-.agenda-hora-header {
-  font-size: 0.7rem;
-  padding: 0.5rem;
-  color: #9ca3af;
-  border-right: 1px solid var(--border);
-}
-
-.agenda-dia-header {
-  text-align: center;
-  font-weight: 600;
-  font-size: 0.75rem;
-  padding: 0.5rem;
-  border-left: 1px solid var(--border);
-}
-
-.agenda-row {
-  display: grid;
-  grid-template-columns: 80px repeat(7, 1fr);
-  min-height: 36px;
-}
-
-.agenda-linea {
-  display: grid;
-  grid-template-columns: 80px 1fr;
-  min-height: 36px;
-}
-
-.agenda-hora {
-  font-size: 0.7rem;
-  padding: 0.3rem;
-  border-right: 1px solid var(--border);
-  color: #9ca3af;
-  background: white;
-  text-align: right;
-  padding-right: 0.5rem;
-}
-
-.agenda-celda {
-  border-left: 1px solid var(--border);
-  border-top: 1px solid var(--border);
-  position: relative;
-  padding: 2px;
-}
-
-/* ================= BLOQUE DE CITA (Vista Semana / Día) ================= */
+/* ═══════════════════════════════════════════
+   BLOQUES DE CITA — Vista Semana / Día
+═══════════════════════════════════════════ */
 
 .agenda-cita {
   background: var(--blue);
   color: white;
-  font-size: 0.68rem;
+  font-size: 11px;
   font-weight: 500;
-  padding: 0.25rem 0.4rem;
+  padding: 3px 6px;
   border-radius: 4px;
   border-left: 3px solid var(--blue-dark);
   overflow: hidden;
@@ -262,68 +384,72 @@
   text-overflow: ellipsis;
   cursor: pointer;
   transition: background 0.15s, transform 0.1s, box-shadow 0.15s;
-  box-shadow: 0 1px 3px rgba(14, 165, 233, 0.25);
+  box-shadow: 0 1px 3px rgba(14,165,233,0.25);
   user-select: none;
   display: flex;
   align-items: center;
-  gap: 0.3rem;
+  gap: 4px;
 }
 
-.agenda-cita:hover {
-  background: var(--blue-dark);
-  transform: translateY(-1px);
-  box-shadow: 0 3px 8px rgba(14, 165, 233, 0.4);
-}
-
-.agenda-cita:active {
-  transform: translateY(0);
-  box-shadow: 0 1px 2px rgba(14, 165, 233, 0.2);
-}
-
-/* Punto decorativo */
 .agenda-cita::before {
   content: "";
   display: inline-block;
   width: 5px;
   height: 5px;
-  background: rgba(255, 255, 255, 0.7);
+  background: rgba(255,255,255,0.7);
   border-radius: 50%;
   flex-shrink: 0;
 }
 
-/* ================= DOCTORES ================= */
+.agenda-cita.clickable:hover  { background: var(--blue-dark); transform: translateY(-1px); box-shadow: 0 3px 8px rgba(14,165,233,0.4); }
+.agenda-cita.clickable:active { transform: translateY(0); }
+
+.agenda-cita--pendiente    { background: var(--blue);  border-left-color: var(--blue-dark); }
+.agenda-cita--atendida     { background: var(--green); border-left-color: var(--green-dark); }
+.agenda-cita--cancelada    { background: #ef4444;      border-left-color: #b91c1c; }
+.agenda-cita--reprogramada { background: #f59e0b;      border-left-color: #b45309; }
+
+.agenda-cita-nombre { font-weight: 600; overflow: hidden; text-overflow: ellipsis; }
+.agenda-cita-estado { font-size: 10px; opacity: 0.85; text-transform: capitalize; }
+.agenda-cita-hora   { font-size: 10px; opacity: 0.85; }
+
+/* ═══════════════════════════════════════════
+   PANEL DOCTORES (izquierda)
+═══════════════════════════════════════════ */
 
 .doctores-panel {
   border: 1px solid var(--border);
   border-radius: 8px;
   padding: 0.75rem;
-  overflow-y: auto;
+  background: white;
 }
 
 .doctores-panel h4 {
-  font-size: 0.8rem;
-  margin-bottom: 0.5rem;
+  font-size: 13px;
+  font-weight: 700;
+  margin: 0 0 8px 0;
+  color: var(--text-gray);
 }
 
 .doctores-lista {
   display: flex;
   flex-direction: column;
-  gap: 0.25rem;
+  gap: 3px;
 }
 
 .doctor-item {
-  padding: 0.45rem 0.6rem;
+  padding: 6px 8px;
   border-radius: 6px;
   cursor: pointer;
-  font-size: 0.75rem;
+  font-size: 12px;
+  color: var(--text-gray);
   transition: background 0.15s;
 }
 
-.doctor-item:hover {
-  background: var(--bg-light);
-}
+.doctor-item:hover { background: var(--bg-light); }
 
 .doctor-item.activo {
   background: var(--green);
   color: white;
+  font-weight: 600;
 }
