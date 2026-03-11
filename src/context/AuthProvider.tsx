@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import type { ReactNode } from "react";
+import { supabase } from "../services/supabaseClient";
 import { AuthService } from "../services/auth.service";
 import type { AuthUser, UserRole } from "../services/auth.service";
 import { AuthContext } from "./AuthContext";
@@ -9,20 +10,41 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const storedUser = AuthService.getStoredUser();
-    if (storedUser) {
-      setUser(storedUser);
-    }
-    setLoading(false);
+    // 1. Carga la sesión activa al arrancar la app
+    AuthService.getSession().then((u) => {
+      setUser(u);
+      setLoading(false);
+    });
+
+    // 2. Escucha cambios de sesión en tiempo real (login/logout/token refresh)
+    const { data: listener } = supabase.auth.onAuthStateChange(
+      async (_event, session) => {
+        if (!session?.user) {
+          setUser(null);
+          return;
+        }
+        const meta = session.user.user_metadata ?? {};
+        setUser({
+          id: session.user.id,
+          correo: session.user.email!,
+          nombres: meta.nombres ?? "",
+          apellidos: meta.apellidos ?? "",
+          rol: meta.rol,
+          medicoId: meta.medicoId,
+        });
+      }
+    );
+
+    return () => listener.subscription.unsubscribe();
   }, []);
 
   const login = async (correo: string, password: string) => {
-    const { user } = await AuthService.login(correo, password);
-    setUser(user);
+    const userData = await AuthService.login(correo, password);
+    setUser(userData);
   };
 
-  const logout = () => {
-    AuthService.logout();
+  const logout = async () => {
+    await AuthService.logout();
     setUser(null);
   };
 
@@ -31,19 +53,11 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     return roles.includes(user.rol);
   };
 
-  if (loading) {
-    return null;
-  }
+  if (loading) return null;
 
   return (
     <AuthContext.Provider
-      value={{
-        user,
-        isAuthenticated: !!user,
-        login,
-        logout,
-        hasRole,
-      }}
+      value={{ user, isAuthenticated: !!user, login, logout, hasRole }}
     >
       {children}
     </AuthContext.Provider>

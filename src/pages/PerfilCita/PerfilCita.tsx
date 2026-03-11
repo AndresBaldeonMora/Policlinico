@@ -1,39 +1,29 @@
-import { useEffect, useState, useCallback, useMemo } from "react";
+// ============================================================
+// PerfilCita.tsx  (refactored)
+//
+// Changes from original:
+//  1. 9 useState calls → useReducer for fetch + clinical data
+//     (tabActiva / tabDemo stay as useState — they are pure,
+//      independent UI state with no cross-slice interactions)
+//  2. Confirmed all .map() keys are already stable IDs —
+//     linter warning was a false positive; added comments to
+//     make intent explicit
+//  3. Fixed a11y: replaced `div role="button"` with `<button>`
+//     in the citas widget
+// ============================================================
+
+import { useEffect, useState, useCallback, useMemo, useReducer } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import "./PerfilCita.css";
-import {
-  CitaApiService,
-  type CitaTransformada,
-} from "../../services/cita.service";
+import { CitaApiService } from "../../services/cita.service";
+import { perfilCitaReducer, initialState } from "./PerfilCitaReducer";
 
 // ============================================================================
-// TYPES
+// TYPES (UI-only — not shared with reducer)
 // ============================================================================
 
 type TabPrincipal = "dashboard" | "historial" | "documentos";
 type TabDemografico = "quien" | "contacto";
-
-interface Alergia {
-  id: string;
-  sustancia: string;
-  reaccion: string;
-  severidad: "leve" | "moderada" | "severa";
-}
-
-interface ProblemaMedico {
-  id: string;
-  descripcion: string;
-  estado: "activo" | "resuelto";
-  fechaInicio: string;
-}
-
-interface Medicamento {
-  id: string;
-  nombre: string;
-  dosis: string;
-  frecuencia: string;
-  activo: boolean;
-}
 
 // ============================================================================
 // CONSTANTS
@@ -83,36 +73,37 @@ const PerfilCita = () => {
   const { citaId } = useParams<{ citaId: string }>();
   const navigate = useNavigate();
 
-  const [cita, setCita] = useState<CitaTransformada | null>(null);
-  const [cargando, setCargando] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+  // ── Reducer: fetch lifecycle + clinical data ──────────────
+  const [state, dispatch] = useReducer(perfilCitaReducer, initialState);
+  const {
+    cita,
+    cargando,
+    error,
+    alergias,
+    problemasMedicos,
+    medicamentos,
+    citasPaciente,
+  } = state;
 
+  // ── useState: pure UI toggles (no shared state, no side effects) ──
   const [tabActiva, setTabActiva] = useState<TabPrincipal>("dashboard");
   const [tabDemo, setTabDemo] = useState<TabDemografico>("quien");
-
-  // Mock (luego API)
-  const [alergias] = useState<Alergia[]>([]);
-  const [problemasMedicos] = useState<ProblemaMedico[]>([]);
-  const [medicamentos] = useState<Medicamento[]>([]);
-  const [citasPaciente] = useState<CitaTransformada[]>([]);
 
   // ============================================================================
 
   const cargarCita = useCallback(async () => {
     if (!citaId) {
-      setError("ID de cita no proporcionado");
-      setCargando(false);
+      dispatch({ type: "FETCH_ERROR", payload: "ID de cita no proporcionado" });
       return;
     }
 
+    dispatch({ type: "FETCH_START" });
+
     try {
-      setCargando(true);
       const data = await CitaApiService.obtenerPorId(citaId);
-      setCita(data);
+      dispatch({ type: "FETCH_SUCCESS", payload: data });
     } catch {
-      setError("No se pudo cargar la cita");
-    } finally {
-      setCargando(false);
+      dispatch({ type: "FETCH_ERROR", payload: "No se pudo cargar la cita" });
     }
   }, [citaId]);
 
@@ -127,6 +118,8 @@ const PerfilCita = () => {
     () => calcularEdad(paciente?.fechaNacimiento),
     [paciente?.fechaNacimiento]
   );
+
+  // ── Loading / error guards ────────────────────────────────
 
   if (cargando) {
     return (
@@ -170,17 +163,15 @@ const PerfilCita = () => {
             </h1>
             <div className="datos-basicos">
               <span>DNI: {paciente.dni}</span>
-              <span>
-                F.Nac: {formatearFechaCorta(paciente.fechaNacimiento)}
-              </span>
+              <span>F.Nac: {formatearFechaCorta(paciente.fechaNacimiento)}</span>
               {edad !== null && <span>{edad} años</span>}
             </div>
           </div>
         </div>
 
         <div className="encounter-selector">
-          <label>Cita actual</label>
-          <select disabled>
+          <label htmlFor="cita-actual">Cita actual</label>
+          <select id="cita-actual" disabled>
             <option>
               {formatearFechaCorta(cita.fecha)} - {cita.hora}
             </option>
@@ -188,16 +179,14 @@ const PerfilCita = () => {
 
           <button
             className="btn btn-primary btn-nueva-cita"
-            onClick={() =>
-              navigate(`/reservar-cita?pacienteId=${paciente._id}`)
-            }
+            onClick={() => navigate(`/reservar-cita?pacienteId=${paciente._id}`)}
           >
             + Nueva Cita
           </button>
         </div>
       </div>
 
-      {/* TABS */}
+      {/* TABS — key={t.id} is stable (string literal union, never reordered) */}
       <div className="tabs-principales">
         {TABS_PRINCIPALES.map((t) => (
           <button
@@ -246,6 +235,7 @@ const PerfilCita = () => {
                 <h3>📊 Datos Demográficos</h3>
               </div>
 
+              {/* key={t.id} is stable (string literal union) */}
               <div className="tabs-demograficos">
                 {TABS_DEMOGRAFICOS.map((t) => (
                   <button
@@ -267,7 +257,6 @@ const PerfilCita = () => {
                     <strong>DNI:</strong> {paciente.dni}
                   </>
                 )}
-
                 {tabDemo === "contacto" && (
                   <>
                     <strong>Teléfono:</strong> {paciente.telefono || "—"}
@@ -285,16 +274,20 @@ const PerfilCita = () => {
                 <h4>📅 Citas</h4>
               </div>
               <div className="widget-body">
-                {citasPaciente.length === 0
-                  ? "Sin citas"
-                  : citasPaciente.map((c) => (
-                      <div
-                        key={c._id}
-                        onClick={() => navigate(`/citas/${c._id}`)}
-                      >
-                        {formatearFechaCorta(c.fecha)} - {c.hora}
-                      </div>
-                    ))}
+                {citasPaciente.length === 0 ? (
+                  "Sin citas"
+                ) : (
+                  /* key={c._id} is a stable MongoDB ObjectId — never an index */
+                  citasPaciente.map((c) => (
+                    <button
+                      key={c._id}
+                      className="cita-widget-item"
+                      onClick={() => navigate(`/citas/${c._id}`)}
+                    >
+                      {formatearFechaCorta(c.fecha)} - {c.hora}
+                    </button>
+                  ))
+                )}
               </div>
             </div>
           </div>

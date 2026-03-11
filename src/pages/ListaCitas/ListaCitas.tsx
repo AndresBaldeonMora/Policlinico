@@ -1,19 +1,70 @@
-import { useEffect, useState } from "react";
+// ============================================================
+// ListaCitas.tsx  (refactored)
+//
+// Changes from original:
+//  1. 12 useState calls → single useReducer (listaCitasReducer)
+//  2. 583-line component → logic stays here, UI extracted to
+//     ReprogramarModal + its internal sub-components
+//  3. Stable keys used everywhere (no array-index keys)
+// ============================================================
+
+import { useEffect, useReducer, useState } from "react";
 import "./ListaCitas.css";
 import { CitaApiService } from "../../services/cita.service";
 import type { CitaProcesada } from "../../services/cita.service";
 import { CalendarClock } from "lucide-react";
+import { DoctorApiService } from "../../services/doctor.service";
 import {
-  DoctorApiService,
-  type HorarioDisponible,
-} from "../../services/doctor.service";
+  listaCitasReducer,
+  initialState,
+} from "./ListaCitasReducer";
+import type { MesOption, HorarioPorDia } from "./ListaCitasReducer";
+import ReprogramarModal from "./ReprogramarModal";
 
-const normalizeString = (str: string): string => {
-  return str
+// ── Helpers ──────────────────────────────────────────────────
+
+const normalizeString = (str: string): string =>
+  str
     .toLowerCase()
     .normalize("NFD")
     .replace(/[\u0300-\u036f]/g, "");
+
+const formatearFechaCompleta = (fecha: Date): string =>
+  new Intl.DateTimeFormat("es-PE", {
+    day: "2-digit",
+    month: "2-digit",
+    year: "numeric",
+  }).format(fecha);
+
+const obtenerNombreDia = (fecha: Date): string => {
+  const nombre = new Intl.DateTimeFormat("es-PE", { weekday: "long" }).format(fecha);
+  return nombre.charAt(0).toUpperCase() + nombre.slice(1);
 };
+
+const generarMeses = (): MesOption[] => {
+  const nombresMeses = [
+    "Enero", "Febrero", "Marzo", "Abril", "Mayo", "Junio",
+    "Julio", "Agosto", "Septiembre", "Octubre", "Noviembre", "Diciembre",
+  ];
+  const hoy = new Date();
+  return Array.from({ length: 3 }, (_, i) => {
+    const d = new Date(hoy.getFullYear(), hoy.getMonth() + i, 1);
+    return { numero: d.getMonth(), nombre: nombresMeses[d.getMonth()], anio: d.getFullYear() };
+  });
+};
+
+const generarDiasDelMes = (mes: MesOption): number[] => {
+  const hoy = new Date();
+  hoy.setHours(0, 0, 0, 0);
+  const ultimoDia = new Date(mes.anio, mes.numero + 1, 0).getDate();
+  const dias: number[] = [];
+  for (let dia = 1; dia <= ultimoDia; dia++) {
+    if (new Date(mes.anio, mes.numero, dia) >= hoy) dias.push(dia);
+  }
+  return dias;
+};
+
+// ── Notification banner (pure display) ───────────────────────
 
 interface NotificationProps {
   message: string;
@@ -31,278 +82,117 @@ const Notification = ({ message, type, visible }: NotificationProps) => {
   );
 };
 
-interface MesOption {
-  numero: number;
-  nombre: string;
-  anio: number;
-}
-
-interface HorarioPorDia {
-  fecha: string;
-  fechaISO: string;
-  diaNombre: string;
-  diaNumero: number;
-  horarios: HorarioDisponible[];
-}
+// ── Main component ───────────────────────────────────────────
 
 const ListaCitas = () => {
-  const [citas, setCitas] = useState<CitaProcesada[]>([]);
+  // ── Reducer ──────────────────────────────────────────────
+  const [state, dispatch] = useReducer(listaCitasReducer, initialState);
+  const {
+    notification,
+    editando,
+    pasoModal,
+    mesesDisponibles,
+    mesSeleccionado,
+    diasDelMes,
+    diaSeleccionado,
+    horariosPorDia,
+    cargandoHorarios,
+  } = state;
+
+  // citas/busqueda/cargandoLista are independent of the rescheduling workflow
+  // so they stay as plain useState — no need to push them into the reducer.
+  const [citasData, setCitasData] = useState<CitaProcesada[]>([]);
   const [busqueda, setBusqueda] = useState("");
-  const [cargando, setCargando] = useState(true);
+  const [cargandoLista, setCargandoLista] = useState(true);
 
-  const [notification, setNotification] = useState({
-    message: "",
-    type: "",
-    visible: false,
-  });
-
-  const [editando, setEditando] = useState<{
-    id: string;
-    dni: string;
-    paciente: string;
-    especialidad: string;
-    doctor: string;
-    doctorId: string;
-    fecha: string; // nueva fecha seleccionada
-    hora: string; // nueva hora seleccionada
-    fechaOriginal: string;
-    horaOriginal: string;
-  } | null>(null);
-
-  // Paso dentro del modal: 1 = seleccionar nueva fecha/hora, 2 = resumen
-  const [pasoModal, setPasoModal] = useState<1 | 2>(1);
-
-  // Estados selector Mes/Día/Horarios
-  const [mesesDisponibles, setMesesDisponibles] = useState<MesOption[]>([]);
-  const [mesSeleccionado, setMesSeleccionado] = useState<MesOption | null>(
-    null
-  );
-  const [diasDelMes, setDiasDelMes] = useState<number[]>([]);
-  const [diaSeleccionado, setDiaSeleccionado] = useState<number | null>(null);
-  const [horariosPorDia, setHorariosPorDia] = useState<HorarioPorDia[]>([]);
-  const [cargandoHorarios, setCargandoHorarios] = useState(false);
-
-  // ================== Helpers de fecha ==================
-  const formatearFechaCompleta = (fecha: Date): string => {
-    return new Intl.DateTimeFormat("es-PE", {
-      day: "2-digit",
-      month: "2-digit",
-      year: "numeric",
-    }).format(fecha);
-  };
-
-  const obtenerNombreDia = (fecha: Date): string => {
-    const nombre = new Intl.DateTimeFormat("es-PE", {
-      weekday: "long",
-    }).format(fecha);
-    return nombre.charAt(0).toUpperCase() + nombre.slice(1);
-  };
-
-  const formatearFechaResumen = (fechaISO: string) => {
-    if (!fechaISO) return "";
-    const [anio, mes, dia] = fechaISO.split("-");
-    const fecha = new Date(Number(anio), Number(mes) - 1, Number(dia));
-    const nombreDia = new Intl.DateTimeFormat("es-PE", {
-      weekday: "long",
-    }).format(fecha);
-    return `${
-      nombreDia.charAt(0).toUpperCase() + nombreDia.slice(1)
-    } ${dia}/${mes}/${anio}`;
-  };
-
-  // ================== Notificación ==================
+  // ── Notifications ─────────────────────────────────────────
   const showNotification = (message: string, type: "success" | "error") => {
-    setNotification({ message, type, visible: true });
-    setTimeout(() => {
-      setNotification((prev) => ({ ...prev, visible: false }));
-    }, 3000);
+    dispatch({ type: "SHOW_NOTIFICATION", payload: { message, type } });
+    setTimeout(() => dispatch({ type: "HIDE_NOTIFICATION" }), 3000);
   };
 
-  // ================== Carga inicial ==================
+  // ── Initialisation ────────────────────────────────────────
   useEffect(() => {
-    generarMesesDisponibles();
-  }, []);
-
-  useEffect(() => {
+    dispatch({ type: "SET_MESES_DISPONIBLES", payload: generarMeses() });
     cargarCitas();
-  }, []);
+  }, []);                                        // eslint-disable-line react-hooks/exhaustive-deps
 
   const cargarCitas = async () => {
     try {
-      setCargando(true);
+      setCargandoLista(true);
       const data = await CitaApiService.listar();
-      setCitas(data);
-    } catch (error) {
-      console.error("❌ Error al cargar citas:", error);
+      setCitasData(data);
+    } catch {
       showNotification("Error al cargar la lista de citas.", "error");
     } finally {
-      setCargando(false);
+      setCargandoLista(false);
     }
   };
 
-  // ================== Meses / Días ==================
-  const generarMesesDisponibles = () => {
-    const meses: MesOption[] = [];
-    const hoy = new Date();
-    const nombresMeses = [
-      "Enero",
-      "Febrero",
-      "Marzo",
-      "Abril",
-      "Mayo",
-      "Junio",
-      "Julio",
-      "Agosto",
-      "Septiembre",
-      "Octubre",
-      "Noviembre",
-      "Diciembre",
-    ];
-
-    for (let i = 0; i < 3; i++) {
-      const fecha = new Date(hoy.getFullYear(), hoy.getMonth() + i, 1);
-      meses.push({
-        numero: fecha.getMonth(),
-        nombre: nombresMeses[fecha.getMonth()],
-        anio: fecha.getFullYear(),
-      });
-    }
-
-    setMesesDisponibles(meses);
+  // ── Month / day / slot handlers ───────────────────────────
+  const handleSelectMes = (mes: MesOption) => {
+    dispatch({ type: "SELECT_MES", payload: { mes, dias: generarDiasDelMes(mes) } });
   };
 
-  const generarDiasDelMes = (mes: MesOption) => {
-    const hoy = new Date();
-    hoy.setHours(0, 0, 0, 0);
-    const ultimoDia = new Date(mes.anio, mes.numero + 1, 0);
-    const dias: number[] = [];
-
-    for (let dia = 1; dia <= ultimoDia.getDate(); dia++) {
-      const fecha = new Date(mes.anio, mes.numero, dia);
-      if (fecha >= hoy) {
-        dias.push(dia);
-      }
-    }
-    return dias;
-  };
-
-  const handleMesSeleccionado = (mes: MesOption) => {
-    setMesSeleccionado(mes);
-    setDiaSeleccionado(null);
-    setHorariosPorDia([]);
-    setPasoModal(1); // siempre volvemos al paso 1 si cambia el mes
-
-    if (editando) {
-      setEditando({
-        ...editando,
-        fecha: "",
-        hora: "",
-      });
-    }
-
-    const dias = generarDiasDelMes(mes);
-    setDiasDelMes(dias);
-  };
-
-  const handleDiaSeleccionado = async (dia: number) => {
+  const handleSelectDia = async (dia: number) => {
     if (!mesSeleccionado || !editando) return;
-
-    setDiaSeleccionado(dia);
-
     const fecha = new Date(mesSeleccionado.anio, mesSeleccionado.numero, dia);
     const fechaISO = fecha.toISOString().split("T")[0];
-
-    setEditando({
-      ...editando,
-      fecha: fechaISO,
-      hora: "",
-    });
-
-    await cargarHorariosPorDia(mesSeleccionado, dia);
+    dispatch({ type: "SELECT_DIA", payload: { dia, fechaISO } });
+    await cargarHorariosPorDia(dia, editando.doctorId, fechaISO, fecha);
   };
 
-  const cargarHorariosPorDia = async (mes: MesOption, dia: number) => {
-    if (!editando?.doctorId) return;
-
-    setCargandoHorarios(true);
-
+  const cargarHorariosPorDia = async (
+    dia: number,
+    doctorId: string,
+    fechaISO: string,
+    fechaDate: Date
+  ) => {
+    dispatch({ type: "SET_CARGANDO_HORARIOS", payload: true });
     try {
-      const fecha = new Date(mes.anio, mes.numero, dia);
-      const fechaISO = fecha.toISOString().split("T")[0];
-
-      const horariosDelDia = await DoctorApiService.obtenerHorariosDisponibles(
-        editando.doctorId,
-        fechaISO
-      );
-
+      const horariosDelDia = await DoctorApiService.obtenerHorariosDisponibles(doctorId, fechaISO);
       const horarioInfo: HorarioPorDia = {
-        fecha: formatearFechaCompleta(fecha),
+        fecha: formatearFechaCompleta(fechaDate),
         fechaISO,
-        diaNombre: obtenerNombreDia(fecha),
+        diaNombre: obtenerNombreDia(fechaDate),
         diaNumero: dia,
         horarios: horariosDelDia,
       };
-
-      setHorariosPorDia([horarioInfo]);
-    } catch (err) {
-      console.error("❌ Error al cargar horarios:", err);
+      dispatch({ type: "SET_HORARIOS_POR_DIA", payload: [horarioInfo] });
+    } catch {
       showNotification("Error al cargar horarios", "error");
     } finally {
-      setCargandoHorarios(false);
+      dispatch({ type: "SET_CARGANDO_HORARIOS", payload: false });
     }
   };
 
-  // ================== Filtro citas ==================
-  const filtrarCitas = citas.filter((cita) => {
-    const filtroNormalizado = normalizeString(busqueda);
-    const dniNormalizado = normalizeString(cita.dni);
-    const doctorNormalizado = normalizeString(cita.doctor);
-    return (
-      dniNormalizado.includes(filtroNormalizado) ||
-      doctorNormalizado.includes(filtroNormalizado)
-    );
-  });
-
-  // ================== Reprogramar ==================
+  // ── Modal lifecycle ───────────────────────────────────────
   const onReprogramar = (cita: CitaProcesada) => {
-    setEditando({
-      id: cita._id,
-      dni: cita.dni,
-      paciente: cita.paciente,
-      especialidad: cita.especialidad,
-      doctor: cita.doctor,
-      doctorId: cita.doctorId,
-      fecha: "",
-      hora: "",
-      fechaOriginal: cita.fecha,
-      horaOriginal: cita.hora,
+    dispatch({
+      type: "OPEN_MODAL",
+      payload: {
+        id: cita._id,
+        dni: cita.dni,
+        paciente: cita.paciente,
+        especialidad: cita.especialidad,
+        doctor: cita.doctor,
+        doctorId: cita.doctorId,
+        fecha: "",
+        hora: "",
+        fechaOriginal: cita.fecha,
+        horaOriginal: cita.hora,
+      },
     });
-
-    setPasoModal(1);
-    setMesSeleccionado(null);
-    setDiaSeleccionado(null);
-    setDiasDelMes([]);
-    setHorariosPorDia([]);
   };
 
-  const cerrarModal = () => {
-    setEditando(null);
-    setPasoModal(1);
-    setMesSeleccionado(null);
-    setDiaSeleccionado(null);
-    setDiasDelMes([]);
-    setHorariosPorDia([]);
-  };
+  const cerrarModal = () => dispatch({ type: "CLOSE_MODAL" });
 
   const irASegundoPaso = () => {
     if (!editando?.fecha || !editando?.hora) {
-      showNotification(
-        "Selecciona una nueva fecha y hora antes de continuar.",
-        "error"
-      );
+      showNotification("Selecciona una nueva fecha y hora antes de continuar.", "error");
       return;
     }
-    setPasoModal(2);
+    dispatch({ type: "SET_PASO_MODAL", payload: 2 });
   };
 
   const confirmarReprogramar = async () => {
@@ -310,32 +200,32 @@ const ListaCitas = () => {
       showNotification("Faltan datos para reprogramar la cita.", "error");
       return;
     }
-
     try {
-      await CitaApiService.reprogramar(
-        editando.id,
-        editando.fecha,
-        editando.hora
-      );
+      await CitaApiService.reprogramar(editando.id, editando.fecha, editando.hora);
       showNotification("Cita reprogramada correctamente.", "success");
       cerrarModal();
       cargarCitas();
     } catch (error: unknown) {
-      let errorMessage = "Error desconocido al reprogramar cita.";
-      if (error instanceof Error) {
-        errorMessage = error.message || "Error al reprogramar cita.";
-      }
-      showNotification(errorMessage, "error");
-      console.error(error);
+      const msg = error instanceof Error ? error.message : "Error desconocido al reprogramar cita.";
+      showNotification(msg, "error");
     }
   };
 
-  // ================== Render ==================
+  // ── Filtered list ─────────────────────────────────────────
+  const filtrarCitas = citasData.filter((cita) => {
+    const f = normalizeString(busqueda);
+    return (
+      normalizeString(cita.dni).includes(f) ||
+      normalizeString(cita.doctor).includes(f)
+    );
+  });
+
+  // ── Render ────────────────────────────────────────────────
   return (
     <div className="lista-citas">
       <Notification
         message={notification.message}
-        type={notification.type as "success" | "error"}
+        type={notification.type}
         visible={notification.visible}
       />
 
@@ -351,7 +241,7 @@ const ListaCitas = () => {
         />
       </div>
 
-      {cargando ? (
+      {cargandoLista ? (
         <p className="texto-cargando">Cargando citas...</p>
       ) : (
         <div className="card">
@@ -391,8 +281,7 @@ const ListaCitas = () => {
                               : "badge-success"
                           }`}
                         >
-                          {cita.estado.charAt(0).toUpperCase() +
-                            cita.estado.slice(1)}
+                          {cita.estado.charAt(0).toUpperCase() + cita.estado.slice(1)}
                         </span>
                       </td>
                       <td>
@@ -419,211 +308,25 @@ const ListaCitas = () => {
         </div>
       )}
 
-      {/* ================== MODAL REPROGRAMAR ================== */}
+      {/* ── Modal (extracted component) ── */}
       {editando && (
-        <div className="modal-overlay">
-          <div className="modal-card-reprogramar">
-            <div className="modal-header-reprogramar">
-              <h3>Reprogramar Cita</h3>
-              <span className="modal-subtitle">
-                {editando.paciente} · {editando.doctor} ·{" "}
-                {editando.especialidad}
-              </span>
-
-              {/* Indicador de pasos */}
-              <div className="modal-stepper">
-                <div
-                  className={`modal-step ${pasoModal === 1 ? "activo" : ""} ${
-                    pasoModal > 1 ? "completado" : ""
-                  }`}
-                >
-                  <span className="step-circle">1</span>
-                  <span className="step-label">Nueva fecha y hora</span>
-                </div>
-                <div
-                  className={`modal-step ${pasoModal === 2 ? "activo" : ""}`}
-                >
-                  <span className="step-circle">2</span>
-                  <span className="step-label">Confirmar cambios</span>
-                </div>
-              </div>
-            </div>
-
-            <div className="modal-body">
-              {pasoModal === 1 && (
-                <>
-                  <div className="selector-mes">
-                    <label className="selector-label">Seleccionar Mes:</label>
-                    <div className="meses-lista">
-                      {mesesDisponibles.map((mes) => (
-                        <button
-                          key={`${mes.anio}-${mes.numero}`}
-                          type="button"
-                          className={`mes-btn ${
-                            mesSeleccionado?.numero === mes.numero &&
-                            mesSeleccionado?.anio === mes.anio
-                              ? "activo"
-                              : ""
-                          }`}
-                          onClick={() => handleMesSeleccionado(mes)}
-                        >
-                          {mes.nombre} {mes.anio}
-                        </button>
-                      ))}
-                    </div>
-                  </div>
-
-                  {mesSeleccionado && diasDelMes.length > 0 && (
-                    <div className="selector-dia">
-                      <label className="selector-label">Seleccionar Día:</label>
-                      <div className="dias-lista-selector">
-                        {diasDelMes.map((dia) => (
-                          <button
-                            key={dia}
-                            type="button"
-                            className={`dia-btn ${
-                              diaSeleccionado === dia ? "activo" : ""
-                            }`}
-                            onClick={() => handleDiaSeleccionado(dia)}
-                          >
-                            {dia}
-                          </button>
-                        ))}
-                      </div>
-                    </div>
-                  )}
-
-                  {diaSeleccionado && (
-                    <div className="horarios-contenedor-modal">
-                      {cargandoHorarios ? (
-                        <div className="horarios-loading">
-                          <div className="spinner-small"></div>
-                          <p>Cargando horarios...</p>
-                        </div>
-                      ) : horariosPorDia.length > 0 &&
-                        horariosPorDia[0].horarios.filter((h) => h.disponible)
-                          .length > 0 ? (
-                        <div className="dias-lista-modal">
-                          {horariosPorDia.map((dia) => (
-                            <div key={dia.fechaISO} className="dia-grupo-modal">
-                              <div className="dia-header-modal">
-                                <span className="dia-nombre">
-                                  {dia.diaNombre}
-                                </span>
-                                <span className="dia-fecha">
-                                  📅 {dia.fecha}
-                                </span>
-                              </div>
-
-                              <div className="horarios-horizontal-modal">
-                                {dia.horarios
-                                  .filter((h) => h.disponible)
-                                  .map((horario) => (
-                                    <label
-                                      key={horario.hora}
-                                      className={`horario-radio-modal ${
-                                        editando.hora === horario.hora
-                                          ? "seleccionado"
-                                          : ""
-                                      }`}
-                                    >
-                                      <input
-                                        type="radio"
-                                        name="horario"
-                                        value={horario.hora}
-                                        checked={editando.hora === horario.hora}
-                                        onChange={() =>
-                                          setEditando({
-                                            ...editando,
-                                            hora: horario.hora,
-                                          })
-                                        }
-                                      />
-                                      <span className="horario-texto">
-                                        {horario.hora} hs
-                                      </span>
-                                    </label>
-                                  ))}
-                              </div>
-                            </div>
-                          ))}
-                        </div>
-                      ) : (
-                        <div className="no-horarios">
-                          <p>😔 No hay horarios disponibles para este día.</p>
-                        </div>
-                      )}
-                    </div>
-                  )}
-                </>
-              )}
-
-              {pasoModal === 2 && (
-                <div className="modal-resumen-reprogramar">
-                  <h4>Confirmar nueva programación</h4>
-                  <div className="modal-resumen-grid">
-                    <div className="modal-resumen-item">
-                      <label>Paciente</label>
-                      <strong>{editando.paciente}</strong>
-                      <span>DNI: {editando.dni}</span>
-                    </div>
-                    <div className="modal-resumen-item">
-                      <label>Médico</label>
-                      <strong>{editando.doctor}</strong>
-                      <span>{editando.especialidad}</span>
-                    </div>
-                    <div className="modal-resumen-item">
-                      <label>Fecha y hora original</label>
-                      <strong>{editando.fechaOriginal}</strong>
-                      <span>{editando.horaOriginal} hs</span>
-                    </div>
-                    <div className="modal-resumen-item destacado">
-                      <label>Nueva fecha y hora</label>
-                      <strong>{formatearFechaResumen(editando.fecha)}</strong>
-                      <span>{editando.hora} hs</span>
-                    </div>
-                  </div>
-                  <p className="modal-resumen-note">
-                    Revisa que la nueva fecha y hora sean correctas antes de
-                    confirmar. Esta acción actualizará la cita del paciente.
-                  </p>
-                </div>
-              )}
-            </div>
-
-            <div className="modal-actions">
-              {pasoModal === 1 ? (
-                <>
-                  <button onClick={cerrarModal} className="btn btn-secondary">
-                    Cancelar
-                  </button>
-                  <button
-                    onClick={irASegundoPaso}
-                    className="btn btn-primary btn-next"
-                    disabled={!editando.fecha || !editando.hora}
-                  >
-                    Siguiente
-                  </button>
-                </>
-              ) : (
-                <>
-                  <button
-                    onClick={() => setPasoModal(1)}
-                    className="btn btn-secondary btn-back"
-                  >
-                    Volver
-                  </button>
-                  <button
-                    onClick={confirmarReprogramar}
-                    className="btn btn-primary btn-confirmar"
-                  >
-                    Confirmar Reprogramación
-                  </button>
-                </>
-              )}
-            </div>
-          </div>
-        </div>
+        <ReprogramarModal
+          editando={editando}
+          pasoModal={pasoModal}
+          mesesDisponibles={mesesDisponibles}
+          mesSeleccionado={mesSeleccionado}
+          diasDelMes={diasDelMes}
+          diaSeleccionado={diaSeleccionado}
+          horariosPorDia={horariosPorDia}
+          cargandoHorarios={cargandoHorarios}
+          onSelectMes={handleSelectMes}
+          onSelectDia={handleSelectDia}
+          onSelectHora={(hora) => dispatch({ type: "SET_HORA", payload: hora })}
+          onSiguiente={irASegundoPaso}
+          onVolver={() => dispatch({ type: "SET_PASO_MODAL", payload: 1 })}
+          onCerrar={cerrarModal}
+          onConfirmar={confirmarReprogramar}
+        />
       )}
     </div>
   );

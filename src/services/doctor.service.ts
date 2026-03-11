@@ -14,8 +14,8 @@ export interface Doctor {
   correo: string;
   telefono: string;
   especialidadId: EspecialidadPoblada | string;
-  cvUrl?: string; // ✅ Soporte para CV
-  cmp?: string; // opcional si lo agregas
+  cmp?: string;
+  supabaseId?: string;
   createdAt?: string;
   updatedAt?: string;
 }
@@ -28,8 +28,8 @@ export interface DoctorTransformado {
   telefono: string;
   especialidad: string;
   especialidadId: string;
-  cvUrl?: string;
   cmp?: string;
+  supabaseId?: string;
 }
 
 export interface HorarioDisponible {
@@ -38,19 +38,14 @@ export interface HorarioDisponible {
 }
 
 interface AxiosErrorResponse {
-  response?: {
-    data?: {
-      message?: string;
-    };
-  };
+  response?: { data?: { message?: string } };
   message?: string;
 }
 
 const transformarDoctor = (doctor: Doctor): DoctorTransformado => {
-  const especialidadPoblada =
-    typeof doctor.especialidadId === "object"
-      ? (doctor.especialidadId as EspecialidadPoblada)
-      : null;
+  const esp = typeof doctor.especialidadId === "object"
+    ? (doctor.especialidadId as EspecialidadPoblada)
+    : null;
 
   return {
     id: doctor._id || doctor.id || "",
@@ -58,90 +53,46 @@ const transformarDoctor = (doctor: Doctor): DoctorTransformado => {
     apellidos: doctor.apellidos,
     correo: doctor.correo,
     telefono: doctor.telefono,
-    especialidad: especialidadPoblada?.nombre || "Sin especialidad",
-    especialidadId:
-      especialidadPoblada?._id ||
-      (typeof doctor.especialidadId === "string"
-        ? doctor.especialidadId
-        : ""),
-    cvUrl: doctor.cvUrl || "",
+    especialidad: esp?.nombre || "Sin especialidad",
+    especialidadId: esp?._id || (typeof doctor.especialidadId === "string" ? doctor.especialidadId : ""),
     cmp: doctor.cmp,
+    supabaseId: doctor.supabaseId,
   };
 };
 
 export class DoctorApiService {
   static async listar(): Promise<DoctorTransformado[]> {
     try {
-      const response = await api.get<{ success: boolean; data: Doctor[] }>(
-        "/doctores"
-      );
-
-      if (response.data.success && response.data.data) {
-        return response.data.data.map(transformarDoctor);
-      }
-
-      return [];
+      const response = await api.get<{ success: boolean; data: Doctor[] }>("/doctores");
+      return response.data.success ? response.data.data.map(transformarDoctor) : [];
     } catch (error: unknown) {
       const err = error as AxiosErrorResponse;
-      console.error(
-        "❌ Error al listar doctores:",
-        err.response?.data || err.message
-      );
-      throw new Error(
-        err.response?.data?.message || "Error al listar doctores"
-      );
+      throw new Error(err.response?.data?.message || "Error al listar doctores");
     }
   }
 
-  static async obtenerPorEspecialidad(
-    especialidadId: string
-  ): Promise<DoctorTransformado[]> {
+  static async obtenerPorEspecialidad(especialidadId: string): Promise<DoctorTransformado[]> {
     try {
       const response = await api.get<{ success: boolean; data: Doctor[] }>(
         `/doctores/especialidad/${especialidadId}`
       );
-
-      if (response.data.success && response.data.data) {
-        return response.data.data.map(transformarDoctor);
-      }
-
-      return [];
+      return response.data.success ? response.data.data.map(transformarDoctor) : [];
     } catch (error: unknown) {
       const err = error as AxiosErrorResponse;
-      console.error(
-        "❌ Error al obtener doctores por especialidad:",
-        err.response?.data || err.message
-      );
-      throw new Error(
-        err.response?.data?.message ||
-          "Error al obtener doctores por especialidad"
-      );
+      throw new Error(err.response?.data?.message || "Error al obtener doctores por especialidad");
     }
   }
 
-  static async obtenerHorariosDisponibles(
-    doctorId: string,
-    fecha: string
-  ): Promise<HorarioDisponible[]> {
+  static async obtenerHorariosDisponibles(doctorId: string, fecha: string): Promise<HorarioDisponible[]> {
     try {
-      const response = await api.get<{
-        success: boolean;
-        data: HorarioDisponible[];
-      }>(`/doctores/${doctorId}/horarios`, {
-        params: { fecha },
-      });
-
-      if (response.data.success && response.data.data) {
-        return response.data.data;
-      }
-
-      return [];
+      const response = await api.get<{ success: boolean; data: HorarioDisponible[] }>(
+        `/doctores/${doctorId}/horarios-disponibles`, // ✅ corregido
+        { params: { fecha } }
+      );
+      return response.data.success ? response.data.data : [];
     } catch (error: unknown) {
       const err = error as AxiosErrorResponse;
-      console.error(
-        "❌ Error al obtener horarios disponibles:",
-        err.response?.data || err.message
-      );
+      console.error("❌ Error al obtener horarios disponibles:", err.response?.data || err.message);
       return [];
     }
   }

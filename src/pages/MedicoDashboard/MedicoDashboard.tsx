@@ -1,40 +1,86 @@
-import { useState, useEffect } from "react";
+import { useReducer, useEffect } from "react";
 import { MedicoApiService } from "../../services/medico.service";
 import type { CitaMedico, MedicoPerfil } from "../../services/medico.service";
+import MedicoHeader from "./MedicoHeader";
+import EstadisticasGrid from "./EstadisticasGrid";
+import CitasTabs from "./CitasTabs";
+import CitaModal from "./CitaModal";
 import "./MedicoDashboard.css";
 
-const MedicoDashboard = () => {
-  const [loading, setLoading] = useState(true);
-  const [perfil, setPerfil] = useState<MedicoPerfil | null>(null);
-  const [citasHoy, setCitasHoy] = useState<CitaMedico[]>([]);
-  const [todasLasCitas, setTodasLasCitas] = useState<CitaMedico[]>([]);
-  const [vistaActual, setVistaActual] = useState<"hoy" | "todas">("hoy");
-  const [citaSeleccionada, setCitaSeleccionada] = useState<CitaMedico | null>(
-    null
-  );
+// ─── Estado ───────────────────────────────────────────────
+interface DashboardState {
+  loading: boolean;
+  perfil: MedicoPerfil | null;
+  citasHoy: CitaMedico[];
+  todasLasCitas: CitaMedico[];
+  vistaActual: "hoy" | "todas";
+  citaSeleccionada: CitaMedico | null;
+}
 
-  useEffect(() => {
-    cargarDatos();
-  }, []);
+// ─── Acciones ─────────────────────────────────────────────
+type DashboardAction =
+  | { type: "CARGA_INICIO" }
+  | { type: "CARGA_EXITO"; perfil: MedicoPerfil; citasHoy: CitaMedico[]; todasLasCitas: CitaMedico[] }
+  | { type: "CARGA_ERROR" }
+  | { type: "CAMBIAR_VISTA"; vista: "hoy" | "todas" }
+  | { type: "SELECCIONAR_CITA"; cita: CitaMedico | null };
+
+// ─── Reducer ──────────────────────────────────────────────
+function dashboardReducer(state: DashboardState, action: DashboardAction): DashboardState {
+  switch (action.type) {
+    case "CARGA_INICIO":
+      return { ...state, loading: true };
+    case "CARGA_EXITO":
+      return {
+        ...state,
+        loading: false,
+        perfil: action.perfil,
+        citasHoy: action.citasHoy,
+        todasLasCitas: action.todasLasCitas,
+      };
+    case "CARGA_ERROR":
+      return { ...state, loading: false };
+    case "CAMBIAR_VISTA":
+      return { ...state, vistaActual: action.vista };
+    case "SELECCIONAR_CITA":
+      return { ...state, citaSeleccionada: action.cita };
+    default:
+      return state;
+  }
+}
+
+const initialState: DashboardState = {
+  loading: true,
+  perfil: null,
+  citasHoy: [],
+  todasLasCitas: [],
+  vistaActual: "hoy",
+  citaSeleccionada: null,
+};
+
+// ─── Componente ───────────────────────────────────────────
+const MedicoDashboard = () => {
+  const [state, dispatch] = useReducer(dashboardReducer, initialState);
+  const { loading, perfil, citasHoy, todasLasCitas, vistaActual, citaSeleccionada } = state;
 
   const cargarDatos = async () => {
+    dispatch({ type: "CARGA_INICIO" });
     try {
-      setLoading(true);
       const [perfilData, citasHoyData, todasCitas] = await Promise.all([
         MedicoApiService.obtenerMiPerfil(),
         MedicoApiService.obtenerCitasHoy(),
         MedicoApiService.obtenerMisCitas(),
       ]);
-
-      setPerfil(perfilData);
-      setCitasHoy(citasHoyData);
-      setTodasLasCitas(todasCitas);
+      dispatch({ type: "CARGA_EXITO", perfil: perfilData, citasHoy: citasHoyData, todasLasCitas: todasCitas });
     } catch (error) {
       console.error("Error al cargar datos:", error);
-    } finally {
-      setLoading(false);
+      dispatch({ type: "CARGA_ERROR" });
     }
   };
+
+  useEffect(() => {
+    cargarDatos();
+  }, []);
 
   const cambiarEstado = async (
     citaId: string,
@@ -43,22 +89,13 @@ const MedicoDashboard = () => {
     try {
       await MedicoApiService.actualizarEstadoCita(citaId, nuevoEstado);
       await cargarDatos();
-      setCitaSeleccionada(null);
+      dispatch({ type: "SELECCIONAR_CITA", cita: null });
     } catch (error) {
       console.error("Error al cambiar estado:", error);
     }
   };
 
-  const formatearFecha = (fecha: string) => {
-    const date = new Date(fecha);
-    return date.toLocaleDateString("es-PE", {
-      weekday: "long",
-      day: "2-digit",
-      month: "long",
-      year: "numeric",
-    });
-  };
-
+  // ── Derived state (sin useMemo — triviales) ────────────
   const estadisticas = {
     citasHoy: citasHoy.length,
     pendientes: citasHoy.filter((c) => c.estado === "PENDIENTE").length,
@@ -66,13 +103,11 @@ const MedicoDashboard = () => {
     canceladas: todasLasCitas.filter((c) => c.estado === "CANCELADA").length,
   };
 
-  const citasAMostrar = vistaActual === "hoy" ? citasHoy : todasLasCitas;
-
   if (loading) {
     return (
       <div className="loading-container">
         <div className="loading-content">
-          <div className="spinner"></div>
+          <div className="spinner" />
           <p className="loading-text">Cargando datos...</p>
         </div>
       </div>
@@ -81,237 +116,24 @@ const MedicoDashboard = () => {
 
   return (
     <div className="medico-dashboard">
-      {/* Header */}
-      <div className="medico-header">
-        <div className="medico-header-content">
-          <div className="medico-header-left">
-            <div className="medico-avatar">👨‍⚕️</div>
-            <div className="medico-info">
-              <h1>
-                Dr. {perfil?.nombres} {perfil?.apellidos}
-              </h1>
-              <p className="especialidad">{perfil?.especialidadId.nombre}</p>
-              {perfil?.cmp && <p className="cmp">CMP: {perfil.cmp}</p>}
-            </div>
-          </div>
-          <div className="medico-header-right">
-            <p className="label">Correo</p>
-            <p className="value">{perfil?.correo}</p>
-          </div>
-        </div>
-      </div>
+      {perfil && <MedicoHeader perfil={perfil} />}
 
-      {/* Estadísticas */}
-      <div className="stats-grid">
-        <div className="stat-card">
-          <div className="stat-card-content">
-            <div className="stat-info">
-              <p className="stat-label">Citas Hoy</p>
-              <p className="stat-value blue">{estadisticas.citasHoy}</p>
-            </div>
-            <div className="stat-icon">📅</div>
-          </div>
-        </div>
+      <EstadisticasGrid estadisticas={estadisticas} />
 
-        <div className="stat-card">
-          <div className="stat-card-content">
-            <div className="stat-info">
-              <p className="stat-label">Pendientes</p>
-              <p className="stat-value yellow">{estadisticas.pendientes}</p>
-            </div>
-            <div className="stat-icon">⏳</div>
-          </div>
-        </div>
+      <CitasTabs
+        citasHoy={citasHoy}
+        todasLasCitas={todasLasCitas}
+        vistaActual={vistaActual}
+        onCambiarVista={(vista) => dispatch({ type: "CAMBIAR_VISTA", vista })}
+        onSeleccionarCita={(cita) => dispatch({ type: "SELECCIONAR_CITA", cita })}
+      />
 
-        <div className="stat-card">
-          <div className="stat-card-content">
-            <div className="stat-info">
-              <p className="stat-label">Atendidas</p>
-              <p className="stat-value green">{estadisticas.atendidas}</p>
-            </div>
-            <div className="stat-icon">✅</div>
-          </div>
-        </div>
-
-        <div className="stat-card">
-          <div className="stat-card-content">
-            <div className="stat-info">
-              <p className="stat-label">Canceladas</p>
-              <p className="stat-value red">{estadisticas.canceladas}</p>
-            </div>
-            <div className="stat-icon">❌</div>
-          </div>
-        </div>
-      </div>
-
-      {/* Tabs y Lista de Citas */}
-      <div className="citas-container">
-        <div className="tabs-header">
-          <button
-            onClick={() => setVistaActual("hoy")}
-            className={`tab-button ${vistaActual === "hoy" ? "active" : ""}`}
-          >
-            Citas de Hoy ({citasHoy.length})
-          </button>
-          <button
-            onClick={() => setVistaActual("todas")}
-            className={`tab-button ${vistaActual === "todas" ? "active" : ""}`}
-          >
-            Todas las Citas ({todasLasCitas.length})
-          </button>
-        </div>
-
-        <div className="citas-content">
-          {citasAMostrar.length === 0 ? (
-            <div className="empty-state">
-              <p>No hay citas para mostrar</p>
-            </div>
-          ) : (
-            <div className="citas-list">
-              {citasAMostrar.map((cita) => (
-                <div
-                  key={cita._id}
-                  className="cita-card"
-                  onClick={() => setCitaSeleccionada(cita)}
-                >
-                  <div className="cita-card-content">
-                    <div className="cita-paciente-info">
-                      <div className="paciente-avatar">👤</div>
-                      <div className="paciente-datos">
-                        <h3>
-                          {cita.pacienteId.nombres} {cita.pacienteId.apellidos}
-                        </h3>
-                        <p>DNI: {cita.pacienteId.dni}</p>
-                        <p>📞 {cita.pacienteId.telefono}</p>
-                      </div>
-                    </div>
-
-                    <div className="cita-fecha-hora">
-                      <p className="label">Fecha</p>
-                      <p className="fecha">{formatearFecha(cita.fecha)}</p>
-                      <p className="hora">{cita.hora}</p>
-                    </div>
-
-                    <div>
-                      <span
-                        className={`estado-badge ${cita.estado.toLowerCase()}`}
-                      >
-                        {cita.estado}
-                      </span>
-                    </div>
-                  </div>
-                </div>
-              ))}
-            </div>
-          )}
-        </div>
-      </div>
-
-      {/* Modal */}
       {citaSeleccionada && (
-        <div className="modal-overlay">
-          <div className="modal-content">
-            <div className="modal-header">
-              <h2>Detalle de la Cita</h2>
-              <button
-                onClick={() => setCitaSeleccionada(null)}
-                className="modal-close"
-              >
-                ×
-              </button>
-            </div>
-
-            <div className="modal-body">
-              <div className="info-section">
-                <h3>Información del Paciente</h3>
-                <div className="info-grid">
-                  <div className="info-item">
-                    <p className="label">Nombre Completo</p>
-                    <p className="value">
-                      {citaSeleccionada.pacienteId.nombres}{" "}
-                      {citaSeleccionada.pacienteId.apellidos}
-                    </p>
-                  </div>
-                  <div className="info-item">
-                    <p className="label">DNI</p>
-                    <p className="value">{citaSeleccionada.pacienteId.dni}</p>
-                  </div>
-                  <div className="info-item">
-                    <p className="label">Teléfono</p>
-                    <p className="value">
-                      {citaSeleccionada.pacienteId.telefono}
-                    </p>
-                  </div>
-                  {citaSeleccionada.pacienteId.correo && (
-                    <div className="info-item">
-                      <p className="label">Correo</p>
-                      <p className="value">
-                        {citaSeleccionada.pacienteId.correo}
-                      </p>
-                    </div>
-                  )}
-                </div>
-              </div>
-
-              <div className="info-section">
-                <h3>Información de la Cita</h3>
-                <div className="info-grid">
-                  <div className="info-item">
-                    <p className="label">Fecha</p>
-                    <p className="value">
-                      {formatearFecha(citaSeleccionada.fecha)}
-                    </p>
-                  </div>
-                  <div className="info-item">
-                    <p className="label">Hora</p>
-                    <p className="value">{citaSeleccionada.hora}</p>
-                  </div>
-                  <div className="info-item">
-                    <p className="label">Estado Actual</p>
-                    <span
-                      className={`estado-badge ${citaSeleccionada.estado.toLowerCase()}`}
-                    >
-                      {citaSeleccionada.estado}
-                    </span>
-                  </div>
-                </div>
-              </div>
-
-              <div className="acciones-section">
-                <h3>Cambiar Estado</h3>
-                <div className="acciones-botones">
-                  <button
-                    onClick={() =>
-                      cambiarEstado(citaSeleccionada._id, "PENDIENTE")
-                    }
-                    disabled={citaSeleccionada.estado === "PENDIENTE"}
-                    className="btn-estado pendiente"
-                  >
-                    ⏳ Pendiente
-                  </button>
-                  <button
-                    onClick={() =>
-                      cambiarEstado(citaSeleccionada._id, "ATENDIDA")
-                    }
-                    disabled={citaSeleccionada.estado === "ATENDIDA"}
-                    className="btn-estado atendida"
-                  >
-                    ✅ Atendida
-                  </button>
-                  <button
-                    onClick={() =>
-                      cambiarEstado(citaSeleccionada._id, "CANCELADA")
-                    }
-                    disabled={citaSeleccionada.estado === "CANCELADA"}
-                    className="btn-estado cancelada"
-                  >
-                    ❌ Cancelar
-                  </button>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
+        <CitaModal
+          cita={citaSeleccionada}
+          onCerrar={() => dispatch({ type: "SELECCIONAR_CITA", cita: null })}
+          onCambiarEstado={cambiarEstado}
+        />
       )}
     </div>
   );

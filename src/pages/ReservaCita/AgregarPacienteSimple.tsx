@@ -1,296 +1,183 @@
 // src/pages/ReservaCita/AgregarPacienteSimple.tsx
-import { useEffect, useState } from "react";
+import { useEffect, useReducer } from "react";
 import { PacienteApiService } from "../../services/paciente.service";
 import api from "../../services/api";
 import "./AgregarPacienteSimple.css";
 
-interface AgregarPacienteSimpleProps {
+interface Props {
   dniInicial: string;
   onPacienteCreado: (dni: string) => void;
   onCancelar: () => void;
 }
 
-interface ReniecResponse {
-  success: boolean;
-  data?: {
-    dni: string;
-    nombres: string;
-    apellidoPaterno: string;
-    apellidoMaterno: string;
-  };
+interface ReniecData {
+  nombres: string;
+  apellidoPaterno: string;
+  apellidoMaterno: string;
 }
 
-const AgregarPacienteSimple = ({
-  dniInicial,
-  onPacienteCreado,
-  onCancelar,
-}: AgregarPacienteSimpleProps) => {
-  const [loading, setLoading] = useState(false);
+interface FormState {
+  nombres: string;
+  apellidos: string;
+  telefono: string;
+  loading: boolean;
+  loadingReniec: boolean;
+  error: string;
+  errorReniec: string;
+}
 
-  const [loadingReniec, setLoadingReniec] = useState(false);
-  const [errorReniec, setErrorReniec] = useState("");
+type Action =
+  | { type: "SET_FIELD"; field: keyof Pick<FormState, "nombres" | "apellidos" | "telefono">; value: string }
+  | { type: "SET_ERROR"; message: string }
+  | { type: "SET_ERROR_RENIEC"; message: string }
+  | { type: "SET_LOADING"; value: boolean }
+  | { type: "SET_LOADING_RENIEC"; value: boolean }
+  | { type: "RENIEC_OK"; nombres: string; apellidos: string }
+  | { type: "CLEAR_ERROR" };
 
-  const [error, setError] = useState("");
+function reducer(state: FormState, action: Action): FormState {
+  switch (action.type) {
+    case "SET_FIELD":         return { ...state, [action.field]: action.value };
+    case "SET_ERROR":         return { ...state, error: action.message, loading: false };
+    case "SET_ERROR_RENIEC":  return { ...state, errorReniec: action.message, loadingReniec: false };
+    case "SET_LOADING":       return { ...state, loading: action.value };
+    case "SET_LOADING_RENIEC":return { ...state, loadingReniec: action.value };
+    case "RENIEC_OK":         return { ...state, nombres: action.nombres, apellidos: action.apellidos, loadingReniec: false, errorReniec: "" };
+    case "CLEAR_ERROR":       return { ...state, error: "" };
+    default:                  return state;
+  }
+}
 
-  const [formData, setFormData] = useState({
-    dni: dniInicial,
-    nombres: "",
-    apellidos: "",
-    telefono: "",
-    correo: "",
-    fechaNacimiento: "",
-    direccion: "",
-  });
+const INITIAL: FormState = {
+  nombres: "", apellidos: "", telefono: "",
+  loading: false, loadingReniec: false,
+  error: "", errorReniec: "",
+};
 
-  // -------------------------
-  // 🔍 AUTOCOMPLETE RENIEC
-  // -------------------------
+const AgregarPacienteSimple = ({ dniInicial, onPacienteCreado, onCancelar }: Props) => {
+  const [state, dispatch] = useReducer(reducer, INITIAL);
+
+  // Consulta RENIEC al montar
   useEffect(() => {
-    const buscarReniec = async () => {
-      if (!dniInicial || dniInicial.length !== 8) return;
+    if (dniInicial.length !== 8) return;
+    let cancelled = false;
 
-      setLoadingReniec(true);
-      setErrorReniec("");
-
+    const buscar = async () => {
+      dispatch({ type: "SET_LOADING_RENIEC", value: true });
       try {
-        const res = await api.get<ReniecResponse>(`/reniec/${dniInicial}`);
-
+        const res = await api.get<{ success: boolean; data?: ReniecData }>(`/reniec/${dniInicial}`);
+        if (cancelled) return;
         if (res.data.success && res.data.data) {
           const d = res.data.data;
-
-          setFormData((prev) => ({
-            ...prev,
+          dispatch({
+            type: "RENIEC_OK",
             nombres: d.nombres ?? "",
-            apellidos: `${d.apellidoPaterno ?? ""} ${
-              d.apellidoMaterno ?? ""
-            }`.trim(),
-          }));
+            apellidos: `${d.apellidoPaterno ?? ""} ${d.apellidoMaterno ?? ""}`.trim(),
+          });
         } else {
-          setErrorReniec("No se encontraron datos en RENIEC.");
+          dispatch({ type: "SET_ERROR_RENIEC", message: "No encontrado en RENIEC — ingresa los datos." });
         }
       } catch {
-        setErrorReniec("No se pudo consultar RENIEC.");
-      } finally {
-        setLoadingReniec(false);
+        if (!cancelled) dispatch({ type: "SET_ERROR_RENIEC", message: "No se pudo consultar RENIEC." });
       }
     };
 
-    buscarReniec();
+    buscar();
+    return () => { cancelled = true; };
   }, [dniInicial]);
 
-  // -------------------------
-  // 🔄 HANDLE CHANGE
-  // -------------------------
-  const handleChange = (
-    e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
-  ) => {
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
-
-    if (name === "telefono") {
-      if (!/^\d*$/.test(value)) return;
-      if (value.length > 15) return;
-    }
-
-    setFormData((prev) => ({ ...prev, [name]: value }));
-    setError("");
+    if (name === "telefono" && (!/^\d*$/.test(value) || value.length > 15)) return;
+    dispatch({ type: "SET_FIELD", field: name as "nombres" | "apellidos" | "telefono", value });
+    dispatch({ type: "CLEAR_ERROR" });
   };
 
-  // -------------------------
-  // 📧 Validación de email
-  // -------------------------
-  const isValidEmail = (email: string) =>
-    /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
-
-  // -------------------------
-  // 🎂 Validación edad
-  // -------------------------
-  const validarEdad = (fechaStr: string) => {
-    const fecha = new Date(fechaStr);
-    if (Number.isNaN(fecha.getTime())) return false;
-
-    const hoy = new Date();
-    if (fecha > hoy) return false;
-
-    let edad = hoy.getFullYear() - fecha.getFullYear();
-    const m = hoy.getMonth() - fecha.getMonth();
-    if (m < 0 || (m === 0 && hoy.getDate() < fecha.getDate())) edad--;
-
-    return edad >= 0 && edad <= 110;
-  };
-
-  // -------------------------
-  // 💾 GUARDAR
-  // -------------------------
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setError("");
+    if (!state.nombres.trim())   return dispatch({ type: "SET_ERROR", message: "Los nombres son obligatorios." });
+    if (!state.apellidos.trim()) return dispatch({ type: "SET_ERROR", message: "Los apellidos son obligatorios." });
+    if (state.telefono.trim().length < 7) return dispatch({ type: "SET_ERROR", message: "Ingresa un teléfono válido." });
 
-    if (formData.nombres.trim() === "") {
-      setError("Los nombres son obligatorios.");
-      return;
-    }
-
-    if (formData.apellidos.trim() === "") {
-      setError("Los apellidos son obligatorios.");
-      return;
-    }
-
-    if (formData.telefono.trim().length < 6) {
-      setError("Ingrese un teléfono válido.");
-      return;
-    }
-
-    if (!isValidEmail(formData.correo.trim())) {
-      setError("Ingrese un correo válido.");
-      return;
-    }
-
-    if (!validarEdad(formData.fechaNacimiento)) {
-      setError("Ingrese una fecha de nacimiento válida.");
-      return;
-    }
-
+    dispatch({ type: "SET_LOADING", value: true });
     try {
-      setLoading(true);
-
       await PacienteApiService.crear({
-        dni: formData.dni,
-        nombres: formData.nombres.trim(),
-        apellidos: formData.apellidos.trim(),
-        telefono: formData.telefono.trim(),
-        correo: formData.correo.trim(),
-        direccion: formData.direccion.trim(),
-        fechaNacimiento: formData.fechaNacimiento,
+        dni: dniInicial,
+        nombres: state.nombres.trim(),
+        apellidos: state.apellidos.trim(),
+        telefono: state.telefono.trim(),
+        correo: "",
+        direccion: "",
+        fechaNacimiento: "",
       });
-
-      onPacienteCreado(formData.dni);
+      onPacienteCreado(dniInicial);
     } catch (err) {
-      const msg =
-        err instanceof Error ? err.message : "Error al registrar paciente.";
-      setError(msg);
-    } finally {
-      setLoading(false);
+      dispatch({ type: "SET_ERROR", message: err instanceof Error ? err.message : "Error al registrar." });
     }
   };
 
   return (
-    <div className="modal-overlay-simple" onClick={onCancelar}>
-      <div
-        className="modal-content-simple"
-        onClick={(e) => e.stopPropagation()}
-      >
+    <div
+      className="modal-overlay-simple"
+      role="presentation"
+      onClick={(e) => { if (e.target === e.currentTarget) onCancelar(); }}
+      onKeyDown={(e) => { if (e.key === "Escape") onCancelar(); }}
+    >
+      <div className="modal-content-simple">
+        {/* Header */}
         <div className="modal-header-simple">
           <h3>👤 Nuevo Paciente</h3>
-          <button
-            className="close-btn-simple"
-            onClick={onCancelar}
-            disabled={loading}
-          >
-            ✕
-          </button>
+          <button className="close-btn-simple" onClick={onCancelar} disabled={state.loading}>✕</button>
         </div>
 
-        {error && <div className="error-message-simple">⚠️ {error}</div>}
-        {errorReniec && (
-          <div className="error-message-simple">🔎 {errorReniec}</div>
-        )}
-
         <form onSubmit={handleSubmit} className="form-simple">
+          {/* DNI (solo lectura) */}
           <div className="form-group-simple">
             <label>DNI</label>
-            <input
-              type="text"
-              value={formData.dni}
-              disabled
-              className="input-disabled-modal"
-            />
-            {loadingReniec && <small>Consultando RENIEC...</small>}
+            <input type="text" value={dniInicial} disabled className="input-disabled-modal" />
+            {state.loadingReniec && (
+              <small className="aps-reniec-loading">⏳ Consultando RENIEC...</small>
+            )}
+            {state.errorReniec && (
+              <small className="aps-reniec-warn">🔍 {state.errorReniec}</small>
+            )}
+            {!state.loadingReniec && !state.errorReniec && state.nombres && (
+              <small className="aps-reniec-ok">✓ Datos obtenidos de RENIEC</small>
+            )}
           </div>
 
+          {state.error && (
+            <div className="error-message-simple">⚠️ {state.error}</div>
+          )}
+
+          {/* Nombres + Apellidos */}
           <div className="form-row-simple">
             <div className="form-group-simple">
-              <label>Nombres *</label>
-              <input
-                name="nombres"
-                value={formData.nombres}
-                onChange={handleChange}
-                disabled={loading}
-                placeholder="Juan Carlos"
-              />
+              <label>Nombres <span style={{ color: "#ef4444" }}>*</span></label>
+              <input name="nombres" value={state.nombres} onChange={handleChange} disabled={state.loading} placeholder="Juan Carlos" />
             </div>
-
             <div className="form-group-simple">
-              <label>Apellidos *</label>
-              <input
-                name="apellidos"
-                value={formData.apellidos}
-                onChange={handleChange}
-                disabled={loading}
-                placeholder="Pérez García"
-              />
+              <label>Apellidos <span style={{ color: "#ef4444" }}>*</span></label>
+              <input name="apellidos" value={state.apellidos} onChange={handleChange} disabled={state.loading} placeholder="Pérez García" />
             </div>
           </div>
 
-          <div className="form-row-simple">
-            <div className="form-group-simple">
-              <label>Teléfono *</label>
-              <input
-                name="telefono"
-                value={formData.telefono}
-                onChange={handleChange}
-                disabled={loading}
-                placeholder="987654321"
-              />
-            </div>
-
-            <div className="form-group-simple">
-              <label>Correo *</label>
-              <input
-                name="correo"
-                value={formData.correo}
-                onChange={handleChange}
-                disabled={loading}
-                placeholder="correo@ejemplo.com"
-              />
-            </div>
-          </div>
-
+          {/* Teléfono */}
           <div className="form-group-simple">
-            <label>Fecha de nacimiento *</label>
-            <input
-              type="date"
-              name="fechaNacimiento"
-              value={formData.fechaNacimiento}
-              onChange={handleChange}
-              disabled={loading}
-            />
+            <label>Celular <span style={{ color: "#ef4444" }}>*</span></label>
+            <input name="telefono" value={state.telefono} onChange={handleChange} disabled={state.loading} placeholder="987654321" />
           </div>
 
-          <div className="form-group-simple">
-            <label>Dirección</label>
-            <textarea
-              name="direccion"
-              rows={2}
-              value={formData.direccion}
-              onChange={handleChange}
-              disabled={loading}
-            />
-          </div>
+          <p className="aps-nota">
+            💡 Solo datos esenciales para la cita. Puedes completar el perfil completo desde la sección <strong>Pacientes</strong>.
+          </p>
 
           <div className="buttons-simple">
-            <button
-              type="button"
-              className="btn-cancelar-simple"
-              onClick={onCancelar}
-            >
+            <button type="button" className="btn-cancelar-simple" onClick={onCancelar} disabled={state.loading}>
               Cancelar
             </button>
-            <button
-              type="submit"
-              className="btn-guardar-simple"
-              disabled={loading}
-            >
-              {loading ? "Guardando..." : "✓ Guardar y usar en la cita"}
+            <button type="submit" className="btn-guardar-simple" disabled={state.loading}>
+              {state.loading ? "Guardando..." : "✓ Guardar y continuar"}
             </button>
           </div>
         </form>

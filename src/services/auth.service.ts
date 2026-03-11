@@ -1,72 +1,70 @@
-import api from "./api"; // Tu instancia de axios con el interceptor
-import type { AxiosResponse } from "axios";
+import { supabase } from "./supabaseClient";
 
-// Definimos los tipos aquí para mantener el orden
-export type UserRole = "ADMIN" | "MEDICO" | "PACIENTE" | "RECEPCIONISTA";
+export type UserRole = "ADMIN" | "MEDICO" | "RECEPCIONISTA";
 
 export interface AuthUser {
-  _id: string;
+  id: string;         // UUID de Supabase
+  correo: string;
   nombres: string;
   apellidos: string;
-  correo: string;
   rol: UserRole;
-  medicoId?: string; // Fundamental para que tu dashboard sepa quién es el doctor
-}
-
-// La respuesta que devuelve tu Backend al hacer login
-interface LoginResponse {
-  token: string;
-  user: AuthUser;
+  medicoId?: string;
 }
 
 export const AuthService = {
-  // 1. LOGIN: Conecta, recibe datos y GUARDA EL TOKEN
-  login: async (correo: string, password: string): Promise<LoginResponse> => {
-    // Hacemos la petición POST al backend
-    const response: AxiosResponse<LoginResponse> = await api.post("/auth/login", {
-      correo,
+  // LOGIN: Supabase maneja todo, nosotros solo leemos el resultado
+  login: async (correo: string, password: string): Promise<AuthUser> => {
+    const { data, error } = await supabase.auth.signInWithPassword({
+      email: correo,
       password,
     });
 
-    const { token, user } = response.data;
-
-    // ============================================================
-    // ¡ESTA ES LA PARTE CRUCIAL QUE TE FALTABA!
-    // Guardamos el token para que api.ts lo pueda leer
-    // ============================================================
-    if (token) {
-      localStorage.setItem("token", token);
-    }
-    
-    // Guardamos al usuario para no perderlo al recargar la página
-    if (user) {
-      localStorage.setItem("user", JSON.stringify(user));
+    if (error) {
+      // Mensaje amigable en español
+      if (error.message.includes("Invalid login credentials")) {
+        throw new Error("Correo o contraseña incorrectos.");
+      }
+      throw new Error(error.message);
     }
 
-    return response.data;
+    const meta = data.user?.user_metadata ?? {};
+
+    return {
+      id: data.user!.id,
+      correo: data.user!.email!,
+      nombres: meta.nombres ?? "",
+      apellidos: meta.apellidos ?? "",
+      rol: meta.rol as UserRole,
+      medicoId: meta.medicoId,
+    };
   },
 
-  // 2. LOGOUT: Borra todo para limpiar la sesión
-  logout: () => {
-    localStorage.removeItem("token");
-    localStorage.removeItem("user");
+  // LOGOUT: Cierra sesión en Supabase (invalida el token)
+  logout: async (): Promise<void> => {
+    await supabase.auth.signOut();
   },
 
-  // 3. RECUPERAR USUARIO: Usado por tu AuthProvider al iniciar la app
-  getStoredUser: (): AuthUser | null => {
-    const storedUser = localStorage.getItem("user");
-    if (!storedUser) return null;
-    
-    try {
-      return JSON.parse(storedUser) as AuthUser;
-    } catch (error) {
-      console.error("Error al parsear el usuario almacenado:", error);
-      return null;
-    }
+  // OBTENER SESIÓN ACTIVA: Usado por AuthProvider al iniciar la app
+  getSession: async (): Promise<AuthUser | null> => {
+    const { data } = await supabase.auth.getSession();
+    if (!data.session?.user) return null;
+
+    const u = data.session.user;
+    const meta = u.user_metadata ?? {};
+
+    return {
+      id: u.id,
+      correo: u.email!,
+      nombres: meta.nombres ?? "",
+      apellidos: meta.apellidos ?? "",
+      rol: meta.rol as UserRole,
+      medicoId: meta.medicoId,
+    };
   },
 
-  // 4. TOKEN: Utilidad por si necesitas leer el token manualmente
-  getToken: (): string | null => {
-    return localStorage.getItem("token");
-  }
+  // TOKEN ACTIVO: Para enviarlo en el header Authorization del backend
+  getToken: async (): Promise<string | null> => {
+    const { data } = await supabase.auth.getSession();
+    return data.session?.access_token ?? null;
+  },
 };

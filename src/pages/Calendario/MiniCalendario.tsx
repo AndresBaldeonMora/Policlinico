@@ -1,4 +1,4 @@
-import "./Minicalendario.css";
+import "./MiniCalendario.css";
 
 interface MiniCalendarioProps {
   fecha: Date;
@@ -52,16 +52,24 @@ const MiniCalendario = ({ fecha, onChange }: MiniCalendarioProps) => {
         {diasMes.map((d, i) =>
           d ? (
             <div
-              key={i}
+              key={`day-${d}`}
               className={`mini-cal-dia ${
                 d === fecha.getDate() ? "activo" : ""
               }`}
+              role="button"
+              tabIndex={0}
               onClick={() => onChange(new Date(year, month, d))}
+              onKeyDown={(e) => {
+                if (e.key === "Enter" || e.key === " ") {
+                  e.preventDefault();
+                  onChange(new Date(year, month, d));
+                }
+              }}
             >
               {d}
             </div>
           ) : (
-            <div key={i} />
+            <div key={`pad-${dias[i]}`} />
           )
         )}
       </div>
