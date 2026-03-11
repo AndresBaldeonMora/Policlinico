@@ -13,9 +13,12 @@ interface Props {
 
 const CalendarioTopbar = ({ titulo, vista, onCambiarFecha, onCambiarVista }: Props) => (
   <div className="calendario-topbar">
-    <button onClick={() => onCambiarFecha(-1)} aria-label="Período anterior">◀</button>
-    <h2>{titulo}</h2>
-    <button onClick={() => onCambiarFecha(1)} aria-label="Período siguiente">▶</button>
+
+    <div className="calendario-topbar-nav">
+      <button onClick={() => onCambiarFecha(-1)} aria-label="Período anterior">◀</button>
+      <h2>{titulo}</h2>
+      <button onClick={() => onCambiarFecha(1)} aria-label="Período siguiente">▶</button>
+    </div>
 
     <div className="vista-selector" role="group" aria-label="Selector de vista">
       {VISTAS.map((v) => (
@@ -30,6 +33,7 @@ const CalendarioTopbar = ({ titulo, vista, onCambiarFecha, onCambiarVista }: Pro
         </button>
       ))}
     </div>
+
   </div>
 );
 

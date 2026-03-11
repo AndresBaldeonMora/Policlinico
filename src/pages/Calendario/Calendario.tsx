@@ -119,13 +119,7 @@ const Calendario = () => {
     else                    nueva.setDate(nueva.getDate() + delta);
     dispatch({ type: "SET_FECHA", fecha: nueva });
   }, [fecha, vista]);
-
-  const irAReserva = useCallback((fechaISO: string, doctorIdArg?: string) => {
-    const params = new URLSearchParams({ fecha: fechaISO });
-    if (doctorIdArg && doctorIdArg !== DOCTOR_TODOS_ID) params.set("doctorId", doctorIdArg);
-    navigate(`/reservar-cita?${params.toString()}`);
-  }, [navigate]);
-
+  
   const irADetalleCita = useCallback((e: React.MouseEvent | React.KeyboardEvent, citaId: string) => {
     e.stopPropagation();
     navigate(`/citas/${citaId}`);
@@ -185,7 +179,6 @@ const Calendario = () => {
                   citas={citas}
                   doctores={doctores}
                   doctorId={doctorId}
-                  onReservar={irAReserva}
                   onVerCita={irADetalleCita}
                 />
               )}
@@ -196,7 +189,6 @@ const Calendario = () => {
                   citas={citas}
                   doctores={doctores}
                   doctorId={doctorId}
-                  onReservar={irAReserva}
                   onVerCita={irADetalleCita}
                 />
               )}
@@ -206,7 +198,6 @@ const Calendario = () => {
                   citas={citas}
                   doctores={doctores}
                   doctorId={doctorId}
-                  onReservar={irAReserva}
                   onVerCita={irADetalleCita}
                 />
               )}

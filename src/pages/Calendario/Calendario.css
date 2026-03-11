@@ -50,14 +50,37 @@
 ═══════════════════════════════════════════ */
 
 .calendario-topbar {
-  display: grid;
-  grid-template-columns: auto 1fr auto auto;
+  display: flex;
   align-items: center;
   gap: 0.75rem;
   padding: 0.5rem 0.75rem;
   border-bottom: 1px solid var(--border);
   background: white;
-  flex-shrink: 0; /* ✅ no se encoge */
+  flex-shrink: 0;
+}
+
+.calendario-topbar-nav {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.calendario-topbar-nav h2 {
+  font-size: 1.1rem;
+  font-weight: 700;
+  text-transform: capitalize;
+  margin: 0;
+  white-space: nowrap;
+}
+
+.calendario-topbar-nav button {
+  border: 1px solid var(--border);
+  background: white;
+  border-radius: 6px;
+  padding: 0.3rem 0.6rem;
+  cursor: pointer;
+  line-height: 1;
+  color: var(--text-gray);
 }
 
 .calendario-topbar button {
@@ -68,19 +91,14 @@
   cursor: pointer;
 }
 
-.calendario-topbar button:hover { background: var(--bg-light); }
-
-.calendario-topbar h2 {
-  text-align: center;
-  font-size: 1.1rem;
-  font-weight: 700;
-  text-transform: capitalize;
-  margin: 0;
+.calendario-topbar-nav button:hover {
+  background: var(--bg-light);
 }
 
 .vista-selector {
   display: flex;
   gap: 0.25rem;
+  margin-left: auto;
 }
 
 .vista-selector button {
@@ -141,7 +159,7 @@
   padding: 10px 12px;
   text-align: center;
   border-bottom: 2px solid #1d4ed8;
-  border-right: 1px solid #1d4ed8;
+  border-right: 1px solid black;
   position: sticky;
   top: 0;
   z-index: 3;
@@ -190,7 +208,7 @@
   padding: 2px 3px;
   min-height: 40px;
   min-width: 180px;
-  cursor: pointer;
+  cursor: default;
   transition: background 0.1s;
 }
 
@@ -293,7 +311,7 @@
   border-right: 1px solid var(--border);
   border-bottom: 1px solid var(--border);
   padding: 4px;
-  cursor: pointer;
+  cursor: default;
   transition: background 0.1s;
   overflow: hidden;
 }

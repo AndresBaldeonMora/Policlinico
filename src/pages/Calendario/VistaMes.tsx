@@ -26,11 +26,10 @@ interface Props {
   citas: CitaTransformada[];
   doctores: DoctorTransformado[];
   doctorId: string;
-  onReservar: (fechaISO: string, doctorId?: string) => void;
   onVerCita: (e: React.MouseEvent | React.KeyboardEvent, citaId: string) => void;
 }
 
-const VistaMes = ({ diasDelMes, citas, doctores, doctorId, onVerCita, onReservar }: Props) => {
+const VistaMes = ({ diasDelMes, citas, doctores, doctorId, onVerCita}: Props) => {
   const doctoresMostrados = doctorId === "ALL"
     ? doctores
     : doctores.filter((d) => d.id === doctorId);
@@ -77,7 +76,6 @@ const VistaMes = ({ diasDelMes, citas, doctores, doctorId, onVerCita, onReservar
                 <div
                   key={`${doc.id}-${fechaISO}`}
                   className={`calendario-celda ${esHoy ? "calendario-celda--hoy" : ""}`}
-                  onClick={() => onReservar(fechaISO, doc.id)}
                 >
                   <span className={`dia-numero ${esHoy ? "dia-numero--hoy" : ""}`}>
                     {dia.getDate()}

@@ -6,13 +6,6 @@ import { getDoctorIdString } from "../../services/cita.service";
 
 const DIAS_SEMANA = ["Lun", "Mar", "Mié", "Jue", "Vie", "Sáb", "Dom"] as const;
 
-const toISODateLocal = (d: Date): string => {
-  const y = d.getFullYear();
-  const m = String(d.getMonth() + 1).padStart(2, "0");
-  const day = String(d.getDate()).padStart(2, "0");
-  return `${y}-${m}-${day}`;
-};
-
 const ESTADO_COLOR: Record<string, string> = {
   PENDIENTE:    "agenda-cita--pendiente",
   ATENDIDA:     "agenda-cita--atendida",
@@ -26,11 +19,10 @@ interface Props {
   citas: CitaTransformada[];
   doctores: DoctorTransformado[];
   doctorId: string;
-  onReservar: (fechaISO: string, doctorId?: string) => void;
   onVerCita: (e: React.MouseEvent | React.KeyboardEvent, citaId: string) => void;
 }
 
-const VistaSemana = ({ inicioSemana, horas, citas, doctores, doctorId, onVerCita, onReservar }: Props) => {
+const VistaSemana = ({ inicioSemana, horas, citas, doctores, doctorId, onVerCita }: Props) => {
   const doctoresMostrados = doctorId === "ALL"
     ? doctores
     : doctores.filter((d) => d.id === doctorId);
@@ -89,12 +81,10 @@ const VistaSemana = ({ inicioSemana, horas, citas, doctores, doctorId, onVerCita
                 <div key={`hora-${hora}`} className="multi-hora-label">{hora}</div>
                 {diasSemana.map((dia, i) => {
                   const cita = getCita(doc.id, dia, hora);
-                  const fechaISO = toISODateLocal(dia);
                   return (
                     <div
                       key={`${doc.id}-${i}-${hora}`}
                       className="multi-celda"
-                      onClick={() => !cita && onReservar(fechaISO, doc.id)}
                     >
                       {cita?.pacienteId && (
                         <div

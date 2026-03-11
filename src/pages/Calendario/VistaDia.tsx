@@ -3,23 +3,14 @@ import type { CitaTransformada } from "../../services/cita.service";
 import type { DoctorTransformado } from "../../services/doctor.service";
 import { getDoctorIdString } from "../../services/cita.service";
 
-
 interface Props {
   fecha: Date;
   horas: string[];
   citas: CitaTransformada[];
   doctores: DoctorTransformado[];
   doctorId: string;
-  onReservar: (fechaISO: string, doctorId?: string) => void;
   onVerCita: (e: React.MouseEvent | React.KeyboardEvent, citaId: string) => void;
 }
-
-const toISODateLocal = (d: Date): string => {
-  const y = d.getFullYear();
-  const m = String(d.getMonth() + 1).padStart(2, "0");
-  const day = String(d.getDate()).padStart(2, "0");
-  return `${y}-${m}-${day}`;
-};
 
 const ESTADO_COLOR: Record<string, string> = {
   PENDIENTE:    "agenda-cita--pendiente",
@@ -28,13 +19,10 @@ const ESTADO_COLOR: Record<string, string> = {
   REPROGRAMADA: "agenda-cita--reprogramada",
 };
 
-const VistaDia = ({ fecha, horas, citas, doctores, doctorId, onVerCita, onReservar }: Props) => {
-  // Si hay un doctor seleccionado, solo mostrar ese; sino todos
+const VistaDia = ({ fecha, horas, citas, doctores, doctorId, onVerCita }: Props) => {
   const doctoresMostrados = doctorId === "ALL"
     ? doctores
     : doctores.filter((d) => d.id === doctorId);
-
-  const fechaISO = toISODateLocal(fecha);
 
   const getCita = (dId: string, hora: string) =>
     citas.find((c) => {
@@ -50,7 +38,6 @@ const VistaDia = ({ fecha, horas, citas, doctores, doctorId, onVerCita, onReserv
 
   return (
     <div className="multi-dia-wrapper">
-      {/* Header de médicos */}
       <div
         className="multi-dia-grid"
         style={{ gridTemplateColumns: `80px repeat(${doctoresMostrados.length}, 1fr)` }}
@@ -65,18 +52,13 @@ const VistaDia = ({ fecha, horas, citas, doctores, doctorId, onVerCita, onReserv
           </div>
         ))}
 
-        {/* Filas de horas */}
         {horas.map((hora) => (
           <>
             <div key={`hora-${hora}`} className="multi-hora-label">{hora}</div>
             {doctoresMostrados.map((doc) => {
               const cita = getCita(doc.id, hora);
               return (
-                <div
-                  key={`${doc.id}-${hora}`}
-                  className="multi-celda"
-                  onClick={() => !cita && onReservar(fechaISO, doc.id)}
-                >
+                <div key={`${doc.id}-${hora}`} className="multi-celda">
                   {cita?.pacienteId && (
                     <div
                       className={`agenda-cita clickable ${ESTADO_COLOR[cita.estado] ?? ""}`}
