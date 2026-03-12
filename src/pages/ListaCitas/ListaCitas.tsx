@@ -12,7 +12,7 @@ import { useEffect, useReducer, useState } from "react";
 import "./ListaCitas.css";
 import { CitaApiService } from "../../services/cita.service";
 import type { CitaProcesada } from "../../services/cita.service";
-import { CalendarClock } from "lucide-react";
+import { CalendarClock, XCircle } from "lucide-react";
 import { DoctorApiService } from "../../services/doctor.service";
 import {
   listaCitasReducer,
@@ -104,6 +104,7 @@ const ListaCitas = () => {
   const [citasData, setCitasData] = useState<CitaProcesada[]>([]);
   const [busqueda, setBusqueda] = useState("");
   const [cargandoLista, setCargandoLista] = useState(true);
+  const [citaACancelar, setCitaACancelar] = useState<string | null>(null);
 
   // ── Notifications ─────────────────────────────────────────
   const showNotification = (message: string, type: "success" | "error") => {
@@ -210,6 +211,19 @@ const ListaCitas = () => {
       showNotification(msg, "error");
     }
   };
+  
+  const cancelarCita = async () => {
+    if (!citaACancelar) return;
+    try {
+      await CitaApiService.cancelar(citaACancelar);
+      setCitaACancelar(null);
+      showNotification("Cita cancelada correctamente.", "success");
+      cargarCitas();
+    } catch (error: unknown) {
+      const msg = error instanceof Error ? error.message : "Error al cancelar la cita.";
+      showNotification(msg, "error");
+    }
+  };
 
   // ── Filtered list ─────────────────────────────────────────
   const filtrarCitas = citasData.filter((cita) => {
@@ -272,25 +286,33 @@ const ListaCitas = () => {
                       <td>{cita.fecha}</td>
                       <td>{cita.hora}</td>
                       <td>
-                        <span
-                          className={`badge ${
-                            cita.estado === "PENDIENTE"
-                              ? "badge-warning"
-                              : cita.estado === "REPROGRAMADA"
-                              ? "badge-info"
-                              : "badge-success"
-                          }`}
-                        >
-                          {cita.estado.charAt(0).toUpperCase() + cita.estado.slice(1)}
-                        </span>
+                      <span
+                        className={`badge ${
+                          cita.estado === "PENDIENTE"     ? "badge-warning"
+                          : cita.estado === "REPROGRAMADA" ? "badge-info"
+                          : cita.estado === "CANCELADA"    ? "badge-danger"
+                          : "badge-success"
+                        }`}
+                      >
+                        {cita.estado.charAt(0).toUpperCase() + cita.estado.slice(1).toLowerCase()}
+                      </span>
                       </td>
                       <td>
                         <button
                           className="btn-icon"
                           title="Reprogramar cita"
                           onClick={() => onReprogramar(cita)}
+                          disabled={cita.estado === "CANCELADA" || cita.estado === "ATENDIDA" || cita.estado === "REPROGRAMADA"}
                         >
                           <CalendarClock size={20} strokeWidth={2} />
+                        </button>
+                        <button
+                          className="btn-icon btn-icon-danger"
+                          title="Cancelar cita"
+                          onClick={() => setCitaACancelar(cita._id)}
+                          disabled={cita.estado === "CANCELADA" || cita.estado === "ATENDIDA"}
+                        >
+                          <XCircle size={20} strokeWidth={2} />
                         </button>
                       </td>
                     </tr>
@@ -307,7 +329,22 @@ const ListaCitas = () => {
           </div>
         </div>
       )}
-
+      {citaACancelar && (
+        <div className="modal-overlay">
+          <div className="modal-confirmacion">
+            <h3>¿Cancelar cita?</h3>
+            <p>Esta acción no se puede deshacer. La cita quedará registrada como cancelada.</p>
+            <div className="modal-actions">
+              <button className="btn btn-secondary" onClick={() => setCitaACancelar(null)}>
+                Volver
+              </button>
+              <button className="btn btn-danger" onClick={cancelarCita}>
+                Sí, cancelar cita
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
       {/* ── Modal (extracted component) ── */}
       {editando && (
         <ReprogramarModal
