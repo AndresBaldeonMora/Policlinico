@@ -1,4 +1,5 @@
 import { useEffect, useState, useRef } from "react";
+import { useSearchParams } from "react-router-dom";
 import { Upload, Eye, X, FileText, ExternalLink, Search, Stethoscope, Mail, Phone } from "lucide-react";
 import "../ListaCitas/ListaCitas.css";
 import {
@@ -14,8 +15,11 @@ interface NotificationState { message: string; type: "success" | "error" | ""; v
 type Doctor = DoctorBase & { cmp?: string; cvUrl?: string };
 
 const ListaMedicos = () => {
+  const [searchParams] = useSearchParams();
+  const highlightId = searchParams.get("highlight");
+  const highlightRef = useRef<HTMLTableRowElement>(null);
   const [doctores, setDoctores] = useState<Doctor[]>([]);
-  const [busqueda, setBusqueda] = useState("");
+  const [busqueda, setBusqueda] = useState(searchParams.get("buscar") || "");
   const [cargando, setCargando] = useState(true);
   const [notification, setNotification] = useState<NotificationState>({ message: "", type: "", visible: false });
   const [doctorCV, setDoctorCV] = useState<Doctor | null>(null);
@@ -40,6 +44,12 @@ const ListaMedicos = () => {
   };
 
   useEffect(() => { cargarDoctores(); }, []);
+
+  useEffect(() => {
+    if (highlightId && highlightRef.current) {
+      highlightRef.current.scrollIntoView({ behavior: "smooth", block: "center" });
+    }
+  }, [highlightId, doctores]);
   useEffect(() => { return () => { Object.values(cvLocalUrls).forEach((url) => URL.revokeObjectURL(url)); }; }, [cvLocalUrls]);
 
   const doctoresFiltrados = doctores.filter((d) => {
@@ -107,7 +117,11 @@ const ListaMedicos = () => {
               <tbody>
                 {doctoresFiltrados.length > 0 ? (
                   doctoresFiltrados.map((d) => (
-                    <tr key={d.id}>
+                    <tr
+                      key={d.id}
+                      ref={highlightId === d.id ? highlightRef : undefined}
+                      className={highlightId === d.id ? "tr-highlight" : ""}
+                    >
                       <td>
                         <div className="td-person">
                           <div className="td-avatar td-avatar--doc">

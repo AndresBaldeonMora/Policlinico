@@ -1,4 +1,5 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
+import { useSearchParams } from "react-router-dom";
 import { Search, UserPlus, Pencil, Users } from "lucide-react";
 import "../ListaCitas/ListaCitas.css";
 import "./ListaPacientes.css";
@@ -11,8 +12,11 @@ const normalizeString = (str: string): string =>
 interface NotificationState { message: string; type: "success" | "error" | ""; visible: boolean; }
 
 const ListaPacientes = () => {
+  const [searchParams] = useSearchParams();
+  const highlightId = searchParams.get("highlight");
+  const highlightRef = useRef<HTMLTableRowElement>(null);
   const [pacientes, setPacientes] = useState<PacienteTransformado[]>([]);
-  const [busqueda, setBusqueda] = useState("");
+  const [busqueda, setBusqueda] = useState(searchParams.get("buscar") || "");
   const [cargando, setCargando] = useState(true);
   const [notification, setNotification] = useState<NotificationState>({ message: "", type: "", visible: false });
   const [modalAbierto, setModalAbierto] = useState(false);
@@ -35,6 +39,12 @@ const ListaPacientes = () => {
   };
 
   useEffect(() => { cargarPacientes(); }, []);
+
+  useEffect(() => {
+    if (highlightId && highlightRef.current) {
+      highlightRef.current.scrollIntoView({ behavior: "smooth", block: "center" });
+    }
+  }, [highlightId, pacientes]);
 
   const pacientesFiltrados = pacientes.filter((p) => {
     const filtro = normalizeString(busqueda);
@@ -98,7 +108,11 @@ const ListaPacientes = () => {
               <tbody>
                 {pacientesFiltrados.length > 0 ? (
                   pacientesFiltrados.map((p) => (
-                    <tr key={p.id}>
+                    <tr
+                      key={p.id}
+                      ref={highlightId === p.id ? highlightRef : undefined}
+                      className={highlightId === p.id ? "tr-highlight" : ""}
+                    >
                       <td><span className="td-mono">{p.dni}</span></td>
                       <td>
                         <div className="td-person">

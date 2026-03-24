@@ -1,3 +1,4 @@
+import { useState } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { useAuth } from "../../hooks/userAuth";
 import {
@@ -9,6 +10,8 @@ import {
   LayoutDashboard,
   LogOut,
   ChevronRight,
+  PanelLeftClose,
+  PanelLeftOpen,
 } from "lucide-react";
 import "./Sidebar.css";
 
@@ -16,12 +19,13 @@ const Sidebar = () => {
   const location = useLocation();
   const navigate = useNavigate();
   const { logout, user } = useAuth();
+  const [collapsed, setCollapsed] = useState(false);
 
   const adminMenu = [
     { path: "/", label: "Calendario", icon: Calendar, description: "Vista principal de citas" },
     { path: "/reserva-cita", label: "Solicitar Cita", icon: CalendarPlus, description: "Agendar nueva cita" },
-    { path: "/lista-citas", label: "Gestión de Citas", icon: ClipboardList, description: "Administrar citas" },
-    { path: "/medicos", label: "Médicos", icon: Stethoscope, description: "Directorio de doctores" },
+    { path: "/lista-citas", label: "Gestion de Citas", icon: ClipboardList, description: "Administrar citas" },
+    { path: "/medicos", label: "Medicos", icon: Stethoscope, description: "Directorio de doctores" },
     { path: "/pacientes", label: "Pacientes", icon: Users, description: "Listado de pacientes" },
   ];
 
@@ -39,7 +43,7 @@ const Sidebar = () => {
   const avatarLetter = user?.nombres?.charAt(0).toUpperCase() || "U";
 
   return (
-    <aside className="sidebar">
+    <aside className={`sidebar${collapsed ? " sidebar--collapsed" : ""}`}>
       <div className="sidebar-header">
         <div className="logo">
           <div className="logo-icon">
@@ -54,18 +58,27 @@ const Sidebar = () => {
               </defs>
             </svg>
           </div>
-          <div>
-            <h2 className="logo-text">Policlínico</h2>
-            <p className="logo-subtitle">
-              {user?.rol === "MEDICO" ? "Portal Médico" : "Administración"}
-            </p>
-          </div>
+          {!collapsed && (
+            <div>
+              <h2 className="logo-text">Policlinico</h2>
+              <p className="logo-subtitle">
+                {user?.rol === "MEDICO" ? "Portal Medico" : "Administracion"}
+              </p>
+            </div>
+          )}
         </div>
+        <button
+          className="sidebar-toggle"
+          onClick={() => setCollapsed(!collapsed)}
+          title={collapsed ? "Expandir menu" : "Colapsar menu"}
+        >
+          {collapsed ? <PanelLeftOpen size={18} /> : <PanelLeftClose size={18} />}
+        </button>
       </div>
 
       <nav className="sidebar-nav">
         <div className="nav-section">
-          <p className="nav-section-title">MENÚ PRINCIPAL</p>
+          {!collapsed && <p className="nav-section-title">MENU PRINCIPAL</p>}
           {menuItems.map((item) => {
             const isActive = location.pathname === item.path;
             const Icon = item.icon;
@@ -77,8 +90,12 @@ const Sidebar = () => {
                 title={item.description}
               >
                 <Icon size={20} strokeWidth={isActive ? 2.2 : 1.8} />
-                <span className="sidebar-label">{item.label}</span>
-                {isActive && <ChevronRight size={16} className="sidebar-link-arrow" />}
+                {!collapsed && (
+                  <>
+                    <span className="sidebar-label">{item.label}</span>
+                    {isActive && <ChevronRight size={16} className="sidebar-link-arrow" />}
+                  </>
+                )}
               </Link>
             );
           })}
@@ -86,18 +103,24 @@ const Sidebar = () => {
       </nav>
 
       <div className="sidebar-footer">
-        <div className="sidebar-user-card">
-          <div className="sidebar-user-avatar">{avatarLetter}</div>
-          <div className="sidebar-user-info">
-            <span className="sidebar-user-name">
-              {user ? `${user.nombres} ${user.apellidos}` : "Usuario"}
-            </span>
-            <span className="sidebar-user-role">{user?.rol || "Sin rol"}</span>
+        {!collapsed ? (
+          <div className="sidebar-user-card">
+            <div className="sidebar-user-avatar">{avatarLetter}</div>
+            <div className="sidebar-user-info">
+              <span className="sidebar-user-name">
+                {user ? `${user.nombres} ${user.apellidos}` : "Usuario"}
+              </span>
+              <span className="sidebar-user-role">{user?.rol || "Sin rol"}</span>
+            </div>
           </div>
-        </div>
-        <button className="btn-logout" onClick={handleLogout}>
+        ) : (
+          <div className="sidebar-user-card sidebar-user-card--collapsed">
+            <div className="sidebar-user-avatar">{avatarLetter}</div>
+          </div>
+        )}
+        <button className="btn-logout" onClick={handleLogout} title="Cerrar Sesion">
           <LogOut size={18} strokeWidth={2} />
-          <span>Cerrar Sesión</span>
+          {!collapsed && <span>Cerrar Sesion</span>}
         </button>
       </div>
     </aside>

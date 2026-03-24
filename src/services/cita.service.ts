@@ -51,7 +51,6 @@ export interface CitaProcesada {
   estado: EstadoCita;
 }
 
-// ✅ doctorId puede ser objeto populado o string (sin populate)
 export interface CitaTransformada {
   _id: string;
   fecha: string;
@@ -61,7 +60,6 @@ export interface CitaTransformada {
   doctorId?: DoctorDTO | string;
 }
 
-// ✅ Helper sin any — extrae el _id del doctorId sea objeto o string
 export const getDoctorIdString = (doctorId?: DoctorDTO | string): string => {
   if (!doctorId) return "";
   if (typeof doctorId === "string") return doctorId;

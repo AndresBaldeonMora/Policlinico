@@ -182,6 +182,37 @@
   border-bottom: none;
 }
 
+/* ── Highlight animation from search ── */
+.tr-highlight {
+  animation: rowHighlight 2.5s ease-out;
+}
+
+.tr-highlight td {
+  position: relative;
+}
+
+.tr-highlight td::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: var(--primary);
+  opacity: 0;
+  pointer-events: none;
+  animation: cellGlow 2.5s ease-out;
+}
+
+@keyframes rowHighlight {
+  0% { background: rgba(20, 184, 166, 0.25); }
+  30% { background: rgba(20, 184, 166, 0.15); }
+  100% { background: transparent; }
+}
+
+@keyframes cellGlow {
+  0% { opacity: 0.12; }
+  30% { opacity: 0.06; }
+  100% { opacity: 0; }
+}
+
 /* ── Table Cell Components ── */
 
 /* Person with avatar */

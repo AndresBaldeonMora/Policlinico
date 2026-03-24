@@ -1,4 +1,5 @@
-import { useEffect, useReducer, useState } from "react";
+import { useEffect, useReducer, useRef, useState } from "react";
+import { useSearchParams } from "react-router-dom";
 import "./ListaCitas.css";
 import { CitaApiService } from "../../services/cita.service";
 import type { CitaProcesada } from "../../services/cita.service";
@@ -55,6 +56,9 @@ const ESTADO_CONFIG: Record<string, { class: string; label: string }> = {
 };
 
 const ListaCitas = () => {
+  const [searchParams] = useSearchParams();
+  const highlightId = searchParams.get("highlight");
+  const highlightRef = useRef<HTMLTableRowElement>(null);
   const [state, dispatch] = useReducer(listaCitasReducer, initialState);
   const { notification, editando, pasoModal, mesesDisponibles, mesSeleccionado, diasDelMes, diaSeleccionado, horariosPorDia, cargandoHorarios } = state;
 
@@ -71,6 +75,12 @@ const ListaCitas = () => {
     dispatch({ type: "SET_MESES_DISPONIBLES", payload: generarMeses() });
     cargarCitas();
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
+
+  useEffect(() => {
+    if (highlightId && highlightRef.current) {
+      highlightRef.current.scrollIntoView({ behavior: "smooth", block: "center" });
+    }
+  }, [highlightId, citasData]);
 
   const cargarCitas = async () => {
     try {
@@ -203,7 +213,11 @@ const ListaCitas = () => {
                     const estadoInfo = ESTADO_CONFIG[cita.estado] || { class: "badge-warning", label: cita.estado };
                     const inicialPaciente = cita.paciente.charAt(0).toUpperCase();
                     return (
-                      <tr key={cita._id}>
+                      <tr
+                        key={cita._id}
+                        ref={highlightId === cita._id ? highlightRef : undefined}
+                        className={highlightId === cita._id ? "tr-highlight" : ""}
+                      >
                         <td className="td-id">{cita.id}</td>
                         <td>
                           <div className="td-person">
