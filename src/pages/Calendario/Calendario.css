@@ -14,7 +14,7 @@
 
 .calendario-container {
   padding: 1rem;
-  height: 100vh;
+  height: calc(100vh - 80px);
   box-sizing: border-box;
   display: flex;
   flex-direction: column;
@@ -133,12 +133,15 @@
 
 .multi-dia-wrapper {
   flex: 1;
-  overflow: auto;
+  overflow-x: auto;
+  overflow-y: hidden;
   min-height: 0;
 }
 
 .multi-dia-grid {
   display: grid;
+  height: 100%;
+  grid-auto-rows: 1fr;
   /* gridTemplateColumns se define inline */
 }
 
@@ -187,29 +190,36 @@
   background: white;
   border-bottom: 1px solid #f3f4f6;
   border-right: 1px solid var(--border);
-  padding: 0 8px;
-  font-size: 11px;
+  padding: 0 8px 0 0;
+  font-size: 10px;
   color: #9ca3af;
   text-align: right;
   display: flex;
   align-items: flex-start;
   justify-content: flex-end;
-  padding-top: 3px;
-  min-height: 40px;
+  padding-top: 2px;
+  height: unset;
+  flex: 1;
+  min-height: unset;
   min-width: 70px;
   position: sticky;
   left: 0;
   z-index: 2;
+  box-sizing: border-box;
 }
 
 .multi-celda {
   border-bottom: 1px solid #f3f4f6;
   border-right: 1px solid #f0f0f0;
-  padding: 2px 3px;
-  min-height: 40px;
+  padding: 1px 2px;
+  height: unset;
+  flex: 1;
+  min-height: unset;
   min-width: 180px;
   cursor: default;
   transition: background 0.1s;
+  box-sizing: border-box;
+  overflow: hidden;
 }
 
 .multi-celda:hover { background: #f0fdf4; }
@@ -220,19 +230,23 @@
 
 .multi-semana-wrapper {
   flex: 1;
-  overflow-y: auto;
+  overflow-x: auto;
+  overflow-y: hidden;
   min-height: 0;
   display: flex;
   flex-direction: column;
-  gap: 20px;
-  padding: 12px;
+  gap: 0;
+  padding: 0;
 }
 
 .multi-semana-bloque {
   border: 1px solid var(--border);
   border-radius: 8px;
   overflow: hidden;
-  flex-shrink: 0; /* ✅ no se comprime */
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
 }
 
 .multi-semana-doctor-header {
@@ -242,11 +256,15 @@
   display: flex;
   align-items: center;
   gap: 12px;
+  flex-shrink: 0;
 }
 
 .multi-semana-grid {
   display: grid;
   overflow-x: auto;
+  overflow-y: auto;
+  flex: 1;
+  min-height: 0;
 }
 
 .agenda-dia-header {

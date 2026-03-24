@@ -106,6 +106,15 @@ export class CitaApiService {
     }
   }
 
+  static async cancelar(id: string): Promise<void> {
+  const response = await api.put<{ success: boolean; message?: string }>(
+    `/citas/${id}/cancelar`
+  );
+  if (!response.data.success) {
+    throw new Error(response.data.message || "Error al cancelar la cita");
+    }
+  }
+
   static async obtenerPorId(id: string): Promise<CitaTransformada> {
     const response = await api.get<{ success: boolean; data: CitaTransformada; message?: string }>(
       `/citas/${id}`

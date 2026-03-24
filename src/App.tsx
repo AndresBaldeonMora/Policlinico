@@ -9,7 +9,6 @@ import ListaPacientes from "./pages/ListaPacientes/ListaPacientes";
 import Calendario from "./pages/Calendario/Calendario";
 import MedicoDashboard from "./pages/MedicoDashboard/MedicoDashboard";
 import PerfilCita from "./pages/PerfilCita/PerfilCita";
-
 import Login from "./pages/Login/Login";
 
 import { AuthProvider } from "./context/AuthProvider";
@@ -20,74 +19,49 @@ function App() {
     <AuthProvider>
       <BrowserRouter>
         <Routes>
-          {/* ================== PUBLIC ================== */}
           <Route path="/login" element={<Login />} />
 
-          {/* ================== PROTECTED ================== */}
           <Route element={<ProtectedLayout />}>
-            <Route
-              path="/"
-              element={
-                <ProtectedRoute roles={["RECEPCIONISTA"]}>
-                  <Calendario />
-                </ProtectedRoute>
-              }
-            />
+            {/* ── RECEPCIONISTA ── */}
+            <Route path="/" element={
+              <ProtectedRoute roles={["RECEPCIONISTA"]}>
+                <Calendario />
+              </ProtectedRoute>
+            } />
+            <Route path="/reserva-cita" element={
+              <ProtectedRoute roles={["RECEPCIONISTA"]}>
+                <ReservaCita />
+              </ProtectedRoute>
+            } />
+            <Route path="/lista-citas" element={
+              <ProtectedRoute roles={["RECEPCIONISTA"]}>
+                <ListaCitas />
+              </ProtectedRoute>
+            } />
+            <Route path="/medicos" element={
+              <ProtectedRoute roles={["RECEPCIONISTA"]}>
+                <ListaMedicos />
+              </ProtectedRoute>
+            } />
+            <Route path="/pacientes" element={
+              <ProtectedRoute roles={["RECEPCIONISTA"]}>
+                <ListaPacientes />
+              </ProtectedRoute>
+            } />
 
-            <Route
-              path="/reserva-cita"
-              element={
-                <ProtectedRoute roles={["RECEPCIONISTA"]}>
-                  <ReservaCita />
-                </ProtectedRoute>
-              }
-            />
+            {/* ── COMPARTIDA: RECEPCIONISTA + MEDICO ── */}
+            <Route path="/citas/:citaId" element={
+              <ProtectedRoute roles={["RECEPCIONISTA", "MEDICO"]}>
+                <PerfilCita />
+              </ProtectedRoute>
+            } />
 
-            <Route
-              path="/lista-citas"
-              element={
-                <ProtectedRoute roles={["RECEPCIONISTA"]}>
-                  <ListaCitas />
-                </ProtectedRoute>
-              }
-            />
-
-            {/* 👇 RUTA PERFIL DE CITA */}
-            <Route
-              path="/citas/:citaId"
-              element={
-                <ProtectedRoute roles={["RECEPCIONISTA"]}>
-                  <PerfilCita />
-                </ProtectedRoute>
-              }
-            />
-
-            <Route
-              path="/medicos"
-              element={
-                <ProtectedRoute roles={["RECEPCIONISTA"]}>
-                  <ListaMedicos />
-                </ProtectedRoute>
-              }
-            />
-
-            <Route
-              path="/pacientes"
-              element={
-                <ProtectedRoute roles={["RECEPCIONISTA"]}>
-                  <ListaPacientes />
-                </ProtectedRoute>
-              }
-            />
-
-            <Route
-              path="/medico"
-              element={
-                <ProtectedRoute roles={["MEDICO"]}>
-                  <MedicoDashboard />
-                </ProtectedRoute>
-              }
-            />
+            {/* ── MEDICO ── */}
+            <Route path="/medico" element={
+              <ProtectedRoute roles={["MEDICO"]}>
+                <MedicoDashboard />
+              </ProtectedRoute>
+            } />
           </Route>
         </Routes>
       </BrowserRouter>

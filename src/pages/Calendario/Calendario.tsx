@@ -1,4 +1,3 @@
-// src/pages/Calendario/Calendario.tsx
 import { useEffect, useReducer, useCallback, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
 import { CitaApiService } from "../../services/cita.service";
@@ -60,7 +59,6 @@ type CalendarioAction =
   | { type: "SET_DOCTOR_ID"; doctorId: string }
   | { type: "SET_LOADING"; value: boolean };
 
-// ✅ DEFAULT: vista día
 const initialState: CalendarioState = {
   vista: "dia",
   fecha: new Date(),
@@ -82,8 +80,15 @@ function calendarioReducer(state: CalendarioState, action: CalendarioAction): Ca
   }
 }
 
-const Calendario = () => {
-  const [state, dispatch] = useReducer(calendarioReducer, initialState);
+interface CalendarioProps {
+  medicoFijo?: string;
+}
+
+const Calendario = ({ medicoFijo }: CalendarioProps) => {
+  const [state, dispatch] = useReducer(calendarioReducer, {
+    ...initialState,
+    doctorId: medicoFijo ?? DOCTOR_TODOS_ID,
+  });
   const { vista, fecha, citas, doctores, doctorId, loading } = state;
   const navigate = useNavigate();
 
@@ -94,6 +99,13 @@ const Calendario = () => {
       dispatch({ type: "SET_DOCTORES", doctores: [] });
     }
   }, []);
+
+  useEffect(() => {
+    if (!medicoFijo) return;
+    DoctorApiService.obtenerPorId(medicoFijo)
+      .then((doc) => dispatch({ type: "SET_DOCTORES", doctores: [doc] }))
+      .catch(() => {});
+  }, [medicoFijo]);
 
   const cargarCitas = useCallback(async () => {
     try {
@@ -109,17 +121,21 @@ const Calendario = () => {
     }
   }, [fecha, vista, doctorId]);
 
-  useEffect(() => { cargarDoctores(); }, [cargarDoctores]);
+  // Solo carga doctores si NO es médico fijo (recepcionista / admin)
+  useEffect(() => {
+    if (!medicoFijo) cargarDoctores();
+  }, [cargarDoctores, medicoFijo]);
+
   useEffect(() => { cargarCitas(); }, [cargarCitas]);
 
   const cambiarFecha = useCallback((delta: number) => {
     const nueva = new Date(fecha);
-    if (vista === "mes")    nueva.setMonth(nueva.getMonth() + delta);
+    if (vista === "mes")         nueva.setMonth(nueva.getMonth() + delta);
     else if (vista === "semana") nueva.setDate(nueva.getDate() + delta * 7);
-    else                    nueva.setDate(nueva.getDate() + delta);
+    else                         nueva.setDate(nueva.getDate() + delta);
     dispatch({ type: "SET_FECHA", fecha: nueva });
   }, [fecha, vista]);
-  
+
   const irADetalleCita = useCallback((e: React.MouseEvent | React.KeyboardEvent, citaId: string) => {
     e.stopPropagation();
     navigate(`/citas/${citaId}`);
@@ -148,16 +164,28 @@ const Calendario = () => {
     return `${inicio.toLocaleDateString("es-PE")} – ${fin.toLocaleDateString("es-PE")}`;
   })();
 
+  // Para VistaDia/Semana/Mes: si es médico fijo, construimos un array con solo ese doctor
+  // para que el componente renderice solo su columna (sin necesidad de cambiar VistaDia)
+  const doctoresParaVista = medicoFijo
+    ? doctores.filter((d) => d.id === medicoFijo)
+    : doctores;
+
   return (
     <div className="calendario-container">
       <div className="calendario-layout">
         <div className="calendario-left">
-          <MiniCalendario fecha={fecha} onChange={(f) => dispatch({ type: "SET_FECHA", fecha: f })} />
-          <DoctoresPanel
-            doctores={doctores}
-            doctorId={doctorId}
-            onSeleccionar={(id) => dispatch({ type: "SET_DOCTOR_ID", doctorId: id })}
+          <MiniCalendario
+            fecha={fecha}
+            onChange={(f) => dispatch({ type: "SET_FECHA", fecha: f })}
           />
+          {/* Panel de doctores: solo para recepcionista / admin */}
+          {!medicoFijo && (
+            <DoctoresPanel
+              doctores={doctores}
+              doctorId={doctorId}
+              onSeleccionar={(id) => dispatch({ type: "SET_DOCTOR_ID", doctorId: id })}
+            />
+          )}
         </div>
 
         <div className="calendario-main">
@@ -177,7 +205,7 @@ const Calendario = () => {
                   fecha={fecha}
                   horas={HORAS_LABORALES}
                   citas={citas}
-                  doctores={doctores}
+                  doctores={doctoresParaVista}
                   doctorId={doctorId}
                   onVerCita={irADetalleCita}
                 />
@@ -187,7 +215,7 @@ const Calendario = () => {
                   inicioSemana={inicioSemana}
                   horas={HORAS_LABORALES}
                   citas={citas}
-                  doctores={doctores}
+                  doctores={doctoresParaVista}
                   doctorId={doctorId}
                   onVerCita={irADetalleCita}
                 />
@@ -196,7 +224,7 @@ const Calendario = () => {
                 <VistaMes
                   diasDelMes={diasDelMes}
                   citas={citas}
-                  doctores={doctores}
+                  doctores={doctoresParaVista}
                   doctorId={doctorId}
                   onVerCita={irADetalleCita}
                 />
