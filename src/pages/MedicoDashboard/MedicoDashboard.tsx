@@ -1,140 +1,89 @@
-import { useReducer, useEffect } from "react";
+import { useEffect, useReducer, useCallback } from "react";
 import { MedicoApiService } from "../../services/medico.service";
-import type { CitaMedico, MedicoPerfil } from "../../services/medico.service";
-import MedicoHeader from "./MedicoHeader";
-import EstadisticasGrid from "./EstadisticasGrid";
-import CitasTabs from "./CitasTabs";
-import CitaModal from "./CitaModal";
+import type { MedicoPerfil } from "../../services/medico.service";
+import { useAuth } from "../../hooks/userAuth";
+import Calendario from "../Calendario/Calendario";
 import "./MedicoDashboard.css";
 
-// ─── Estado ───────────────────────────────────────────────
-interface DashboardState {
+interface State {
   loading: boolean;
   perfil: MedicoPerfil | null;
-  citasHoy: CitaMedico[];
-  todasLasCitas: CitaMedico[];
-  vistaActual: "hoy" | "todas";
-  citaSeleccionada: CitaMedico | null;
 }
 
-// ─── Acciones ─────────────────────────────────────────────
-type DashboardAction =
+type Action =
   | { type: "CARGA_INICIO" }
-  | { type: "CARGA_EXITO"; perfil: MedicoPerfil; citasHoy: CitaMedico[]; todasLasCitas: CitaMedico[] }
-  | { type: "CARGA_ERROR" }
-  | { type: "CAMBIAR_VISTA"; vista: "hoy" | "todas" }
-  | { type: "SELECCIONAR_CITA"; cita: CitaMedico | null };
+  | { type: "CARGA_EXITO"; perfil: MedicoPerfil }
+  | { type: "CARGA_ERROR" };
 
-// ─── Reducer ──────────────────────────────────────────────
-function dashboardReducer(state: DashboardState, action: DashboardAction): DashboardState {
+function reducer(state: State, action: Action): State {
   switch (action.type) {
-    case "CARGA_INICIO":
-      return { ...state, loading: true };
-    case "CARGA_EXITO":
-      return {
-        ...state,
-        loading: false,
-        perfil: action.perfil,
-        citasHoy: action.citasHoy,
-        todasLasCitas: action.todasLasCitas,
-      };
-    case "CARGA_ERROR":
-      return { ...state, loading: false };
-    case "CAMBIAR_VISTA":
-      return { ...state, vistaActual: action.vista };
-    case "SELECCIONAR_CITA":
-      return { ...state, citaSeleccionada: action.cita };
-    default:
-      return state;
+    case "CARGA_INICIO": return { ...state, loading: true };
+    case "CARGA_EXITO":  return { loading: false, perfil: action.perfil };
+    case "CARGA_ERROR":  return { ...state, loading: false };
+    default:             return state;
   }
 }
 
-const initialState: DashboardState = {
-  loading: true,
-  perfil: null,
-  citasHoy: [],
-  todasLasCitas: [],
-  vistaActual: "hoy",
-  citaSeleccionada: null,
-};
-
-// ─── Componente ───────────────────────────────────────────
 const MedicoDashboard = () => {
-  const [state, dispatch] = useReducer(dashboardReducer, initialState);
-  const { loading, perfil, citasHoy, todasLasCitas, vistaActual, citaSeleccionada } = state;
+  const { user } = useAuth();
+  const [state, dispatch] = useReducer(reducer, { loading: true, perfil: null });
+  const { loading, perfil } = state;
 
-  const cargarDatos = async () => {
+  const cargarPerfil = useCallback(async () => {
     dispatch({ type: "CARGA_INICIO" });
     try {
-      const [perfilData, citasHoyData, todasCitas] = await Promise.all([
-        MedicoApiService.obtenerMiPerfil(),
-        MedicoApiService.obtenerCitasHoy(),
-        MedicoApiService.obtenerMisCitas(),
-      ]);
-      dispatch({ type: "CARGA_EXITO", perfil: perfilData, citasHoy: citasHoyData, todasLasCitas: todasCitas });
-    } catch (error) {
-      console.error("Error al cargar datos:", error);
+      const perfilData = await MedicoApiService.obtenerMiPerfil();
+      dispatch({ type: "CARGA_EXITO", perfil: perfilData });
+    } catch {
       dispatch({ type: "CARGA_ERROR" });
     }
-  };
-
-  useEffect(() => {
-    cargarDatos();
   }, []);
 
-  const cambiarEstado = async (
-    citaId: string,
-    nuevoEstado: "PENDIENTE" | "ATENDIDA" | "CANCELADA"
-  ) => {
-    try {
-      await MedicoApiService.actualizarEstadoCita(citaId, nuevoEstado);
-      await cargarDatos();
-      dispatch({ type: "SELECCIONAR_CITA", cita: null });
-    } catch (error) {
-      console.error("Error al cambiar estado:", error);
-    }
-  };
-
-  // ── Derived state (sin useMemo — triviales) ────────────
-  const estadisticas = {
-    citasHoy: citasHoy.length,
-    pendientes: citasHoy.filter((c) => c.estado === "PENDIENTE").length,
-    atendidas: todasLasCitas.filter((c) => c.estado === "ATENDIDA").length,
-    canceladas: todasLasCitas.filter((c) => c.estado === "CANCELADA").length,
-  };
+  useEffect(() => { cargarPerfil(); }, [cargarPerfil]);
 
   if (loading) {
     return (
-      <div className="loading-container">
-        <div className="loading-content">
-          <div className="spinner" />
-          <p className="loading-text">Cargando datos...</p>
-        </div>
+      <div className="md-loading">
+        <div className="md-spinner" />
       </div>
     );
   }
 
   return (
-    <div className="medico-dashboard">
-      {perfil && <MedicoHeader perfil={perfil} />}
-
-      <EstadisticasGrid estadisticas={estadisticas} />
-
-      <CitasTabs
-        citasHoy={citasHoy}
-        todasLasCitas={todasLasCitas}
-        vistaActual={vistaActual}
-        onCambiarVista={(vista) => dispatch({ type: "CAMBIAR_VISTA", vista })}
-        onSeleccionarCita={(cita) => dispatch({ type: "SELECCIONAR_CITA", cita })}
-      />
-
-      {citaSeleccionada && (
-        <CitaModal
-          cita={citaSeleccionada}
-          onCerrar={() => dispatch({ type: "SELECCIONAR_CITA", cita: null })}
-          onCambiarEstado={cambiarEstado}
-        />
+    <div className="md-container">
+      {/* ── Perfil ── */}
+      {perfil && (
+        <div className="md-perfil">
+          <div className="md-perfil-avatar">
+            {perfil.nombres.charAt(0)}{perfil.apellidos.charAt(0)}
+          </div>
+          <div className="md-perfil-info">
+            <h2>Dr. {perfil.nombres} {perfil.apellidos}</h2>
+            <span className="md-especialidad">{perfil.especialidadId.nombre}</span>
+          </div>
+          <div className="md-perfil-datos">
+            {perfil.cmp && (
+              <div className="md-dato">
+                <span className="md-dato-label">CMP</span>
+                <span className="md-dato-value">{perfil.cmp}</span>
+              </div>
+            )}
+            <div className="md-dato">
+              <span className="md-dato-label">Correo</span>
+              <span className="md-dato-value">{perfil.correo}</span>
+            </div>
+            <div className="md-dato">
+              <span className="md-dato-label">Teléfono</span>
+              <span className="md-dato-value">{perfil.telefono}</span>
+            </div>
+          </div>
+        </div>
       )}
+
+      {/* ── Calendario ── */}
+      <div className="md-calendario">
+        <Calendario medicoFijo={user?.medicoId} />
+      </div>
     </div>
   );
 };

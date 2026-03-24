@@ -71,6 +71,16 @@ export class DoctorApiService {
     }
   }
 
+  static async obtenerPorId(id: string): Promise<DoctorTransformado> {
+    try {
+      const response = await api.get<{ success: boolean; data: Doctor }>(`/doctores/${id}`);
+      return transformarDoctor(response.data.data);
+    } catch (error: unknown) {
+      const err = error as AxiosErrorResponse;
+      throw new Error(err.response?.data?.message || "Error al obtener doctor");
+    }
+  }
+
   static async obtenerPorEspecialidad(especialidadId: string): Promise<DoctorTransformado[]> {
     try {
       const response = await api.get<{ success: boolean; data: Doctor[] }>(
