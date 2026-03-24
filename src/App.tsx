@@ -13,12 +13,14 @@ import PerfilCita from "./pages/PerfilCita/PerfilCita";
 import Login from "./pages/Login/Login";
 
 import { AuthProvider } from "./context/AuthProvider";
+import { ThemeProvider } from "./context/ThemeContext";
 import { ProtectedRoute } from "./routes/ProtectedRoute";
 
 function App() {
   return (
     <AuthProvider>
-      <BrowserRouter>
+      <ThemeProvider>
+        <BrowserRouter>
         <Routes>
           {/* ================== PUBLIC ================== */}
           <Route path="/login" element={<Login />} />
@@ -52,7 +54,7 @@ function App() {
               }
             />
 
-            {/* 👇 RUTA PERFIL DE CITA */}
+            {/* RUTA PERFIL DE CITA */}
             <Route
               path="/citas/:citaId"
               element={
@@ -90,7 +92,8 @@ function App() {
             />
           </Route>
         </Routes>
-      </BrowserRouter>
+        </BrowserRouter>
+      </ThemeProvider>
     </AuthProvider>
   );
 }
@@ -99,9 +102,9 @@ function ProtectedLayout() {
   return (
     <div className="app">
       <Sidebar />
-      <div style={{ flex: 1, display: "flex", flexDirection: "column" }}>
+      <div style={{ flex: 1, display: "flex", flexDirection: "column", minWidth: 0 }}>
         <Header />
-        <main style={{ flex: 1 }}>
+        <main style={{ flex: 1, overflow: "auto" }}>
           <Outlet />
         </main>
       </div>

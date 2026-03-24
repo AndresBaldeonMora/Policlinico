@@ -60,7 +60,7 @@ type CalendarioAction =
   | { type: "SET_DOCTOR_ID"; doctorId: string }
   | { type: "SET_LOADING"; value: boolean };
 
-// ✅ DEFAULT: vista día
+// DEFAULT: vista dia
 const initialState: CalendarioState = {
   vista: "dia",
   fecha: new Date(),

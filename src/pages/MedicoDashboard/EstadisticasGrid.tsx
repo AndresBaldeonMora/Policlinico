@@ -1,3 +1,6 @@
+import { Calendar, Clock, CheckCircle, XCircle } from "lucide-react";
+import type { ReactNode } from "react";
+
 interface Estadisticas {
   citasHoy: number;
   pendientes: number;
@@ -9,12 +12,12 @@ interface Props {
   estadisticas: Estadisticas;
 }
 
-const STATS = [
-  { label: "Citas Hoy",   key: "citasHoy",   color: "blue",   icon: "📅" },
-  { label: "Pendientes",  key: "pendientes",  color: "yellow", icon: "⏳" },
-  { label: "Atendidas",   key: "atendidas",   color: "green",  icon: "✅" },
-  { label: "Canceladas",  key: "canceladas",  color: "red",    icon: "❌" },
-] as const;
+const STATS: { label: string; key: keyof Estadisticas; color: string; icon: ReactNode }[] = [
+  { label: "Citas Hoy",   key: "citasHoy",   color: "blue",   icon: <Calendar size={20} /> },
+  { label: "Pendientes",  key: "pendientes",  color: "yellow", icon: <Clock size={20} /> },
+  { label: "Atendidas",   key: "atendidas",   color: "green",  icon: <CheckCircle size={20} /> },
+  { label: "Canceladas",  key: "canceladas",  color: "red",    icon: <XCircle size={20} /> },
+];
 
 const EstadisticasGrid = ({ estadisticas }: Props) => (
   <div className="stats-grid">

@@ -32,12 +32,12 @@ const PasoDoctor = ({ doctoresDisponibles, doctorSeleccionado, especialidadSelec
               if (e.key === "Enter" || e.key === " ") { e.preventDefault(); onSeleccionar(doctor); }
             }}
           >
-            <div className="doctor-avatar">👨‍⚕️</div>
+            <div className="doctor-avatar">{doctor.nombres.charAt(0)}{doctor.apellidos.charAt(0)}</div>
             <div className="doctor-info-text">
               <h4>{doctor.nombres} {doctor.apellidos}</h4>
               <p>{doctor.especialidad}</p>
             </div>
-            {doctorSeleccionado?.id === doctor.id && <span className="doctor-check-mark">✓</span>}
+            {doctorSeleccionado?.id === doctor.id && <span className="doctor-check-mark">Sel.</span>}
           </div>
         ))}
       </div>

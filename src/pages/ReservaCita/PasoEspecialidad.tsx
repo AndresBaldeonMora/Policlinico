@@ -55,7 +55,7 @@ const PasoEspecialidad = ({
                     if (e.key === "Enter" || e.key === " ") { e.preventDefault(); onSeleccionar(esp); }
                   }}
                 >
-                  🏥 {esp.nombre}
+                  {esp.nombre}
                 </div>
               ))}
             </div>
@@ -64,7 +64,7 @@ const PasoEspecialidad = ({
 
         {especialidadSeleccionada && (
           <div className="selected-tag">
-            <span>🏥 {especialidadSeleccionada.nombre}</span>
+            <span>{especialidadSeleccionada.nombre}</span>
             <button type="button" onClick={onDeseleccionar} className="tag-close" aria-label="Deseleccionar especialidad">×</button>
           </div>
         )}

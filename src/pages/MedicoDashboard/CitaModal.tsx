@@ -17,9 +17,9 @@ const formatearFecha = (fecha: string) =>
   });
 
 const BOTONES_ESTADO = [
-  { estado: "PENDIENTE" as Estado, label: "⏳ Pendiente", className: "pendiente" },
-  { estado: "ATENDIDA"  as Estado, label: "✅ Atendida",  className: "atendida"  },
-  { estado: "CANCELADA" as Estado, label: "❌ Cancelar",  className: "cancelada" },
+  { estado: "PENDIENTE" as Estado, label: "Pendiente", className: "pendiente" },
+  { estado: "ATENDIDA"  as Estado, label: "Atendida",  className: "atendida"  },
+  { estado: "CANCELADA" as Estado, label: "Cancelar",  className: "cancelada" },
 ] as const;
 
 const CitaModal = ({ cita, onCerrar, onCambiarEstado }: Props) => (
@@ -27,12 +27,12 @@ const CitaModal = ({ cita, onCerrar, onCambiarEstado }: Props) => (
     <div className="modal-content">
       <div className="modal-header">
         <h2>Detalle de la Cita</h2>
-        <button onClick={onCerrar} className="modal-close">×</button>
+        <button onClick={onCerrar} className="modal-close">&times;</button>
       </div>
 
       <div className="modal-body">
         <div className="info-section">
-          <h3>Información del Paciente</h3>
+          <h3>Informacion del Paciente</h3>
           <div className="info-grid">
             <div className="info-item">
               <p className="label">Nombre Completo</p>
@@ -43,7 +43,7 @@ const CitaModal = ({ cita, onCerrar, onCambiarEstado }: Props) => (
               <p className="value">{cita.pacienteId.dni}</p>
             </div>
             <div className="info-item">
-              <p className="label">Teléfono</p>
+              <p className="label">Telefono</p>
               <p className="value">{cita.pacienteId.telefono}</p>
             </div>
             {cita.pacienteId.correo && (
@@ -56,7 +56,7 @@ const CitaModal = ({ cita, onCerrar, onCambiarEstado }: Props) => (
         </div>
 
         <div className="info-section">
-          <h3>Información de la Cita</h3>
+          <h3>Informacion de la Cita</h3>
           <div className="info-grid">
             <div className="info-item">
               <p className="label">Fecha</p>

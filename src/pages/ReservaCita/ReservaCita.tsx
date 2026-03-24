@@ -322,7 +322,7 @@ const ReservaCita = () => {
       )}
 
       <div className="reserva-cita-header">
-        <h1>📅 Reservar Cita Médica</h1>
+        <h1>Reservar Cita Medica</h1>
         <button
           onClick={() => dispatch({ type: "RESET" })}
           className="btn-close-form"
@@ -343,7 +343,7 @@ const ReservaCita = () => {
 
         <div className="cita-form">
           <div className="paso-content">
-            <PasoActual   // ✅ componente real, no función inline
+            <PasoActual
               state={state}
               dispatch={dispatch}
               handleBuscarPaciente={handleBuscarPaciente}

@@ -1,62 +1,78 @@
+/* ═══════════════════════════════════════════
+   MINI CALENDARIO — Modern Design
+═══════════════════════════════════════════ */
+
 .mini-cal {
-  border: 1px solid #e5e7eb;
-  border-radius: 10px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
   padding: 0.75rem;
-  background: white;
+  background: var(--bg-card);
 }
 
-/* HEADER */
 .mini-cal-header {
   display: flex;
   align-items: center;
   justify-content: space-between;
   font-weight: 700;
-  font-size: 0.85rem;
+  font-size: 0.82rem;
   margin-bottom: 0.5rem;
   text-transform: capitalize;
+  color: var(--text-primary);
 }
 
 .mini-cal-header button {
   background: transparent;
   border: none;
   cursor: pointer;
-  font-size: 0.9rem;
-  padding: 0.2rem 0.4rem;
+  font-size: 0.85rem;
+  padding: 0.25rem 0.4rem;
+  border-radius: var(--radius-sm);
+  color: var(--text-muted);
+  transition: all 0.15s var(--ease);
 }
 
 .mini-cal-header button:hover {
-  background: #f3f4f6;
-  border-radius: 4px;
+  background: var(--bg-hover);
+  color: var(--primary);
 }
 
-/* GRID */
 .mini-cal-grid {
   display: grid;
   grid-template-columns: repeat(7, 1fr);
-  gap: 0.25rem;
+  gap: 2px;
 }
 
 .mini-cal-dia-header {
-  font-size: 0.65rem;
+  font-size: 0.62rem;
   text-align: center;
-  font-weight: 600;
-  color: #6b7280;
+  font-weight: 700;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  padding-bottom: 0.25rem;
 }
 
 .mini-cal-dia {
-  font-size: 0.7rem;
+  font-size: 0.72rem;
   font-weight: 600;
-  border-radius: 6px;
+  border-radius: var(--radius-sm);
   padding: 0.3rem 0;
   text-align: center;
   cursor: pointer;
+  color: var(--text-secondary);
+  transition: all 0.1s var(--ease);
 }
 
 .mini-cal-dia:hover {
-  background: #f3f4f6;
+  background: var(--bg-hover);
+  color: var(--primary);
 }
 
 .mini-cal-dia.activo {
-  background: #10b981;
-  color: white;
+  background: var(--primary);
+  color: var(--text-inverse);
+}
+
+/* Dark mode */
+[data-theme="dark"] .mini-cal-dia:hover {
+  background: var(--bg-hover);
 }

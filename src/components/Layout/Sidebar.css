@@ -1,25 +1,28 @@
-/* ===== Sidebar Base ===== */
+/* ═══════════════════════════════════════════
+   SIDEBAR — Modern Design
+═══════════════════════════════════════════ */
+
 .sidebar {
-  width: 280px;
+  width: 260px;
   height: 100vh;
   position: sticky;
   top: 0;
   display: flex;
   flex-direction: column;
-  background-color: #ffffff;
-  border-right: 1px solid #e2e8f0;
+  background: var(--bg-card);
+  border-right: 1px solid var(--border);
+  z-index: 20;
 }
 
-/* ===== Header / Logo ===== */
+/* ── Logo ── */
 .sidebar-header {
-  padding: 1.5rem;
-  border-bottom: 1px solid #f1f5f9;
+  padding: 1.25rem 1.25rem 1rem;
 }
 
 .logo {
   display: flex;
   align-items: center;
-  gap: 1rem;
+  gap: 0.75rem;
 }
 
 .logo-icon {
@@ -27,95 +30,153 @@
 }
 
 .logo-text {
-  font-size: 1.25rem;
-  font-weight: 700;
-  color: #1a202c;
+  font-size: 1.15rem;
+  font-weight: 800;
+  color: var(--text-primary);
   line-height: 1.2;
   margin: 0;
+  letter-spacing: -0.03em;
 }
 
 .logo-subtitle {
-  font-size: 0.75rem;
-  color: #94a3b8;
+  font-size: 0.7rem;
+  color: var(--text-muted);
   font-weight: 500;
   margin: 0;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
 }
 
-/* ===== Navegación ===== */
+/* ── Navigation ── */
 .sidebar-nav {
   flex: 1;
-  padding: 1.5rem 0;
+  padding: 0.5rem 0;
   overflow-y: auto;
 }
 
 .nav-section {
-  margin-bottom: 2rem;
+  padding: 0 0.75rem;
 }
 
 .nav-section-title {
-  font-size: 0.75rem;
-  font-weight: 600;
-  color: #94a3b8;
-  letter-spacing: 0.05em;
-  padding: 0 1.5rem;
+  font-size: 0.65rem;
+  font-weight: 700;
+  color: var(--text-muted);
+  letter-spacing: 0.08em;
+  padding: 0 0.75rem;
   margin-bottom: 0.5rem;
+  margin-top: 0.5rem;
 }
 
-/* ===== Enlaces ===== */
+/* ── Links ── */
 .sidebar-link {
   display: flex;
   align-items: center;
-  gap: 0.8rem;
-  padding: 0.75rem 1rem;
-  color: #374151;
+  gap: 0.75rem;
+  padding: 0.625rem 0.75rem;
+  color: var(--text-secondary);
   text-decoration: none;
-  border-radius: 8px;
-  font-size: 0.95rem;
+  border-radius: var(--radius-md);
+  font-size: 0.875rem;
   font-weight: 500;
-  transition: all 0.2s ease;
+  transition: all 0.15s var(--ease);
+  margin-bottom: 2px;
+  position: relative;
 }
 
 .sidebar-link:hover {
-  background-color: #f0fdf4;
-  color: #16a34a;
+  background-color: var(--bg-hover);
+  color: var(--primary);
 }
 
 .sidebar-link.active {
-  background-color: #dcfce7;
-  color: #15803d;
+  background: var(--primary-lighter);
+  color: var(--primary);
   font-weight: 600;
 }
 
-.sidebar-icon {
-  font-size: 1.3rem;
-  width: 24px;
+.sidebar-link-arrow {
+  margin-left: auto;
+  opacity: 0.5;
+}
+
+/* ── Footer ── */
+.sidebar-footer {
+  margin-top: auto;
+  padding: 0.75rem;
+  border-top: 1px solid var(--border);
+}
+
+.sidebar-user-card {
+  display: flex;
+  align-items: center;
+  gap: 0.625rem;
+  padding: 0.5rem 0.5rem 0.75rem;
+}
+
+.sidebar-user-avatar {
+  width: 36px;
+  height: 36px;
+  border-radius: var(--radius-md);
+  background: var(--primary-gradient);
+  color: white;
   display: flex;
   align-items: center;
   justify-content: center;
+  font-weight: 700;
+  font-size: 0.875rem;
+  flex-shrink: 0;
 }
 
-/* ===== Footer / Logout ===== */
-.sidebar-footer {
-  margin-top: auto;
-  padding: 1rem;
-  border-top: 1px solid #f1f5f9;
+.sidebar-user-info {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.sidebar-user-name {
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: var(--text-primary);
+  line-height: 1.2;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.sidebar-user-role {
+  font-size: 0.68rem;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  font-weight: 500;
 }
 
 .btn-logout {
   width: 100%;
   background: none;
-  border: none;
-  color: #dc2626;
-  font-weight: 600;
-  font-size: 1rem;
+  border: 1px solid var(--border);
+  color: var(--text-secondary);
+  font-weight: 500;
+  font-size: 0.8rem;
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 0.6rem;
+  gap: 0.5rem;
   cursor: pointer;
-  transition: color 0.2s ease;
+  padding: 0.5rem;
+  border-radius: var(--radius-md);
+  transition: all 0.15s var(--ease);
 }
 
 .btn-logout:hover {
-  color: #b91c1c;
+  background: var(--error-bg);
+  border-color: #fecaca;
+  color: var(--error);
+}
+
+/* ── Dark Mode ── */
+[data-theme="dark"] .sidebar {
+  background: var(--bg-card);
+  border-right-color: var(--border);
 }

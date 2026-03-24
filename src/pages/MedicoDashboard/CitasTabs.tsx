@@ -65,11 +65,11 @@ const CitasTabs = ({
               >
                 <div className="cita-card-content">
                   <div className="cita-paciente-info">
-                    <div className="paciente-avatar">👤</div>
+                    <div className="paciente-avatar">{cita.pacienteId.nombres.charAt(0)}</div>
                     <div className="paciente-datos">
                       <h3>{cita.pacienteId.nombres} {cita.pacienteId.apellidos}</h3>
                       <p>DNI: {cita.pacienteId.dni}</p>
-                      <p>📞 {cita.pacienteId.telefono}</p>
+                      <p>Tel: {cita.pacienteId.telefono}</p>
                     </div>
                   </div>
                   <div className="cita-fecha-hora">

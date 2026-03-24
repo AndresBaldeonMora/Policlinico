@@ -126,8 +126,8 @@ const AgregarPacienteSimple = ({ dniInicial, onPacienteCreado, onCancelar }: Pro
       <div className="modal-content-simple">
         {/* Header */}
         <div className="modal-header-simple">
-          <h3>👤 Nuevo Paciente</h3>
-          <button className="close-btn-simple" onClick={onCancelar} disabled={state.loading}>✕</button>
+          <h3>Nuevo Paciente</h3>
+          <button className="close-btn-simple" onClick={onCancelar} disabled={state.loading}>&times;</button>
         </div>
 
         <form onSubmit={handleSubmit} className="form-simple">
@@ -136,18 +136,18 @@ const AgregarPacienteSimple = ({ dniInicial, onPacienteCreado, onCancelar }: Pro
             <label>DNI</label>
             <input type="text" value={dniInicial} disabled className="input-disabled-modal" />
             {state.loadingReniec && (
-              <small className="aps-reniec-loading">⏳ Consultando RENIEC...</small>
+              <small className="aps-reniec-loading">Consultando RENIEC...</small>
             )}
             {state.errorReniec && (
-              <small className="aps-reniec-warn">🔍 {state.errorReniec}</small>
+              <small className="aps-reniec-warn">{state.errorReniec}</small>
             )}
             {!state.loadingReniec && !state.errorReniec && state.nombres && (
-              <small className="aps-reniec-ok">✓ Datos obtenidos de RENIEC</small>
+              <small className="aps-reniec-ok">Datos obtenidos de RENIEC</small>
             )}
           </div>
 
           {state.error && (
-            <div className="error-message-simple">⚠️ {state.error}</div>
+            <div className="error-message-simple">{state.error}</div>
           )}
 
           {/* Nombres + Apellidos */}
@@ -169,7 +169,7 @@ const AgregarPacienteSimple = ({ dniInicial, onPacienteCreado, onCancelar }: Pro
           </div>
 
           <p className="aps-nota">
-            💡 Solo datos esenciales para la cita. Puedes completar el perfil completo desde la sección <strong>Pacientes</strong>.
+            Solo datos esenciales para la cita. Puedes completar el perfil completo desde la seccion Pacientes.
           </p>
 
           <div className="buttons-simple">
@@ -177,7 +177,7 @@ const AgregarPacienteSimple = ({ dniInicial, onPacienteCreado, onCancelar }: Pro
               Cancelar
             </button>
             <button type="submit" className="btn-guardar-simple" disabled={state.loading}>
-              {state.loading ? "Guardando..." : "✓ Guardar y continuar"}
+              {state.loading ? "Guardando..." : "Guardar y continuar"}
             </button>
           </div>
         </form>

@@ -10,13 +10,11 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    // 1. Carga la sesión activa al arrancar la app
     AuthService.getSession().then((u) => {
       setUser(u);
       setLoading(false);
     });
 
-    // 2. Escucha cambios de sesión en tiempo real (login/logout/token refresh)
     const { data: listener } = supabase.auth.onAuthStateChange(
       async (_event, session) => {
         if (!session?.user) {

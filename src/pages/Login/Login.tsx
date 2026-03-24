@@ -2,7 +2,17 @@ import type { FormEvent } from "react";
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "../../hooks/userAuth";
+import { Mail, Lock, AlertCircle, ArrowRight, HeartPulse, Stethoscope, Pill, Shield, Activity, Heart } from "lucide-react";
 import "./Login.css";
+
+const FLOATING_ICONS = [
+  { Icon: Stethoscope, x: 8, y: 15, delay: 0, size: 22 },
+  { Icon: Heart, x: 85, y: 20, delay: 1.5, size: 18 },
+  { Icon: Pill, x: 12, y: 70, delay: 3, size: 20 },
+  { Icon: Shield, x: 90, y: 65, delay: 0.8, size: 19 },
+  { Icon: Activity, x: 75, y: 85, delay: 2.2, size: 21 },
+  { Icon: HeartPulse, x: 20, y: 88, delay: 4, size: 17 },
+];
 
 const Login = () => {
   const { login, user, isAuthenticated } = useAuth();
@@ -12,29 +22,20 @@ const Login = () => {
   const [cargando, setCargando] = useState(false);
   const [error, setError] = useState("");
 
-  // Redirige automáticamente cuando el usuario queda autenticado
   useEffect(() => {
     if (!isAuthenticated || !user) return;
-    if (user.rol === "MEDICO") {
-      navigate("/medico", { replace: true });
-    } else {
-      navigate("/", { replace: true });
-    }
+    navigate(user.rol === "MEDICO" ? "/medico" : "/", { replace: true });
   }, [isAuthenticated, user, navigate]);
 
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
     setError("");
-    if (!correo || !password) {
-      setError("Ingresa tu correo y contraseña.");
-      return;
-    }
+    if (!correo || !password) { setError("Ingresa tu correo y contrasena."); return; }
     setCargando(true);
     try {
       await login(correo, password);
-      // La redirección la maneja el useEffect de arriba
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Error al iniciar sesión.");
+      setError(err instanceof Error ? err.message : "Error al iniciar sesion.");
     } finally {
       setCargando(false);
     }
@@ -42,85 +43,99 @@ const Login = () => {
 
   return (
     <div className="login-page">
+      {/* Animated background */}
       <div className="login-bg">
-        <div className="login-bg-circle login-bg-circle--1" />
-        <div className="login-bg-circle login-bg-circle--2" />
-        <div className="login-bg-circle login-bg-circle--3" />
+        <div className="login-orb login-orb--1" />
+        <div className="login-orb login-orb--2" />
+        <div className="login-orb login-orb--3" />
+
+        {/* ECG heartbeat line */}
+        <svg className="login-ecg" viewBox="0 0 1200 120" preserveAspectRatio="none">
+          <path
+            className="login-ecg-line"
+            d="M0,60 L200,60 L220,60 L240,20 L260,100 L280,40 L300,80 L320,60 L500,60 L520,60 L540,15 L560,105 L580,35 L600,85 L620,60 L800,60 L820,60 L840,20 L860,100 L880,40 L900,80 L920,60 L1200,60"
+            fill="none"
+          />
+        </svg>
+        <svg className="login-ecg login-ecg--2" viewBox="0 0 1200 120" preserveAspectRatio="none">
+          <path
+            className="login-ecg-line login-ecg-line--2"
+            d="M0,60 L200,60 L220,60 L240,20 L260,100 L280,40 L300,80 L320,60 L500,60 L520,60 L540,15 L560,105 L580,35 L600,85 L620,60 L800,60 L820,60 L840,20 L860,100 L880,40 L900,80 L920,60 L1200,60"
+            fill="none"
+          />
+        </svg>
+
+        {/* Floating medical icons */}
+        {FLOATING_ICONS.map(({ Icon, x, y, delay, size }, i) => (
+          <div
+            key={i}
+            className="login-float-icon"
+            style={{
+              left: `${x}%`,
+              top: `${y}%`,
+              animationDelay: `${delay}s`,
+            }}
+          >
+            <Icon size={size} />
+          </div>
+        ))}
       </div>
 
-      <div className="login-card">
-        <div className="login-header">
-          <div className="login-logo">
-            <svg viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg">
-              <rect width="48" height="48" rx="14" fill="#0ea5e9" />
-              <path d="M24 10v28M10 24h28" stroke="white" strokeWidth="5" strokeLinecap="round" />
-            </svg>
+      <div className="login-card-wrapper">
+        {/* Logo + Branding */}
+        <div className="login-brand-top">
+          <div className="login-logo-pulse">
+            <HeartPulse size={28} strokeWidth={2} />
           </div>
-          <h1 className="login-title">Centro Médico<br />San José</h1>
-          <p className="login-subtitle">Sistema de gestión clínica</p>
+          <h1 className="login-main-title">Policlinico</h1>
+          <p className="login-main-sub">Sistema de Gestion Clinica</p>
         </div>
 
-        <form onSubmit={handleSubmit} className="login-form" noValidate>
-          <div className="login-field">
-            <label className="login-label" htmlFor="correo">Correo institucional</label>
-            <div className="login-input-wrap">
-              <span className="login-input-icon">
-                <svg viewBox="0 0 20 20" fill="currentColor">
-                  <path d="M2.003 5.884L10 9.882l7.997-3.998A2 2 0 0016 4H4a2 2 0 00-1.997 1.884z" />
-                  <path d="M18 8.118l-8 4-8-4V14a2 2 0 002 2h12a2 2 0 002-2V8.118z" />
-                </svg>
-              </span>
-              <input
-                id="correo"
-                type="email"
-                className="login-input"
-                value={correo}
-                onChange={(e) => setCorreo(e.target.value)}
-                placeholder="usuario@clinica.com"
-                autoComplete="email"
-                disabled={cargando}
-              />
-            </div>
+        {/* Card */}
+        <div className="login-card">
+          <div className="login-card-header">
+            <h2>Iniciar Sesion</h2>
+            <p>Ingresa tus credenciales para continuar</p>
           </div>
 
-          <div className="login-field">
-            <label className="login-label" htmlFor="password">Contraseña</label>
-            <div className="login-input-wrap">
-              <span className="login-input-icon">
-                <svg viewBox="0 0 20 20" fill="currentColor">
-                  <path fillRule="evenodd" d="M5 9V7a5 5 0 0110 0v2a2 2 0 012 2v5a2 2 0 01-2 2H5a2 2 0 01-2-2v-5a2 2 0 012-2zm8-2v2H7V7a3 3 0 016 0z" clipRule="evenodd" />
-                </svg>
-              </span>
-              <input
-                id="password"
-                type="password"
-                className="login-input"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                placeholder="••••••••"
-                autoComplete="current-password"
-                disabled={cargando}
-              />
+          <form onSubmit={handleSubmit} className="login-form" noValidate>
+            <div className="login-field">
+              <label className="login-label" htmlFor="correo">Correo</label>
+              <div className="login-input-wrap">
+                <span className="login-input-icon"><Mail size={16} /></span>
+                <input id="correo" type="email" className="login-input"
+                  value={correo} onChange={(e) => setCorreo(e.target.value)}
+                  placeholder="usuario@clinica.com" autoComplete="email" disabled={cargando} />
+              </div>
             </div>
-          </div>
 
-          {error && (
-            <div className="login-error" role="alert">
-              <svg viewBox="0 0 20 20" fill="currentColor" className="login-error-icon">
-                <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
-              </svg>
-              {error}
+            <div className="login-field">
+              <label className="login-label" htmlFor="password">Contrasena</label>
+              <div className="login-input-wrap">
+                <span className="login-input-icon"><Lock size={16} /></span>
+                <input id="password" type="password" className="login-input"
+                  value={password} onChange={(e) => setPassword(e.target.value)}
+                  placeholder="Ingresa tu contrasena" autoComplete="current-password" disabled={cargando} />
+              </div>
             </div>
-          )}
 
-          <button type="submit" className="login-button" disabled={cargando}>
-            {cargando ? (<><span className="login-spinner" />Ingresando...</>) : "Ingresar al sistema"}
-          </button>
-        </form>
+            {error && (
+              <div className="login-error" role="alert">
+                <AlertCircle size={14} /> {error}
+              </div>
+            )}
 
-        <div className="login-footer">
-          <span>Acceso exclusivo para personal autorizado</span>
+            <button type="submit" className="login-button" disabled={cargando}>
+              {cargando ? (
+                <><span className="login-spinner" />Verificando...</>
+              ) : (
+                <>Ingresar <ArrowRight size={16} /></>
+              )}
+            </button>
+          </form>
         </div>
+
+        <p className="login-footer-text">Acceso exclusivo para personal autorizado</p>
       </div>
     </div>
   );

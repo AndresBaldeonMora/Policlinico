@@ -58,7 +58,7 @@ const PasoPaciente = ({
                 : <span className="badge-bd">Registrado</span>}
             </div>
           </div>
-          <div style={{ marginLeft: "auto", color: "#16a34a", fontSize: "1.2rem" }}>👉</div>
+          <div style={{ marginLeft: "auto", color: "var(--primary)", fontSize: "0.8rem", fontWeight: 600 }}>Seleccionar</div>
         </div>
       )}
 
@@ -66,7 +66,7 @@ const PasoPaciente = ({
         <div className="not-found-container">
           <p className="not-found-text">No encontramos resultados para este DNI.</p>
           <button type="button" onClick={onNuevoPaciente} className="btn-nuevo-paciente">
-            ➕ Registrar Nuevo Paciente
+            + Registrar Nuevo Paciente
           </button>
         </div>
       )}

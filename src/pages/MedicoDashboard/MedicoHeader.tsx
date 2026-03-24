@@ -1,3 +1,4 @@
+import { Stethoscope } from "lucide-react";
 import type { MedicoPerfil } from "../../services/medico.service";
 
 interface Props {
@@ -8,7 +9,7 @@ const MedicoHeader = ({ perfil }: Props) => (
   <div className="medico-header">
     <div className="medico-header-content">
       <div className="medico-header-left">
-        <div className="medico-avatar">👨‍⚕️</div>
+        <div className="medico-avatar"><Stethoscope size={28} /></div>
         <div className="medico-info">
           <h1>Dr. {perfil.nombres} {perfil.apellidos}</h1>
           <p className="especialidad">{perfil.especialidadId.nombre}</p>

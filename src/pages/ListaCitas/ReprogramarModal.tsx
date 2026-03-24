@@ -122,7 +122,7 @@ const HorariosSelector = ({
   if (!hayDisponibles) {
     return (
       <div className="no-horarios">
-        <p>😔 No hay horarios disponibles para este día.</p>
+        <p>No hay horarios disponibles para este dia.</p>
       </div>
     );
   }
@@ -134,7 +134,7 @@ const HorariosSelector = ({
           <div key={dia.fechaISO} className="dia-grupo-modal">
             <div className="dia-header-modal">
               <span className="dia-nombre">{dia.diaNombre}</span>
-              <span className="dia-fecha">📅 {dia.fecha}</span>
+              <span className="dia-fecha">{dia.fecha}</span>
             </div>
 
             <div className="horarios-horizontal-modal">
