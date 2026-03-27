@@ -37,7 +37,12 @@ const PasoDoctor = ({ doctoresDisponibles, doctorSeleccionado, especialidadSelec
               <h4>{doctor.nombres} {doctor.apellidos}</h4>
               <p>{doctor.especialidad}</p>
             </div>
-            {doctorSeleccionado?.id === doctor.id && <span className="doctor-check-mark">Sel.</span>}
+            {doctorSeleccionado?.id === doctor.id && (
+              <svg width="20" height="20" viewBox="0 0 20 20" fill="none" style={{ marginLeft: "auto", flexShrink: 0 }}>
+                <circle cx="10" cy="10" r="10" fill="#0f766e" />
+                <path d="M5.5 10l3 3 6-6" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+              </svg>
+            )}
           </div>
         ))}
       </div>

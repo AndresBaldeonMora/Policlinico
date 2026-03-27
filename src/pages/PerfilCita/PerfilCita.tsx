@@ -169,21 +169,7 @@ const PerfilCita = () => {
           </div>
         </div>
 
-        <div className="encounter-selector">
-          <label htmlFor="cita-actual">Cita actual</label>
-          <select id="cita-actual" disabled>
-            <option>
-              {formatearFechaCorta(cita.fecha)} - {cita.hora}
-            </option>
-          </select>
-
-          <button
-            className="btn btn-primary btn-nueva-cita"
-            onClick={() => navigate(`/reservar-cita?pacienteId=${paciente._id}`)}
-          >
-            + Nueva Cita
-          </button>
-        </div>
+        <span>{formatearFechaCorta(cita.fecha)} - {cita.hora}</span>
       </div>
 
       {/* TABS — key={t.id} is stable (string literal union, never reordered) */}

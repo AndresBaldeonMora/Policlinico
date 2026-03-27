@@ -56,7 +56,6 @@ const PasoActual = ({ state, dispatch, handleBuscarPaciente }: PasoActualProps) 
         onSearchChange={(v) => dispatch({ type: "SET_SEARCH_ESPECIALIDAD", value: v })}
         onToggleSuggestions={(v) => dispatch({ type: "TOGGLE_SUGERENCIAS_ESPECIALIDAD", visible: v })}
         onSeleccionar={(esp) => dispatch({ type: "SELECCIONAR_ESPECIALIDAD", especialidad: esp })}
-        onDeseleccionar={() => dispatch({ type: "SELECCIONAR_ESPECIALIDAD", especialidad: null })}
       />
     );
     case 2: return (

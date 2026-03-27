@@ -1,10 +1,4 @@
-// ============================================================
-// ReprogramarModal.tsx
-// Self-contained modal for the "reschedule appointment" flow.
-// Props come from the parent; no local state needed here.
-// ============================================================
-
-import type { HorarioPorDia, MesOption, EditandoState } from "./listaCitasReducer";
+import type { HorarioPorDia, MesOption, EditandoState } from "./ListaCitasReducer";
 
 // ── Helpers ──────────────────────────────────────────────────
 
