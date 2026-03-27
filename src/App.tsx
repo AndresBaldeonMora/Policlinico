@@ -9,7 +9,7 @@ import ListaPacientes from "./pages/ListaPacientes/ListaPacientes";
 import Calendario from "./pages/Calendario/Calendario";
 import MedicoDashboard from "./pages/MedicoDashboard/MedicoDashboard";
 import PerfilCita from "./pages/PerfilCita/PerfilCita";
-
+import Dashboard from "./pages/Dashboard/Dashboard";
 import Login from "./pages/Login/Login";
 
 import { AuthProvider } from "./context/AuthProvider";
@@ -31,7 +31,7 @@ function App() {
               path="/"
               element={
                 <ProtectedRoute roles={["RECEPCIONISTA"]}>
-                  <Calendario />
+                  <Dashboard />
                 </ProtectedRoute>
               }
             />
@@ -50,6 +50,15 @@ function App() {
               element={
                 <ProtectedRoute roles={["RECEPCIONISTA"]}>
                   <ListaCitas />
+                </ProtectedRoute>
+              }
+            />
+
+            <Route
+              path="/calendario"
+              element={
+                <ProtectedRoute roles={["RECEPCIONISTA"]}>
+                  <Calendario />
                 </ProtectedRoute>
               }
             />

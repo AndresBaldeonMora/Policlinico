@@ -46,6 +46,12 @@ const ListaPacientes = () => {
     }
   }, [highlightId, pacientes]);
 
+  useEffect(() => {
+    if (searchParams.get("nuevo") === "1") {
+      abrirNuevo();
+    }
+  }, []);
+
   const pacientesFiltrados = pacientes.filter((p) => {
     const filtro = normalizeString(busqueda);
     return normalizeString(`${p.nombres} ${p.apellidos}`).includes(filtro) ||

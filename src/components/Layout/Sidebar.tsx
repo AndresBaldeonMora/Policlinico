@@ -22,7 +22,8 @@ const Sidebar = () => {
   const [collapsed, setCollapsed] = useState(false);
 
   const adminMenu = [
-    { path: "/", label: "Calendario", icon: Calendar, description: "Vista principal de citas" },
+    { path: "/", label: "Inicio", icon: LayoutDashboard, description: "Panel de inicio" },
+    { path: "/calendario", label: "Calendario", icon: Calendar, description: "Vista principal de citas" },
     { path: "/reserva-cita", label: "Solicitar Cita", icon: CalendarPlus, description: "Agendar nueva cita" },
     { path: "/lista-citas", label: "Gestion de Citas", icon: ClipboardList, description: "Administrar citas" },
     { path: "/medicos", label: "Medicos", icon: Stethoscope, description: "Directorio de doctores" },
