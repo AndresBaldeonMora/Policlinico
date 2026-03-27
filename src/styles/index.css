@@ -1,28 +1,33 @@
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600;700;800&display=swap');
 
 /* ═══════════════════════════════════════════
    DESIGN TOKENS
 ═══════════════════════════════════════════ */
 :root {
-  /* Primary */
-  --primary: #0f766e;
-  --primary-light: #14b8a6;
-  --primary-lighter: #ccfbf1;
-  --primary-dark: #0d9488;
-  --primary-gradient: linear-gradient(135deg, #14b8a6 0%, #0f766e 100%);
+  /* Primary (green) */
+  --primary: #059669;
+  --primary-light: #10b981;
+  --primary-lighter: #ecfdf5;
+  --primary-dark: #047857;
+  --primary-gradient: linear-gradient(135deg, #10b981 0%, #059669 100%);
 
-  /* Accent */
-  --accent: #6366f1;
-  --accent-light: #818cf8;
-  --accent-lighter: #eef2ff;
+  /* Secondary (blue) */
+  --secondary: #0284c7;
+  --secondary-light: #0ea5e9;
+  --secondary-lighter: #e0f2fe;
+
+  /* Accent (headers) */
+  --accent: #2563eb;
+  --accent-light: #3b82f6;
+  --accent-lighter: #eff6ff;
 
   /* Neutrals */
-  --bg-body: #f8fafc;
+  --bg-body: #f9fafb;
   --bg-card: #ffffff;
-  --bg-hover: #f1f5f9;
-  --bg-muted: #f8fafc;
-  --border: #e2e8f0;
-  --border-light: #f1f5f9;
+  --bg-hover: #f3f4f6;
+  --bg-muted: #f9fafb;
+  --border: #e5e7eb;
+  --border-light: #f3f4f6;
 
   /* Text */
   --text-primary: #0f172a;
@@ -37,8 +42,8 @@
   --warning-bg: #fffbeb;
   --error: #ef4444;
   --error-bg: #fef2f2;
-  --info: #3b82f6;
-  --info-bg: #eff6ff;
+  --info: #0ea5e9;
+  --info-bg: #e0f2fe;
 
   /* Shadows */
   --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.05);
@@ -63,10 +68,13 @@
   color-scheme: dark;
 
   /* Primary */
-  --primary-lighter: rgba(20, 184, 166, 0.15);
+  --primary-lighter: rgba(16, 185, 129, 0.15);
+
+  /* Secondary */
+  --secondary-lighter: rgba(14, 165, 233, 0.15);
 
   /* Accent */
-  --accent-lighter: rgba(99, 102, 241, 0.15);
+  --accent-lighter: rgba(37, 99, 235, 0.15);
 
   /* Neutrals */
   --bg-body: #0f172a;
@@ -86,7 +94,7 @@
   --success-bg: rgba(16, 185, 129, 0.15);
   --warning-bg: rgba(245, 158, 11, 0.15);
   --error-bg: rgba(239, 68, 68, 0.15);
-  --info-bg: rgba(59, 130, 246, 0.15);
+  --info-bg: rgba(14, 165, 233, 0.15);
 
   /* Shadows */
   --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.3);
@@ -105,7 +113,7 @@
 }
 
 body {
-  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  font-family: 'DM Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
   background-color: var(--bg-body);
   color: var(--text-primary);
   line-height: 1.6;
@@ -155,12 +163,12 @@ body {
 .btn-primary {
   background: var(--primary-gradient);
   color: var(--text-inverse);
-  box-shadow: 0 1px 3px rgba(15, 118, 110, 0.2);
+  box-shadow: 0 1px 3px rgba(5, 150, 105, 0.2);
 }
 
 .btn-primary:hover {
   transform: translateY(-1px);
-  box-shadow: 0 4px 12px rgba(15, 118, 110, 0.3);
+  box-shadow: 0 4px 12px rgba(5, 150, 105, 0.3);
 }
 
 .btn-secondary {
@@ -179,7 +187,7 @@ body {
 h1 {
   font-size: 1.75rem;
   font-weight: 700;
-  color: var(--text-primary);
+  color: var(--accent);
   margin-bottom: 0.5rem;
   letter-spacing: -0.025em;
 }
@@ -187,7 +195,7 @@ h1 {
 h2 {
   font-size: 1.25rem;
   font-weight: 600;
-  color: var(--text-primary);
+  color: var(--accent);
   margin-bottom: 1rem;
   letter-spacing: -0.015em;
 }

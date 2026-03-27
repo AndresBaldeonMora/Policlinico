@@ -49,8 +49,8 @@ const Notification = ({ message, type, visible }: NotificationProps) => {
 };
 
 const ESTADO_CONFIG: Record<string, { class: string; label: string }> = {
-  PENDIENTE:    { class: "badge-warning",  label: "Pendiente" },
-  REPROGRAMADA: { class: "badge-info",     label: "Reprogramada" },
+  PENDIENTE:    { class: "badge-info",     label: "Pendiente" },
+  REPROGRAMADA: { class: "badge-warning",  label: "Reprogramada" },
   ATENDIDA:     { class: "badge-success",  label: "Atendida" },
   CANCELADA:    { class: "badge-danger",   label: "Cancelada" },
 };

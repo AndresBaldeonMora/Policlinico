@@ -15,7 +15,7 @@ export interface CitaMedico {
   fecha: string;
   hora: string;
   estado: "PENDIENTE" | "ATENDIDA" | "CANCELADA";
-  motivo?: string;
+  notas?: string;
 }
 
 export interface MedicoPerfil {
@@ -59,6 +59,18 @@ export class MedicoApiService {
   ): Promise<CitaMedico> {
     const response = await api.patch(`/medico/citas/${citaId}/estado`, {
       estado,
+    });
+    return response.data.data;
+  }
+
+  static async guardarNotas(
+    citaId: string,
+    notas: string,
+    estadoActual: "PENDIENTE" | "ATENDIDA" | "CANCELADA"
+  ): Promise<CitaMedico> {
+    const response = await api.patch(`/medico/citas/${citaId}/estado`, {
+      estado: estadoActual,
+      notas,
     });
     return response.data.data;
   }

@@ -398,21 +398,21 @@
 }
 
 .cita-chip--pendiente {
-  background: var(--primary-lighter);
-  color: var(--primary);
-  border-left-color: var(--primary);
-}
-.cita-chip--pendiente::before {
-  background: var(--primary);
-}
-
-.cita-chip--atendida {
   background: var(--info-bg);
   color: var(--info);
   border-left-color: var(--info);
 }
-.cita-chip--atendida::before {
+.cita-chip--pendiente::before {
   background: var(--info);
+}
+
+.cita-chip--atendida {
+  background: var(--success-bg);
+  color: var(--success);
+  border-left-color: var(--success);
+}
+.cita-chip--atendida::before {
+  background: var(--success);
 }
 
 .cita-chip--cancelada {
@@ -426,7 +426,7 @@
 
 .cita-chip--reprogramada {
   background: var(--warning-bg);
-  color: #b45309;
+  color: var(--warning);
   border-left-color: var(--warning);
 }
 .cita-chip--reprogramada::before {
@@ -473,17 +473,17 @@
 }
 
 .agenda-cita--pendiente {
-  background: var(--primary-lighter);
-  color: var(--primary);
-  border-left-color: var(--primary);
+  background: var(--info-bg);
+  color: var(--info);
+  border-left-color: var(--info);
 }
 .agenda-cita--pendiente::before {
-  background: var(--primary);
+  background: var(--info);
 }
 
 .agenda-cita--atendida {
   background: var(--success-bg);
-  color: #065f46;
+  color: var(--success);
   border-left-color: var(--success);
 }
 .agenda-cita--atendida::before {
@@ -501,7 +501,7 @@
 
 .agenda-cita--reprogramada {
   background: var(--warning-bg);
-  color: #b45309;
+  color: var(--warning);
   border-left-color: var(--warning);
 }
 .agenda-cita--reprogramada::before {
@@ -592,15 +592,15 @@
 }
 
 [data-theme="dark"] .multi-celda:hover {
-  background: rgba(20, 184, 166, 0.08);
+  background: rgba(16, 185, 129, 0.08);
 }
 
 [data-theme="dark"] .calendario-celda:hover {
-  background: rgba(20, 184, 166, 0.08);
+  background: rgba(16, 185, 129, 0.08);
 }
 
 [data-theme="dark"] .calendario-celda--hoy {
-  background: rgba(20, 184, 166, 0.1);
+  background: rgba(16, 185, 129, 0.1);
 }
 
 [data-theme="dark"] .calendario-celda--vacia {
