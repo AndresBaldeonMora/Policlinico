@@ -1,4 +1,5 @@
 import { useReducer, useEffect, useCallback, useMemo } from "react";
+import { useNavigate } from "react-router-dom";
 import { MedicoApiService } from "../../services/medico.service";
 import { CitaApiService } from "../../services/cita.service";
 import { DoctorApiService } from "../../services/doctor.service";
@@ -13,7 +14,6 @@ import CalendarioTopbar from "../Calendario/CalendarioTopBar";
 import VistaDia from "../Calendario/VistaDia";
 import VistaSemana from "../Calendario/VistaSemana";
 import VistaMes from "../Calendario/VistaMes";
-import CitaModal from "./CitaModal";
 import "./MedicoDashboard.css";
 
 const HORA_INICIO = 8;
@@ -53,7 +53,6 @@ interface DashboardState {
   citasCalendario: CitaTransformada[];
   doctores: DoctorTransformado[];
   loadingCalendario: boolean;
-  citaSeleccionadaId: string | null;
 }
 
 type DashboardAction =
@@ -64,8 +63,7 @@ type DashboardAction =
   | { type: "SET_FECHA"; fecha: Date }
   | { type: "SET_CITAS_CALENDARIO"; citas: CitaTransformada[] }
   | { type: "SET_DOCTORES"; doctores: DoctorTransformado[] }
-  | { type: "SET_LOADING_CALENDARIO"; value: boolean }
-  | { type: "SELECCIONAR_CITA"; citaId: string | null };
+  | { type: "SET_LOADING_CALENDARIO"; value: boolean };
 
 function dashboardReducer(state: DashboardState, action: DashboardAction): DashboardState {
   switch (action.type) {
@@ -85,8 +83,6 @@ function dashboardReducer(state: DashboardState, action: DashboardAction): Dashb
       return { ...state, doctores: action.doctores };
     case "SET_LOADING_CALENDARIO":
       return { ...state, loadingCalendario: action.value };
-    case "SELECCIONAR_CITA":
-      return { ...state, citaSeleccionadaId: action.citaId };
     default:
       return state;
   }
@@ -102,12 +98,12 @@ const initialState: DashboardState = {
   citasCalendario: [],
   doctores: [],
   loadingCalendario: false,
-  citaSeleccionadaId: null,
 };
 
 const MedicoDashboard = () => {
   const [state, dispatch] = useReducer(dashboardReducer, initialState);
-  const { loading, perfil, citasHoy, todasLasCitas, vista, fecha, citasCalendario, doctores, loadingCalendario, citaSeleccionadaId } = state;
+  const { loading, perfil, citasHoy, todasLasCitas, vista, fecha, citasCalendario, doctores, loadingCalendario } = state;
+  const navigate = useNavigate();
   const { user } = useAuth();
   const medicoId = user?.medicoId ?? "";
 
@@ -161,17 +157,8 @@ const MedicoDashboard = () => {
 
   const irADetalleCita = useCallback((e: React.MouseEvent | React.KeyboardEvent, citaId: string) => {
     e.stopPropagation();
-    dispatch({ type: "SELECCIONAR_CITA", citaId });
-  }, []);
-
-  const cerrarModal = useCallback(() => {
-    dispatch({ type: "SELECCIONAR_CITA", citaId: null });
-  }, []);
-
-  const onCitaActualizada = useCallback(() => {
-    cargarDatos();
-    cargarCitasCalendario();
-  }, [cargarDatos, cargarCitasCalendario]);
+    navigate(`/citas/${citaId}`);
+  }, [navigate]);
 
   const estadisticas = {
     citasHoy: citasHoy.length,
@@ -271,13 +258,6 @@ const MedicoDashboard = () => {
         </div>
       </div>
 
-      {citaSeleccionadaId && (
-        <CitaModal
-          citaId={citaSeleccionadaId}
-          onCerrar={cerrarModal}
-          onCitaActualizada={onCitaActualizada}
-        />
-      )}
     </div>
   );
 };

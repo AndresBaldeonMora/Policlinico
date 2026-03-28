@@ -58,7 +58,7 @@ function App() {
             <Route
               path="/citas/:citaId"
               element={
-                <ProtectedRoute roles={["RECEPCIONISTA"]}>
+                <ProtectedRoute roles={["RECEPCIONISTA", "MEDICO"]}>
                   <PerfilCita />
                 </ProtectedRoute>
               }

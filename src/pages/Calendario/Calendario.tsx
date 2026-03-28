@@ -11,6 +11,7 @@ import DoctoresPanel from "./DoctoresPanel";
 import VistaMes from "./VistaMes";
 import VistaSemana from "./VistaSemana";
 import VistaDia from "./VistaDia";
+import CitaQuickModal from "../../components/CitaQuickModal/CitaQuickModal";
 import "./Calendario.css";
 
 type Vista = "dia" | "semana" | "mes";
@@ -50,6 +51,7 @@ interface CalendarioState {
   doctores: DoctorTransformado[];
   doctorId: string;
   loading: boolean;
+  citaSeleccionadaId: string | null;
 }
 
 type CalendarioAction =
@@ -58,9 +60,9 @@ type CalendarioAction =
   | { type: "SET_CITAS"; citas: CitaTransformada[] }
   | { type: "SET_DOCTORES"; doctores: DoctorTransformado[] }
   | { type: "SET_DOCTOR_ID"; doctorId: string }
-  | { type: "SET_LOADING"; value: boolean };
+  | { type: "SET_LOADING"; value: boolean }
+  | { type: "SELECCIONAR_CITA"; citaId: string | null };
 
-// DEFAULT: vista dia
 const initialState: CalendarioState = {
   vista: "dia",
   fecha: new Date(),
@@ -68,6 +70,7 @@ const initialState: CalendarioState = {
   doctores: [],
   doctorId: DOCTOR_TODOS_ID,
   loading: false,
+  citaSeleccionadaId: null,
 };
 
 function calendarioReducer(state: CalendarioState, action: CalendarioAction): CalendarioState {
@@ -78,13 +81,14 @@ function calendarioReducer(state: CalendarioState, action: CalendarioAction): Ca
     case "SET_DOCTORES":  return { ...state, doctores: action.doctores };
     case "SET_DOCTOR_ID": return { ...state, doctorId: action.doctorId };
     case "SET_LOADING":   return { ...state, loading: action.value };
+    case "SELECCIONAR_CITA": return { ...state, citaSeleccionadaId: action.citaId };
     default:              return state;
   }
 }
 
 const Calendario = () => {
   const [state, dispatch] = useReducer(calendarioReducer, initialState);
-  const { vista, fecha, citas, doctores, doctorId, loading } = state;
+  const { vista, fecha, citas, doctores, doctorId, loading, citaSeleccionadaId } = state;
   const navigate = useNavigate();
 
   const cargarDoctores = useCallback(async () => {
@@ -122,6 +126,15 @@ const Calendario = () => {
   
   const irADetalleCita = useCallback((e: React.MouseEvent | React.KeyboardEvent, citaId: string) => {
     e.stopPropagation();
+    dispatch({ type: "SELECCIONAR_CITA", citaId });
+  }, []);
+
+  const cerrarModal = useCallback(() => {
+    dispatch({ type: "SELECCIONAR_CITA", citaId: null });
+  }, []);
+
+  const irAPerfilCita = useCallback((citaId: string) => {
+    dispatch({ type: "SELECCIONAR_CITA", citaId: null });
     navigate(`/citas/${citaId}`);
   }, [navigate]);
 
@@ -205,6 +218,15 @@ const Calendario = () => {
           )}
         </div>
       </div>
+
+      {citaSeleccionadaId && (
+        <CitaQuickModal
+          citaId={citaSeleccionadaId}
+          onCerrar={cerrarModal}
+          onCitaActualizada={cargarCitas}
+          onIrADetalle={irAPerfilCita}
+        />
+      )}
     </div>
   );
 };

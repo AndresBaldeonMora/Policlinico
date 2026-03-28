@@ -32,7 +32,7 @@ const calcularEdad = (fechaNacimiento?: string): string => {
   let edad = hoy.getFullYear() - nacimiento.getFullYear();
   const m = hoy.getMonth() - nacimiento.getMonth();
   if (m < 0 || (m === 0 && hoy.getDate() < nacimiento.getDate())) edad--;
-  return `${edad} anios`;
+  return `${edad} años`;
 };
 
 const CitaModal = ({ citaId, onCerrar, onCitaActualizada }: Props) => {

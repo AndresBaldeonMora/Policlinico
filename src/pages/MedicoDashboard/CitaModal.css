@@ -267,6 +267,44 @@
   font-size: 0.85rem;
 }
 
+.cita-modal-error-msg {
+  background: var(--error-bg);
+  color: var(--error);
+  padding: 0.625rem 1rem;
+  border-radius: var(--radius-md);
+  font-size: 0.82rem;
+  font-weight: 600;
+  border-left: 3px solid var(--error);
+}
+
+.cita-modal-error-text {
+  color: var(--error);
+}
+
+.cita-modal-error-actions {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.cita-modal-btn--danger-text {
+  color: var(--error);
+}
+
+.cita-modal-btn--with-icon {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+}
+
+.cita-modal-btn:focus-visible {
+  outline: 2px solid var(--primary);
+  outline-offset: 2px;
+}
+
+.cita-modal-card:focus {
+  outline: none;
+}
+
 @media (max-width: 640px) {
   .cita-modal-card {
     width: 95%;
