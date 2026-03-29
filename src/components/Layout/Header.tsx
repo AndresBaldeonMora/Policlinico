@@ -2,7 +2,7 @@ import { useState, useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "../../hooks/userAuth";
 import { useTheme } from "../../context/ThemeContext";
-import { Moon, Search, Sun, LogOut } from "lucide-react";
+import { Moon, Search, Sun, LogOut, ChevronDown } from "lucide-react";
 import SearchPalette from "./SearchPalette";
 import "./Header.css";
 
@@ -29,11 +29,15 @@ const Header = () => {
 
   useEffect(() => {
     const handleClickOutside = (e: MouseEvent) => {
-      if (dropdownRef.current && !dropdownRef.current.contains(e.target as Node)) {
+      if (
+        dropdownRef.current &&
+        !dropdownRef.current.contains(e.target as Node)
+      ) {
         setDropdownOpen(false);
       }
     };
-    if (dropdownOpen) document.addEventListener("mousedown", handleClickOutside);
+    if (dropdownOpen)
+      document.addEventListener("mousedown", handleClickOutside);
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, [dropdownOpen]);
 
@@ -48,16 +52,29 @@ const Header = () => {
       <header className="header">
         <div className="header-content">
           <div className="header-left">
-            <button className="header-search" onClick={() => setSearchOpen(true)}>
+            <button
+              className="header-search"
+              onClick={() => setSearchOpen(true)}
+            >
               <Search size={18} className="header-search-icon" />
-              <span className="header-search-placeholder">Buscar pacientes, citas, doctores...</span>
+              <span className="header-search-placeholder">
+                Buscar pacientes, citas, doctores...
+              </span>
               <kbd className="header-search-kbd">Ctrl+K</kbd>
             </button>
           </div>
 
           <div className="header-right">
-            <button className="header-theme-btn" onClick={toggleTheme} aria-label="Toggle theme">
-              {theme === "dark" ? <Sun size={20} strokeWidth={1.8} /> : <Moon size={20} strokeWidth={1.8} />}
+            <button
+              className="header-theme-btn"
+              onClick={toggleTheme}
+              aria-label="Toggle theme"
+            >
+              {theme === "dark" ? (
+                <Sun size={20} strokeWidth={1.8} />
+              ) : (
+                <Moon size={20} strokeWidth={1.8} />
+              )}
             </button>
 
             <div className="header-divider" />
@@ -69,7 +86,8 @@ const Header = () => {
                 role="button"
                 tabIndex={0}
                 onKeyDown={(e) => {
-                  if (e.key === "Enter" || e.key === " ") setDropdownOpen((prev) => !prev);
+                  if (e.key === "Enter" || e.key === " ")
+                    setDropdownOpen((prev) => !prev);
                 }}
               >
                 <div className="header-user-info">
@@ -79,11 +97,19 @@ const Header = () => {
                   <p className="user-role">{user?.rol || "Sin rol"}</p>
                 </div>
                 <div className="user-avatar">{avatarLetter}</div>
+                <ChevronDown
+                  size={14}
+                  strokeWidth={2}
+                  className={`header-user-chevron ${dropdownOpen ? "header-user-chevron--open" : ""}`}
+                />
               </div>
 
               {dropdownOpen && (
                 <div className="header-dropdown">
-                  <button className="header-dropdown-item" onClick={handleLogout}>
+                  <button
+                    className="header-dropdown-item"
+                    onClick={handleLogout}
+                  >
                     <LogOut size={15} strokeWidth={2} />
                     <span>Cerrar sesión</span>
                   </button>

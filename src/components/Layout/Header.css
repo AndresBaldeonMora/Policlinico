@@ -191,3 +191,13 @@
   from { opacity: 0; transform: translateY(-6px); }
   to   { opacity: 1; transform: translateY(0); }
 }
+
+.header-user-chevron {
+  color: var(--text-muted);
+  transition: transform 0.2s var(--ease);
+  flex-shrink: 0;
+}
+
+.header-user-chevron--open {
+  transform: rotate(180deg);
+}
