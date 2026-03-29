@@ -361,17 +361,17 @@
   flex-shrink: 0;
 }
 
-.badge-success { background: var(--success-bg); color: #ffffff; }
-.badge-success .modern-badge-dot { background: var(--success); }
+.badge-success { background: #dcfce7; color: #15803d; }
+.badge-success .modern-badge-dot { background: #15803d; }
 
-.badge-warning { background: var(--warning-bg); color: #ffffff; }
-.badge-warning .modern-badge-dot { background: var(--warning); }
+.badge-warning { background: #fef9c3; color: #a16207; }
+.badge-warning .modern-badge-dot { background: #a16207; }
 
-.badge-info { background: var(--info-bg); color: #ffffff; }
-.badge-info .modern-badge-dot { background: var(--info); }
+.badge-info { background: #dbeafe; color: #1d4ed8; }
+.badge-info .modern-badge-dot { background: #1d4ed8; }
 
-.badge-danger { background: var(--error-bg); color: #ffffff; }
-.badge-danger .modern-badge-dot { background: var(--error); }
+.badge-danger { background: #fee2e2; color: #b91c1c; }
+.badge-danger .modern-badge-dot { background: #b91c1c; }
 
 /* ── Action Button ── */
 .btn-action {
