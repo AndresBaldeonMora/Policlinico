@@ -244,39 +244,26 @@ const ListaMedicos = () => {
                       </td>
                       <td>
                         <div className="td-cv-actions">
-                          {getCvUrl(d) ? (
-                            <>
-                              <button
-                                type="button"
-                                className="btn-action"
-                                onClick={() => handleVerCV(d)}
-                                title="Ver CV"
-                              >
-                                <Eye size={15} />
-                              </button>
-                              {esAdmin && (
-                                <button
-                                  type="button"
-                                  className="btn-action btn-action--upload"
-                                  onClick={() => handleUploadClick(d.id)}
-                                  title="Cambiar CV"
-                                >
-                                  <Upload size={15} />
-                                </button>
-                              )}
-                            </>
-                          ) : esAdmin ? (
+                          {getCvUrl(d) && (
                             <button
                               type="button"
-                              className="btn-action btn-action--upload"
-                              onClick={() => handleUploadClick(d.id)}
-                              title="Subir CV"
+                              className="btn-action"
+                              onClick={() => handleVerCV(d)}
+                              title="Ver CV"
                             >
-                              <Upload size={15} />
+                              <Eye size={15} />
                             </button>
-                          ) : (
-                            <span className="td-muted">Sin CV</span>
                           )}
+                          <button
+                            type="button"
+                            className="btn-action btn-action--upload"
+                            onClick={() => handleUploadClick(d.id)}
+                            title={getCvUrl(d) ? "Cambiar CV" : "Subir CV"}
+                            disabled={!esAdmin}
+                            style={!esAdmin ? { opacity: 0.4, cursor: "not-allowed" } : undefined}
+                          >
+                            <Upload size={15} />
+                          </button>
                         </div>
                       </td>
                     </tr>
@@ -340,15 +327,15 @@ const ListaMedicos = () => {
               >
                 Cerrar
               </button>
-              {esAdmin && (
-                <button
-                  type="button"
-                  className="btn btn-secondary"
-                  onClick={() => handleUploadClick(doctorCV.id)}
-                >
-                  <Upload size={15} /> Cambiar CV
-                </button>
-              )}
+              <button
+                type="button"
+                className="btn btn-secondary"
+                onClick={() => handleUploadClick(doctorCV.id)}
+                disabled={!esAdmin}
+                style={!esAdmin ? { opacity: 0.5, cursor: "not-allowed" } : undefined}
+              >
+                <Upload size={15} /> Cambiar CV
+              </button>
               {cvUrlSeleccionado && (
                 <a
                   href={cvUrlSeleccionado}
