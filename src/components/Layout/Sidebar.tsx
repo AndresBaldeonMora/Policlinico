@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Link, useLocation, useNavigate } from "react-router-dom";
+import { Link, useLocation} from "react-router-dom";
 import { useAuth } from "../../hooks/userAuth";
 import {
   Calendar,
@@ -8,7 +8,6 @@ import {
   Stethoscope,
   Users,
   LayoutDashboard,
-  LogOut,
   ChevronRight,
   PanelLeftClose,
   PanelLeftOpen,
@@ -17,8 +16,7 @@ import "./Sidebar.css";
 
 const Sidebar = () => {
   const location = useLocation();
-  const navigate = useNavigate();
-  const { logout, user } = useAuth();
+  const { user } = useAuth();
   const [collapsed, setCollapsed] = useState(false);
 
   const adminMenu = [
@@ -35,11 +33,6 @@ const Sidebar = () => {
   ];
 
   const menuItems = user?.rol === "MEDICO" ? medicoMenu : adminMenu;
-
-  const handleLogout = () => {
-    logout();
-    navigate("/login", { replace: true });
-  };
 
   const avatarLetter = user?.nombres?.charAt(0).toUpperCase() || "U";
 
@@ -119,10 +112,6 @@ const Sidebar = () => {
             <div className="sidebar-user-avatar">{avatarLetter}</div>
           </div>
         )}
-        <button className="btn-logout" onClick={handleLogout} title="Cerrar Sesion">
-          <LogOut size={18} strokeWidth={2} />
-          {!collapsed && <span>Cerrar Sesion</span>}
-        </button>
       </div>
     </aside>
   );

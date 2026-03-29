@@ -1,18 +1,21 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
+import { useNavigate } from "react-router-dom";
 import { useAuth } from "../../hooks/userAuth";
 import { useTheme } from "../../context/ThemeContext";
-import { Bell, Moon, Search, Sun } from "lucide-react";
+import { Moon, Search, Sun, LogOut } from "lucide-react";
 import SearchPalette from "./SearchPalette";
 import "./Header.css";
 
 const Header = () => {
-  const { user } = useAuth();
+  const { user, logout } = useAuth();
   const { theme, toggleTheme } = useTheme();
+  const navigate = useNavigate();
   const [searchOpen, setSearchOpen] = useState(false);
+  const [dropdownOpen, setDropdownOpen] = useState(false);
+  const dropdownRef = useRef<HTMLDivElement>(null);
 
   const avatarLetter = user?.nombres?.charAt(0).toUpperCase() || "U";
 
-  // Ctrl+K / Cmd+K shortcut
   useEffect(() => {
     const handleKey = (e: KeyboardEvent) => {
       if ((e.ctrlKey || e.metaKey) && e.key === "k") {
@@ -23,6 +26,22 @@ const Header = () => {
     window.addEventListener("keydown", handleKey);
     return () => window.removeEventListener("keydown", handleKey);
   }, []);
+
+  useEffect(() => {
+    const handleClickOutside = (e: MouseEvent) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(e.target as Node)) {
+        setDropdownOpen(false);
+      }
+    };
+    if (dropdownOpen) document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, [dropdownOpen]);
+
+  const handleLogout = async () => {
+    setDropdownOpen(false);
+    await logout();
+    navigate("/login", { replace: true });
+  };
 
   return (
     <>
@@ -35,28 +54,45 @@ const Header = () => {
               <kbd className="header-search-kbd">Ctrl+K</kbd>
             </button>
           </div>
+
           <div className="header-right">
-            <button className="header-notification" onClick={toggleTheme} aria-label="Toggle theme">
+            <button className="header-theme-btn" onClick={toggleTheme} aria-label="Toggle theme">
               {theme === "dark" ? <Sun size={20} strokeWidth={1.8} /> : <Moon size={20} strokeWidth={1.8} />}
             </button>
-            <button className="header-notification">
-              <Bell size={20} strokeWidth={1.8} />
-              <span className="notification-badge">3</span>
-            </button>
+
             <div className="header-divider" />
-            <div className="header-user">
-              <div className="header-user-info">
-                <p className="user-name">
-                  {user ? `${user.nombres} ${user.apellidos}` : "Usuario"}
-                </p>
-                <p className="user-role">{user?.rol || "Sin rol"}</p>
+
+            <div className="header-user-wrapper" ref={dropdownRef}>
+              <div
+                className="header-user"
+                onClick={() => setDropdownOpen((prev) => !prev)}
+                role="button"
+                tabIndex={0}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter" || e.key === " ") setDropdownOpen((prev) => !prev);
+                }}
+              >
+                <div className="header-user-info">
+                  <p className="user-name">
+                    {user ? `${user.nombres} ${user.apellidos}` : "Usuario"}
+                  </p>
+                  <p className="user-role">{user?.rol || "Sin rol"}</p>
+                </div>
+                <div className="user-avatar">{avatarLetter}</div>
               </div>
-              <div className="user-avatar">{avatarLetter}</div>
+
+              {dropdownOpen && (
+                <div className="header-dropdown">
+                  <button className="header-dropdown-item" onClick={handleLogout}>
+                    <LogOut size={15} strokeWidth={2} />
+                    <span>Cerrar sesión</span>
+                  </button>
+                </div>
+              )}
             </div>
           </div>
         </div>
       </header>
-
       <SearchPalette open={searchOpen} onClose={() => setSearchOpen(false)} />
     </>
   );
