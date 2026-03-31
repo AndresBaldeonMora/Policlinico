@@ -25,7 +25,6 @@ export interface DoctorDTO {
   _id: string;
   nombres: string;
   apellidos: string;
-  especialidadId?: { _id: string; nombre: string } | string;
 }
 
 export interface Cita {
@@ -52,6 +51,7 @@ export interface CitaProcesada {
   estado: EstadoCita;
 }
 
+// ✅ doctorId puede ser objeto populado o string (sin populate)
 export interface CitaTransformada {
   _id: string;
   fecha: string;
@@ -61,6 +61,7 @@ export interface CitaTransformada {
   doctorId?: DoctorDTO | string;
 }
 
+// ✅ Helper sin any — extrae el _id del doctorId sea objeto o string
 export const getDoctorIdString = (doctorId?: DoctorDTO | string): string => {
   if (!doctorId) return "";
   if (typeof doctorId === "string") return doctorId;
@@ -122,15 +123,5 @@ export class CitaApiService {
       throw new Error(response.data.message || "No se pudo obtener la cita");
     }
     return response.data.data;
-  }
-
-  static async cambiarEstado(id: string, estado: EstadoCita): Promise<void> {
-    const response = await api.patch<{ success: boolean; message?: string }>(
-      `/citas/${id}/estado`,
-      { estado }
-    );
-    if (!response.data.success) {
-      throw new Error(response.data.message || "Error al cambiar estado de la cita");
-    }
   }
 }

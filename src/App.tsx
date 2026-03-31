@@ -12,85 +12,59 @@ import PerfilCita from "./pages/PerfilCita/PerfilCita";
 import Login from "./pages/Login/Login";
 
 import { AuthProvider } from "./context/AuthProvider";
-import { ThemeProvider } from "./context/ThemeContext";
 import { ProtectedRoute } from "./routes/ProtectedRoute";
 
 function App() {
   return (
     <AuthProvider>
-      <ThemeProvider>
-        <BrowserRouter>
+      <BrowserRouter>
         <Routes>
           <Route path="/login" element={<Login />} />
 
           <Route element={<ProtectedLayout />}>
-            <Route
-              path="/"
-              element={
-                <ProtectedRoute roles={["RECEPCIONISTA"]}>
-                  <Calendario />
-                </ProtectedRoute>
-              }
-            />
+            {/* ── RECEPCIONISTA ── */}
+            <Route path="/" element={
+              <ProtectedRoute roles={["RECEPCIONISTA"]}>
+                <Calendario />
+              </ProtectedRoute>
+            } />
+            <Route path="/reserva-cita" element={
+              <ProtectedRoute roles={["RECEPCIONISTA"]}>
+                <ReservaCita />
+              </ProtectedRoute>
+            } />
+            <Route path="/lista-citas" element={
+              <ProtectedRoute roles={["RECEPCIONISTA"]}>
+                <ListaCitas />
+              </ProtectedRoute>
+            } />
+            <Route path="/medicos" element={
+              <ProtectedRoute roles={["RECEPCIONISTA"]}>
+                <ListaMedicos />
+              </ProtectedRoute>
+            } />
+            <Route path="/pacientes" element={
+              <ProtectedRoute roles={["RECEPCIONISTA"]}>
+                <ListaPacientes />
+              </ProtectedRoute>
+            } />
 
-            <Route
-              path="/reserva-cita"
-              element={
-                <ProtectedRoute roles={["RECEPCIONISTA"]}>
-                  <ReservaCita />
-                </ProtectedRoute>
-              }
-            />
+            {/* ── COMPARTIDA: RECEPCIONISTA + MEDICO ── */}
+            <Route path="/citas/:citaId" element={
+              <ProtectedRoute roles={["RECEPCIONISTA", "MEDICO"]}>
+                <PerfilCita />
+              </ProtectedRoute>
+            } />
 
-            <Route
-              path="/lista-citas"
-              element={
-                <ProtectedRoute roles={["RECEPCIONISTA"]}>
-                  <ListaCitas />
-                </ProtectedRoute>
-              }
-            />
-
-            {/* RUTA PERFIL DE CITA */}
-            <Route
-              path="/citas/:citaId"
-              element={
-                <ProtectedRoute roles={["RECEPCIONISTA", "MEDICO"]}>
-                  <PerfilCita />
-                </ProtectedRoute>
-              }
-            />
-
-            <Route
-              path="/medicos"
-              element={
-                <ProtectedRoute roles={["RECEPCIONISTA"]}>
-                  <ListaMedicos />
-                </ProtectedRoute>
-              }
-            />
-
-            <Route
-              path="/pacientes"
-              element={
-                <ProtectedRoute roles={["RECEPCIONISTA"]}>
-                  <ListaPacientes />
-                </ProtectedRoute>
-              }
-            />
-
-            <Route
-              path="/medico"
-              element={
-                <ProtectedRoute roles={["MEDICO"]}>
-                  <MedicoDashboard />
-                </ProtectedRoute>
-              }
-            />
+            {/* ── MEDICO ── */}
+            <Route path="/medico" element={
+              <ProtectedRoute roles={["MEDICO"]}>
+                <MedicoDashboard />
+              </ProtectedRoute>
+            } />
           </Route>
         </Routes>
-        </BrowserRouter>
-      </ThemeProvider>
+      </BrowserRouter>
     </AuthProvider>
   );
 }
@@ -99,9 +73,9 @@ function ProtectedLayout() {
   return (
     <div className="app">
       <Sidebar />
-      <div style={{ flex: 1, display: "flex", flexDirection: "column", minWidth: 0 }}>
+      <div style={{ flex: 1, display: "flex", flexDirection: "column" }}>
         <Header />
-        <main style={{ flex: 1, overflow: "auto" }}>
+        <main style={{ flex: 1 }}>
           <Outlet />
         </main>
       </div>
