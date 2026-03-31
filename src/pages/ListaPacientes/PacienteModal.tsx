@@ -1,7 +1,6 @@
 // src/pages/ListaPacientes/PacienteModal.tsx
-import { useEffect, useReducer, useMemo, useRef } from "react";
+import { useReducer, useMemo } from "react";
 import { PacienteApiService, type PacienteTransformado } from "../../services/paciente.service";
-import api from "../../services/api";
 import "./PacienteModal.css";
 
 interface Props {
@@ -10,46 +9,34 @@ interface Props {
   onCancelar: () => void;
 }
 
-interface ReniecData {
-  nombres: string;
-  apellidoPaterno: string;
-  apellidoMaterno: string;
-}
-
 interface FormState {
   dni: string; nombres: string; apellidos: string;
   fechaNacimiento: string; sexo: string; estadoCivil: string;
   telefono: string; correo: string; direccion: string; distrito: string;
   apoderadoNombre: string; apoderadoParentesco: string; apoderadoTelefono: string;
-  loading: boolean; loadingReniec: boolean;
-  error: string; errorReniec: string; seccionActiva: number;
+  loading: boolean;
+  error: string;  seccionActiva: number;
 }
 
 type Action =
   | { type: "SET_FIELD"; field: string; value: string }
   | { type: "SET_SECCION"; value: number }
   | { type: "SET_LOADING"; value: boolean }
-  | { type: "SET_LOADING_RENIEC"; value: boolean }
   | { type: "SET_ERROR"; message: string }
-  | { type: "SET_ERROR_RENIEC"; message: string }
   | { type: "CLEAR_ERROR" }
-  | { type: "RENIEC_OK"; nombres: string; apellidos: string };
 
 function reducer(state: FormState, action: Action): FormState {
   switch (action.type) {
     case "SET_FIELD":          return { ...state, [action.field]: action.value };
     case "SET_SECCION":        return { ...state, seccionActiva: action.value };
     case "SET_LOADING":        return { ...state, loading: action.value };
-    case "SET_LOADING_RENIEC": return { ...state, loadingReniec: action.value };
     case "SET_ERROR":          return { ...state, error: action.message, loading: false };
-    case "SET_ERROR_RENIEC":   return { ...state, errorReniec: action.message, loadingReniec: false };
-    case "CLEAR_ERROR":        return { ...state, error: "", errorReniec: "" };
-    case "RENIEC_OK":          return { ...state, nombres: action.nombres, apellidos: action.apellidos, loadingReniec: false, errorReniec: "" };
+    case "CLEAR_ERROR":        return { ...state, error: "" };
     default:                   return state;
   }
 }
 
-// Convierte "1946-12-05T00:00:00.000Z" → "1946-12-05" para input type="date"
+// ✅ Convierte "1946-12-05T00:00:00.000Z" → "1946-12-05" para input type="date"
 function toInputDate(fechaStr?: string): string {
   if (!fechaStr) return "";
   if (/^\d{4}-\d{2}-\d{2}$/.test(fechaStr)) return fechaStr; // ya está en formato correcto
@@ -64,13 +51,13 @@ function toInputDate(fechaStr?: string): string {
 function buildInitial(p?: PacienteTransformado | null): FormState {
   return {
     dni: p?.dni ?? "", nombres: p?.nombres ?? "", apellidos: p?.apellidos ?? "",
-    fechaNacimiento: toInputDate(p?.fechaNacimiento),  // formato corregido
+    fechaNacimiento: toInputDate(p?.fechaNacimiento),  // ✅ formato corregido
     sexo: p?.sexo ?? "", estadoCivil: p?.estadoCivil ?? "",
     telefono: p?.telefono ?? "", correo: p?.correo ?? "",
     direccion: p?.direccion ?? "", distrito: p?.distrito ?? "",
     apoderadoNombre: p?.apoderadoNombre ?? "", apoderadoParentesco: p?.apoderadoParentesco ?? "",
     apoderadoTelefono: p?.apoderadoTelefono ?? "",
-    loading: false, loadingReniec: false, error: "", errorReniec: "", seccionActiva: 0,
+    loading: false,  error: "",  seccionActiva: 0,
   };
 }
 
@@ -105,31 +92,9 @@ const SECCIONES = ["Datos Personales", "Contacto", "Apoderado"];
 const PacienteModal = ({ paciente, onGuardado, onCancelar }: Props) => {
   const esEdicion = !!paciente;
   const [state, dispatch] = useReducer(reducer, paciente, buildInitial);
-  const reniecLlamado = useRef(false);
-
   const edad = useMemo(() => calcularEdad(state.fechaNacimiento), [state.fechaNacimiento]);
   const errorFecha = useMemo(() => validarFecha(state.fechaNacimiento), [state.fechaNacimiento]);
   const esMenor = edad !== null && edad < 18;
-
-  useEffect(() => {
-    if (esEdicion || state.dni.length !== 8 || reniecLlamado.current) return;
-    reniecLlamado.current = true;
-    const buscar = async () => {
-      dispatch({ type: "SET_LOADING_RENIEC", value: true });
-      try {
-        const res = await api.get<{ success: boolean; data?: ReniecData }>(`/reniec/${state.dni}`);
-        if (res.data.success && res.data.data) {
-          const d = res.data.data;
-          dispatch({ type: "RENIEC_OK", nombres: d.nombres ?? "", apellidos: `${d.apellidoPaterno ?? ""} ${d.apellidoMaterno ?? ""}`.trim() });
-        } else {
-          dispatch({ type: "SET_ERROR_RENIEC", message: "No encontrado en RENIEC — ingresa los datos manualmente." });
-        }
-      } catch {
-        dispatch({ type: "SET_ERROR_RENIEC", message: "No se pudo consultar RENIEC." });
-      }
-    };
-    buscar();
-  }, [state.dni, esEdicion]);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
     const { name, value } = e.target;
@@ -171,7 +136,19 @@ const PacienteModal = ({ paciente, onGuardado, onCancelar }: Props) => {
         : await PacienteApiService.crear(datos);
       onGuardado(resultado);
     } catch (err) {
-      dispatch({ type: "SET_ERROR", message: err instanceof Error ? err.message : "Error al guardar." });
+      //Nota: Se está validando el error de DNI duplicado en frontend
+      // mediante el mensaje del backend (E11000 / duplicate).
+      // Esto no es lo más óptimo, ya que depende de strings que podrían cambiar.
+      // Lo ideal sería que el backend retorne un código de error estructurado,
+      // por ejemplo: { code: "DNI_DUPLICADO" }, para manejarlo de forma más segura.
+      const msg = err instanceof Error ? err.message.toLowerCase() : "";
+
+
+      if (msg.includes("e11000") || msg.includes("duplicate")) {
+        dispatch({ type: "SET_ERROR", message: "Ya existe un paciente con este DNI" });
+      } else {
+        dispatch({ type: "SET_ERROR", message: "Error al guardar." });
+      }
     }
   };
 
@@ -182,14 +159,15 @@ const PacienteModal = ({ paciente, onGuardado, onCancelar }: Props) => {
       <div className="pm-modal">
         <div className="pm-header">
           <div className="pm-header-info">
-            <div className="pm-header-icon">{esEdicion ? "Editar" : "Nuevo"}</div>
+            <div className="pm-header-icon">{esEdicion ? "✏️" : "👤"}</div>
             <div>
               <h2>{esEdicion ? "Editar Paciente" : "Nuevo Paciente"}</h2>
               {esEdicion && <span className="pm-header-dni">DNI: {paciente!.dni}</span>}
             </div>
           </div>
-          <button className="pm-close" onClick={onCancelar} disabled={state.loading}>&times;</button>
+          <button className="pm-close" onClick={onCancelar} disabled={state.loading}>✕</button>
         </div>
+
 
         <div className="pm-tabs">
           {SECCIONES.map((s, i) => (
@@ -204,7 +182,7 @@ const PacienteModal = ({ paciente, onGuardado, onCancelar }: Props) => {
           ))}
         </div>
 
-        {state.error && <div className="pm-error">{state.error}</div>}
+        {state.error && <div className="pm-error"><span>⚠️</span> {state.error}</div>}
 
         <form onSubmit={handleSubmit} className="pm-form">
           {state.seccionActiva === 0 && (
@@ -217,9 +195,6 @@ const PacienteModal = ({ paciente, onGuardado, onCancelar }: Props) => {
                   <>
                     <input className="pm-input" name="dni" value={state.dni} onChange={handleChange}
                       placeholder="12345678" maxLength={8} disabled={state.loading} />
-                    {state.loadingReniec && <span className="pm-reniec-status pm-reniec-status--loading"><span className="pm-spinner-sm" /> Consultando RENIEC...</span>}
-                    {state.errorReniec  && <span className="pm-reniec-status pm-reniec-status--warn">{state.errorReniec}</span>}
-                    {!state.loadingReniec && !state.errorReniec && state.nombres && <span className="pm-reniec-status pm-reniec-status--ok">Datos obtenidos de RENIEC</span>}
                   </>
                 )}
               </div>
@@ -244,7 +219,7 @@ const PacienteModal = ({ paciente, onGuardado, onCancelar }: Props) => {
                     min="1900-01-01"
                   />
                   {errorFecha
-                    ? <span className="pm-field-error">{errorFecha}</span>
+                    ? <span className="pm-field-error">⚠ {errorFecha}</span>
                     : edad !== null && <span className="pm-edad-tag">{edad} años {esMenor && "· Menor de edad"}</span>
                   }
                 </div>
@@ -300,13 +275,13 @@ const PacienteModal = ({ paciente, onGuardado, onCancelar }: Props) => {
             <div className="pm-section">
               {!esMenor ? (
                 <div className="pm-no-aplica">
-                  <span>-</span>
+                  <span>🔒</span>
                   <p>Esta sección aplica solo para pacientes menores de 18 años.</p>
                   <small>Ingresa la fecha de nacimiento en "Datos Personales" para habilitarla.</small>
                 </div>
               ) : (
                 <>
-                  <div className="pm-menor-aviso">Paciente menor de edad — se requiere datos del apoderado</div>
+                  <div className="pm-menor-aviso">👶 Paciente menor de edad — se requiere datos del apoderado</div>
                   <div className="pm-row">
                     <div className="pm-field">
                       <label className="pm-label">Nombre del Apoderado <span className="pm-req">*</span></label>
@@ -337,17 +312,17 @@ const PacienteModal = ({ paciente, onGuardado, onCancelar }: Props) => {
             <div className="pm-footer-nav">
               {state.seccionActiva > 0 && (
                 <button type="button" className="pm-btn pm-btn--secondary"
-                  onClick={() => dispatch({ type: "SET_SECCION", value: state.seccionActiva - 1 })}>Anterior</button>
+                  onClick={() => dispatch({ type: "SET_SECCION", value: state.seccionActiva - 1 })}>← Anterior</button>
               )}
               {state.seccionActiva < SECCIONES.length - 1 && (
                 <button type="button" className="pm-btn pm-btn--secondary"
-                  onClick={() => dispatch({ type: "SET_SECCION", value: state.seccionActiva + 1 })}>Siguiente</button>
+                  onClick={() => dispatch({ type: "SET_SECCION", value: state.seccionActiva + 1 })}>Siguiente →</button>
               )}
             </div>
             <div className="pm-footer-actions">
               <button type="button" className="pm-btn pm-btn--ghost" onClick={onCancelar} disabled={state.loading}>Cancelar</button>
               <button type="submit" className="pm-btn pm-btn--primary" disabled={state.loading || !!errorFecha}>
-                {state.loading ? <><span className="pm-spinner-sm" /> Guardando...</> : esEdicion ? "Guardar cambios" : "Registrar paciente"}
+                {state.loading ? <><span className="pm-spinner-sm" /> Guardando...</> : esEdicion ? "✓ Guardar cambios" : "✓ Registrar paciente"}
               </button>
             </div>
           </div>
@@ -356,5 +331,6 @@ const PacienteModal = ({ paciente, onGuardado, onCancelar }: Props) => {
     </div>
   );
 };
+
 
 export default PacienteModal;

@@ -222,20 +222,6 @@
 .pm-input:disabled, .pm-select:disabled { opacity: 0.5; cursor: not-allowed; }
 .pm-input--disabled { background: var(--bg-hover); color: var(--text-muted); font-weight: 600; cursor: not-allowed; }
 
-/* ── RENIEC ── */
-.pm-reniec-status {
-  font-size: 0.72rem;
-  display: flex;
-  align-items: center;
-  gap: 0.3rem;
-  margin-top: 0.1rem;
-  font-weight: 500;
-}
-
-.pm-reniec-status--loading { color: var(--text-muted); }
-.pm-reniec-status--warn { color: #d97706; }
-.pm-reniec-status--ok { color: var(--primary); font-weight: 700; }
-
 .pm-edad-tag { font-size: 0.72rem; color: var(--primary); font-weight: 700; }
 
 .pm-menor-aviso {
