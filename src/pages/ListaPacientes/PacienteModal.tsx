@@ -49,7 +49,7 @@ function reducer(state: FormState, action: Action): FormState {
   }
 }
 
-// ✅ Convierte "1946-12-05T00:00:00.000Z" → "1946-12-05" para input type="date"
+// Convierte "1946-12-05T00:00:00.000Z" → "1946-12-05" para input type="date"
 function toInputDate(fechaStr?: string): string {
   if (!fechaStr) return "";
   if (/^\d{4}-\d{2}-\d{2}$/.test(fechaStr)) return fechaStr; // ya está en formato correcto
@@ -64,7 +64,7 @@ function toInputDate(fechaStr?: string): string {
 function buildInitial(p?: PacienteTransformado | null): FormState {
   return {
     dni: p?.dni ?? "", nombres: p?.nombres ?? "", apellidos: p?.apellidos ?? "",
-    fechaNacimiento: toInputDate(p?.fechaNacimiento),  // ✅ formato corregido
+    fechaNacimiento: toInputDate(p?.fechaNacimiento),  // formato corregido
     sexo: p?.sexo ?? "", estadoCivil: p?.estadoCivil ?? "",
     telefono: p?.telefono ?? "", correo: p?.correo ?? "",
     direccion: p?.direccion ?? "", distrito: p?.distrito ?? "",
@@ -182,13 +182,13 @@ const PacienteModal = ({ paciente, onGuardado, onCancelar }: Props) => {
       <div className="pm-modal">
         <div className="pm-header">
           <div className="pm-header-info">
-            <div className="pm-header-icon">{esEdicion ? "✏️" : "👤"}</div>
+            <div className="pm-header-icon">{esEdicion ? "Editar" : "Nuevo"}</div>
             <div>
               <h2>{esEdicion ? "Editar Paciente" : "Nuevo Paciente"}</h2>
               {esEdicion && <span className="pm-header-dni">DNI: {paciente!.dni}</span>}
             </div>
           </div>
-          <button className="pm-close" onClick={onCancelar} disabled={state.loading}>✕</button>
+          <button className="pm-close" onClick={onCancelar} disabled={state.loading}>&times;</button>
         </div>
 
         <div className="pm-tabs">
@@ -204,7 +204,7 @@ const PacienteModal = ({ paciente, onGuardado, onCancelar }: Props) => {
           ))}
         </div>
 
-        {state.error && <div className="pm-error"><span>⚠️</span> {state.error}</div>}
+        {state.error && <div className="pm-error">{state.error}</div>}
 
         <form onSubmit={handleSubmit} className="pm-form">
           {state.seccionActiva === 0 && (
@@ -218,8 +218,8 @@ const PacienteModal = ({ paciente, onGuardado, onCancelar }: Props) => {
                     <input className="pm-input" name="dni" value={state.dni} onChange={handleChange}
                       placeholder="12345678" maxLength={8} disabled={state.loading} />
                     {state.loadingReniec && <span className="pm-reniec-status pm-reniec-status--loading"><span className="pm-spinner-sm" /> Consultando RENIEC...</span>}
-                    {state.errorReniec  && <span className="pm-reniec-status pm-reniec-status--warn">🔍 {state.errorReniec}</span>}
-                    {!state.loadingReniec && !state.errorReniec && state.nombres && <span className="pm-reniec-status pm-reniec-status--ok">✓ Datos obtenidos de RENIEC</span>}
+                    {state.errorReniec  && <span className="pm-reniec-status pm-reniec-status--warn">{state.errorReniec}</span>}
+                    {!state.loadingReniec && !state.errorReniec && state.nombres && <span className="pm-reniec-status pm-reniec-status--ok">Datos obtenidos de RENIEC</span>}
                   </>
                 )}
               </div>
@@ -244,7 +244,7 @@ const PacienteModal = ({ paciente, onGuardado, onCancelar }: Props) => {
                     min="1900-01-01"
                   />
                   {errorFecha
-                    ? <span className="pm-field-error">⚠ {errorFecha}</span>
+                    ? <span className="pm-field-error">{errorFecha}</span>
                     : edad !== null && <span className="pm-edad-tag">{edad} años {esMenor && "· Menor de edad"}</span>
                   }
                 </div>
@@ -300,13 +300,13 @@ const PacienteModal = ({ paciente, onGuardado, onCancelar }: Props) => {
             <div className="pm-section">
               {!esMenor ? (
                 <div className="pm-no-aplica">
-                  <span>🔒</span>
+                  <span>-</span>
                   <p>Esta sección aplica solo para pacientes menores de 18 años.</p>
                   <small>Ingresa la fecha de nacimiento en "Datos Personales" para habilitarla.</small>
                 </div>
               ) : (
                 <>
-                  <div className="pm-menor-aviso">👶 Paciente menor de edad — se requiere datos del apoderado</div>
+                  <div className="pm-menor-aviso">Paciente menor de edad — se requiere datos del apoderado</div>
                   <div className="pm-row">
                     <div className="pm-field">
                       <label className="pm-label">Nombre del Apoderado <span className="pm-req">*</span></label>
@@ -337,17 +337,17 @@ const PacienteModal = ({ paciente, onGuardado, onCancelar }: Props) => {
             <div className="pm-footer-nav">
               {state.seccionActiva > 0 && (
                 <button type="button" className="pm-btn pm-btn--secondary"
-                  onClick={() => dispatch({ type: "SET_SECCION", value: state.seccionActiva - 1 })}>← Anterior</button>
+                  onClick={() => dispatch({ type: "SET_SECCION", value: state.seccionActiva - 1 })}>Anterior</button>
               )}
               {state.seccionActiva < SECCIONES.length - 1 && (
                 <button type="button" className="pm-btn pm-btn--secondary"
-                  onClick={() => dispatch({ type: "SET_SECCION", value: state.seccionActiva + 1 })}>Siguiente →</button>
+                  onClick={() => dispatch({ type: "SET_SECCION", value: state.seccionActiva + 1 })}>Siguiente</button>
               )}
             </div>
             <div className="pm-footer-actions">
               <button type="button" className="pm-btn pm-btn--ghost" onClick={onCancelar} disabled={state.loading}>Cancelar</button>
               <button type="submit" className="pm-btn pm-btn--primary" disabled={state.loading || !!errorFecha}>
-                {state.loading ? <><span className="pm-spinner-sm" /> Guardando...</> : esEdicion ? "✓ Guardar cambios" : "✓ Registrar paciente"}
+                {state.loading ? <><span className="pm-spinner-sm" /> Guardando...</> : esEdicion ? "Guardar cambios" : "Registrar paciente"}
               </button>
             </div>
           </div>

@@ -56,7 +56,6 @@ const PasoActual = ({ state, dispatch, handleBuscarPaciente }: PasoActualProps) 
         onSearchChange={(v) => dispatch({ type: "SET_SEARCH_ESPECIALIDAD", value: v })}
         onToggleSuggestions={(v) => dispatch({ type: "TOGGLE_SUGERENCIAS_ESPECIALIDAD", visible: v })}
         onSeleccionar={(esp) => dispatch({ type: "SELECCIONAR_ESPECIALIDAD", especialidad: esp })}
-        onDeseleccionar={() => dispatch({ type: "SELECCIONAR_ESPECIALIDAD", especialidad: null })}
       />
     );
     case 2: return (
@@ -322,7 +321,7 @@ const ReservaCita = () => {
       )}
 
       <div className="reserva-cita-header">
-        <h1>📅 Reservar Cita Médica</h1>
+        <h1>Reservar Cita Medica</h1>
         <button
           onClick={() => dispatch({ type: "RESET" })}
           className="btn-close-form"
@@ -343,7 +342,7 @@ const ReservaCita = () => {
 
         <div className="cita-form">
           <div className="paso-content">
-            <PasoActual   // ✅ componente real, no función inline
+            <PasoActual
               state={state}
               dispatch={dispatch}
               handleBuscarPaciente={handleBuscarPaciente}

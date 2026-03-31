@@ -96,13 +96,13 @@ export class DoctorApiService {
   static async obtenerHorariosDisponibles(doctorId: string, fecha: string): Promise<HorarioDisponible[]> {
     try {
       const response = await api.get<{ success: boolean; data: HorarioDisponible[] }>(
-        `/doctores/${doctorId}/horarios-disponibles`, // ✅ corregido
+        `/doctores/${doctorId}/horarios-disponibles`,
         { params: { fecha } }
       );
       return response.data.success ? response.data.data : [];
     } catch (error: unknown) {
       const err = error as AxiosErrorResponse;
-      console.error("❌ Error al obtener horarios disponibles:", err.response?.data || err.message);
+      console.error("Error al obtener horarios disponibles:", err.response?.data || err.message);
       return [];
     }
   }
