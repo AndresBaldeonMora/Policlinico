@@ -1,4 +1,3 @@
-import { useRef, useEffect } from "react";
 import type { Especialidad } from "../../services/especialidad.service";
 
 interface Props {
@@ -10,32 +9,17 @@ interface Props {
   onSearchChange: (value: string) => void;
   onToggleSuggestions: (visible: boolean) => void;
   onSeleccionar: (esp: Especialidad) => void;
+  onDeseleccionar: () => void;
 }
 
 const PasoEspecialidad = ({
-  searchEspecialidad, especialidades,
+  searchEspecialidad, especialidades, especialidadSeleccionada,
   showSuggestions, loading, onSearchChange, onToggleSuggestions,
-  onSeleccionar
+  onSeleccionar, onDeseleccionar,
 }: Props) => {
-  const containerRef = useRef<HTMLDivElement>(null);
-
-  // Cerrar al hacer clic fuera
-  useEffect(() => {
-    const handler = (e: MouseEvent) => {
-      if (containerRef.current && !containerRef.current.contains(e.target as Node)) {
-        onToggleSuggestions(false);
-      }
-    };
-    document.addEventListener("mousedown", handler);
-    return () => document.removeEventListener("mousedown", handler);
-  }, [onToggleSuggestions]);
-
-  // Filtrar — si no hay texto muestra todas
-  const sugerencias = searchEspecialidad
-    ? especialidades.filter((e) =>
-        e.nombre.toLowerCase().includes(searchEspecialidad.toLowerCase())
-      )
-    : especialidades;
+  const sugerencias = especialidades.filter((e) =>
+    e.nombre.toLowerCase().includes(searchEspecialidad.toLowerCase())
+  );
 
   return (
     <div className="form-step">
@@ -45,68 +29,45 @@ const PasoEspecialidad = ({
       </div>
 
       <div className="form-group">
-        <label htmlFor="especialidad">Especialidad</label>
-        <div className="autocomplete-container" ref={containerRef}>
+        <label htmlFor="especialidad">Buscar Especialidad</label>
+        <div className="autocomplete-container">
+          <input
+            type="text"
+            id="especialidad"
+            value={searchEspecialidad}
+            onChange={(e) => { onSearchChange(e.target.value); onToggleSuggestions(true); }}
+            onFocus={() => onToggleSuggestions(true)}
+            placeholder="Escriba para buscar..."
+            disabled={loading}
+            className="input-search"
+          />
 
-          {/* Input + ícono flecha */}
-          <div className="combobox-wrapper">
-            <input
-              type="text"
-              id="especialidad"
-              value={searchEspecialidad}
-              onChange={(e) => { onSearchChange(e.target.value); onToggleSuggestions(true); }}
-              onFocus={() => onToggleSuggestions(true)}
-              placeholder="Seleccione o escriba una especialidad..."
-              disabled={loading}
-              className="input-search combobox-input"
-            />
-            <button
-              type="button"
-              className="combobox-arrow"
-              tabIndex={-1}
-              onClick={() => onToggleSuggestions(!showSuggestions)}
-              aria-label="Mostrar opciones"
-            >
-              <svg
-                width="16"
-                height="16"
-                viewBox="0 0 16 16"
-                fill="none"
-                style={{ transform: showSuggestions ? "rotate(180deg)" : "rotate(0deg)", transition: "transform 0.2s" }}
-              >
-                <path d="M3 6l5 5 5-5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
-              </svg>
-            </button>
-          </div>
-
-          {/* Dropdown */}
-          {showSuggestions && (
+          {showSuggestions && searchEspecialidad && sugerencias.length > 0 && (
             <div className="suggestions-list">
-              {sugerencias.length === 0 ? (
-                <div className="no-results">Sin resultados</div>
-              ) : (
-                sugerencias.map((esp) => (
-                  <div
-                    key={esp.id}
-                    className="suggestion-item"
-                    role="button"
-                    tabIndex={0}
-                    onClick={() => { onSeleccionar(esp); onToggleSuggestions(false); }}
-                    onKeyDown={(e) => {
-                      if (e.key === "Enter" || e.key === " ") {
-                        e.preventDefault();
-                        onSeleccionar(esp);
-                        onToggleSuggestions(false);
-                      }
-                    }}
-                  >
-                    {esp.nombre}
-                  </div>
-                ))
-              )}
+              {sugerencias.map((esp) => (
+                <div
+                  key={esp.id}
+                  className="suggestion-item"
+                  role="button"
+                  tabIndex={0}
+                  onClick={() => onSeleccionar(esp)}
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter" || e.key === " ") { e.preventDefault(); onSeleccionar(esp); }
+                  }}
+                >
+                  🏥 {esp.nombre}
+                </div>
+              ))}
             </div>
           )}
         </div>
+
+        {especialidadSeleccionada && (
+          <div className="selected-tag">
+            <span>🏥 {especialidadSeleccionada.nombre}</span>
+            <button type="button" onClick={onDeseleccionar} className="tag-close" aria-label="Deseleccionar especialidad">×</button>
+          </div>
+        )}
       </div>
     </div>
   );

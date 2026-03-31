@@ -1,5 +1,6 @@
-import { ChevronLeft, ChevronRight } from "lucide-react";
 import type { Vista } from "./types";
+
+
 
 const VISTAS: readonly Vista[] = ["dia", "semana", "mes"];
 
@@ -14,9 +15,9 @@ const CalendarioTopbar = ({ titulo, vista, onCambiarFecha, onCambiarVista }: Pro
   <div className="calendario-topbar">
 
     <div className="calendario-topbar-nav">
-      <button onClick={() => onCambiarFecha(-1)} aria-label="Período anterior"><ChevronLeft size={16} /></button>
+      <button onClick={() => onCambiarFecha(-1)} aria-label="Período anterior">◀</button>
       <h2>{titulo}</h2>
-      <button onClick={() => onCambiarFecha(1)} aria-label="Período siguiente"><ChevronRight size={16} /></button>
+      <button onClick={() => onCambiarFecha(1)} aria-label="Período siguiente">▶</button>
     </div>
 
     <div className="vista-selector" role="group" aria-label="Selector de vista">

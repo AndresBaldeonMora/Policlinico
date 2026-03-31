@@ -1,24 +1,34 @@
-import { useEffect, useRef, useState } from "react";
-import { useSearchParams } from "react-router-dom";
-import { Search, UserPlus, Pencil, Users } from "lucide-react";
+// src/pages/ListaPacientes/ListaPacientes.tsx
+import { useEffect, useState } from "react";
 import "../ListaCitas/ListaCitas.css";
 import "./ListaPacientes.css";
-import { PacienteApiService, type PacienteTransformado } from "../../services/paciente.service";
+import {
+  PacienteApiService,
+  type PacienteTransformado,
+} from "../../services/paciente.service";
 import PacienteModal from "./PacienteModal";
 
 const normalizeString = (str: string): string =>
-  (str || "").toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+  (str || "")
+    .toLowerCase()
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "");
 
-interface NotificationState { message: string; type: "success" | "error" | ""; visible: boolean; }
+interface NotificationState {
+  message: string;
+  type: "success" | "error" | "";
+  visible: boolean;
+}
 
 const ListaPacientes = () => {
-  const [searchParams] = useSearchParams();
-  const highlightId = searchParams.get("highlight");
-  const highlightRef = useRef<HTMLTableRowElement>(null);
   const [pacientes, setPacientes] = useState<PacienteTransformado[]>([]);
-  const [busqueda, setBusqueda] = useState(searchParams.get("buscar") || "");
+  const [busqueda, setBusqueda] = useState("");
   const [cargando, setCargando] = useState(true);
-  const [notification, setNotification] = useState<NotificationState>({ message: "", type: "", visible: false });
+  const [notification, setNotification] = useState<NotificationState>({
+    message: "", type: "", visible: false,
+  });
+
+  // Modal state
   const [modalAbierto, setModalAbierto] = useState(false);
   const [pacienteEditando, setPacienteEditando] = useState<PacienteTransformado | null>(null);
 
@@ -30,7 +40,8 @@ const ListaPacientes = () => {
   const cargarPacientes = async () => {
     try {
       setCargando(true);
-      setPacientes(await PacienteApiService.listar());
+      const data = await PacienteApiService.listar();
+      setPacientes(data);
     } catch {
       showNotification("Error al cargar la lista de pacientes.", "error");
     } finally {
@@ -40,104 +51,122 @@ const ListaPacientes = () => {
 
   useEffect(() => { cargarPacientes(); }, []);
 
-  useEffect(() => {
-    if (highlightId && highlightRef.current) {
-      highlightRef.current.scrollIntoView({ behavior: "smooth", block: "center" });
-    }
-  }, [highlightId, pacientes]);
-
   const pacientesFiltrados = pacientes.filter((p) => {
     const filtro = normalizeString(busqueda);
-    return normalizeString(`${p.nombres} ${p.apellidos}`).includes(filtro) ||
+    const nombreCompleto = normalizeString(`${p.nombres ?? ""} ${p.apellidos ?? ""}`);
+    return (
+      nombreCompleto.includes(filtro) ||
       normalizeString(p.dni || "").includes(filtro) ||
-      normalizeString(p.telefono || "").includes(filtro);
+      normalizeString(p.telefono || "").includes(filtro)
+    );
   });
 
-  const abrirNuevo = () => { setPacienteEditando(null); setModalAbierto(true); };
-  const abrirEditar = (p: PacienteTransformado) => { setPacienteEditando(p); setModalAbierto(true); };
+  const abrirNuevo = () => {
+    setPacienteEditando(null);
+    setModalAbierto(true);
+  };
+
+  const abrirEditar = (p: PacienteTransformado) => {
+    setPacienteEditando(p);
+    setModalAbierto(true);
+  };
 
   const handleGuardado = (p: PacienteTransformado) => {
     setModalAbierto(false);
     setPacientes((prev) => {
       const idx = prev.findIndex((x) => x._id === p._id);
-      if (idx >= 0) { const next = [...prev]; next[idx] = p; return next; }
+      if (idx >= 0) {
+        const next = [...prev];
+        next[idx] = p;
+        return next;
+      }
       return [p, ...prev];
     });
-    showNotification(pacienteEditando ? "Paciente actualizado correctamente." : "Paciente registrado correctamente.", "success");
+    showNotification(
+      pacienteEditando ? "Paciente actualizado correctamente." : "Paciente registrado correctamente.",
+      "success"
+    );
   };
 
   return (
-    <div className="lista-page">
-      {notification.visible && <div className={`notification ${notification.type}`}>{notification.message}</div>}
-
-      <div className="lista-page-header">
-        <div>
-          <h1>Pacientes</h1>
-          <p className="lista-page-subtitle">{pacientes.length} pacientes registrados</p>
+    <div className="lista-citas">
+      {notification.visible && (
+        <div className={`notification ${notification.type}`}>
+          {notification.type === "success" ? "✅ " : "❌ "}
+          {notification.message}
         </div>
-        <button className="btn-page-action" onClick={abrirNuevo}>
-          <UserPlus size={16} /> Nuevo Paciente
+      )}
+
+      {/* Header con botón */}
+      <div className="lp-header">
+        <h1>Pacientes Registrados</h1>
+        <button className="lp-btn-nuevo" onClick={abrirNuevo}>
+          <span>+</span> Nuevo Paciente
         </button>
       </div>
 
-      <div className="lista-search-bar">
-        <Search size={18} className="lista-search-icon" />
-        <input type="text" placeholder="Buscar por DNI, nombre o telefono..."
-          value={busqueda} onChange={(e) => setBusqueda(e.target.value)} className="lista-search-input" />
-        {!cargando && busqueda && (
-          <span className="lista-search-count">{pacientesFiltrados.length} de {pacientes.length}</span>
+      {/* Buscador + contador */}
+      <div className="buscador-container lp-buscador">
+        <input
+          type="text"
+          placeholder="Buscar por DNI, nombre o teléfono..."
+          value={busqueda}
+          onChange={(e) => setBusqueda(e.target.value)}
+          className="input-busqueda"
+        />
+        {!cargando && (
+          <span className="lp-contador">
+            {pacientesFiltrados.length} de {pacientes.length} pacientes
+          </span>
         )}
       </div>
 
       {cargando ? (
-        <div className="lista-loading"><div className="lista-loading-spinner" /><p>Cargando pacientes...</p></div>
+        <p className="texto-cargando">Cargando pacientes...</p>
       ) : (
-        <div className="lista-table-card">
+        <div className="card">
           <div className="table-container">
-            <table className="modern-table">
+            <table className="citas-table citas-table-pacientes">
               <thead>
                 <tr>
-                  <th style={{ width: 120 }}>DNI</th>
-                  <th style={{ width: 250 }}>Paciente</th>
-                  <th style={{ width: 130 }}>Telefono</th>
+                  <th className="col-dni">DNI</th>
+                  <th className="col-nombre">Nombre Completo</th>
+                  <th className="col-telefono">Teléfono</th>
                   <th>Correo</th>
-                  <th style={{ width: 80 }}>Edad</th>
-                  <th style={{ width: 80 }}>Accion</th>
+                  <th className="col-edad">Edad</th>
+                  <th className="col-acciones">Acciones</th>
                 </tr>
               </thead>
               <tbody>
                 {pacientesFiltrados.length > 0 ? (
                   pacientesFiltrados.map((p) => (
-                    <tr
-                      key={p.id}
-                      ref={highlightId === p.id ? highlightRef : undefined}
-                      className={highlightId === p.id ? "tr-highlight" : ""}
-                    >
-                      <td><span className="td-mono">{p.dni}</span></td>
-                      <td>
-                        <div className="td-person">
-                          <div className="td-avatar">{p.nombres.charAt(0)}</div>
-                          <div className="td-person-info">
-                            <span className="td-person-name">{p.nombres} {p.apellidos}</span>
-                            {p.distrito && <span className="td-person-meta">{p.distrito}</span>}
-                          </div>
-                        </div>
+                    <tr key={p.id}>
+                      <td className="col-dni">
+                        <span className="lp-dni-badge">{p.dni}</span>
                       </td>
-                      <td>{p.telefono || <span className="td-muted">--</span>}</td>
-                      <td className="td-truncate">{p.correo || <span className="td-muted">--</span>}</td>
-                      <td className="td-center">{p.edad != null ? `${p.edad}` : <span className="td-muted">--</span>}</td>
-                      <td className="td-center">
-                        <button className="btn-action" onClick={() => abrirEditar(p)} title="Editar paciente">
-                          <Pencil size={15} />
+                      <td className="col-nombre">
+                        <span className="lp-nombre">{p.nombres} {p.apellidos}</span>
+                      </td>
+                      <td className="col-telefono">{p.telefono || <span className="lp-vacio">—</span>}</td>
+                      <td>{p.correo || <span className="lp-vacio">—</span>}</td>
+                      <td className="col-edad">
+                        {p.edad != null ? `${p.edad} años` : <span className="lp-vacio">—</span>}
+                      </td>
+                      <td className="col-acciones">
+                        <button
+                          className="lp-btn-editar"
+                          onClick={() => abrirEditar(p)}
+                          title="Editar paciente"
+                        >
+                          ✏️ Editar
                         </button>
                       </td>
                     </tr>
                   ))
                 ) : (
                   <tr>
-                    <td colSpan={6} className="td-empty">
-                      <Users size={32} className="td-empty-icon" />
-                      <p>{busqueda ? "No se encontraron pacientes con ese criterio." : "No hay pacientes registrados."}</p>
+                    <td colSpan={6} className="sin-resultados">
+                      {busqueda ? "No se encontraron pacientes con ese criterio." : "No hay pacientes registrados."}
                     </td>
                   </tr>
                 )}
@@ -147,8 +176,13 @@ const ListaPacientes = () => {
         </div>
       )}
 
+      {/* Modal crear/editar */}
       {modalAbierto && (
-        <PacienteModal paciente={pacienteEditando} onGuardado={handleGuardado} onCancelar={() => setModalAbierto(false)} />
+        <PacienteModal
+          paciente={pacienteEditando}
+          onGuardado={handleGuardado}
+          onCancelar={() => setModalAbierto(false)}
+        />
       )}
     </div>
   );

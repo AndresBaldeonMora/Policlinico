@@ -14,6 +14,7 @@ export interface Paciente {
   correo: string;
   direccion: string;
   distrito?: string;
+  // Apoderado (solo menores)
   apoderadoNombre?: string;
   apoderadoParentesco?: string;
   apoderadoTelefono?: string;

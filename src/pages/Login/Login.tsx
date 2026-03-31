@@ -1,8 +1,7 @@
-import type { FormEvent, KeyboardEvent } from "react";
-import { useEffect, useRef, useState } from "react";
+import type { FormEvent } from "react";
+import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "../../hooks/userAuth";
-import { Mail, Lock, AlertCircle, ArrowRight, Eye, EyeOff } from "lucide-react";
 import "./Login.css";
 
 const Login = () => {
@@ -10,32 +9,32 @@ const Login = () => {
   const navigate = useNavigate();
   const [correo, setCorreo] = useState("");
   const [password, setPassword] = useState("");
-  const [showPass, setShowPass] = useState(false);
   const [cargando, setCargando] = useState(false);
   const [error, setError] = useState("");
-  const passRef = useRef<HTMLInputElement>(null);
 
-  const handleCorreoKey = (e: KeyboardEvent<HTMLInputElement>) => {
-    if (e.key === "Enter") {
-      e.preventDefault();
-      passRef.current?.focus();
-    }
-  };
-
+  // Redirige automáticamente cuando el usuario queda autenticado
   useEffect(() => {
     if (!isAuthenticated || !user) return;
-    navigate(user.rol === "MEDICO" ? "/medico" : "/", { replace: true });
+    if (user.rol === "MEDICO") {
+      navigate("/medico", { replace: true });
+    } else {
+      navigate("/", { replace: true });
+    }
   }, [isAuthenticated, user, navigate]);
 
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
     setError("");
-    if (!correo || !password) { setError("Ingresa tu correo y contrasena."); return; }
+    if (!correo || !password) {
+      setError("Ingresa tu correo y contraseña.");
+      return;
+    }
     setCargando(true);
     try {
       await login(correo, password);
+      // La redirección la maneja el useEffect de arriba
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Error al iniciar sesion.");
+      setError(err instanceof Error ? err.message : "Error al iniciar sesión.");
     } finally {
       setCargando(false);
     }
@@ -43,136 +42,84 @@ const Login = () => {
 
   return (
     <div className="login-page">
-      {/* Left panel - visual */}
-      <div className="login-panel-left">
-        <div className="login-panel-bg">
-          <div className="login-grid-pattern" />
-          <div className="login-glow login-glow--1" />
-          <div className="login-glow login-glow--2" />
-        </div>
-
-        <div className="login-panel-content">
-          <div className="login-illustration">
-            <svg viewBox="0 0 200 200" className="login-svg-art">
-              {/* Cross / medical */}
-              <rect x="85" y="40" width="30" height="120" rx="15" fill="rgba(255,255,255,0.15)" />
-              <rect x="40" y="85" width="120" height="30" rx="15" fill="rgba(255,255,255,0.15)" />
-              {/* Pulse line */}
-              <polyline
-                points="20,120 60,120 72,90 84,150 96,100 108,130 120,120 180,120"
-                fill="none"
-                stroke="rgba(255,255,255,0.3)"
-                strokeWidth="3"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                className="login-pulse-line"
-              />
-              {/* Circles */}
-              <circle cx="100" cy="100" r="80" fill="none" stroke="rgba(255,255,255,0.06)" strokeWidth="1" />
-              <circle cx="100" cy="100" r="60" fill="none" stroke="rgba(255,255,255,0.04)" strokeWidth="1" />
-            </svg>
-          </div>
-
-          <h2 className="login-panel-title">Sistema de Gestion Clinica</h2>
-          <p className="login-panel-desc">
-            Administra citas, pacientes y personal medico de manera eficiente y segura.
-          </p>
-
-          <div className="login-panel-features">
-            <div className="login-feature">
-              <span className="login-feature-dot" />
-              Gestion de citas en tiempo real
-            </div>
-            <div className="login-feature">
-              <span className="login-feature-dot" />
-              Historial clinico de pacientes
-            </div>
-            <div className="login-feature">
-              <span className="login-feature-dot" />
-              Panel de control por especialidad
-            </div>
-          </div>
-        </div>
+      <div className="login-bg">
+        <div className="login-bg-circle login-bg-circle--1" />
+        <div className="login-bg-circle login-bg-circle--2" />
+        <div className="login-bg-circle login-bg-circle--3" />
       </div>
 
-      {/* Right panel - form */}
-      <div className="login-panel-right">
-        <div className="login-form-container">
-          <div className="login-form-header">
-            <h1>Bienvenido</h1>
-            <p>Ingresa tus credenciales para acceder al sistema</p>
+      <div className="login-card">
+        <div className="login-header">
+          <div className="login-logo">
+            <svg viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <rect width="48" height="48" rx="14" fill="#0ea5e9" />
+              <path d="M24 10v28M10 24h28" stroke="white" strokeWidth="5" strokeLinecap="round" />
+            </svg>
+          </div>
+          <h1 className="login-title">Centro Médico<br />San José</h1>
+          <p className="login-subtitle">Sistema de gestión clínica</p>
+        </div>
+
+        <form onSubmit={handleSubmit} className="login-form" noValidate>
+          <div className="login-field">
+            <label className="login-label" htmlFor="correo">Correo institucional</label>
+            <div className="login-input-wrap">
+              <span className="login-input-icon">
+                <svg viewBox="0 0 20 20" fill="currentColor">
+                  <path d="M2.003 5.884L10 9.882l7.997-3.998A2 2 0 0016 4H4a2 2 0 00-1.997 1.884z" />
+                  <path d="M18 8.118l-8 4-8-4V14a2 2 0 002 2h12a2 2 0 002-2V8.118z" />
+                </svg>
+              </span>
+              <input
+                id="correo"
+                type="email"
+                className="login-input"
+                value={correo}
+                onChange={(e) => setCorreo(e.target.value)}
+                placeholder="usuario@clinica.com"
+                autoComplete="email"
+                disabled={cargando}
+              />
+            </div>
           </div>
 
-          <form onSubmit={handleSubmit} className="login-form" noValidate>
-            <div className="login-field">
-              <label className="login-label" htmlFor="correo">Correo electronico</label>
-              <div className="login-input-wrap">
-                <span className="login-input-icon"><Mail size={18} /></span>
-                <input
-                  id="correo"
-                  type="email"
-                  className="login-input"
-                  value={correo}
-                  onChange={(e) => setCorreo(e.target.value)}
-                  onKeyDown={handleCorreoKey}
-                  placeholder="correo@clinica.com"
-                  autoComplete="email"
-                  disabled={cargando}
-                />
-              </div>
+          <div className="login-field">
+            <label className="login-label" htmlFor="password">Contraseña</label>
+            <div className="login-input-wrap">
+              <span className="login-input-icon">
+                <svg viewBox="0 0 20 20" fill="currentColor">
+                  <path fillRule="evenodd" d="M5 9V7a5 5 0 0110 0v2a2 2 0 012 2v5a2 2 0 01-2 2H5a2 2 0 01-2-2v-5a2 2 0 012-2zm8-2v2H7V7a3 3 0 016 0z" clipRule="evenodd" />
+                </svg>
+              </span>
+              <input
+                id="password"
+                type="password"
+                className="login-input"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                placeholder="••••••••"
+                autoComplete="current-password"
+                disabled={cargando}
+              />
             </div>
+          </div>
 
-            <div className="login-field">
-              <label className="login-label" htmlFor="password">Contrasena</label>
-              <div className="login-input-wrap">
-                <span className="login-input-icon"><Lock size={18} /></span>
-                <input
-                  ref={passRef}
-                  id="password"
-                  type="password"
-                  className="login-input login-input--pass"
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  placeholder="Ingresa tu contrasena"
-                  autoComplete="current-password"
-                  disabled={cargando}
-                />
-                {showPass && password && (
-                  <span className="login-pass-preview">{password}</span>
-                )}
-                <button
-                  type="button"
-                  className="login-toggle-pass"
-                  onMouseDown={() => setShowPass(true)}
-                  onMouseUp={() => setShowPass(false)}
-                  onMouseLeave={() => setShowPass(false)}
-                  onTouchStart={() => setShowPass(true)}
-                  onTouchEnd={() => setShowPass(false)}
-                  tabIndex={-1}
-                  aria-label="Mostrar contrasena"
-                >
-                  {showPass ? <EyeOff size={16} /> : <Eye size={16} />}
-                </button>
-              </div>
+          {error && (
+            <div className="login-error" role="alert">
+              <svg viewBox="0 0 20 20" fill="currentColor" className="login-error-icon">
+                <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
+              </svg>
+              {error}
             </div>
+          )}
 
-            {error && (
-              <div className="login-error" role="alert">
-                <AlertCircle size={15} />
-                <span>{error}</span>
-              </div>
-            )}
+          <button type="submit" className="login-button" disabled={cargando}>
+            {cargando ? (<><span className="login-spinner" />Ingresando...</>) : "Ingresar al sistema"}
+          </button>
+        </form>
 
-            <button type="submit" className="login-button" disabled={cargando}>
-              {cargando ? (
-                <><span className="login-spinner" />Verificando...</>
-              ) : (
-                <>Ingresar <ArrowRight size={16} /></>
-              )}
-            </button>
-          </form>
-
-          <p className="login-footer-text">Acceso exclusivo para personal autorizado</p>
+        <div className="login-footer">
+          <span>Acceso exclusivo para personal autorizado</span>
         </div>
       </div>
     </div>

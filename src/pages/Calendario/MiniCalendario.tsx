@@ -1,4 +1,3 @@
-import { ChevronLeft, ChevronRight } from "lucide-react";
 import "./MiniCalendario.css";
 
 interface MiniCalendarioProps {
@@ -30,7 +29,7 @@ const MiniCalendario = ({ fecha, onChange }: MiniCalendarioProps) => {
     <div className="mini-cal">
       {/* HEADER CON FLECHAS */}
       <div className="mini-cal-header">
-        <button onClick={() => cambiarMes(-1)}><ChevronLeft size={14} /></button>
+        <button onClick={() => cambiarMes(-1)}>◀</button>
 
         <span>
           {fecha.toLocaleDateString("es-PE", {
@@ -39,7 +38,7 @@ const MiniCalendario = ({ fecha, onChange }: MiniCalendarioProps) => {
           })}
         </span>
 
-        <button onClick={() => cambiarMes(1)}><ChevronRight size={14} /></button>
+        <button onClick={() => cambiarMes(1)}>▶</button>
       </div>
 
       {/* GRID */}

@@ -6,7 +6,7 @@ import api from './api';
 export interface Especialidad {
   id: string;
   nombre: string;
-  descripcion?: string;
+  descripcion?: string; // Hazlo opcional
 }
 
 export class EspecialidadApiService {

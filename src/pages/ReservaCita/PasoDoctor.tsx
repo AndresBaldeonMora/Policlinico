@@ -32,17 +32,12 @@ const PasoDoctor = ({ doctoresDisponibles, doctorSeleccionado, especialidadSelec
               if (e.key === "Enter" || e.key === " ") { e.preventDefault(); onSeleccionar(doctor); }
             }}
           >
-            <div className="doctor-avatar">{doctor.nombres.charAt(0)}{doctor.apellidos.charAt(0)}</div>
+            <div className="doctor-avatar">👨‍⚕️</div>
             <div className="doctor-info-text">
               <h4>{doctor.nombres} {doctor.apellidos}</h4>
               <p>{doctor.especialidad}</p>
             </div>
-            {doctorSeleccionado?.id === doctor.id && (
-              <svg width="20" height="20" viewBox="0 0 20 20" fill="none" style={{ marginLeft: "auto", flexShrink: 0 }}>
-                <circle cx="10" cy="10" r="10" fill="#0f766e" />
-                <path d="M5.5 10l3 3 6-6" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
-              </svg>
-            )}
+            {doctorSeleccionado?.id === doctor.id && <span className="doctor-check-mark">✓</span>}
           </div>
         ))}
       </div>

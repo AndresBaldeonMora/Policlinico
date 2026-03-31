@@ -12,11 +12,14 @@ const api = axios.create({
 
 api.interceptors.request.use(
   async (config) => {
+    // Leer la sesión activa de Supabase (no localStorage directo)
     const { data } = await supabase.auth.getSession();
     const token = data.session?.access_token;
+
     if (token) {
       config.headers.Authorization = `Bearer ${token}`;
     }
+
     return config;
   },
   (error) => Promise.reject(error)
