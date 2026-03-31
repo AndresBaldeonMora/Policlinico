@@ -28,7 +28,6 @@ export interface NotificationState {
 export interface ReservaState {
   // UI
   loading: boolean;
-  reniecLoading: boolean;
   error: string;
   notification: NotificationState;
   pasoActual: number;
@@ -85,7 +84,6 @@ export type ReservaAction =
   | { type: "RESET_HORA" }
   // Paciente
   | { type: "SET_SEARCH_DNI"; value: string }
-  | { type: "SET_RENIEC_LOADING"; value: boolean }
   | { type: "SET_PACIENTE_ENCONTRADO"; paciente: PacienteTransformado | null }
   | { type: "SELECCIONAR_PACIENTE"; paciente: PacienteTransformado }
   | { type: "SET_TODOS_PACIENTES"; pacientes: PacienteTransformado[] }
@@ -105,7 +103,6 @@ export type ReservaAction =
 // ─── Estado inicial ───────────────────────────────────────
 export const initialState: ReservaState = {
   loading: false,
-  reniecLoading: false,
   error: "",
   notification: { message: "", type: "", visible: false },
   pasoActual: 1,
@@ -187,10 +184,9 @@ export function reservaReducer(state: ReservaState, action: ReservaAction): Rese
     case "RESET_HORA":
       return { ...state, horaSeleccionada: "", fechaSeleccionada: "" };
 
+
     case "SET_SEARCH_DNI":
       return { ...state, searchDNI: action.value, error: "", pacienteEncontrado: null, pacienteSeleccionado: null };
-    case "SET_RENIEC_LOADING":
-      return { ...state, reniecLoading: action.value };
     case "SET_PACIENTE_ENCONTRADO":
       return { ...state, pacienteEncontrado: action.paciente };
     case "SELECCIONAR_PACIENTE":
@@ -199,6 +195,7 @@ export function reservaReducer(state: ReservaState, action: ReservaAction): Rese
       return { ...state, todosLosPacientes: action.pacientes };
     case "TOGGLE_NUEVO_PACIENTE":
       return { ...state, mostrarNuevoPaciente: action.visible };
+
 
     case "CONFIRMAR_INICIO":
       return { ...state, loading: true, error: "" };
@@ -214,6 +211,7 @@ export function reservaReducer(state: ReservaState, action: ReservaAction): Rese
       return { ...state, notification: { ...state.notification, visible: false } };
     case "SET_ERROR":
       return { ...state, error: action.message };
+
 
     case "PREFILL_FECHA":
       return {
@@ -235,8 +233,10 @@ export function reservaReducer(state: ReservaState, action: ReservaAction): Rese
         pasoActual: Math.max(state.pasoActual, state.fechaSeleccionada ? 5 : 2),
       };
 
+
     case "RESET":
       return { ...initialState, especialidades: state.especialidades, todosLosDoctores: state.todosLosDoctores, todosLosPacientes: state.todosLosPacientes, mesesDisponibles: state.mesesDisponibles };
+
 
     default:
       return state;

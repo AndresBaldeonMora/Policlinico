@@ -592,15 +592,15 @@
 }
 
 [data-theme="dark"] .multi-celda:hover {
-  background: rgba(20, 184, 166, 0.08);
+  background: rgba(16, 185, 129, 0.08);
 }
 
 [data-theme="dark"] .calendario-celda:hover {
-  background: rgba(20, 184, 166, 0.08);
+  background: rgba(16, 185, 129, 0.08);
 }
 
 [data-theme="dark"] .calendario-celda--hoy {
-  background: rgba(20, 184, 166, 0.1);
+  background: rgba(16, 185, 129, 0.1);
 }
 
 [data-theme="dark"] .calendario-celda--vacia {

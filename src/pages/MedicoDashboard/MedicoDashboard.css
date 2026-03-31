@@ -1,457 +1,157 @@
-/* ===== CONTAINER PRINCIPAL ===== */
 .medico-dashboard {
   min-height: 100vh;
-  background-color: #f9fafb;
-  padding: 2rem;
+  background-color: var(--bg-body);
+  padding: 1.5rem;
 }
 
-/* ===== HEADER ===== */
-.medico-header {
-  background-color: #ffffff;
-  border-radius: 12px;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
-  padding: 2rem;
-  margin-bottom: 2rem;
+.medico-calendario-layout {
+  display: grid;
+  grid-template-columns: 250px 1fr;
+  gap: 1.25rem;
+  min-height: 500px;
 }
 
-.medico-header-content {
+.medico-hero {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-xl);
+  padding: 1.5rem 2rem;
+  margin-bottom: 1.5rem;
+}
+
+.medico-hero-top {
+  margin-bottom: 1.25rem;
+}
+
+.medico-hero-profile {
   display: flex;
   align-items: center;
-  justify-content: space-between;
-  gap: 2rem;
+  gap: 1rem;
 }
 
-.medico-header-left {
-  display: flex;
-  align-items: center;
-  gap: 1.5rem;
-}
-
-.medico-avatar {
-  width: 80px;
-  height: 80px;
-  background: linear-gradient(135deg, #10b981 0%, #059669 100%);
-  border-radius: 50%;
+.medico-hero-avatar {
+  width: 48px;
+  height: 48px;
+  background: var(--primary-lighter);
+  border-radius: var(--radius-md);
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 2.5rem;
-  flex-shrink: 0;
-  box-shadow: 0 4px 6px rgba(16, 185, 129, 0.2);
-}
-
-.medico-info {
-  flex: 1;
-}
-
-.medico-info h1 {
-  font-size: 1.75rem;
+  color: var(--primary);
   font-weight: 700;
-  color: #1f2937;
-  margin: 0 0 0.5rem 0;
-  line-height: 1.2;
-}
-
-.medico-info .especialidad {
-  color: #10b981;
-  font-size: 1.125rem;
-  font-weight: 600;
-  margin: 0 0 0.25rem 0;
-}
-
-.medico-info .cmp {
-  color: #6b7280;
-  font-size: 0.875rem;
-  margin: 0;
-}
-
-.medico-header-right {
-  text-align: right;
-}
-
-.medico-header-right .label {
-  font-size: 0.875rem;
-  color: #6b7280;
-  margin: 0 0 0.25rem 0;
-  display: block;
-}
-
-.medico-header-right .value {
-  color: #1f2937;
-  font-weight: 500;
   font-size: 1rem;
-  margin: 0;
+  flex-shrink: 0;
 }
 
-/* ===== ESTADÍSTICAS ===== */
-.stats-grid {
+.medico-hero-info h1 {
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: var(--text-primary);
+  margin: 0 0 0.35rem 0;
+  line-height: 1.2;
+  letter-spacing: -0.02em;
+}
+
+.medico-hero-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+}
+
+.medico-hero-tag {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  padding: 0.15rem 0.6rem;
+  border-radius: 100px;
+  font-size: 0.72rem;
+  font-weight: 600;
+}
+
+.medico-hero-tag--primary {
+  background: var(--primary-lighter);
+  color: var(--primary);
+}
+
+.medico-hero-tag--muted {
+  background: var(--bg-body);
+  color: var(--text-muted);
+}
+
+.medico-hero-stats {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
-  gap: 1.5rem;
-  margin-bottom: 2rem;
+  border-top: 1px solid var(--border);
+  padding-top: 1.25rem;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 0.625rem;
 }
 
-.stat-card {
-  background-color: #ffffff;
-  border-radius: 12px;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.08);
-  padding: 1.75rem;
-  transition: transform 0.2s, box-shadow 0.2s;
-}
-
-.stat-card:hover {
-  transform: translateY(-4px);
-  box-shadow: 0 8px 16px rgba(0, 0, 0, 0.12);
-}
-
-.stat-card-content {
+.stat-chip {
   display: flex;
   align-items: center;
-  justify-content: space-between;
+  gap: 0.625rem;
+  padding: 0.75rem;
+  border-radius: var(--radius-md);
+  background: var(--bg-body);
+  border: 1px solid var(--border);
+  transition: border-color 0.15s var(--ease);
 }
 
-.stat-info {
-  flex: 1;
+.stat-chip:hover {
+  border-color: var(--primary-light);
 }
 
-.stat-info p {
-  margin: 0;
+.stat-chip-icon {
+  width: 32px;
+  height: 32px;
+  border-radius: var(--radius-sm);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
 }
 
-.stat-label {
-  font-size: 0.875rem;
-  color: #6b7280;
-  font-weight: 500;
-  text-transform: uppercase;
-  letter-spacing: 0.5px;
+.stat-chip--info .stat-chip-icon {
+  background: var(--info-bg);
+  color: var(--info);
 }
 
-.stat-value {
-  font-size: 2.5rem;
+.stat-chip--warning .stat-chip-icon {
+  background: var(--warning-bg);
+  color: var(--warning);
+}
+
+.stat-chip--success .stat-chip-icon {
+  background: var(--success-bg);
+  color: var(--success);
+}
+
+.stat-chip--danger .stat-chip-icon {
+  background: var(--error-bg);
+  color: var(--error);
+}
+
+.stat-chip-data {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.stat-chip-value {
+  font-size: 1.25rem;
   font-weight: 800;
-  margin-top: 0.5rem;
+  color: var(--text-primary);
   line-height: 1;
 }
 
-.stat-value.blue {
-  color: #3b82f6;
-}
-
-.stat-value.yellow {
-  color: #eab308;
-}
-
-.stat-value.green {
-  color: #22c55e;
-}
-
-.stat-value.red {
-  color: #ef4444;
-}
-
-.stat-icon {
-  font-size: 2.5rem;
-}
-
-/* ===== TABS ===== */
-.citas-container {
-  background-color: #ffffff;
-  border-radius: 12px;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
-  margin-bottom: 1.5rem;
-}
-
-.tabs-header {
-  border-bottom: 1px solid #e5e7eb;
-  display: flex;
-}
-
-.tab-button {
-  padding: 0.75rem 1.5rem;
-  background: none;
-  border: none;
-  border-bottom: 2px solid transparent;
-  color: #6b7280;
+.stat-chip-label {
+  font-size: 0.68rem;
   font-weight: 500;
-  cursor: pointer;
-  transition: all 0.2s;
+  color: var(--text-muted);
+  margin-top: 0.15rem;
+  white-space: nowrap;
 }
 
-.tab-button:hover {
-  color: #1f2937;
-}
-
-.tab-button.active {
-  border-bottom-color: #22c55e;
-  color: #22c55e;
-}
-
-/* ===== LISTA DE CITAS ===== */
-.citas-content {
-  padding: 1.5rem;
-}
-
-.empty-state {
-  text-align: center;
-  padding: 3rem 0;
-}
-
-.empty-state p {
-  color: #6b7280;
-  font-size: 1.125rem;
-}
-
-.citas-list {
-  display: flex;
-  flex-direction: column;
-  gap: 1rem;
-}
-
-.cita-card {
-  border: 1px solid #e5e7eb;
-  border-radius: 12px;
-  padding: 1rem;
-  cursor: pointer;
-  transition: all 0.2s;
-}
-
-.cita-card:hover {
-  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-}
-
-.cita-card-content {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 1rem;
-}
-
-.cita-paciente-info {
-  display: flex;
-  align-items: center;
-  gap: 1rem;
-  flex: 1;
-}
-
-.paciente-avatar {
-  width: 48px;
-  height: 48px;
-  background-color: #dbeafe;
-  border-radius: 50%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 1.5rem;
-  flex-shrink: 0;
-}
-
-.paciente-datos h3 {
-  font-size: 1rem;
-  font-weight: 600;
-  color: #1f2937;
-  margin: 0 0 0.25rem 0;
-}
-
-.paciente-datos p {
-  font-size: 0.875rem;
-  color: #6b7280;
-  margin: 0;
-}
-
-.cita-fecha-hora {
-  text-align: right;
-  margin-right: 1rem;
-}
-
-.cita-fecha-hora .label {
-  font-size: 0.875rem;
-  color: #6b7280;
-  margin: 0;
-}
-
-.cita-fecha-hora .fecha {
-  font-weight: 500;
-  color: #1f2937;
-  margin: 0.25rem 0;
-}
-
-.cita-fecha-hora .hora {
-  font-size: 1.125rem;
-  font-weight: 700;
-  color: #22c55e;
-  margin: 0;
-}
-
-.estado-badge {
-  padding: 0.5rem 1rem;
-  border-radius: 9999px;
-  font-size: 0.875rem;
-  font-weight: 500;
-}
-
-.estado-badge.pendiente {
-  background-color: #fef3c7;
-  color: #92400e;
-}
-
-.estado-badge.atendida {
-  background-color: #d1fae5;
-  color: #065f46;
-}
-
-.estado-badge.cancelada {
-  background-color: #fee2e2;
-  color: #991b1b;
-}
-
-/* ===== MODAL ===== */
-.modal-overlay {
-  position: fixed;
-  inset: 0;
-  background-color: rgba(0, 0, 0, 0.5);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  padding: 1rem;
-  z-index: 1000;
-}
-
-.modal-content {
-  background-color: #ffffff;
-  border-radius: 12px;
-  box-shadow: 0 20px 25px rgba(0, 0, 0, 0.15);
-  max-width: 42rem;
-  width: 100%;
-  max-height: 90vh;
-  overflow-y: auto;
-}
-
-.modal-header {
-  padding: 1.5rem;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  border-bottom: 1px solid #e5e7eb;
-}
-
-.modal-header h2 {
-  font-size: 1.5rem;
-  font-weight: 700;
-  color: #1f2937;
-  margin: 0;
-}
-
-.modal-close {
-  background: none;
-  border: none;
-  color: #6b7280;
-  font-size: 2rem;
-  cursor: pointer;
-  padding: 0;
-  width: 32px;
-  height: 32px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  transition: color 0.2s;
-}
-
-.modal-close:hover {
-  color: #1f2937;
-}
-
-.modal-body {
-  padding: 1.5rem;
-}
-
-.info-section {
-  background-color: #f9fafb;
-  border-radius: 8px;
-  padding: 1rem;
-  margin-bottom: 1.5rem;
-}
-
-.info-section h3 {
-  font-size: 1rem;
-  font-weight: 600;
-  color: #1f2937;
-  margin: 0 0 0.75rem 0;
-}
-
-.info-grid {
-  display: grid;
-  grid-template-columns: repeat(2, 1fr);
-  gap: 1rem;
-}
-
-.info-item p {
-  margin: 0;
-}
-
-.info-item .label {
-  font-size: 0.875rem;
-  color: #6b7280;
-}
-
-.info-item .value {
-  font-weight: 500;
-  color: #1f2937;
-  margin-top: 0.25rem;
-}
-
-.acciones-section h3 {
-  font-size: 1rem;
-  font-weight: 600;
-  color: #1f2937;
-  margin: 0 0 0.75rem 0;
-}
-
-.acciones-botones {
-  display: flex;
-  gap: 0.75rem;
-}
-
-.btn-estado {
-  flex: 1;
-  padding: 0.75rem 1rem;
-  border: none;
-  border-radius: 8px;
-  font-weight: 500;
-  cursor: pointer;
-  transition: all 0.2s;
-  color: #ffffff;
-}
-
-.btn-estado:disabled {
-  opacity: 0.5;
-  cursor: not-allowed;
-}
-
-.btn-estado.pendiente {
-  background-color: #eab308;
-}
-
-.btn-estado.pendiente:hover:not(:disabled) {
-  background-color: #ca8a04;
-}
-
-.btn-estado.atendida {
-  background-color: #22c55e;
-}
-
-.btn-estado.atendida:hover:not(:disabled) {
-  background-color: #16a34a;
-}
-
-.btn-estado.cancelada {
-  background-color: #ef4444;
-}
-
-.btn-estado.cancelada:hover:not(:disabled) {
-  background-color: #dc2626;
-}
-
-/* ===== LOADING ===== */
 .loading-container {
   display: flex;
   align-items: center;
@@ -466,54 +166,60 @@
 .spinner {
   width: 64px;
   height: 64px;
-  border: 4px solid #e5e7eb;
-  border-top-color: #22c55e;
+  border: 4px solid var(--border);
+  border-top-color: var(--primary-light);
   border-radius: 50%;
   animation: spin 1s linear infinite;
   margin: 0 auto 1rem;
 }
 
 @keyframes spin {
-  to {
-    transform: rotate(360deg);
-  }
+  to { transform: rotate(360deg); }
 }
 
 .loading-text {
-  color: #6b7280;
+  color: var(--text-muted);
 }
 
-/* ===== RESPONSIVE ===== */
+@media (max-width: 900px) {
+  .medico-hero-stats {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
 @media (max-width: 768px) {
-  .medico-header-content {
-    flex-direction: column;
-    gap: 1rem;
+  .medico-dashboard {
+    padding: 1rem;
   }
 
-  .medico-header-right {
-    text-align: left;
-    width: 100%;
-  }
-
-  .stats-grid {
+  .medico-calendario-layout {
     grid-template-columns: 1fr;
   }
 
-  .cita-card-content {
-    flex-direction: column;
-    align-items: flex-start;
+  .medico-hero {
+    padding: 1.25rem;
   }
 
-  .cita-fecha-hora {
-    text-align: left;
-    margin-right: 0;
+  .medico-hero-stats {
+    grid-template-columns: repeat(2, 1fr);
   }
 
-  .info-grid {
-    grid-template-columns: 1fr;
+  .medico-hero-info h1 {
+    font-size: 1.15rem;
+  }
+}
+
+@media (max-width: 480px) {
+  .medico-hero-stats {
+    grid-template-columns: 1fr 1fr;
+    gap: 0.5rem;
   }
 
-  .acciones-botones {
-    flex-direction: column;
+  .stat-chip {
+    padding: 0.5rem;
+  }
+
+  .stat-chip-value {
+    font-size: 1.1rem;
   }
 }

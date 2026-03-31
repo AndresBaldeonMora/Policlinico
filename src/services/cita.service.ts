@@ -25,6 +25,7 @@ export interface DoctorDTO {
   _id: string;
   nombres: string;
   apellidos: string;
+  especialidadId?: { _id: string; nombre: string } | string;
 }
 
 export interface Cita {
@@ -112,5 +113,15 @@ export class CitaApiService {
       throw new Error(response.data.message || "No se pudo obtener la cita");
     }
     return response.data.data;
+  }
+
+  static async cambiarEstado(id: string, estado: EstadoCita): Promise<void> {
+    const response = await api.patch<{ success: boolean; message?: string }>(
+      `/citas/${id}/estado`,
+      { estado }
+    );
+    if (!response.data.success) {
+      throw new Error(response.data.message || "Error al cambiar estado de la cita");
+    }
   }
 }

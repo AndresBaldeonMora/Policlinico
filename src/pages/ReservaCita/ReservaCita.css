@@ -21,6 +21,7 @@
   margin: 0;
   font-size: 1.5rem;
   letter-spacing: -0.02em;
+  color: var(--text-primary);
 }
 
 .btn-close-form {
@@ -591,16 +592,6 @@ select:focus {
   display: flex;
   align-items: center;
   gap: 0.5rem;
-}
-
-.badge-reniec {
-  background: var(--accent);
-  color: var(--text-inverse);
-  font-size: 0.62rem;
-  padding: 1px 6px;
-  border-radius: 4px;
-  font-weight: 700;
-  text-transform: uppercase;
 }
 
 .badge-bd {

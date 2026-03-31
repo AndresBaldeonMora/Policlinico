@@ -121,11 +121,6 @@
   background: var(--bg-card);
 }
 
-/* ── RENIEC ── */
-.aps-reniec-loading { color: var(--text-muted); font-size: 0.72rem; }
-.aps-reniec-warn { color: #d97706; font-size: 0.72rem; }
-.aps-reniec-ok { color: var(--primary); font-size: 0.72rem; font-weight: 700; }
-
 .aps-nota {
   font-size: 0.75rem;
   color: var(--text-muted);

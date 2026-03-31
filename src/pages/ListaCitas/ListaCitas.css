@@ -45,13 +45,13 @@
   font-weight: 700;
   cursor: pointer;
   transition: all 0.15s var(--ease);
-  box-shadow: 0 2px 8px rgba(15, 118, 110, 0.2);
+  box-shadow: 0 2px 8px rgba(5, 150, 105, 0.2);
   white-space: nowrap;
 }
 
 .btn-page-action:hover {
   transform: translateY(-1px);
-  box-shadow: 0 4px 12px rgba(15, 118, 110, 0.3);
+  box-shadow: 0 4px 12px rgba(5, 150, 105, 0.3);
 }
 
 /* ── Search Bar ── */
@@ -70,7 +70,7 @@
 
 .lista-search-bar:focus-within {
   border-color: var(--primary-light);
-  box-shadow: 0 0 0 3px rgba(20, 184, 166, 0.08);
+  box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.08);
 }
 
 .lista-search-icon {
@@ -202,8 +202,8 @@
 }
 
 @keyframes rowHighlight {
-  0% { background: rgba(20, 184, 166, 0.25); }
-  30% { background: rgba(20, 184, 166, 0.15); }
+  0% { background: rgba(16, 185, 129, 0.25); }
+  30% { background: rgba(16, 185, 129, 0.15); }
   100% { background: transparent; }
 }
 
@@ -432,7 +432,7 @@
 .lista-citas h1 { font-size: 1.5rem; color: var(--text-primary); margin-bottom: 1rem; }
 .buscador-container { margin-bottom: 1rem; }
 .input-busqueda { width: 100%; max-width: 400px; border-radius: var(--radius-md); border: 1px solid var(--border); padding: 0.625rem 0.875rem; font-size: 0.875rem; font-family: inherit; background: var(--bg-card); color: var(--text-primary); transition: all 0.2s var(--ease); }
-.input-busqueda:focus { outline: none; border-color: var(--primary-light); box-shadow: 0 0 0 3px rgba(20, 184, 166, 0.08); }
+.input-busqueda:focus { outline: none; border-color: var(--primary-light); box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.08); }
 .input-busqueda::placeholder { color: var(--text-muted); }
 
 /* ═══════════════════════════════════════════
@@ -548,7 +548,7 @@
   border-color: var(--primary);
   background: var(--primary);
   color: var(--text-inverse);
-  box-shadow: 0 2px 4px rgba(15, 118, 110, 0.3);
+  box-shadow: 0 2px 4px rgba(5, 150, 105, 0.3);
 }
 
 .modal-step.completado .step-circle {
@@ -562,25 +562,19 @@
 }
 
 /* ── Month selector ── */
-.selector-mes {
-  margin: 1.2rem 0 1rem;
-  display: flex;
-  align-items: center;
-  gap: 1rem;
-}
+.selector-mes { margin: 1.2rem 0 1rem; }
 
 .selector-label {
+  display: block;
   font-weight: 600;
   color: var(--text-secondary);
-  font-size: 0.8rem;
-  white-space: nowrap;
-  flex-shrink: 0;
-  min-width: 110px;
+  margin-bottom: 0.5rem;
+  font-size: 0.85rem;
 }
 
 .meses-lista {
   display: flex;
-  gap: 0.5rem;
+  gap: 0.625rem;
   flex-wrap: wrap;
 }
 
@@ -604,37 +598,38 @@
 }
 
 .mes-btn.activo {
-  background: #0f766e !important;
-  border-color: #0f766e !important;
-  color: #ffffff !important;
+  background: var(--primary-gradient);
+  border-color: var(--primary);
+  color: var(--text-inverse);
+  box-shadow: 0 2px 8px rgba(5, 150, 105, 0.25);
 }
 
 /* ── Day selector ── */
-.selector-dia {
-  margin: 1rem 0;
-  display: flex;
-  align-items: flex-start;
-  gap: 1rem;
-}
+.selector-dia { margin: 1rem 0; }
 
 .dias-lista-selector {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 0.5rem;
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(48px, 1fr));
+  gap: 0.375rem;
+  max-height: 220px;
+  overflow-y: auto;
+  padding: 0.5rem;
+  background: var(--bg-body);
+  border-radius: var(--radius-md);
+  border: 1px solid var(--border);
 }
 
 .dia-btn {
-  padding: 0.4rem 0.6rem;
+  padding: 0.5rem;
   border: 1.5px solid var(--border);
   border-radius: var(--radius-sm);
   background: var(--bg-card);
   color: var(--text-secondary);
-  font-size: 0.82rem;
+  font-size: 0.85rem;
   font-weight: 700;
   cursor: pointer;
   transition: all 0.15s var(--ease);
   text-align: center;
-  min-width: 38px;
 }
 
 .dia-btn:hover {
@@ -644,23 +639,38 @@
 }
 
 .dia-btn.activo {
-  background: #0f766e !important;
-  border-color: #0f766e !important;
-  color: #ffffff !important;
+  background: var(--primary-gradient);
+  border-color: var(--primary);
+  color: var(--text-inverse);
+  box-shadow: 0 2px 6px rgba(5, 150, 105, 0.25);
 }
 
 /* ── Time slots modal ── */
 .horarios-contenedor-modal {
-  margin-top: 1rem;
+  background: var(--bg-card);
   border-radius: var(--radius-md);
-  overflow: hidden;
+  padding: 1rem;
+  min-height: 150px;
+  margin-top: 1rem;
+}
+
+.dias-lista-modal {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
 }
 
 .dia-grupo-modal {
-  background: transparent;
+  background: var(--bg-body);
   border: 1px solid var(--border);
-  border-radius: var(--radius-md);
-  padding: 0.875rem;
+  border-radius: var(--radius-lg);
+  padding: 1rem;
+  transition: all 0.15s var(--ease);
+}
+
+.dia-grupo-modal:hover {
+  box-shadow: var(--shadow-sm);
+  border-color: var(--primary-light);
 }
 
 .dia-header-modal {
@@ -672,6 +682,18 @@
   border-bottom: 1px solid var(--border);
 }
 
+.dia-nombre {
+  font-size: 0.9rem;
+  font-weight: 700;
+  color: var(--text-primary);
+}
+
+.dia-fecha {
+  font-size: 0.8rem;
+  color: var(--text-secondary);
+  font-weight: 500;
+}
+
 .horarios-horizontal-modal {
   display: flex;
   flex-wrap: wrap;
@@ -679,10 +701,11 @@
 }
 
 .horario-radio-modal {
+  position: relative;
   display: flex;
   align-items: center;
   justify-content: center;
-  padding: 0.4rem 0.75rem;
+  padding: 0.5rem 1rem;
   border: 1.5px solid var(--border);
   border-radius: var(--radius-sm);
   background: var(--bg-card);
@@ -699,9 +722,10 @@
 }
 
 .horario-texto {
-  font-size: 0.8rem;
+  font-size: 0.85rem;
   font-weight: 600;
   color: var(--text-secondary);
+  font-variant-numeric: tabular-nums;
 }
 
 .horario-radio-modal:hover {
@@ -710,13 +734,15 @@
 }
 
 .horario-radio-modal.seleccionado {
-  background: #0f766e !important;
-  border-color: #0f766e !important;
+  background: var(--primary-gradient);
+  border-color: var(--primary);
+  box-shadow: 0 2px 8px rgba(5, 150, 105, 0.25);
 }
 
 .horario-radio-modal.seleccionado .horario-texto {
-  color: #ffffff !important;
+  color: var(--text-inverse);
 }
+
 /* ── Loading in modal ── */
 .horarios-loading {
   display: flex;
@@ -773,7 +799,7 @@
   gap: 0.75rem 1rem;
   padding: 1rem;
   border-radius: var(--radius-md);
-  background: transparent;
+  background: var(--bg-body);
   border: 1px solid var(--border);
 }
 
@@ -804,7 +830,7 @@
   background: var(--primary-lighter);
   border-radius: var(--radius-sm);
   padding: 0.5rem 0.625rem;
-  border: 1px solid rgba(20, 184, 166, 0.2);
+  border: 1px solid rgba(16, 185, 129, 0.2);
 }
 
 .modal-resumen-note {
@@ -840,7 +866,7 @@
 
 .modal-actions .btn-primary:hover:not(:disabled) {
   transform: translateY(-1px);
-  box-shadow: 0 4px 12px rgba(15, 118, 110, 0.3);
+  box-shadow: 0 4px 12px rgba(5, 150, 105, 0.3);
 }
 
 .modal-actions .btn-secondary {
@@ -856,18 +882,18 @@
 .modal-actions .btn-next {
   background: var(--primary-gradient);
   color: var(--text-inverse);
-  box-shadow: 0 2px 8px rgba(15, 118, 110, 0.2);
+  box-shadow: 0 2px 8px rgba(5, 150, 105, 0.2);
 }
 
 .modal-actions .btn-next:hover:not(:disabled) {
   transform: translateY(-1px);
-  box-shadow: 0 4px 12px rgba(15, 118, 110, 0.3);
+  box-shadow: 0 4px 12px rgba(5, 150, 105, 0.3);
 }
 
 .modal-actions .btn-confirmar {
   background: var(--primary-gradient);
   color: var(--text-inverse);
-  box-shadow: 0 2px 10px rgba(15, 118, 110, 0.25);
+  box-shadow: 0 2px 10px rgba(5, 150, 105, 0.25);
 }
 
 .modal-actions .btn-confirmar:hover:not(:disabled) { transform: translateY(-1px); }
@@ -949,12 +975,12 @@
 .btn-ver-cv {
   background: var(--primary-gradient);
   color: var(--text-inverse);
-  box-shadow: 0 1px 4px rgba(15, 118, 110, 0.2);
+  box-shadow: 0 1px 4px rgba(5, 150, 105, 0.2);
 }
 
 .btn-ver-cv:hover {
   transform: translateY(-1px);
-  box-shadow: 0 3px 8px rgba(15, 118, 110, 0.3);
+  box-shadow: 0 3px 8px rgba(5, 150, 105, 0.3);
 }
 
 .btn-upload-cv {
@@ -1073,7 +1099,7 @@
 }
 
 [data-theme="dark"] .dia-grupo-modal {
-  background: transparent;
+  background: var(--bg-body);
 }
 
 [data-theme="dark"] .horario-radio-modal {
@@ -1086,6 +1112,7 @@
 }
 
 [data-theme="dark"] .dias-lista-selector {
+  background: var(--bg-body);
   border-color: var(--border);
 }
 

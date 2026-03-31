@@ -5,7 +5,6 @@ import { PacienteApiService } from "../../services/paciente.service";
 import { EspecialidadApiService } from "../../services/especialidad.service";
 import { DoctorApiService } from "../../services/doctor.service";
 import { CitaApiService } from "../../services/cita.service";
-import { ReniecService } from "../../services/reniec.service";
 
 import { reservaReducer, initialState, generarMesesDisponibles, generarDiasDelMes } from "./reservaCitaReducer";
 import type { MesOption, ReservaAction } from "./reservaCitaReducer";
@@ -92,7 +91,6 @@ const PasoActual = ({ state, dispatch, handleBuscarPaciente }: PasoActualProps) 
         searchDNI={state.searchDNI}
         pacienteEncontrado={state.pacienteEncontrado}
         pacienteSeleccionado={state.pacienteSeleccionado}
-        reniecLoading={state.reniecLoading}
         onBuscar={handleBuscarPaciente}
         onSeleccionar={(p) => dispatch({ type: "SELECCIONAR_PACIENTE", paciente: p })}
         onNuevoPaciente={() => dispatch({ type: "TOGGLE_NUEVO_PACIENTE", visible: true })}
@@ -115,10 +113,8 @@ const PasoActual = ({ state, dispatch, handleBuscarPaciente }: PasoActualProps) 
 const ReservaCita = () => {
   const [state, dispatch] = useReducer(reservaReducer, initialState);
   const [searchParams] = useSearchParams();
-
   const fechaParam = searchParams.get("fecha") || "";
   const doctorIdParam = searchParams.get("doctorId") || "";
-
   const prefillHasFecha = !!parseISODate(fechaParam);
   const prefillHasDoctor = !!doctorIdParam;
 
@@ -204,6 +200,7 @@ const ReservaCita = () => {
           }],
         });
 
+
         if (!prefillHasFecha) dispatch({ type: "RESET_HORA" });
       } catch {
         dispatch({ type: "SET_HORARIOS", horarios: [] });
@@ -218,29 +215,16 @@ const ReservaCita = () => {
     if (dni && !/^\d*$/.test(dni)) return;
     if (dni.length > DNI_LENGTH) return;
 
+
     dispatch({ type: "SET_SEARCH_DNI", value: dni });
     if (!/^\d{8}$/.test(dni)) return;
 
-    const local = state.todosLosPacientes.find((p) => p.dni === dni);
-    if (local) { dispatch({ type: "SET_PACIENTE_ENCONTRADO", paciente: local }); return; }
 
-    try {
-      dispatch({ type: "SET_RENIEC_LOADING", value: true });
-      const data = await ReniecService.buscarPorDNI(dni);
-      dispatch({
-        type: "SET_PACIENTE_ENCONTRADO",
-        paciente: {
-          _id: "temp_reniec", id: "temp_reniec",
-          dni: data.dni, nombres: data.nombres,
-          apellidos: `${data.apellidoPaterno} ${data.apellidoMaterno}`,
-          telefono: "", correo: "", direccion: "", fechaNacimiento: "",
-        },
-      });
-    } catch {
-      dispatch({ type: "SET_PACIENTE_ENCONTRADO", paciente: null });
-    } finally {
-      dispatch({ type: "SET_RENIEC_LOADING", value: false });
-    }
+    const local = state.todosLosPacientes.find((p) => p.dni === dni);
+    if (local) { dispatch({ type: "SET_PACIENTE_ENCONTRADO", paciente: local });
+      } else {
+    dispatch({ type: "SET_PACIENTE_ENCONTRADO", paciente: null });
+}
   }, [state.todosLosPacientes]);
 
   const handlePacienteCreado = useCallback(async (dni: string) => {
@@ -258,6 +242,7 @@ const ReservaCita = () => {
   const handleConfirmarCita = useCallback(async () => {
     const { pasoActual, pacienteSeleccionado, doctorSeleccionado, horaSeleccionada, fechaSeleccionada } = state;
 
+
     if (pasoActual !== PASOS_TOTALES) {
       dispatch({ type: "IR_PASO", paso: PASOS_TOTALES });
       return;
@@ -269,19 +254,9 @@ const ReservaCita = () => {
 
     dispatch({ type: "CONFIRMAR_INICIO" });
     try {
-      let pacienteIdFinal = pacienteSeleccionado.id;
-
-      if (pacienteIdFinal === "temp_reniec") {
-        const nuevo = await PacienteApiService.crear({
-          dni: pacienteSeleccionado.dni, nombres: pacienteSeleccionado.nombres,
-          apellidos: pacienteSeleccionado.apellidos,
-          telefono: "", correo: "", direccion: "", fechaNacimiento: "",
-        });
-        pacienteIdFinal = nuevo.id;
-      }
 
       await CitaApiService.crear({
-        pacienteId: pacienteIdFinal,
+        pacienteId: pacienteSeleccionado.id,
         doctorId: doctorSeleccionado.id,
         fecha: fechaSeleccionada,
         hora: horaSeleccionada,
@@ -321,7 +296,7 @@ const ReservaCita = () => {
       )}
 
       <div className="reserva-cita-header">
-        <h1>Reservar Cita Medica</h1>
+        <h1>📅 Reservar Cita Médica</h1>
         <button
           onClick={() => dispatch({ type: "RESET" })}
           className="btn-close-form"
@@ -342,7 +317,7 @@ const ReservaCita = () => {
 
         <div className="cita-form">
           <div className="paso-content">
-            <PasoActual
+            <PasoActual   // ✅ componente real, no función inline
               state={state}
               dispatch={dispatch}
               handleBuscarPaciente={handleBuscarPaciente}
@@ -392,5 +367,4 @@ const ReservaCita = () => {
     </div>
   );
 };
-
 export default ReservaCita;
