@@ -1,6 +1,8 @@
 // src/pages/ReservaCita/StepperHeader.tsx
+import { Check } from "lucide-react";
+
 const PASOS_LABELS = [
-  "Especialidad","Médico","Mes","Día","Hora","Paciente","Confirmar",
+  "Especialidad","Medico","Mes","Dia","Hora","Paciente","Confirmar",
 ] as const;
 
 interface StepperHeaderProps {
@@ -9,8 +11,8 @@ interface StepperHeaderProps {
 }
 
 const StepperHeader = ({ pasoActual, irAlPaso }: StepperHeaderProps) => {
-  const getIconoPaso = (paso: number): string | number =>
-    paso < pasoActual ? "✓" : paso;
+  const getIconoPaso = (paso: number): React.ReactNode =>
+    paso < pasoActual ? <Check size={14} strokeWidth={3} /> : paso;
 
   return (
     <div className="stepper-header">

@@ -7,10 +7,14 @@ import { perfilCitaReducer, initialState } from "./PerfilCitaReducer";
 type TabPrincipal = "dashboard" | "historial" | "documentos";
 type TabDemografico = "quien" | "contacto";
 
-const TABS_PRINCIPALES: { id: TabPrincipal; label: string; icon: string }[] = [
-  { id: "dashboard", label: "Dashboard", icon: "📊" },
-  { id: "historial", label: "Histórico de Visitas", icon: "📋" },
-  { id: "documentos", label: "Documentos", icon: "📄" },
+// ============================================================================
+// CONSTANTS
+// ============================================================================
+
+const TABS_PRINCIPALES: { id: TabPrincipal; label: string }[] = [
+  { id: "dashboard", label: "Dashboard" },
+  { id: "historial", label: "Historico de Visitas" },
+  { id: "documentos", label: "Documentos" },
 ];
 
 const TABS_DEMOGRAFICOS: { id: TabDemografico; label: string }[] = [
@@ -105,12 +109,7 @@ const PerfilCita = () => {
           </div>
         </div>
 
-        <div className="encounter-selector">
-          <label htmlFor="cita-actual">Cita actual</label>
-          <select id="cita-actual" disabled>
-            <option>{formatearFechaCorta(cita.fecha)} - {cita.hora}</option>
-          </select>
-        </div>
+        <span>{formatearFechaCorta(cita.fecha)} - {cita.hora}</span>
       </div>
 
       <div className="tabs-principales">
@@ -120,7 +119,7 @@ const PerfilCita = () => {
             className={`tab ${tabActiva === t.id ? "activa" : ""}`}
             onClick={() => setTabActiva(t.id)}
           >
-            {t.icon} {t.label}
+            {t.label}
           </button>
         ))}
       </div>
@@ -129,22 +128,38 @@ const PerfilCita = () => {
         <div className="dashboard-layout">
           <div className="columna-principal">
             <div className="card-clinica">
-              <div className="card-header"><h3>🚨 Alergias</h3></div>
-              <div className="card-body">{alergias.length === 0 ? "Nada grabado" : "—"}</div>
+              <div className="card-header">
+                <h3>Alergias</h3>
+              </div>
+              <div className="card-body">
+                {alergias.length === 0 ? "Nada grabado" : "—"}
+              </div>
             </div>
 
             <div className="card-clinica">
-              <div className="card-header"><h3>🏥 Problemas Médicos</h3></div>
-              <div className="card-body">{problemasMedicos.length === 0 ? "Nada grabado" : "—"}</div>
+              <div className="card-header">
+                <h3>Problemas Medicos</h3>
+              </div>
+              <div className="card-body">
+                {problemasMedicos.length === 0 ? "Nada grabado" : "—"}
+              </div>
             </div>
 
             <div className="card-clinica">
-              <div className="card-header"><h3>💊 Medicamentos</h3></div>
-              <div className="card-body">{medicamentos.length === 0 ? "Nada grabado" : "—"}</div>
+              <div className="card-header">
+                <h3>Medicamentos</h3>
+              </div>
+              <div className="card-body">
+                {medicamentos.length === 0 ? "Nada grabado" : "—"}
+              </div>
             </div>
 
             <div className="card-clinica">
-              <div className="card-header"><h3>📊 Datos Demográficos</h3></div>
+              <div className="card-header">
+                <h3>Datos Demograficos</h3>
+              </div>
+
+              {/* key={t.id} is stable (string literal union) */}
               <div className="tabs-demograficos">
                 {TABS_DEMOGRAFICOS.map((t) => (
                   <button
@@ -175,7 +190,9 @@ const PerfilCita = () => {
 
           <div className="columna-lateral">
             <div className="widget">
-              <div className="widget-header"><h4>📅 Citas</h4></div>
+              <div className="widget-header">
+                <h4>Citas</h4>
+              </div>
               <div className="widget-body">
                 {citasPaciente.length === 0 ? (
                   "Sin citas"
