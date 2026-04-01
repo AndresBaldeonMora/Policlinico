@@ -11,6 +11,7 @@ import {
   ChevronRight,
   PanelLeftClose,
   PanelLeftOpen,
+  FlaskConical,
 } from "lucide-react";
 import "./Sidebar.css";
 
@@ -25,11 +26,13 @@ const Sidebar = () => {
     { path: "/reserva-cita", label: "Solicitar Cita", icon: CalendarPlus, description: "Agendar nueva cita" },
     { path: "/lista-citas", label: "Gestion de Citas", icon: ClipboardList, description: "Administrar citas" },
     { path: "/medicos", label: "Medicos", icon: Stethoscope, description: "Directorio de doctores" },
-    { path: "/pacientes", label: "Pacientes", icon: Users, description: "Listado de pacientes" },
+    { path: "/pacientes",    label: "Pacientes",   icon: Users,         description: "Listado de pacientes" },
+    { path: "/laboratorio", label: "Laboratorio", icon: FlaskConical,  description: "Órdenes de exámenes" },
   ];
 
   const medicoMenu = [
-    { path: "/medico", label: "Mi Tablero", icon: LayoutDashboard, description: "Resumen de mis citas" },
+    { path: "/medico",            label: "Mi Tablero", icon: LayoutDashboard, description: "Resumen de mis citas" },
+    { path: "/medico/calendario", label: "Calendario", icon: Calendar,        description: "Mi calendario personal" },
   ];
 
   const menuItems = user?.rol === "MEDICO" ? medicoMenu : adminMenu;

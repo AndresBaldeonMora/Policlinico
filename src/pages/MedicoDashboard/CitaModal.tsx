@@ -1,11 +1,14 @@
 import { useEffect, useState, useCallback } from "react";
 import { MedicoApiService } from "../../services/medico.service";
-import type { CitaMedico } from "../../services/medico.service";
-import { X } from "lucide-react";
+import type { CitaMedico, MedicoPerfil } from "../../services/medico.service";
+import { X, FlaskConical } from "lucide-react";
+import { ExamenService, OrdenExamen, TIPO_EXAMEN_LABEL } from "../../services/examen.service";
+import OrdenExamenModal from "./OrdenExamenModal";
 import "./CitaModal.css";
 
 interface Props {
   citaId: string;
+  perfil: MedicoPerfil;
   onCerrar: () => void;
   onCitaActualizada: () => void;
 }
@@ -35,13 +38,24 @@ const calcularEdad = (fechaNacimiento?: string): string => {
   return `${edad} años`;
 };
 
-const CitaModal = ({ citaId, onCerrar, onCitaActualizada }: Props) => {
+const CitaModal = ({ citaId, perfil, onCerrar, onCitaActualizada }: Props) => {
   const [cita, setCita] = useState<CitaMedico | null>(null);
   const [historial, setHistorial] = useState<CitaMedico[]>([]);
   const [notas, setNotas] = useState("");
   const [loading, setLoading] = useState(true);
   const [guardandoNotas, setGuardandoNotas] = useState(false);
   const [cambiandoEstado, setCambiandoEstado] = useState(false);
+  const [ordenes, setOrdenes] = useState<OrdenExamen[]>([]);
+  const [mostrarOrdenModal, setMostrarOrdenModal] = useState(false);
+
+  const cargarOrdenes = useCallback(async () => {
+    try {
+      const data = await ExamenService.listarOrdenesPorCita(citaId);
+      setOrdenes(data);
+    } catch (error) {
+      console.error("Error al cargar órdenes:", error);
+    }
+  }, [citaId]);
 
   const cargarDatos = useCallback(async () => {
     setLoading(true);
@@ -50,7 +64,10 @@ const CitaModal = ({ citaId, onCerrar, onCitaActualizada }: Props) => {
       setCita(detalle);
       setNotas(detalle.notas ?? "");
 
-      const todasCitas = await MedicoApiService.obtenerMisCitas();
+      const [todasCitas] = await Promise.all([
+        MedicoApiService.obtenerMisCitas(),
+        cargarOrdenes(),
+      ]);
       const historialPaciente = todasCitas
         .filter((c) => c.pacienteId._id === detalle.pacienteId._id && c._id !== citaId)
         .sort((a, b) => new Date(b.fecha).getTime() - new Date(a.fecha).getTime())
@@ -61,7 +78,7 @@ const CitaModal = ({ citaId, onCerrar, onCitaActualizada }: Props) => {
     } finally {
       setLoading(false);
     }
-  }, [citaId]);
+  }, [citaId, cargarOrdenes]);
 
   useEffect(() => { cargarDatos(); }, [cargarDatos]);
 
@@ -186,6 +203,66 @@ const CitaModal = ({ citaId, onCerrar, onCitaActualizada }: Props) => {
             </button>
           </div>
 
+          {perfil.especialidadId.tieneLaboratorio && (
+            <div className="cita-modal-section">
+              <div className="cita-modal-section-header">
+                <h4>Exámenes de Laboratorio</h4>
+                {cita.estado === "PENDIENTE" && (
+                  <button
+                    className="cita-modal-btn-lab"
+                    onClick={() => setMostrarOrdenModal(true)}
+                  >
+                    <FlaskConical size={15} />
+                    Solicitar Exámenes
+                  </button>
+                )}
+              </div>
+              {ordenes.length === 0 ? (
+                <p className="cita-modal-empty-lab">No hay órdenes de examen para esta cita.</p>
+              ) : (
+                <div className="cita-modal-ordenes">
+                  {ordenes.map((orden) => (
+                    <div key={orden._id} className="cita-modal-orden-item">
+                      <div className="cita-modal-orden-top">
+                        <span className="cita-modal-orden-fecha">
+                          {new Date(orden.fecha).toLocaleDateString("es-PE")}
+                        </span>
+                        <span className={`cita-modal-badge cita-modal-orden-estado--${orden.estado.toLowerCase()}`}>
+                          {orden.estado === "PENDIENTE" && "Pendiente"}
+                          {orden.estado === "EN_PROCESO" && "En proceso"}
+                          {orden.estado === "COMPLETADO" && "Completado"}
+                          {orden.estado === "CANCELADA" && "Cancelada"}
+                        </span>
+                      </div>
+                      <ul className="cita-modal-orden-examenes">
+                        {orden.items.map((item, i) => {
+                          const ex = typeof item.examenId === "object" ? item.examenId : null;
+                          return (
+                            <li key={i} className="cita-modal-orden-examen">
+                              <span className="cita-modal-orden-examen-nombre">
+                                {ex ? ex.nombre : "—"}
+                              </span>
+                              {ex && (
+                                <span className="cita-modal-orden-tipo">
+                                  {TIPO_EXAMEN_LABEL[ex.tipo] || ex.tipo}
+                                </span>
+                              )}
+                              {item.valorResultado && (
+                                <span className="cita-modal-orden-resultado">
+                                  {item.valorResultado} {item.unidadResultado}
+                                </span>
+                              )}
+                            </li>
+                          );
+                        })}
+                      </ul>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          )}
+
           {historial.length > 0 && (
             <div className="cita-modal-section">
               <h4>Historial de visitas</h4>
@@ -231,6 +308,17 @@ const CitaModal = ({ citaId, onCerrar, onCitaActualizada }: Props) => {
           </button>
         </div>
       </div>
+
+      {mostrarOrdenModal && (
+        <OrdenExamenModal
+          citaId={citaId}
+          pacienteId={cita.pacienteId._id}
+          doctorId={perfil._id}
+          especialidadId={perfil.especialidadId._id}
+          onCerrar={() => setMostrarOrdenModal(false)}
+          onOrdenCreada={cargarOrdenes}
+        />
+      )}
     </div>
   );
 };

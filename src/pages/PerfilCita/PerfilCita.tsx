@@ -17,12 +17,16 @@ import { useParams, useNavigate } from "react-router-dom";
 import "./PerfilCita.css";
 import { CitaApiService } from "../../services/cita.service";
 import { perfilCitaReducer, initialState } from "./PerfilCitaReducer";
+import { useAuth } from "../../hooks/userAuth";
+import type { OrdenExamen, ExamenLaboratorio } from "../../services/examen.service";
+import { ExamenService, TIPO_EXAMEN_LABEL } from "../../services/examen.service";
+import OrdenExamenModal from "../MedicoDashboard/OrdenExamenModal";
 
 // ============================================================================
 // TYPES (UI-only — not shared with reducer)
 // ============================================================================
 
-type TabPrincipal = "dashboard" | "historial" | "documentos";
+type TabPrincipal = "dashboard" | "historial" | "documentos" | "examenes";
 type TabDemografico = "quien" | "contacto";
 
 // ============================================================================
@@ -30,9 +34,10 @@ type TabDemografico = "quien" | "contacto";
 // ============================================================================
 
 const TABS_PRINCIPALES: { id: TabPrincipal; label: string }[] = [
-  { id: "dashboard", label: "Dashboard" },
-  { id: "historial", label: "Historico de Visitas" },
+  { id: "dashboard",  label: "Dashboard" },
+  { id: "historial",  label: "Historico de Visitas" },
   { id: "documentos", label: "Documentos" },
+  { id: "examenes",   label: "Examenes" },
 ];
 
 const TABS_DEMOGRAFICOS: { id: TabDemografico; label: string }[] = [
@@ -72,6 +77,7 @@ const calcularEdad = (fechaNacimiento?: string) => {
 const PerfilCita = () => {
   const { citaId } = useParams<{ citaId: string }>();
   const navigate = useNavigate();
+  const { user } = useAuth();
 
   // ── Reducer: fetch lifecycle + clinical data ──────────────
   const [state, dispatch] = useReducer(perfilCitaReducer, initialState);
@@ -88,6 +94,24 @@ const PerfilCita = () => {
   // ── useState: pure UI toggles (no shared state, no side effects) ──
   const [tabActiva, setTabActiva] = useState<TabPrincipal>("dashboard");
   const [tabDemo, setTabDemo] = useState<TabDemografico>("quien");
+
+  // ── Exámenes ──────────────────────────────────────────────
+  const [ordenes, setOrdenes] = useState<OrdenExamen[]>([]);
+  const [mostrarOrdenModal, setMostrarOrdenModal] = useState(false);
+
+  const cargarOrdenes = useCallback(async () => {
+    if (!citaId) return;
+    try {
+      const data = await ExamenService.listarOrdenesPorCita(citaId);
+      setOrdenes(data);
+    } catch (err) {
+      console.error("Error al cargar órdenes:", err);
+    }
+  }, [citaId]);
+
+  useEffect(() => {
+    if (tabActiva === "examenes") cargarOrdenes();
+  }, [tabActiva, cargarOrdenes]);
 
   // ============================================================================
 
@@ -287,6 +311,94 @@ const PerfilCita = () => {
       {tabActiva === "documentos" && (
         <div className="card-clinica">No hay documentos cargados</div>
       )}
+
+      {tabActiva === "examenes" && (
+        <div className="card-clinica perfil-examenes">
+          <div className="perfil-examenes-header">
+            <h3>Exámenes de Laboratorio</h3>
+            {user?.rol === "MEDICO" && (
+              <button
+                className="btn btn-primary btn-sm"
+                onClick={() => setMostrarOrdenModal(true)}
+              >
+                + Nueva Orden
+              </button>
+            )}
+          </div>
+
+          {ordenes.length === 0 ? (
+            <p className="perfil-examenes-empty">No hay órdenes de examen para esta cita.</p>
+          ) : (
+            <div className="perfil-examenes-lista">
+              {ordenes.map((orden) => (
+                <div key={orden._id} className="perfil-orden-card">
+                  <div className="perfil-orden-top">
+                    <span className="perfil-orden-fecha">
+                      {new Date(orden.fecha).toLocaleDateString("es-PE")}
+                    </span>
+                    <span className={`perfil-orden-estado perfil-orden-estado--${orden.estado.toLowerCase()}`}>
+                      {orden.estado === "PENDIENTE"  && "Pendiente"}
+                      {orden.estado === "EN_PROCESO" && "En proceso"}
+                      {orden.estado === "COMPLETADO" && "Completado"}
+                      {orden.estado === "CANCELADA"  && "Cancelada"}
+                    </span>
+                  </div>
+                  {orden.observacionesGenerales && (
+                    <p className="perfil-orden-obs">{orden.observacionesGenerales}</p>
+                  )}
+                  <table className="perfil-orden-tabla">
+                    <thead>
+                      <tr>
+                        <th>Examen</th>
+                        <th>Tipo</th>
+                        <th>Resultado</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {orden.items.map((item, i) => {
+                        const ex = typeof item.examenId === "object" ? item.examenId as ExamenLaboratorio : null;
+                        return (
+                          <tr key={i}>
+                            <td>{ex?.nombre ?? "—"}</td>
+                            <td>{ex ? TIPO_EXAMEN_LABEL[ex.tipo] : "—"}</td>
+                            <td>
+                              {item.valorResultado
+                                ? <strong>{item.valorResultado} {item.unidadResultado}</strong>
+                                : <span style={{ color: "var(--text-muted)" }}>Pendiente</span>
+                              }
+                            </td>
+                          </tr>
+                        );
+                      })}
+                    </tbody>
+                  </table>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+      )}
+
+      {mostrarOrdenModal && cita && user?.rol === "MEDICO" && (() => {
+        const doctor = cita.doctorId && typeof cita.doctorId === "object" ? cita.doctorId : null;
+        const pacienteId = cita.pacienteId && typeof cita.pacienteId === "object"
+          ? cita.pacienteId._id
+          : String(cita.pacienteId);
+        const doctorId = doctor?._id ?? "";
+        const especialidadId = doctor?.especialidadId && typeof doctor.especialidadId === "object"
+          ? doctor.especialidadId._id
+          : "";
+        return (
+          <OrdenExamenModal
+            citaId={cita._id}
+            pacienteId={pacienteId}
+            doctorId={doctorId}
+            especialidadId={especialidadId}
+            onCerrar={() => setMostrarOrdenModal(false)}
+            onOrdenCreada={cargarOrdenes}
+          />
+        );
+      })()}
     </div>
   );
 };

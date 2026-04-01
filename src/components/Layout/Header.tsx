@@ -2,6 +2,7 @@ import { useState, useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "../../hooks/userAuth";
 import { useTheme } from "../../context/ThemeContext";
+import { MedicoApiService } from "../../services/medico.service";
 import { Moon, Search, Sun, LogOut, ChevronDown } from "lucide-react";
 import SearchPalette from "./SearchPalette";
 import "./Header.css";
@@ -12,9 +13,18 @@ const Header = () => {
   const navigate = useNavigate();
   const [searchOpen, setSearchOpen] = useState(false);
   const [dropdownOpen, setDropdownOpen] = useState(false);
+  const [especialidad, setEspecialidad] = useState<string | null>(null);
   const dropdownRef = useRef<HTMLDivElement>(null);
 
   const avatarLetter = user?.nombres?.charAt(0).toUpperCase() || "U";
+
+  useEffect(() => {
+    if (user?.rol === "MEDICO") {
+      MedicoApiService.obtenerMiPerfil()
+        .then((p) => setEspecialidad(p.especialidadId.nombre))
+        .catch(() => setEspecialidad(null));
+    }
+  }, [user?.rol]);
 
   useEffect(() => {
     const handleKey = (e: KeyboardEvent) => {
@@ -94,7 +104,11 @@ const Header = () => {
                   <p className="user-name">
                     {user ? `${user.nombres} ${user.apellidos}` : "Usuario"}
                   </p>
-                  <p className="user-role">{user?.rol || "Sin rol"}</p>
+                  <p className="user-role">
+                    {user?.rol === "MEDICO" && especialidad
+                      ? `Médico — ${especialidad}`
+                      : user?.rol || "Sin rol"}
+                  </p>
                 </div>
                 <div className="user-avatar">{avatarLetter}</div>
                 <ChevronDown

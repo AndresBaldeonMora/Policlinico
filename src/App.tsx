@@ -11,6 +11,8 @@ import MedicoDashboard from "./pages/MedicoDashboard/MedicoDashboard";
 import PerfilCita from "./pages/PerfilCita/PerfilCita";
 import Dashboard from "./pages/Dashboard/Dashboard";
 import Login from "./pages/Login/Login";
+import Laboratorio from "./pages/Laboratorio/Laboratorio";
+import CalendarioMedico from "./pages/Calendario/CalendarioMedico";
 
 import { AuthProvider } from "./context/AuthProvider";
 import { ThemeProvider } from "./context/ThemeContext";
@@ -92,10 +94,28 @@ function App() {
             />
 
             <Route
+              path="/laboratorio"
+              element={
+                <ProtectedRoute roles={["RECEPCIONISTA"]}>
+                  <Laboratorio />
+                </ProtectedRoute>
+              }
+            />
+
+            <Route
               path="/medico"
               element={
                 <ProtectedRoute roles={["MEDICO"]}>
                   <MedicoDashboard />
+                </ProtectedRoute>
+              }
+            />
+
+            <Route
+              path="/medico/calendario"
+              element={
+                <ProtectedRoute roles={["MEDICO"]}>
+                  <CalendarioMedico />
                 </ProtectedRoute>
               }
             />
