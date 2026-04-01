@@ -21,6 +21,8 @@ import { useAuth } from "../../hooks/userAuth";
 import type { OrdenExamen, ExamenLaboratorio } from "../../services/examen.service";
 import { ExamenService, TIPO_EXAMEN_LABEL } from "../../services/examen.service";
 import OrdenExamenModal from "../MedicoDashboard/OrdenExamenModal";
+import Swal from "sweetalert2";
+import { toastExito } from "../../utils/toast";
 
 // ============================================================================
 // TYPES (UI-only — not shared with reducer)
@@ -98,20 +100,43 @@ const PerfilCita = () => {
   // ── Exámenes ──────────────────────────────────────────────
   const [ordenes, setOrdenes] = useState<OrdenExamen[]>([]);
   const [mostrarOrdenModal, setMostrarOrdenModal] = useState(false);
+  const [errorOrdenes, setErrorOrdenes] = useState("");
 
   const cargarOrdenes = useCallback(async () => {
     if (!citaId) return;
+    setErrorOrdenes("");
     try {
       const data = await ExamenService.listarOrdenesPorCita(citaId);
       setOrdenes(data);
-    } catch (err) {
-      console.error("Error al cargar órdenes:", err);
+    } catch {
+      setErrorOrdenes("No se pudieron cargar las órdenes de examen. Intenta de nuevo.");
     }
   }, [citaId]);
 
   useEffect(() => {
     if (tabActiva === "examenes") cargarOrdenes();
   }, [tabActiva, cargarOrdenes]);
+
+  const handleCancelarOrden = async (ordenId: string) => {
+    const result = await Swal.fire({
+      title: "¿Cancelar esta orden?",
+      text: "Esta acción no se puede deshacer. Los exámenes pendientes no se procesarán.",
+      icon: "warning",
+      showCancelButton: true,
+      confirmButtonColor: "#dc2626",
+      cancelButtonColor: "#64748b",
+      confirmButtonText: "Sí, cancelar orden",
+      cancelButtonText: "No, mantener",
+    });
+    if (!result.isConfirmed) return;
+    try {
+      await ExamenService.cancelarOrden(ordenId);
+      toastExito("Orden cancelada correctamente");
+      await cargarOrdenes();
+    } catch {
+      Swal.fire("Error", "No se pudo cancelar la orden.", "error");
+    }
+  };
 
   // ============================================================================
 
@@ -158,13 +183,18 @@ const PerfilCita = () => {
     return (
       <div className="perfil-error">
         <h2>No se pudo cargar la información</h2>
-        <p>{error}</p>
-        <button
-          className="btn btn-secondary"
-          onClick={() => navigate("/calendario")}
-        >
-          Volver al Calendario
-        </button>
+        <p>{error || "Ocurrió un error inesperado al cargar los datos de la cita."}</p>
+        <div style={{ display: "flex", gap: "0.75rem" }}>
+          <button className="btn btn-primary" onClick={cargarCita}>
+            Reintentar
+          </button>
+          <button
+            className="btn btn-secondary"
+            onClick={() => navigate("/calendario")}
+          >
+            Volver al Calendario
+          </button>
+        </div>
       </div>
     );
   }
@@ -326,7 +356,14 @@ const PerfilCita = () => {
             )}
           </div>
 
-          {ordenes.length === 0 ? (
+          {errorOrdenes ? (
+            <div className="perfil-examenes-error">
+              <p>{errorOrdenes}</p>
+              <button className="btn btn-primary btn-sm" onClick={cargarOrdenes}>
+                Reintentar
+              </button>
+            </div>
+          ) : ordenes.length === 0 ? (
             <p className="perfil-examenes-empty">No hay órdenes de examen para esta cita.</p>
           ) : (
             <div className="perfil-examenes-lista">
@@ -336,12 +373,22 @@ const PerfilCita = () => {
                     <span className="perfil-orden-fecha">
                       {new Date(orden.fecha).toLocaleDateString("es-PE")}
                     </span>
-                    <span className={`perfil-orden-estado perfil-orden-estado--${orden.estado.toLowerCase()}`}>
-                      {orden.estado === "PENDIENTE"  && "Pendiente"}
-                      {orden.estado === "EN_PROCESO" && "En proceso"}
-                      {orden.estado === "COMPLETADO" && "Completado"}
-                      {orden.estado === "CANCELADA"  && "Cancelada"}
-                    </span>
+                    <div className="perfil-orden-top-actions">
+                      <span className={`perfil-orden-estado perfil-orden-estado--${orden.estado.toLowerCase()}`}>
+                        {orden.estado === "PENDIENTE"  && "Pendiente"}
+                        {orden.estado === "EN_PROCESO" && "En proceso"}
+                        {orden.estado === "COMPLETADO" && "Completado"}
+                        {orden.estado === "CANCELADA"  && "Cancelada"}
+                      </span>
+                      {(orden.estado === "PENDIENTE" || orden.estado === "EN_PROCESO") && user?.rol === "MEDICO" && (
+                        <button
+                          className="btn btn-danger btn-sm"
+                          onClick={() => handleCancelarOrden(orden._id)}
+                        >
+                          Cancelar Orden
+                        </button>
+                      )}
+                    </div>
                   </div>
                   {orden.observacionesGenerales && (
                     <p className="perfil-orden-obs">{orden.observacionesGenerales}</p>

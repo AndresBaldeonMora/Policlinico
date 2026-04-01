@@ -29,10 +29,10 @@ const VistaDia = ({ fecha, horas, citas, doctores, doctorId, onVerCita }: Props)
     citas.find((c) => {
       const fc = new Date(c.fecha);
       return (
-        fc.getFullYear() === fecha.getFullYear() &&
-        fc.getMonth()    === fecha.getMonth()    &&
-        fc.getDate()     === fecha.getDate()     &&
-        c.hora           === hora                &&
+        fc.getUTCFullYear() === fecha.getFullYear() &&
+        fc.getUTCMonth()    === fecha.getMonth()    &&
+        fc.getUTCDate()     === fecha.getDate()     &&
+        c.hora              === hora                &&
         getDoctorIdString(c.doctorId) === dId
       );
     });
