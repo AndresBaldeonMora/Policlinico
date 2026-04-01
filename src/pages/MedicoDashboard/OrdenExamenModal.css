@@ -268,3 +268,15 @@
 .orden-btn--cancel:hover {
   background: var(--bg-hover);
 }
+
+/* Error message */
+.orden-modal-error {
+  width: 100%;
+  margin: 0 0 0.5rem;
+  padding: 0.5rem 0.75rem;
+  font-size: 0.82rem;
+  color: #dc2626;
+  background: #fef2f2;
+  border: 1px solid #fecaca;
+  border-radius: 6px;
+}

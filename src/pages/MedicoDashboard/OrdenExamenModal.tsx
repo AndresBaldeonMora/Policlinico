@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { X, FlaskConical, ChevronDown, ChevronUp } from "lucide-react";
 import type { ExamenLaboratorio, TipoExamen } from "../../services/examen.service";
 import { ExamenService, TIPO_EXAMEN_LABEL } from "../../services/examen.service";
+import { toastExito } from "../../utils/toast";
 import "./OrdenExamenModal.css";
 
 interface Props {
@@ -30,6 +31,7 @@ const OrdenExamenModal = ({
   const [loading, setLoading] = useState(true);
   const [guardando, setGuardando] = useState(false);
   const [gruposAbiertos, setGruposAbiertos] = useState<Set<string>>(new Set());
+  const [error, setError] = useState("");
 
   useEffect(() => {
     ExamenService.listarExamenes()
@@ -68,7 +70,20 @@ const OrdenExamenModal = ({
   };
 
   const handleCrear = async () => {
-    if (seleccionados.size === 0) return;
+    setError("");
+
+    if (seleccionados.size === 0) {
+      setError("Debes seleccionar al menos un examen.");
+      return;
+    }
+
+    // Validar que observaciones no sean solo espacios en blanco
+    const obsGeneralesTrimmed = observacionesGenerales.trim();
+    const itemsPayload = [...seleccionados].map((examenId) => ({
+      examenId,
+      observaciones: (observaciones[examenId] || "").trim(),
+    }));
+
     setGuardando(true);
     try {
       await ExamenService.crearOrden({
@@ -76,16 +91,16 @@ const OrdenExamenModal = ({
         doctorId,
         citaId,
         especialidadId,
-        observacionesGenerales,
-        items: [...seleccionados].map((examenId) => ({
-          examenId,
-          observaciones: observaciones[examenId] || "",
-        })),
+        observacionesGenerales: obsGeneralesTrimmed,
+        items: itemsPayload,
       });
+      toastExito("Orden de examen creada exitosamente");
       onOrdenCreada();
       onCerrar();
-    } catch (error) {
-      console.error("Error al crear orden:", error);
+    } catch (err: any) {
+      const mensaje =
+        err?.response?.data?.message || "Error al crear la orden. Intenta de nuevo.";
+      setError(mensaje);
     } finally {
       setGuardando(false);
     }
@@ -188,6 +203,7 @@ const OrdenExamenModal = ({
         </div>
 
         <div className="orden-modal-footer">
+          {error && <p className="orden-modal-error">{error}</p>}
           <span className="orden-seleccionados-count">
             {seleccionados.size > 0
               ? `${seleccionados.size} examen${seleccionados.size > 1 ? "es" : ""} seleccionado${seleccionados.size > 1 ? "s" : ""}`

@@ -9,6 +9,8 @@ import {
   ExamenService,
   TIPO_EXAMEN_LABEL,
 } from "../../services/examen.service";
+import Swal from "sweetalert2";
+import { toastExito } from "../../utils/toast";
 import "./Laboratorio.css";
 
 // ─── Helpers ────────────────────────────────────────────────
@@ -32,31 +34,57 @@ interface ModalResultadosProps {
 const ModalResultados = ({ orden, onCerrar, onGuardado }: ModalResultadosProps) => {
   const [valores, setValores] = useState<Record<string, { valor: string; unidad: string }>>({});
   const [guardando, setGuardando] = useState(false);
+  const [error, setError] = useState("");
+  const [camposVacios, setCamposVacios] = useState<Set<string>>(new Set());
+
+  const pendientes = orden.items.filter((i) => i.estadoItem === "PENDIENTE");
 
   const handleGuardar = async () => {
-    const resultados = Object.entries(valores)
-      .filter(([, v]) => v.valor.trim() !== "")
-      .map(([examenId, v]) => ({
-        examenId,
+    setError("");
+    setCamposVacios(new Set());
+
+    // Validar que todos los exámenes pendientes tengan un valor
+    const vacios = new Set<string>();
+    pendientes.forEach((item) => {
+      const ex = typeof item.examenId === "object" ? item.examenId as ExamenLaboratorio : null;
+      const id = ex ? ex._id : String(item.examenId);
+      const val = valores[id]?.valor?.trim();
+      if (!val) vacios.add(id);
+    });
+
+    if (vacios.size > 0) {
+      setCamposVacios(vacios);
+      setError(`Debes ingresar el resultado de todos los exámenes (${vacios.size} vacío${vacios.size > 1 ? "s" : ""}).`);
+      return;
+    }
+
+    const resultados = pendientes.map((item) => {
+      const ex = typeof item.examenId === "object" ? item.examenId as ExamenLaboratorio : null;
+      const id = ex ? ex._id : String(item.examenId);
+      const v = valores[id];
+      return {
+        examenId: id,
         valorResultado: v.valor.trim(),
         unidadResultado: v.unidad.trim() || undefined,
-      }));
+      };
+    });
 
-    if (resultados.length === 0) return;
     setGuardando(true);
     try {
       await ExamenService.cargarResultados(orden._id, resultados);
+      toastExito("Resultados guardados correctamente");
       onGuardado();
       onCerrar();
-    } catch (error) {
-      console.error("Error al guardar resultados:", error);
+    } catch (err: any) {
+      const mensaje =
+        err?.response?.data?.message || "Error al guardar resultados. Intenta de nuevo.";
+      setError(mensaje);
     } finally {
       setGuardando(false);
     }
   };
 
   const paciente = orden.pacienteId;
-  const pendientes = orden.items.filter((i) => i.estadoItem === "PENDIENTE");
 
   return (
     <div className="lab-modal-overlay" onClick={onCerrar}>
@@ -93,14 +121,17 @@ const ModalResultados = ({ orden, onCerrar, onGuardado }: ModalResultadosProps) 
                     <div className="lab-modal-item-inputs">
                       <input
                         type="text"
-                        placeholder="Valor"
+                        placeholder="Valor *"
+                        className={camposVacios.has(id) ? "lab-input-error" : ""}
                         value={valores[id]?.valor ?? ""}
-                        onChange={(e) =>
+                        onChange={(e) => {
+                          setCamposVacios((prev) => { const next = new Set(prev); next.delete(id); return next; });
+                          setError("");
                           setValores((prev) => ({
                             ...prev,
                             [id]: { valor: e.target.value, unidad: prev[id]?.unidad ?? ex?.unidad ?? "" },
-                          }))
-                        }
+                          }));
+                        }}
                       />
                       <input
                         type="text"
@@ -126,6 +157,7 @@ const ModalResultados = ({ orden, onCerrar, onGuardado }: ModalResultadosProps) 
         </div>
 
         <div className="lab-modal-footer">
+          {error && <p className="lab-modal-error">{error}</p>}
           <button className="lab-btn lab-btn--cancel" onClick={onCerrar}>
             Cancelar
           </button>
@@ -148,9 +180,10 @@ const ModalResultados = ({ orden, onCerrar, onGuardado }: ModalResultadosProps) 
 interface FilaOrdenProps {
   orden: OrdenExamen;
   onCargarResultados: (orden: OrdenExamen) => void;
+  onCancelarOrden: (ordenId: string) => void;
 }
 
-const FilaOrden = ({ orden, onCargarResultados }: FilaOrdenProps) => {
+const FilaOrden = ({ orden, onCargarResultados, onCancelarOrden }: FilaOrdenProps) => {
   const [expandido, setExpandido] = useState(false);
   const cfg = ESTADO_CONFIG[orden.estado] ?? ESTADO_CONFIG.PENDIENTE;
   const Icon = cfg.icon;
@@ -181,12 +214,20 @@ const FilaOrden = ({ orden, onCargarResultados }: FilaOrdenProps) => {
             {cfg.label}
           </span>
           {(orden.estado === "PENDIENTE" || orden.estado === "EN_PROCESO") && (
-            <button
-              className="lab-btn lab-btn--sm lab-btn--primary"
-              onClick={(e) => { e.stopPropagation(); onCargarResultados(orden); }}
-            >
-              Cargar Resultados
-            </button>
+            <>
+              <button
+                className="lab-btn lab-btn--sm lab-btn--primary"
+                onClick={(e) => { e.stopPropagation(); onCargarResultados(orden); }}
+              >
+                Cargar Resultados
+              </button>
+              <button
+                className="lab-btn lab-btn--sm lab-btn--danger"
+                onClick={(e) => { e.stopPropagation(); onCancelarOrden(orden._id); }}
+              >
+                Cancelar
+              </button>
+            </>
           )}
           {expandido ? <ChevronUp size={16} className="lab-chevron" /> : <ChevronDown size={16} className="lab-chevron" />}
         </div>
@@ -243,22 +284,45 @@ type FiltroEstado = "TODOS" | "PENDIENTE" | "EN_PROCESO" | "COMPLETADO";
 const Laboratorio = () => {
   const [ordenes, setOrdenes] = useState<OrdenExamen[]>([]);
   const [loading, setLoading] = useState(true);
+  const [errorCarga, setErrorCarga] = useState("");
   const [filtro, setFiltro] = useState<FiltroEstado>("PENDIENTE");
   const [ordenModal, setOrdenModal] = useState<OrdenExamen | null>(null);
 
   const cargar = useCallback(async () => {
     setLoading(true);
+    setErrorCarga("");
     try {
       const data = await ExamenService.listarOrdenesPendientes();
       setOrdenes(data);
-    } catch (error) {
-      console.error("Error al cargar órdenes:", error);
+    } catch {
+      setErrorCarga("No se pudieron cargar las órdenes. Verifica tu conexión e intenta de nuevo.");
     } finally {
       setLoading(false);
     }
   }, []);
 
   useEffect(() => { cargar(); }, [cargar]);
+
+  const handleCancelarOrden = async (ordenId: string) => {
+    const result = await Swal.fire({
+      title: "¿Cancelar esta orden?",
+      text: "Esta acción no se puede deshacer. Los exámenes pendientes no se procesarán.",
+      icon: "warning",
+      showCancelButton: true,
+      confirmButtonColor: "#dc2626",
+      cancelButtonColor: "#64748b",
+      confirmButtonText: "Sí, cancelar orden",
+      cancelButtonText: "No, mantener",
+    });
+    if (!result.isConfirmed) return;
+    try {
+      await ExamenService.cancelarOrden(ordenId);
+      toastExito("Orden cancelada correctamente");
+      await cargar();
+    } catch {
+      Swal.fire("Error", "No se pudo cancelar la orden.", "error");
+    }
+  };
 
   const ordenesFiltradas = filtro === "TODOS"
     ? ordenes
@@ -301,6 +365,14 @@ const Laboratorio = () => {
           <div className="spinner-small" />
           <p>Cargando órdenes...</p>
         </div>
+      ) : errorCarga ? (
+        <div className="lab-error">
+          <XCircle size={40} />
+          <p>{errorCarga}</p>
+          <button className="lab-btn lab-btn--primary" onClick={cargar}>
+            Reintentar
+          </button>
+        </div>
       ) : ordenesFiltradas.length === 0 ? (
         <div className="lab-empty">
           <FlaskConical size={40} />
@@ -319,6 +391,7 @@ const Laboratorio = () => {
               key={orden._id}
               orden={orden}
               onCargarResultados={setOrdenModal}
+              onCancelarOrden={handleCancelarOrden}
             />
           ))}
         </div>
