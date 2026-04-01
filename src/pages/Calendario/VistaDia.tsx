@@ -1,4 +1,5 @@
 // src/pages/Calendario/VistaDia.tsx
+import { Fragment } from "react";
 import type { CitaTransformada } from "../../services/cita.service";
 import type { DoctorTransformado } from "../../services/doctor.service";
 import { getDoctorIdString } from "../../services/cita.service";
@@ -53,8 +54,8 @@ const VistaDia = ({ fecha, horas, citas, doctores, doctorId, onVerCita }: Props)
         ))}
 
         {horas.map((hora) => (
-          <>
-            <div key={`hora-${hora}`} className="multi-hora-label">{hora}</div>
+          <Fragment key={hora}>
+            <div className="multi-hora-label">{hora}</div>
             {doctoresMostrados.map((doc) => {
               const cita = getCita(doc.id, hora);
               return (
@@ -82,7 +83,7 @@ const VistaDia = ({ fecha, horas, citas, doctores, doctorId, onVerCita }: Props)
                 </div>
               );
             })}
-          </>
+          </Fragment>
         ))}
       </div>
     </div>

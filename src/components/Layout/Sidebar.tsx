@@ -31,8 +31,7 @@ const Sidebar = () => {
   ];
 
   const medicoMenu = [
-    { path: "/medico",            label: "Mi Tablero", icon: LayoutDashboard, description: "Resumen de mis citas" },
-    { path: "/medico/calendario", label: "Calendario", icon: Calendar,        description: "Mi calendario personal" },
+    { path: "/medico", label: "Calendario", icon: Calendar, description: "Mi calendario personal" },
   ];
 
   const menuItems = user?.rol === "MEDICO" ? medicoMenu : adminMenu;

@@ -7,7 +7,6 @@ import ListaCitas from "./pages/ListaCitas/ListaCitas";
 import ListaMedicos from "./pages/ListaMedicos/ListaMedicos";
 import ListaPacientes from "./pages/ListaPacientes/ListaPacientes";
 import Calendario from "./pages/Calendario/Calendario";
-import MedicoDashboard from "./pages/MedicoDashboard/MedicoDashboard";
 import PerfilCita from "./pages/PerfilCita/PerfilCita";
 import Dashboard from "./pages/Dashboard/Dashboard";
 import Login from "./pages/Login/Login";
@@ -104,15 +103,6 @@ function App() {
 
             <Route
               path="/medico"
-              element={
-                <ProtectedRoute roles={["MEDICO"]}>
-                  <MedicoDashboard />
-                </ProtectedRoute>
-              }
-            />
-
-            <Route
-              path="/medico/calendario"
               element={
                 <ProtectedRoute roles={["MEDICO"]}>
                   <CalendarioMedico />
