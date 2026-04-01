@@ -118,9 +118,9 @@ const Calendario = () => {
 
   const cambiarFecha = useCallback((delta: number) => {
     const nueva = new Date(fecha);
-    if (vista === "mes")    nueva.setMonth(nueva.getMonth() + delta);
+    if (vista === "mes")         return dispatch({ type: "SET_FECHA", fecha: new Date(fecha.getFullYear(), fecha.getMonth() + delta, 1) });
     else if (vista === "semana") nueva.setDate(nueva.getDate() + delta * 7);
-    else                    nueva.setDate(nueva.getDate() + delta);
+    else                         nueva.setDate(nueva.getDate() + delta);
     dispatch({ type: "SET_FECHA", fecha: nueva });
   }, [fecha, vista]);
   
