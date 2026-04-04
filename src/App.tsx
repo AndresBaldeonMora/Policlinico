@@ -127,7 +127,7 @@ function App() {
             <Route
               path="/admin/doctores"
               element={
-                <ProtectedRoute roles={["ADMINISTRADOR"]}>
+                <ProtectedRoute roles={["administrador"]}>
                   <GestionDoctores />
                 </ProtectedRoute>
               }
@@ -135,7 +135,7 @@ function App() {
             <Route
               path="/admin/pacientes"
               element={
-                <ProtectedRoute roles={["ADMINISTRADOR"]}>
+                <ProtectedRoute roles={["administrador"]}>
                   <GestionPacientes />
                 </ProtectedRoute>
               }
@@ -143,7 +143,7 @@ function App() {
             <Route
               path="/admin/especialidades"
               element={
-                <ProtectedRoute roles={["ADMINISTRADOR"]}>
+                <ProtectedRoute roles={["administrador"]}>
                   <GestionEspecialidades />
                 </ProtectedRoute>
               }

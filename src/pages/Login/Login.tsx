@@ -25,13 +25,14 @@ const Login = () => {
   useEffect(() => {
     if (!isAuthenticated || !user) return;
     const redirectMap: Record<string, string> = {
-    MEDICO:        "/medico",
-    ADMINISTRADOR: "/admin",
-    RECEPCIONISTA: "/",
-  };
+      MEDICO:         "/medico",
+      RECEPCIONISTA:  "/",
+      administrador:  "/admin/doctores",
+      cliente:        "/",
+    };
 
-  const destination = redirectMap[user.rol] ?? "/";
-  navigate(destination, { replace: true });
+    const destination = redirectMap[user.rol] ?? "/";
+    navigate(destination, { replace: true });
     // navigate(user.rol === "MEDICO" ? "/medico" : "/", { replace: true });
   }, [isAuthenticated, user, navigate]);
 

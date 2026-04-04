@@ -10,26 +10,42 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    AuthService.getSession().then((u) => {
-      setUser(u);
-      setLoading(false);
-    });
-
     const { data: listener } = supabase.auth.onAuthStateChange(
-      async (_event, session) => {
+      (_event, session) => {
         if (!session?.user) {
           setUser(null);
+          setLoading(false);
           return;
         }
-        const meta = session.user.user_metadata ?? {};
+
+        const u = session.user;
+        const meta = u.user_metadata ?? {};
+
+        // Renderiza inmediatamente con el rol de user_metadata (puede ser undefined)
+        const rolMeta = (meta.rol as UserRole) ?? "cliente";
         setUser({
-          id: session.user.id,
-          correo: session.user.email!,
-          nombres: meta.nombres ?? "",
-          apellidos: meta.apellidos ?? "",
-          rol: meta.rol,
-          medicoId: meta.medicoId,
+          id: u.id,
+          correo: u.email!,
+          nombres: (meta.nombres as string) ?? "",
+          apellidos: (meta.apellidos as string) ?? "",
+          rol: rolMeta,
+          medicoId: meta.medicoId as string | undefined,
         });
+        setLoading(false);
+
+        // Luego actualiza el rol desde profiles (sin bloquear el render)
+        supabase
+          .from("profiles")
+          .select("role")
+          .eq("id", u.id)
+          .single()
+          .then(({ data: profile }) => {
+            if (profile?.role) {
+              setUser((prev) =>
+                prev ? { ...prev, rol: profile.role as UserRole } : prev
+              );
+            }
+          });
       }
     );
 
