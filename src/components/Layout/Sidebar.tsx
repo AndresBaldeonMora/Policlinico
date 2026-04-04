@@ -12,6 +12,8 @@ import {
   PanelLeftClose,
   PanelLeftOpen,
   FlaskConical,
+  ShieldCheck, 
+  BookOpen
 } from "lucide-react";
 import "./Sidebar.css";
 
@@ -20,7 +22,8 @@ const Sidebar = () => {
   const { user } = useAuth();
   const [collapsed, setCollapsed] = useState(false);
 
-  const adminMenu = [
+  // pequeña correcion : de adminMenu a recepcionistaMenu 
+  const recepcionistaMenu  = [
     { path: "/", label: "Inicio", icon: LayoutDashboard, description: "Panel de inicio" },
     { path: "/calendario", label: "Calendario", icon: Calendar, description: "Vista principal de citas" },
     { path: "/reserva-cita", label: "Solicitar Cita", icon: CalendarPlus, description: "Agendar nueva cita" },
@@ -34,7 +37,30 @@ const Sidebar = () => {
     { path: "/medico", label: "Calendario", icon: Calendar, description: "Mi calendario personal" },
   ];
 
-  const menuItems = user?.rol === "MEDICO" ? medicoMenu : adminMenu;
+  // Menú ADMINISTRADOR 
+  const administradorMenu = [
+    { path: "/admin",               label: "Panel Admin",   icon: ShieldCheck, description: "Inicio administración" },
+    { path: "/admin/especialidades", label: "Especialidades", icon: BookOpen,    description: "CRUD especialidades" },
+    { path: "/admin/doctores",       label: "Doctores",       icon: Stethoscope, description: "CRUD doctores" },
+    { path: "/admin/pacientes",      label: "Pacientes",      icon: Users,       description: "CRUD pacientes" },
+  ];
+
+  // Versión mas factible para 3 a mas roles
+  const menuMap: Record<string, typeof recepcionistaMenu> = {
+    RECEPCIONISTA: recepcionistaMenu,
+    MEDICO:        medicoMenu,
+    ADMINISTRADOR: administradorMenu,
+  };
+
+  // const menuItems = user?.rol === "MEDICO" ? medicoMenu : adminMenu;
+  const menuItems = menuMap[user?.rol ?? ""] ?? recepcionistaMenu;
+
+  const subtitleMap: Record<string, string> = {
+    MEDICO:        "Portal Médico",
+    ADMINISTRADOR: "Portal Administración",
+    RECEPCIONISTA: "Portal Recepcionista",
+  };
+  const subtitle = subtitleMap[user?.rol ?? ""] ?? "Sistema";
 
   const avatarLetter = user?.nombres?.charAt(0).toUpperCase() || "U";
 
@@ -57,9 +83,10 @@ const Sidebar = () => {
           {!collapsed && (
             <div>
               <h2 className="logo-text">Policlinico</h2>
-              <p className="logo-subtitle">
+              {/* <p className="logo-subtitle">
                 {user?.rol === "MEDICO" ? "Portal Medico" : "Administracion"}
-              </p>
+              </p> */}
+              <p className="logo-subtitle">{subtitle}</p>
             </div>
           )}
         </div>

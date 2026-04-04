@@ -24,7 +24,15 @@ const Login = () => {
 
   useEffect(() => {
     if (!isAuthenticated || !user) return;
-    navigate(user.rol === "MEDICO" ? "/medico" : "/", { replace: true });
+    const redirectMap: Record<string, string> = {
+    MEDICO:        "/medico",
+    ADMINISTRADOR: "/admin",
+    RECEPCIONISTA: "/",
+  };
+
+  const destination = redirectMap[user.rol] ?? "/";
+  navigate(destination, { replace: true });
+    // navigate(user.rol === "MEDICO" ? "/medico" : "/", { replace: true });
   }, [isAuthenticated, user, navigate]);
 
   const handleSubmit = async (e: FormEvent) => {

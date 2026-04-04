@@ -1,6 +1,6 @@
 import { supabase } from "./supabaseClient";
 
-export type UserRole = "ADMIN" | "MEDICO" | "RECEPCIONISTA";
+export type UserRole = "ADMINISTRADOR" | "MEDICO" | "RECEPCIONISTA";
 
 export interface AuthUser {
   id: string;
@@ -26,6 +26,8 @@ export const AuthService = {
     }
 
     const meta = data.user?.user_metadata ?? {};
+    console.log("meta completo:", meta);
+    console.log("rol recibido:", meta.rol);
 
     return {
       id: data.user!.id,
