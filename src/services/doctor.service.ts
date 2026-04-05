@@ -96,4 +96,48 @@ export class DoctorApiService {
       return [];
     }
   }
+
+  static async crear(payload: {
+    nombres: string;
+    apellidos: string;
+    correo: string;
+    telefono: string;
+    especialidadId: string;
+    cmp?: string;
+  }): Promise<DoctorTransformado> {
+    try {
+      const response = await api.post<{ success: boolean; data: Doctor }>("/doctores", payload);
+      return transformarDoctor(response.data.data);
+    } catch (error: unknown) {
+      const err = error as AxiosErrorResponse;
+      throw new Error(err.response?.data?.message || "Error al crear doctor");
+    }
+  }
+
+  static async actualizar(id: string, payload: Partial<{
+    nombres: string;
+    apellidos: string;
+    correo: string;
+    telefono: string;
+    especialidadId: string;
+    cmp: string;
+  }>): Promise<DoctorTransformado> {
+    try {
+      const response = await api.patch<{ success: boolean; data: Doctor }>(`/doctores/${id}`, payload);
+      return transformarDoctor(response.data.data);
+    } catch (error: unknown) {
+      const err = error as AxiosErrorResponse;
+      throw new Error(err.response?.data?.message || "Error al actualizar doctor");
+    }
+  }
+
+  static async eliminar(id: string): Promise<void> {
+    try {
+      await api.delete(`/doctores/${id}`);
+    } catch (error: unknown) {
+      const err = error as AxiosErrorResponse;
+      throw new Error(err.response?.data?.message || "Error al eliminar doctor");
+    }
+  }
 }
+

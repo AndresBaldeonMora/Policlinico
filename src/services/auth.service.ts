@@ -15,6 +15,10 @@ async function getRoleForUser(
   userId: string,
   meta: Record<string, unknown>
 ): Promise<UserRole> {
+
+  // Si user_metadata ya tiene el rol (MEDICO/RECEPCIONISTA), úsalo directo
+  if (meta.rol) return meta.rol as UserRole;
+
   const { data: profile } = await supabase
     .from("profiles")
     .select("role")
@@ -23,8 +27,9 @@ async function getRoleForUser(
 
   if (profile?.role) return profile.role as UserRole;
 
-  // fallback para usuarios con rol en user_metadata (MEDICO / RECEPCIONISTA)
-  return (meta.rol as UserRole) ?? "cliente";
+  // // fallback para usuarios con rol en user_metadata (MEDICO / RECEPCIONISTA)
+  // return (meta.rol as UserRole) ?? "cliente";
+  return "cliente";
 }
 
 export const AuthService = {

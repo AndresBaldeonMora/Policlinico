@@ -102,6 +102,15 @@ export class PacienteApiService {
       throw new Error(err.response?.data?.message || "Error al actualizar paciente");
     }
   }
+  
+  static async eliminar(id: string): Promise<void> {
+    try {
+      await api.delete(`/pacientes/${id}`);
+    } catch (error: unknown) {
+      const err = error as AxiosErrorResponse;
+      throw new Error(err.response?.data?.message || "Error al eliminar paciente");
+    }
+  }
 
   static async listar(): Promise<PacienteTransformado[]> {
     try {

@@ -27,7 +27,7 @@ const Login = () => {
     const redirectMap: Record<string, string> = {
       MEDICO:         "/medico",
       RECEPCIONISTA:  "/",
-      administrador:  "/admin/doctores",
+      administrador:  "/admin",
       cliente:        "/",
     };
 
