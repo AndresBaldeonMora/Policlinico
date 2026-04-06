@@ -14,6 +14,7 @@
 
 import { useEffect, useState, useCallback, useMemo, useReducer } from "react";
 import { useParams, useNavigate } from "react-router-dom";
+import { History, ChevronDown, ChevronUp } from "lucide-react";
 import "./PerfilCita.css";
 import { CitaApiService } from "../../services/cita.service";
 import { perfilCitaReducer, initialState } from "./PerfilCitaReducer";
@@ -99,6 +100,8 @@ const PerfilCita = () => {
 
   // ── Exámenes ──────────────────────────────────────────────
   const [ordenes, setOrdenes] = useState<OrdenExamen[]>([]);
+  const [historial, setHistorial] = useState<OrdenExamen[]>([]);
+  const [historialAbierto, setHistorialAbierto] = useState(false);
   const [mostrarOrdenModal, setMostrarOrdenModal] = useState(false);
   const [errorOrdenes, setErrorOrdenes] = useState("");
 
@@ -106,12 +109,19 @@ const PerfilCita = () => {
     if (!citaId) return;
     setErrorOrdenes("");
     try {
-      const data = await ExamenService.listarOrdenesPorCita(citaId);
-      setOrdenes(data);
+      const [ordenesActuales, todasOrdenes] = await Promise.all([
+        ExamenService.listarOrdenesPorCita(citaId),
+        cita?.pacienteId?._id
+          ? ExamenService.listarOrdenesPorPaciente(cita.pacienteId._id)
+          : Promise.resolve([]),
+      ]);
+      setOrdenes(ordenesActuales);
+      // Historial = órdenes de otras citas del mismo paciente
+      setHistorial(todasOrdenes.filter((o) => o.citaId !== citaId && o.citaId !== undefined));
     } catch {
       setErrorOrdenes("No se pudieron cargar las órdenes de examen. Intenta de nuevo.");
     }
-  }, [citaId]);
+  }, [citaId, cita?.pacienteId?._id]);
 
   useEffect(() => {
     if (tabActiva === "examenes") cargarOrdenes();
@@ -344,8 +354,8 @@ const PerfilCita = () => {
 
       {tabActiva === "examenes" && (
         <div className="card-clinica perfil-examenes">
-          <div className="perfil-examenes-header">
-            <h3>Exámenes de Laboratorio</h3>
+          <div className="card-header">
+            <span>Exámenes de Laboratorio</span>
             {user?.rol === "MEDICO" && (
               <button
                 className="btn btn-primary btn-sm"
@@ -363,64 +373,139 @@ const PerfilCita = () => {
                 Reintentar
               </button>
             </div>
-          ) : ordenes.length === 0 ? (
+          ) : ordenes.length === 0 && historial.length === 0 ? (
             <p className="perfil-examenes-empty">No hay órdenes de examen para esta cita.</p>
           ) : (
             <div className="perfil-examenes-lista">
-              {ordenes.map((orden) => (
-                <div key={orden._id} className="perfil-orden-card">
-                  <div className="perfil-orden-top">
-                    <span className="perfil-orden-fecha">
-                      {new Date(orden.fecha).toLocaleDateString("es-PE")}
-                    </span>
-                    <div className="perfil-orden-top-actions">
-                      <span className={`perfil-orden-estado perfil-orden-estado--${orden.estado.toLowerCase()}`}>
-                        {orden.estado === "PENDIENTE"  && "Pendiente"}
-                        {orden.estado === "EN_PROCESO" && "En proceso"}
-                        {orden.estado === "COMPLETADO" && "Completado"}
-                        {orden.estado === "CANCELADA"  && "Cancelada"}
+              {/* ── Órdenes de esta cita ── */}
+              {ordenes.length === 0 ? (
+                <p className="perfil-examenes-empty" style={{ marginBottom: "1rem" }}>
+                  No hay órdenes para esta cita aún.
+                </p>
+              ) : (
+                ordenes.map((orden) => (
+                  <div key={orden._id} className="perfil-orden-card">
+                    <div className="perfil-orden-top">
+                      <span className="perfil-orden-fecha">
+                        {new Date(orden.fecha).toLocaleDateString("es-PE")}
                       </span>
-                      {(orden.estado === "PENDIENTE" || orden.estado === "EN_PROCESO") && user?.rol === "MEDICO" && (
-                        <button
-                          className="btn btn-danger btn-sm"
-                          onClick={() => handleCancelarOrden(orden._id)}
-                        >
-                          Cancelar Orden
-                        </button>
-                      )}
+                      <div className="perfil-orden-top-actions">
+                        <span className={`perfil-orden-estado perfil-orden-estado--${orden.estado.toLowerCase()}`}>
+                          {orden.estado === "PENDIENTE"  && "Pendiente"}
+                          {orden.estado === "EN_PROCESO" && "En proceso"}
+                          {orden.estado === "COMPLETADO" && "Completado"}
+                          {orden.estado === "CANCELADA"  && "Cancelada"}
+                        </span>
+                        {(orden.estado === "PENDIENTE" || orden.estado === "EN_PROCESO") && user?.rol === "MEDICO" && (
+                          <button
+                            className="btn btn-danger btn-sm"
+                            onClick={() => handleCancelarOrden(orden._id)}
+                          >
+                            Cancelar Orden
+                          </button>
+                        )}
+                      </div>
                     </div>
+                    {orden.observacionesGenerales && (
+                      <p className="perfil-orden-obs">{orden.observacionesGenerales}</p>
+                    )}
+                    <table className="perfil-orden-tabla">
+                      <thead>
+                        <tr>
+                          <th>Examen</th>
+                          <th>Tipo</th>
+                          <th>Resultado</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {orden.items.map((item, i) => {
+                          const ex = typeof item.examenId === "object" ? item.examenId as ExamenLaboratorio : null;
+                          return (
+                            <tr key={i}>
+                              <td>{ex?.nombre ?? "—"}</td>
+                              <td>{ex ? TIPO_EXAMEN_LABEL[ex.tipo] : "—"}</td>
+                              <td>
+                                {item.valorResultado
+                                  ? <strong>{item.valorResultado} {item.unidadResultado}</strong>
+                                  : <span style={{ color: "var(--text-muted)" }}>Pendiente</span>
+                                }
+                              </td>
+                            </tr>
+                          );
+                        })}
+                      </tbody>
+                    </table>
                   </div>
-                  {orden.observacionesGenerales && (
-                    <p className="perfil-orden-obs">{orden.observacionesGenerales}</p>
+                ))
+              )}
+
+              {/* ── Historial de otras visitas ── */}
+              {historial.length > 0 && (
+                <div className="perfil-historial-seccion">
+                  <button
+                    className="perfil-historial-toggle"
+                    onClick={() => setHistorialAbierto((v) => !v)}
+                  >
+                    <span className="perfil-historial-toggle-label">
+                      <History size={14} />
+                      Historial de otras visitas ({historial.length})
+                    </span>
+                    {historialAbierto
+                      ? <ChevronUp size={14} />
+                      : <ChevronDown size={14} />
+                    }
+                  </button>
+
+                  {historialAbierto && (
+                    <div className="perfil-historial-lista">
+                      {historial.map((orden) => (
+                        <div key={orden._id} className="perfil-orden-card perfil-orden-card--historial">
+                          <div className="perfil-orden-top">
+                            <span className="perfil-orden-fecha">
+                              {new Date(orden.fecha).toLocaleDateString("es-PE")}
+                            </span>
+                            <span className={`perfil-orden-estado perfil-orden-estado--${orden.estado.toLowerCase()}`}>
+                              {orden.estado === "PENDIENTE"  && "Pendiente"}
+                              {orden.estado === "EN_PROCESO" && "En proceso"}
+                              {orden.estado === "COMPLETADO" && "Completado"}
+                              {orden.estado === "CANCELADA"  && "Cancelada"}
+                            </span>
+                          </div>
+                          {orden.observacionesGenerales && (
+                            <p className="perfil-orden-obs">{orden.observacionesGenerales}</p>
+                          )}
+                          <table className="perfil-orden-tabla">
+                            <thead>
+                              <tr>
+                                <th>Examen</th>
+                                <th>Tipo</th>
+                                <th>Resultado</th>
+                              </tr>
+                            </thead>
+                            <tbody>
+                              {orden.items.map((item, i) => {
+                                const ex = typeof item.examenId === "object" ? item.examenId as ExamenLaboratorio : null;
+                                return (
+                                  <tr key={i}>
+                                    <td>{ex?.nombre ?? "—"}</td>
+                                    <td>{ex ? TIPO_EXAMEN_LABEL[ex.tipo] : "—"}</td>
+                                    <td>
+                                      {item.valorResultado
+                                        ? <strong>{item.valorResultado} {item.unidadResultado}</strong>
+                                        : <span style={{ color: "var(--text-muted)" }}>—</span>
+                                      }
+                                    </td>
+                                  </tr>
+                                );
+                              })}
+                            </tbody>
+                          </table>
+                        </div>
+                      ))}
+                    </div>
                   )}
-                  <table className="perfil-orden-tabla">
-                    <thead>
-                      <tr>
-                        <th>Examen</th>
-                        <th>Tipo</th>
-                        <th>Resultado</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {orden.items.map((item, i) => {
-                        const ex = typeof item.examenId === "object" ? item.examenId as ExamenLaboratorio : null;
-                        return (
-                          <tr key={i}>
-                            <td>{ex?.nombre ?? "—"}</td>
-                            <td>{ex ? TIPO_EXAMEN_LABEL[ex.tipo] : "—"}</td>
-                            <td>
-                              {item.valorResultado
-                                ? <strong>{item.valorResultado} {item.unidadResultado}</strong>
-                                : <span style={{ color: "var(--text-muted)" }}>Pendiente</span>
-                              }
-                            </td>
-                          </tr>
-                        );
-                      })}
-                    </tbody>
-                  </table>
                 </div>
-              ))}
+              )}
             </div>
           )}
         </div>
