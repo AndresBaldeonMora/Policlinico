@@ -83,31 +83,19 @@ const ModalResultados = ({
     setError("");
     setCamposVacios(new Set());
 
-    // Validar que todos los exámenes pendientes tengan un valor
-    const vacios = new Set<string>();
-    pendientes.forEach((item) => {
-      const ex =
-        typeof item.examenId === "object"
-          ? (item.examenId as ExamenLaboratorio)
-          : null;
+    const seleccionados = pendientes.filter((item) => {
+      const ex = typeof item.examenId === "object" ? (item.examenId as ExamenLaboratorio) : null;
       const id = ex ? ex._id : String(item.examenId);
-      const val = valores[id]?.valor?.trim();
-      if (!val) vacios.add(id);
+      return !!valores[id]?.valor?.trim();
     });
 
-    if (vacios.size > 0) {
-      setCamposVacios(vacios);
-      setError(
-        `Debes ingresar el resultado de todos los exámenes (${vacios.size} vacío${vacios.size > 1 ? "s" : ""}).`,
-      );
+    if (seleccionados.length === 0) {
+      setError("Debes ingresar el resultado de al menos un examen.");
       return;
     }
 
-    const resultados = pendientes.map((item) => {
-      const ex =
-        typeof item.examenId === "object"
-          ? (item.examenId as ExamenLaboratorio)
-          : null;
+    const resultados = seleccionados.map((item) => {
+      const ex = typeof item.examenId === "object" ? (item.examenId as ExamenLaboratorio) : null;
       const id = ex ? ex._id : String(item.examenId);
       const v = valores[id];
       return {
@@ -243,7 +231,18 @@ const ModalResultados = ({
               onClick={handleGuardar}
               disabled={guardando}
             >
-              {guardando ? "Guardando..." : "Guardar Resultados"}
+              {(() => {
+                if (guardando) return "Guardando...";
+                const inputsLlenos = pendientes.filter((item) => {
+                  const ex = typeof item.examenId === "object" ? (item.examenId as ExamenLaboratorio) : null;
+                  const id = ex ? ex._id : String(item.examenId);
+                  return !!valores[id]?.valor?.trim();
+                }).length;
+                if (inputsLlenos > 0 && inputsLlenos < pendientes.length) {
+                  return `Guardar Parcial (${inputsLlenos}/${pendientes.length})`;
+                }
+                return "Completar Orden";
+              })()}
             </button>
           )}
         </div>
