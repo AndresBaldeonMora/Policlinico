@@ -19,8 +19,14 @@ import "./PerfilCita.css";
 import { CitaApiService } from "../../services/cita.service";
 import { perfilCitaReducer, initialState } from "./PerfilCitaReducer";
 import { useAuth } from "../../hooks/userAuth";
-import type { OrdenExamen, ExamenLaboratorio } from "../../services/examen.service";
-import { ExamenService, TIPO_EXAMEN_LABEL } from "../../services/examen.service";
+import type {
+  OrdenExamen,
+  ExamenLaboratorio,
+} from "../../services/examen.service";
+import {
+  ExamenService,
+  TIPO_EXAMEN_LABEL,
+} from "../../services/examen.service";
 import OrdenExamenModal from "../MedicoDashboard/OrdenExamenModal";
 import "../MedicoDashboard/OrdenExamenModal.css";
 import Swal from "sweetalert2";
@@ -38,10 +44,10 @@ type TabDemografico = "quien" | "contacto";
 // ============================================================================
 
 const TABS_PRINCIPALES: { id: TabPrincipal; label: string }[] = [
-  { id: "dashboard",  label: "Dashboard" },
-  { id: "historial",  label: "Historico de Visitas" },
+  { id: "dashboard", label: "Dashboard" },
+  { id: "historial", label: "Historico de Visitas" },
   { id: "documentos", label: "Documentos" },
-  { id: "examenes",   label: "Examenes" },
+  { id: "examenes", label: "Examenes" },
 ];
 
 // ============================================================================
@@ -62,6 +68,23 @@ const formatearFechaCorta = (fechaISO?: string) => {
   const fecha = new Date(fechaISO);
   if (isNaN(fecha.getTime())) return "—";
   return new Intl.DateTimeFormat("es-PE").format(fecha);
+};
+
+const formatearFechaHora = (iso: string) => {
+  const d = new Date(iso);
+  return (
+    d.toLocaleDateString("es-PE", {
+      day: "2-digit",
+      month: "short",
+      year: "numeric",
+    }) +
+    " - " +
+    d.toLocaleTimeString("es-PE", {
+      hour: "2-digit",
+      minute: "2-digit",
+      hour12: true,
+    })
+  );
 };
 
 const calcularEdad = (fechaNacimiento?: string) => {
@@ -123,9 +146,15 @@ const PerfilCita = () => {
       ]);
       setOrdenes(ordenesActuales);
       // Historial = órdenes de otras citas del mismo paciente
-      setHistorial(todasOrdenes.filter((o) => o.citaId !== citaId && o.citaId !== undefined));
+      setHistorial(
+        todasOrdenes.filter(
+          (o) => o.citaId !== citaId && o.citaId !== undefined,
+        ),
+      );
     } catch {
-      setErrorOrdenes("No se pudieron cargar las órdenes de examen. Intenta de nuevo.");
+      setErrorOrdenes(
+        "No se pudieron cargar las órdenes de examen. Intenta de nuevo.",
+      );
     }
   }, [citaId, cita?.pacienteId?._id]);
 
@@ -185,7 +214,7 @@ const PerfilCita = () => {
   const paciente = useMemo(() => cita?.pacienteId, [cita]);
   const edad = useMemo(
     () => calcularEdad(paciente?.fechaNacimiento),
-    [paciente?.fechaNacimiento]
+    [paciente?.fechaNacimiento],
   );
 
   // ── Loading / error guards ────────────────────────────────
@@ -203,7 +232,10 @@ const PerfilCita = () => {
     return (
       <div className="perfil-error">
         <h2>No se pudo cargar la información</h2>
-        <p>{error || "Ocurrió un error inesperado al cargar los datos de la cita."}</p>
+        <p>
+          {error ||
+            "Ocurrió un error inesperado al cargar los datos de la cita."}
+        </p>
         <div style={{ display: "flex", gap: "0.75rem" }}>
           <button className="btn btn-primary" onClick={cargarCita}>
             Reintentar
@@ -237,13 +269,17 @@ const PerfilCita = () => {
             </h1>
             <div className="datos-basicos">
               <span>DNI: {paciente.dni}</span>
-              <span>F.Nac: {formatearFechaCorta(paciente.fechaNacimiento)}</span>
+              <span>
+                F.Nac: {formatearFechaCorta(paciente.fechaNacimiento)}
+              </span>
               {edad !== null && <span>{edad} años</span>}
             </div>
           </div>
         </div>
 
-        <span>{formatearFechaCorta(cita.fecha)} - {cita.hora}</span>
+        <span>
+          {formatearFechaCorta(cita.fecha)} - {cita.hora}
+        </span>
       </div>
 
       {/* TABS — key={t.id} is stable (string literal union, never reordered) */}
@@ -334,20 +370,18 @@ const PerfilCita = () => {
                 <h4>Citas</h4>
               </div>
               <div className="widget-body">
-                {citasPaciente.length === 0 ? (
-                  "Sin citas"
-                ) : (
-                  /* key={c._id} is a stable MongoDB ObjectId — never an index */
-                  citasPaciente.map((c) => (
-                    <button
-                      key={c._id}
-                      className="cita-widget-item"
-                      onClick={() => navigate(`/citas/${c._id}`)}
-                    >
-                      {formatearFechaCorta(c.fecha)} - {c.hora}
-                    </button>
-                  ))
-                )}
+                {citasPaciente.length === 0
+                  ? "Sin citas"
+                  : /* key={c._id} is a stable MongoDB ObjectId — never an index */
+                    citasPaciente.map((c) => (
+                      <button
+                        key={c._id}
+                        className="cita-widget-item"
+                        onClick={() => navigate(`/citas/${c._id}`)}
+                      >
+                        {formatearFechaCorta(c.fecha)} - {c.hora}
+                      </button>
+                    ))}
               </div>
             </div>
           </div>
@@ -379,17 +413,25 @@ const PerfilCita = () => {
           {errorOrdenes ? (
             <div className="perfil-examenes-error">
               <p>{errorOrdenes}</p>
-              <button className="btn btn-primary btn-sm" onClick={cargarOrdenes}>
+              <button
+                className="btn btn-primary btn-sm"
+                onClick={cargarOrdenes}
+              >
                 Reintentar
               </button>
             </div>
           ) : ordenes.length === 0 && historial.length === 0 ? (
-            <p className="perfil-examenes-empty">No hay órdenes de examen para esta cita.</p>
+            <p className="perfil-examenes-empty">
+              No hay órdenes de examen para esta cita.
+            </p>
           ) : (
             <div className="perfil-examenes-lista">
               {/* ── Órdenes de esta cita ── */}
               {ordenes.length === 0 ? (
-                <p className="perfil-examenes-empty" style={{ marginBottom: "1rem" }}>
+                <p
+                  className="perfil-examenes-empty"
+                  style={{ marginBottom: "1rem" }}
+                >
                   No hay órdenes para esta cita aún.
                 </p>
               ) : (
@@ -397,43 +439,49 @@ const PerfilCita = () => {
                   <div key={orden._id} className="perfil-orden-card">
                     <div className="perfil-orden-top">
                       <span className="perfil-orden-fecha">
-                        {new Date(orden.fecha).toLocaleDateString("es-PE")}
+                        {formatearFechaHora(orden.fecha.toString())}
                       </span>
                       <div className="perfil-orden-top-actions">
-                        <span className={`perfil-orden-estado perfil-orden-estado--${orden.estado.toLowerCase()}`}>
-                          {orden.estado === "PENDIENTE"  && "Pendiente"}
+                        <span
+                          className={`perfil-orden-estado perfil-orden-estado--${orden.estado.toLowerCase()}`}
+                        >
+                          {orden.estado === "PENDIENTE" && "Pendiente"}
                           {orden.estado === "EN_PROCESO" && "En proceso"}
                           {orden.estado === "COMPLETADO" && "Completado"}
-                          {orden.estado === "CANCELADA"  && "Cancelada"}
+                          {orden.estado === "CANCELADA" && "Cancelada"}
                         </span>
-                        {orden.estado === "PENDIENTE" && user?.rol === "MEDICO" && (
-                          <>
-                            <button
-                              className="btn btn-secondary btn-sm"
-                              onClick={() => handleEditarOrden(orden)}
-                            >
-                              Editar
-                            </button>
+                        {orden.estado === "PENDIENTE" &&
+                          user?.rol === "MEDICO" && (
+                            <>
+                              <button
+                                className="btn btn-secondary btn-sm"
+                                onClick={() => handleEditarOrden(orden)}
+                              >
+                                Editar
+                              </button>
+                              <button
+                                className="btn btn-danger btn-sm"
+                                onClick={() => handleCancelarOrden(orden._id)}
+                              >
+                                Cancelar Orden
+                              </button>
+                            </>
+                          )}
+                        {orden.estado === "EN_PROCESO" &&
+                          user?.rol === "MEDICO" && (
                             <button
                               className="btn btn-danger btn-sm"
                               onClick={() => handleCancelarOrden(orden._id)}
                             >
                               Cancelar Orden
                             </button>
-                          </>
-                        )}
-                        {orden.estado === "EN_PROCESO" && user?.rol === "MEDICO" && (
-                          <button
-                            className="btn btn-danger btn-sm"
-                            onClick={() => handleCancelarOrden(orden._id)}
-                          >
-                            Cancelar Orden
-                          </button>
-                        )}
+                          )}
                       </div>
                     </div>
                     {orden.observacionesGenerales && (
-                      <p className="perfil-orden-obs">{orden.observacionesGenerales}</p>
+                      <p className="perfil-orden-obs">
+                        {orden.observacionesGenerales}
+                      </p>
                     )}
                     <table className="perfil-orden-tabla">
                       <thead>
@@ -446,17 +494,31 @@ const PerfilCita = () => {
                       </thead>
                       <tbody>
                         {orden.items.map((item, i) => {
-                          const ex = typeof item.examenId === "object" ? item.examenId as ExamenLaboratorio : null;
+                          const ex =
+                            typeof item.examenId === "object"
+                              ? (item.examenId as ExamenLaboratorio)
+                              : null;
                           return (
                             <tr key={i}>
                               <td>{ex?.nombre ?? "—"}</td>
                               <td>{ex ? TIPO_EXAMEN_LABEL[ex.tipo] : "—"}</td>
-                              <td>{item.observaciones || <span style={{ color: "var(--text-muted)" }}>—</span>}</td>
                               <td>
-                                {item.valorResultado
-                                  ? <strong>{item.valorResultado} {item.unidadResultado}</strong>
-                                  : <span style={{ color: "var(--text-muted)" }}>Pendiente</span>
-                                }
+                                {item.observaciones || (
+                                  <span style={{ color: "var(--text-muted)" }}>
+                                    —
+                                  </span>
+                                )}
+                              </td>
+                              <td>
+                                {item.valorResultado ? (
+                                  <strong>
+                                    {item.valorResultado} {item.unidadResultado}
+                                  </strong>
+                                ) : (
+                                  <span style={{ color: "var(--text-muted)" }}>
+                                    Pendiente
+                                  </span>
+                                )}
                               </td>
                             </tr>
                           );
@@ -478,29 +540,37 @@ const PerfilCita = () => {
                       <History size={14} />
                       Historial de otras visitas ({historial.length})
                     </span>
-                    {historialAbierto
-                      ? <ChevronUp size={14} />
-                      : <ChevronDown size={14} />
-                    }
+                    {historialAbierto ? (
+                      <ChevronUp size={14} />
+                    ) : (
+                      <ChevronDown size={14} />
+                    )}
                   </button>
 
                   {historialAbierto && (
                     <div className="perfil-historial-lista">
                       {historial.map((orden) => (
-                        <div key={orden._id} className="perfil-orden-card perfil-orden-card--historial">
+                        <div
+                          key={orden._id}
+                          className="perfil-orden-card perfil-orden-card--historial"
+                        >
                           <div className="perfil-orden-top">
                             <span className="perfil-orden-fecha">
-                              {new Date(orden.fecha).toLocaleDateString("es-PE")}
+                              {formatearFechaHora(orden.fecha.toString())}
                             </span>
-                            <span className={`perfil-orden-estado perfil-orden-estado--${orden.estado.toLowerCase()}`}>
-                              {orden.estado === "PENDIENTE"  && "Pendiente"}
+                            <span
+                              className={`perfil-orden-estado perfil-orden-estado--${orden.estado.toLowerCase()}`}
+                            >
+                              {orden.estado === "PENDIENTE" && "Pendiente"}
                               {orden.estado === "EN_PROCESO" && "En proceso"}
                               {orden.estado === "COMPLETADO" && "Completado"}
-                              {orden.estado === "CANCELADA"  && "Cancelada"}
+                              {orden.estado === "CANCELADA" && "Cancelada"}
                             </span>
                           </div>
                           {orden.observacionesGenerales && (
-                            <p className="perfil-orden-obs">{orden.observacionesGenerales}</p>
+                            <p className="perfil-orden-obs">
+                              {orden.observacionesGenerales}
+                            </p>
                           )}
                           <table className="perfil-orden-tabla">
                             <thead>
@@ -513,17 +583,38 @@ const PerfilCita = () => {
                             </thead>
                             <tbody>
                               {orden.items.map((item, i) => {
-                                const ex = typeof item.examenId === "object" ? item.examenId as ExamenLaboratorio : null;
+                                const ex =
+                                  typeof item.examenId === "object"
+                                    ? (item.examenId as ExamenLaboratorio)
+                                    : null;
                                 return (
                                   <tr key={i}>
                                     <td>{ex?.nombre ?? "—"}</td>
-                                    <td>{ex ? TIPO_EXAMEN_LABEL[ex.tipo] : "—"}</td>
-                                    <td>{item.observaciones || <span style={{ color: "var(--text-muted)" }}>—</span>}</td>
                                     <td>
-                                      {item.valorResultado
-                                        ? <strong>{item.valorResultado} {item.unidadResultado}</strong>
-                                        : <span style={{ color: "var(--text-muted)" }}>—</span>
-                                      }
+                                      {ex ? TIPO_EXAMEN_LABEL[ex.tipo] : "—"}
+                                    </td>
+                                    <td>
+                                      {item.observaciones || (
+                                        <span
+                                          style={{ color: "var(--text-muted)" }}
+                                        >
+                                          —
+                                        </span>
+                                      )}
+                                    </td>
+                                    <td>
+                                      {item.valorResultado ? (
+                                        <strong>
+                                          {item.valorResultado}{" "}
+                                          {item.unidadResultado}
+                                        </strong>
+                                      ) : (
+                                        <span
+                                          style={{ color: "var(--text-muted)" }}
+                                        >
+                                          —
+                                        </span>
+                                      )}
                                     </td>
                                   </tr>
                                 );
@@ -541,63 +632,88 @@ const PerfilCita = () => {
         </div>
       )}
 
-      {mostrarOrdenModal && cita && user?.rol === "MEDICO" && (() => {
-        const doctor = cita.doctorId && typeof cita.doctorId === "object" ? cita.doctorId : null;
-        const pacienteId = cita.pacienteId && typeof cita.pacienteId === "object"
-          ? cita.pacienteId._id
-          : String(cita.pacienteId);
-        const doctorId = doctor?._id ?? "";
-        const especialidadId = doctor?.especialidadId && typeof doctor.especialidadId === "object"
-          ? doctor.especialidadId._id
-          : "";
-        return (
-          <OrdenExamenModal
-            citaId={cita._id}
-            pacienteId={pacienteId}
-            doctorId={doctorId}
-            especialidadId={especialidadId}
-            onCerrar={() => setMostrarOrdenModal(false)}
-            onOrdenCreada={cargarOrdenes}
-          />
-        );
-      })()}
+      {mostrarOrdenModal &&
+        cita &&
+        user?.rol === "MEDICO" &&
+        (() => {
+          const doctor =
+            cita.doctorId && typeof cita.doctorId === "object"
+              ? cita.doctorId
+              : null;
+          const pacienteId =
+            cita.pacienteId && typeof cita.pacienteId === "object"
+              ? cita.pacienteId._id
+              : String(cita.pacienteId);
+          const doctorId = doctor?._id ?? "";
+          const especialidadId =
+            doctor?.especialidadId && typeof doctor.especialidadId === "object"
+              ? doctor.especialidadId._id
+              : "";
+          return (
+            <OrdenExamenModal
+              citaId={cita._id}
+              pacienteId={pacienteId}
+              doctorId={doctorId}
+              especialidadId={especialidadId}
+              onCerrar={() => setMostrarOrdenModal(false)}
+              onOrdenCreada={cargarOrdenes}
+            />
+          );
+        })()}
 
       {/* ── Modal de edición de orden PENDIENTE ── */}
-      {ordenEditando && cita && (() => {
-        const doctor = cita.doctorId && typeof cita.doctorId === "object" ? cita.doctorId : null;
-        const pacienteId = cita.pacienteId && typeof cita.pacienteId === "object"
-          ? cita.pacienteId._id
-          : String(cita.pacienteId);
-        const doctorId = doctor?._id ?? "";
-        const especialidadId = doctor?.especialidadId && typeof doctor.especialidadId === "object"
-          ? doctor.especialidadId._id
-          : "";
-        // Pre-cargar los exámenes e indicaciones existentes de la orden
-        const seleccionadosIniciales = new Set(
-          ordenEditando.items.map((it) =>
-            typeof it.examenId === "object" ? it.examenId._id : String(it.examenId)
-          )
-        );
-        const obsItemIniciales = ordenEditando.items.reduce<Record<string, string>>((acc, it) => {
-          const id = typeof it.examenId === "object" ? it.examenId._id : String(it.examenId);
-          acc[id] = it.observaciones ?? "";
-          return acc;
-        }, {});
-        return (
-          <OrdenExamenModal
-            citaId={cita._id}
-            pacienteId={pacienteId}
-            doctorId={doctorId}
-            especialidadId={especialidadId}
-            onCerrar={() => setOrdenEditando(null)}
-            onOrdenCreada={async () => { setOrdenEditando(null); await cargarOrdenes(); }}
-            ordenId={ordenEditando._id}
-            seleccionadosIniciales={seleccionadosIniciales}
-            obsItemIniciales={obsItemIniciales}
-            obsGeneralesInicial={ordenEditando.observacionesGenerales ?? ""}
-          />
-        );
-      })()}
+      {ordenEditando &&
+        cita &&
+        (() => {
+          const doctor =
+            cita.doctorId && typeof cita.doctorId === "object"
+              ? cita.doctorId
+              : null;
+          const pacienteId =
+            cita.pacienteId && typeof cita.pacienteId === "object"
+              ? cita.pacienteId._id
+              : String(cita.pacienteId);
+          const doctorId = doctor?._id ?? "";
+          const especialidadId =
+            doctor?.especialidadId && typeof doctor.especialidadId === "object"
+              ? doctor.especialidadId._id
+              : "";
+          // Pre-cargar los exámenes e indicaciones existentes de la orden
+          const seleccionadosIniciales = new Set(
+            ordenEditando.items.map((it) =>
+              typeof it.examenId === "object"
+                ? it.examenId._id
+                : String(it.examenId),
+            ),
+          );
+          const obsItemIniciales = ordenEditando.items.reduce<
+            Record<string, string>
+          >((acc, it) => {
+            const id =
+              typeof it.examenId === "object"
+                ? it.examenId._id
+                : String(it.examenId);
+            acc[id] = it.observaciones ?? "";
+            return acc;
+          }, {});
+          return (
+            <OrdenExamenModal
+              citaId={cita._id}
+              pacienteId={pacienteId}
+              doctorId={doctorId}
+              especialidadId={especialidadId}
+              onCerrar={() => setOrdenEditando(null)}
+              onOrdenCreada={async () => {
+                setOrdenEditando(null);
+                await cargarOrdenes();
+              }}
+              ordenId={ordenEditando._id}
+              seleccionadosIniciales={seleccionadosIniciales}
+              obsItemIniciales={obsItemIniciales}
+              obsGeneralesInicial={ordenEditando.observacionesGenerales ?? ""}
+            />
+          );
+        })()}
     </div>
   );
 };

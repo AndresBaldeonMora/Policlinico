@@ -27,12 +27,25 @@ import { toastExito } from "../../utils/toast";
 import "./Laboratorio.css";
 
 // ─── Helpers ────────────────────────────────────────────────
-const formatFecha = (iso: string) =>
-  new Date(iso).toLocaleDateString("es-PE", {
+const formatFecha = (iso: string) => {
+  const d = new Date(iso);
+  const fecha = d.toLocaleDateString("es-PE", {
     day: "2-digit",
     month: "short",
     year: "numeric",
   });
+  const hora = d.toLocaleTimeString("es-PE", {
+    hour: "2-digit",
+    minute: "2-digit",
+    hour12: true
+  });
+  return (
+    <>
+      <span style={{ display: "block" }}>{fecha}</span>
+      <span style={{ display: "block", fontSize: "0.85em", color: "var(--text-muted)" }}>{hora}</span>
+    </>
+  );
+};
 
 const ESTADO_CONFIG = {
   PENDIENTE: { label: "Pendiente", clase: "lab-badge--pending", icon: Clock },
@@ -474,14 +487,15 @@ const Laboratorio = () => {
       )
         return false;
 
-      if (filtros.fechaInicio) {
-        const fechaOrden = new Date(orden.fecha).toISOString().split("T")[0];
-        if (fechaOrden < filtros.fechaInicio) return false;
-      }
+      if (filtros.fechaInicio || filtros.fechaFin) {
+        const d = new Date(orden.fecha);
+        const y = d.getFullYear();
+        const m = String(d.getMonth() + 1).padStart(2, '0');
+        const day = String(d.getDate()).padStart(2, '0');
+        const fechaOrdenLocal = `${y}-${m}-${day}`;
 
-      if (filtros.fechaFin) {
-        const fechaOrden = new Date(orden.fecha).toISOString().split("T")[0];
-        if (fechaOrden > filtros.fechaFin) return false;
+        if (filtros.fechaInicio && fechaOrdenLocal < filtros.fechaInicio) return false;
+        if (filtros.fechaFin && fechaOrdenLocal > filtros.fechaFin) return false;
       }
 
       return true;
