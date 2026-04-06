@@ -12,6 +12,11 @@ interface Props {
   especialidadId: string;
   onCerrar: () => void;
   onOrdenCreada: () => void;
+  // Modo edición (opcional)
+  ordenId?: string;
+  seleccionadosIniciales?: Set<string>;
+  obsItemIniciales?: Record<string, string>;
+  obsGeneralesInicial?: string;
 }
 
 type GrupoExamenes = Record<string, ExamenLaboratorio[]>;
@@ -23,11 +28,16 @@ const OrdenExamenModal = ({
   especialidadId,
   onCerrar,
   onOrdenCreada,
+  ordenId,
+  seleccionadosIniciales,
+  obsItemIniciales,
+  obsGeneralesInicial,
 }: Props) => {
+  const modoEdicion = Boolean(ordenId);
   const [examenes, setExamenes] = useState<ExamenLaboratorio[]>([]);
-  const [seleccionados, setSeleccionados] = useState<Set<string>>(new Set());
-  const [observaciones, setObservaciones] = useState<Record<string, string>>({});
-  const [observacionesGenerales, setObservacionesGenerales] = useState("");
+  const [seleccionados, setSeleccionados] = useState<Set<string>>(seleccionadosIniciales ?? new Set());
+  const [observaciones, setObservaciones] = useState<Record<string, string>>(obsItemIniciales ?? {});
+  const [observacionesGenerales, setObservacionesGenerales] = useState(obsGeneralesInicial ?? "");
   const [loading, setLoading] = useState(true);
   const [guardando, setGuardando] = useState(false);
   const [gruposAbiertos, setGruposAbiertos] = useState<Set<string>>(new Set());
@@ -77,7 +87,6 @@ const OrdenExamenModal = ({
       return;
     }
 
-    // Validar que observaciones no sean solo espacios en blanco
     const obsGeneralesTrimmed = observacionesGenerales.trim();
     const itemsPayload = [...seleccionados].map((examenId) => ({
       examenId,
@@ -86,20 +95,25 @@ const OrdenExamenModal = ({
 
     setGuardando(true);
     try {
-      await ExamenService.crearOrden({
-        pacienteId,
-        doctorId,
-        citaId,
-        especialidadId,
-        observacionesGenerales: obsGeneralesTrimmed,
-        items: itemsPayload,
-      });
-      toastExito("Orden de examen creada exitosamente");
+      if (modoEdicion && ordenId) {
+        await ExamenService.actualizarOrden(ordenId, itemsPayload, obsGeneralesTrimmed);
+        toastExito("Orden actualizada correctamente");
+      } else {
+        await ExamenService.crearOrden({
+          pacienteId,
+          doctorId,
+          citaId,
+          especialidadId,
+          observacionesGenerales: obsGeneralesTrimmed,
+          items: itemsPayload,
+        });
+        toastExito("Orden de examen creada exitosamente");
+      }
       onOrdenCreada();
       onCerrar();
     } catch (err: any) {
       const mensaje =
-        err?.response?.data?.message || "Error al crear la orden. Intenta de nuevo.";
+        err?.response?.data?.message || `Error al ${modoEdicion ? "actualizar" : "crear"} la orden. Intenta de nuevo.`;
       setError(mensaje);
     } finally {
       setGuardando(false);
@@ -112,7 +126,7 @@ const OrdenExamenModal = ({
         <div className="orden-modal-header">
           <div className="orden-modal-title">
             <FlaskConical size={20} />
-            <h3>Solicitar Exámenes de Laboratorio</h3>
+            <h3>{modoEdicion ? "Editar Orden" : "Solicitar Exámenes de Laboratorio"}</h3>
           </div>
           <button className="orden-modal-close" onClick={onCerrar}>
             <X size={18} />
@@ -218,7 +232,10 @@ const OrdenExamenModal = ({
               onClick={handleCrear}
               disabled={seleccionados.size === 0 || guardando}
             >
-              {guardando ? "Creando orden..." : "Crear Orden"}
+              {guardando
+                ? (modoEdicion ? "Guardando..." : "Creando orden...")
+                : (modoEdicion ? "Guardar Cambios" : "Crear Orden")
+              }
             </button>
           </div>
         </div>

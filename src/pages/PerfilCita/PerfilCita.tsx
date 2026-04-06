@@ -22,6 +22,7 @@ import { useAuth } from "../../hooks/userAuth";
 import type { OrdenExamen, ExamenLaboratorio } from "../../services/examen.service";
 import { ExamenService, TIPO_EXAMEN_LABEL } from "../../services/examen.service";
 import OrdenExamenModal from "../MedicoDashboard/OrdenExamenModal";
+import "../MedicoDashboard/OrdenExamenModal.css";
 import Swal from "sweetalert2";
 import { toastExito } from "../../utils/toast";
 
@@ -42,6 +43,10 @@ const TABS_PRINCIPALES: { id: TabPrincipal; label: string }[] = [
   { id: "documentos", label: "Documentos" },
   { id: "examenes",   label: "Examenes" },
 ];
+
+// ============================================================================
+// TABS
+// ============================================================================
 
 const TABS_DEMOGRAFICOS: { id: TabDemografico; label: string }[] = [
   { id: "quien", label: "Quién" },
@@ -103,6 +108,7 @@ const PerfilCita = () => {
   const [historial, setHistorial] = useState<OrdenExamen[]>([]);
   const [historialAbierto, setHistorialAbierto] = useState(false);
   const [mostrarOrdenModal, setMostrarOrdenModal] = useState(false);
+  const [ordenEditando, setOrdenEditando] = useState<OrdenExamen | null>(null);
   const [errorOrdenes, setErrorOrdenes] = useState("");
 
   const cargarOrdenes = useCallback(async () => {
@@ -146,6 +152,10 @@ const PerfilCita = () => {
     } catch {
       Swal.fire("Error", "No se pudo cancelar la orden.", "error");
     }
+  };
+
+  const handleEditarOrden = (orden: OrdenExamen) => {
+    setOrdenEditando(orden);
   };
 
   // ============================================================================
@@ -396,7 +406,23 @@ const PerfilCita = () => {
                           {orden.estado === "COMPLETADO" && "Completado"}
                           {orden.estado === "CANCELADA"  && "Cancelada"}
                         </span>
-                        {(orden.estado === "PENDIENTE" || orden.estado === "EN_PROCESO") && user?.rol === "MEDICO" && (
+                        {orden.estado === "PENDIENTE" && user?.rol === "MEDICO" && (
+                          <>
+                            <button
+                              className="btn btn-secondary btn-sm"
+                              onClick={() => handleEditarOrden(orden)}
+                            >
+                              Editar
+                            </button>
+                            <button
+                              className="btn btn-danger btn-sm"
+                              onClick={() => handleCancelarOrden(orden._id)}
+                            >
+                              Cancelar Orden
+                            </button>
+                          </>
+                        )}
+                        {orden.estado === "EN_PROCESO" && user?.rol === "MEDICO" && (
                           <button
                             className="btn btn-danger btn-sm"
                             onClick={() => handleCancelarOrden(orden._id)}
@@ -414,6 +440,7 @@ const PerfilCita = () => {
                         <tr>
                           <th>Examen</th>
                           <th>Tipo</th>
+                          <th>Observación</th>
                           <th>Resultado</th>
                         </tr>
                       </thead>
@@ -424,6 +451,7 @@ const PerfilCita = () => {
                             <tr key={i}>
                               <td>{ex?.nombre ?? "—"}</td>
                               <td>{ex ? TIPO_EXAMEN_LABEL[ex.tipo] : "—"}</td>
+                              <td>{item.observaciones || <span style={{ color: "var(--text-muted)" }}>—</span>}</td>
                               <td>
                                 {item.valorResultado
                                   ? <strong>{item.valorResultado} {item.unidadResultado}</strong>
@@ -479,6 +507,7 @@ const PerfilCita = () => {
                               <tr>
                                 <th>Examen</th>
                                 <th>Tipo</th>
+                                <th>Observación</th>
                                 <th>Resultado</th>
                               </tr>
                             </thead>
@@ -489,6 +518,7 @@ const PerfilCita = () => {
                                   <tr key={i}>
                                     <td>{ex?.nombre ?? "—"}</td>
                                     <td>{ex ? TIPO_EXAMEN_LABEL[ex.tipo] : "—"}</td>
+                                    <td>{item.observaciones || <span style={{ color: "var(--text-muted)" }}>—</span>}</td>
                                     <td>
                                       {item.valorResultado
                                         ? <strong>{item.valorResultado} {item.unidadResultado}</strong>
@@ -528,6 +558,43 @@ const PerfilCita = () => {
             especialidadId={especialidadId}
             onCerrar={() => setMostrarOrdenModal(false)}
             onOrdenCreada={cargarOrdenes}
+          />
+        );
+      })()}
+
+      {/* ── Modal de edición de orden PENDIENTE ── */}
+      {ordenEditando && cita && (() => {
+        const doctor = cita.doctorId && typeof cita.doctorId === "object" ? cita.doctorId : null;
+        const pacienteId = cita.pacienteId && typeof cita.pacienteId === "object"
+          ? cita.pacienteId._id
+          : String(cita.pacienteId);
+        const doctorId = doctor?._id ?? "";
+        const especialidadId = doctor?.especialidadId && typeof doctor.especialidadId === "object"
+          ? doctor.especialidadId._id
+          : "";
+        // Pre-cargar los exámenes e indicaciones existentes de la orden
+        const seleccionadosIniciales = new Set(
+          ordenEditando.items.map((it) =>
+            typeof it.examenId === "object" ? it.examenId._id : String(it.examenId)
+          )
+        );
+        const obsItemIniciales = ordenEditando.items.reduce<Record<string, string>>((acc, it) => {
+          const id = typeof it.examenId === "object" ? it.examenId._id : String(it.examenId);
+          acc[id] = it.observaciones ?? "";
+          return acc;
+        }, {});
+        return (
+          <OrdenExamenModal
+            citaId={cita._id}
+            pacienteId={pacienteId}
+            doctorId={doctorId}
+            especialidadId={especialidadId}
+            onCerrar={() => setOrdenEditando(null)}
+            onOrdenCreada={async () => { setOrdenEditando(null); await cargarOrdenes(); }}
+            ordenId={ordenEditando._id}
+            seleccionadosIniciales={seleccionadosIniciales}
+            obsItemIniciales={obsItemIniciales}
+            obsGeneralesInicial={ordenEditando.observacionesGenerales ?? ""}
           />
         );
       })()}

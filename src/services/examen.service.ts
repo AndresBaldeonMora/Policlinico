@@ -113,6 +113,18 @@ export class ExamenService {
   static async cancelarOrden(ordenId: string): Promise<void> {
     await api.patch(`/ordenes/${ordenId}/cancelar`);
   }
+
+  static async actualizarOrden(
+    ordenId: string,
+    items: { examenId: string; observaciones?: string }[],
+    observacionesGenerales?: string
+  ): Promise<OrdenExamen> {
+    const res = await api.patch<{ success: boolean; data: OrdenExamen }>(
+      `/ordenes/${ordenId}`,
+      { items, observacionesGenerales }
+    );
+    return res.data.data;
+  }
 }
 
 export const TIPO_EXAMEN_LABEL: Record<TipoExamen, string> = {
