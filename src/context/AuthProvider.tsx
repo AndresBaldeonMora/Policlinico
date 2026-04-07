@@ -52,7 +52,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
           nombres: (meta.nombres as string) ?? "",
           apellidos: (meta.apellidos as string) ?? "",
           // rol: rolMeta,
-           rol: rolMeta.toLowerCase() as UserRole,
+           rol: rolMeta,
           medicoId: meta.medicoId as string | undefined,
         });
         setLoading(false);
