@@ -98,8 +98,9 @@ const PacienteModal = ({ paciente, onGuardado, onCancelar }: Props) => {
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
     const { name, value } = e.target;
-    if ((name === "telefono" || name === "apoderadoTelefono") && (!/^\d*$/.test(value) || value.length > 15)) return;
     if (name === "dni" && (!/^\d*$/.test(value) || value.length > 8)) return;
+    if ((name === "telefono" || name === "apoderadoTelefono") && (!/^\d*$/.test(value) || value.length > 9)) return; // ← máximo 9
+    if (name === "apoderadoNombre" && value !== "" && !/^[a-zA-ZáéíóúÁÉÍÓÚüÜñÑ\s]*$/.test(value)) return; 
     dispatch({ type: "SET_FIELD", field: name, value });
     dispatch({ type: "CLEAR_ERROR" });
   };
@@ -113,6 +114,8 @@ const PacienteModal = ({ paciente, onGuardado, onCancelar }: Props) => {
     if (errFecha)                return errFecha;
     if (!state.telefono.trim())  return "El teléfono es obligatorio.";
     if (esMenor && !state.apoderadoNombre.trim()) return "El menor necesita un apoderado.";
+    if (esMenor && !state.apoderadoTelefono.trim()) return "El celular del apoderado es obligatorio."; 
+    if (esMenor && state.apoderadoTelefono.length !== 9) return "El celular del apoderado debe tener 9 dígitos."; 
     return null;
   };
 
@@ -136,18 +139,11 @@ const PacienteModal = ({ paciente, onGuardado, onCancelar }: Props) => {
         : await PacienteApiService.crear(datos);
       onGuardado(resultado);
     } catch (err) {
-      //Nota: Se está validando el error de DNI duplicado en frontend
-      // mediante el mensaje del backend (E11000 / duplicate).
-      // Esto no es lo más óptimo, ya que depende de strings que podrían cambiar.
-      // Lo ideal sería que el backend retorne un código de error estructurado,
-      // por ejemplo: { code: "DNI_DUPLICADO" }, para manejarlo de forma más segura.
-      const msg = err instanceof Error ? err.message.toLowerCase() : "";
-
-
-      if (msg.includes("e11000") || msg.includes("duplicate")) {
+      const msg = err instanceof Error ? err.message : "";
+      if (msg.toLowerCase().includes("e11000") || msg.toLowerCase().includes("duplicate")) {
         dispatch({ type: "SET_ERROR", message: "Ya existe un paciente con este DNI" });
       } else {
-        dispatch({ type: "SET_ERROR", message: "Error al guardar." });
+        dispatch({ type: "SET_ERROR", message: msg || "Error al guardar." });
       }
     }
   };

@@ -1,6 +1,6 @@
 import { supabase } from "./supabaseClient";
 
-export type UserRole = "ADMIN" | "MEDICO" | "RECEPCIONISTA";
+export type UserRole = "MEDICO" | "RECEPCIONISTA" | "administrador" | "cliente";
 
 export interface AuthUser {
   id: string;
@@ -9,6 +9,27 @@ export interface AuthUser {
   apellidos: string;
   rol: UserRole;
   medicoId?: string;
+}
+
+async function getRoleForUser(
+  userId: string,
+  meta: Record<string, unknown>
+): Promise<UserRole> {
+
+  // Si user_metadata ya tiene el rol (MEDICO/RECEPCIONISTA), úsalo directo
+  if (meta.rol) return meta.rol as UserRole;
+
+  const { data: profile } = await supabase
+    .from("profiles")
+    .select("role")
+    .eq("id", userId)
+    .single();
+
+  if (profile?.role) return profile.role as UserRole;
+
+  // // fallback para usuarios con rol en user_metadata (MEDICO / RECEPCIONISTA)
+  // return (meta.rol as UserRole) ?? "cliente";
+  return "cliente";
 }
 
 export const AuthService = {
@@ -26,14 +47,15 @@ export const AuthService = {
     }
 
     const meta = data.user?.user_metadata ?? {};
+    const rol = await getRoleForUser(data.user!.id, meta);
 
     return {
       id: data.user!.id,
       correo: data.user!.email!,
-      nombres: meta.nombres ?? "",
-      apellidos: meta.apellidos ?? "",
-      rol: meta.rol as UserRole,
-      medicoId: meta.medicoId,
+      nombres: meta.nombres as string ?? "",
+      apellidos: meta.apellidos as string ?? "",
+      rol,
+      medicoId: meta.medicoId as string | undefined,
     };
   },
 
@@ -47,14 +69,15 @@ export const AuthService = {
 
     const u = data.session.user;
     const meta = u.user_metadata ?? {};
+    const rol = await getRoleForUser(u.id, meta);
 
     return {
       id: u.id,
       correo: u.email!,
-      nombres: meta.nombres ?? "",
-      apellidos: meta.apellidos ?? "",
-      rol: meta.rol as UserRole,
-      medicoId: meta.medicoId,
+      nombres: meta.nombres as string ?? "",
+      apellidos: meta.apellidos as string ?? "",
+      rol,
+      medicoId: meta.medicoId as string | undefined,
     };
   },
 

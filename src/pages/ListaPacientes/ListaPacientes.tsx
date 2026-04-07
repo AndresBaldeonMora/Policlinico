@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { useSearchParams } from "react-router-dom";
-import { Search, UserPlus, Pencil, Users } from "lucide-react";
+import { Search, UserPlus, Pencil, Users,Trash2 } from "lucide-react";
 import "../ListaCitas/ListaCitas.css";
 import "./ListaPacientes.css";
 import { PacienteApiService, type PacienteTransformado } from "../../services/paciente.service";
@@ -10,8 +10,10 @@ const normalizeString = (str: string): string =>
   (str || "").toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
 
 interface NotificationState { message: string; type: "success" | "error" | ""; visible: boolean; }
-
-const ListaPacientes = () => {
+interface Props {
+  puedeEliminar?: boolean;
+}
+const ListaPacientes = ({ puedeEliminar = false }: Props) => {
   const [searchParams] = useSearchParams();
   const highlightId = searchParams.get("highlight");
   const highlightRef = useRef<HTMLTableRowElement>(null);
@@ -70,6 +72,17 @@ const ListaPacientes = () => {
       return [p, ...prev];
     });
     showNotification(pacienteEditando ? "Paciente actualizado correctamente." : "Paciente registrado correctamente.", "success");
+  };
+
+  const handleEliminar = async (id: string) => {
+    if (!confirm("¿Seguro que deseas eliminar este paciente?")) return;
+    try {
+      await PacienteApiService.eliminar(id);
+      setPacientes((prev) => prev.filter((p) => p._id !== id));
+      showNotification("Paciente eliminado.", "success");
+    } catch {
+      showNotification("Error al eliminar el paciente.", "error");
+    }
   };
 
   return (
@@ -133,9 +146,19 @@ const ListaPacientes = () => {
                       <td className="td-truncate">{p.correo || <span className="td-muted">--</span>}</td>
                       <td className="td-center">{p.edad != null ? `${p.edad}` : <span className="td-muted">--</span>}</td>
                       <td className="td-center">
-                        <button className="btn-action" onClick={() => abrirEditar(p)} title="Editar paciente">
+                        {/* <button className="btn-action" onClick={() => abrirEditar(p)} title="Editar paciente">
                           <Pencil size={15} />
-                        </button>
+                        </button> */}
+                        <div className="ge-actions">
+                          <button className="btn-action" onClick={() => abrirEditar(p)} title="Editar">
+                            <Pencil size={15} />
+                          </button>
+                          {puedeEliminar && (
+                            <button className="btn-action btn-action--danger" onClick={() => handleEliminar(p._id)} title="Eliminar">
+                              <Trash2 size={14} />
+                            </button>
+                          )}
+                        </div>
                       </td>
                     </tr>
                   ))

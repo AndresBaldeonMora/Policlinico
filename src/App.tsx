@@ -13,6 +13,11 @@ import Login from "./pages/Login/Login";
 import Laboratorio from "./pages/Laboratorio/Laboratorio";
 import CalendarioMedico from "./pages/Calendario/CalendarioMedico";
 
+// Páginas del administrador
+import AdminDashboard      from "./pages/AdminDash/AdminDashboard";
+import GestionEspecialidades from "./pages/AdminDash/GestionEspecialidades";
+import GestionDoctores       from "./pages/AdminDash/GestionDoctores";
+
 import { AuthProvider } from "./context/AuthProvider";
 import { ThemeProvider } from "./context/ThemeContext";
 import { ProtectedRoute } from "./routes/ProtectedRoute";
@@ -106,6 +111,40 @@ function App() {
               element={
                 <ProtectedRoute roles={["MEDICO"]}>
                   <CalendarioMedico />
+                </ProtectedRoute>
+              }
+            />
+
+            <Route
+              path="/admin"
+              element={
+                <ProtectedRoute roles={["administrador"]}>
+                  <AdminDashboard />
+                </ProtectedRoute>
+              }
+            /> 
+
+            <Route
+              path="/admin/doctores"
+              element={
+                <ProtectedRoute roles={["administrador"]}>
+                  <GestionDoctores />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/admin/pacientes"
+              element={
+                <ProtectedRoute roles={["administrador"]}>
+                  <ListaPacientes puedeEliminar />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/admin/especialidades"
+              element={
+                <ProtectedRoute roles={["administrador"]}>
+                  <GestionEspecialidades />
                 </ProtectedRoute>
               }
             />
