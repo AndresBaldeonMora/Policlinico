@@ -14,13 +14,21 @@
 
 import { useEffect, useState, useCallback, useMemo, useReducer } from "react";
 import { useParams, useNavigate } from "react-router-dom";
+import { History, ChevronDown, ChevronUp } from "lucide-react";
 import "./PerfilCita.css";
 import { CitaApiService } from "../../services/cita.service";
 import { perfilCitaReducer, initialState } from "./PerfilCitaReducer";
 import { useAuth } from "../../hooks/userAuth";
-import type { OrdenExamen, ExamenLaboratorio } from "../../services/examen.service";
-import { ExamenService, TIPO_EXAMEN_LABEL } from "../../services/examen.service";
+import type {
+  OrdenExamen,
+  ExamenLaboratorio,
+} from "../../services/examen.service";
+import {
+  ExamenService,
+  TIPO_EXAMEN_LABEL,
+} from "../../services/examen.service";
 import OrdenExamenModal from "../MedicoDashboard/OrdenExamenModal";
+import "../MedicoDashboard/OrdenExamenModal.css";
 import Swal from "sweetalert2";
 import { toastExito } from "../../utils/toast";
 
@@ -36,11 +44,15 @@ type TabDemografico = "quien" | "contacto";
 // ============================================================================
 
 const TABS_PRINCIPALES: { id: TabPrincipal; label: string }[] = [
-  { id: "dashboard",  label: "Dashboard" },
-  { id: "historial",  label: "Historico de Visitas" },
+  { id: "dashboard", label: "Dashboard" },
+  { id: "historial", label: "Historico de Visitas" },
   { id: "documentos", label: "Documentos" },
-  { id: "examenes",   label: "Examenes" },
+  { id: "examenes", label: "Examenes" },
 ];
+
+// ============================================================================
+// TABS
+// ============================================================================
 
 const TABS_DEMOGRAFICOS: { id: TabDemografico; label: string }[] = [
   { id: "quien", label: "Quién" },
@@ -56,6 +68,23 @@ const formatearFechaCorta = (fechaISO?: string) => {
   const fecha = new Date(fechaISO);
   if (isNaN(fecha.getTime())) return "—";
   return new Intl.DateTimeFormat("es-PE").format(fecha);
+};
+
+const formatearFechaHora = (iso: string) => {
+  const d = new Date(iso);
+  return (
+    d.toLocaleDateString("es-PE", {
+      day: "2-digit",
+      month: "short",
+      year: "numeric",
+    }) +
+    " - " +
+    d.toLocaleTimeString("es-PE", {
+      hour: "2-digit",
+      minute: "2-digit",
+      hour12: true,
+    })
+  );
 };
 
 const calcularEdad = (fechaNacimiento?: string) => {
@@ -99,19 +128,35 @@ const PerfilCita = () => {
 
   // ── Exámenes ──────────────────────────────────────────────
   const [ordenes, setOrdenes] = useState<OrdenExamen[]>([]);
+  const [historial, setHistorial] = useState<OrdenExamen[]>([]);
+  const [historialAbierto, setHistorialAbierto] = useState(false);
   const [mostrarOrdenModal, setMostrarOrdenModal] = useState(false);
+  const [ordenEditando, setOrdenEditando] = useState<OrdenExamen | null>(null);
   const [errorOrdenes, setErrorOrdenes] = useState("");
 
   const cargarOrdenes = useCallback(async () => {
     if (!citaId) return;
     setErrorOrdenes("");
     try {
-      const data = await ExamenService.listarOrdenesPorCita(citaId);
-      setOrdenes(data);
+      const [ordenesActuales, todasOrdenes] = await Promise.all([
+        ExamenService.listarOrdenesPorCita(citaId),
+        cita?.pacienteId?._id
+          ? ExamenService.listarOrdenesPorPaciente(cita.pacienteId._id)
+          : Promise.resolve([]),
+      ]);
+      setOrdenes(ordenesActuales);
+      // Historial = órdenes de otras citas del mismo paciente
+      setHistorial(
+        todasOrdenes.filter(
+          (o) => o.citaId !== citaId && o.citaId !== undefined,
+        ),
+      );
     } catch {
-      setErrorOrdenes("No se pudieron cargar las órdenes de examen. Intenta de nuevo.");
+      setErrorOrdenes(
+        "No se pudieron cargar las órdenes de examen. Intenta de nuevo.",
+      );
     }
-  }, [citaId]);
+  }, [citaId, cita?.pacienteId?._id]);
 
   useEffect(() => {
     if (tabActiva === "examenes") cargarOrdenes();
@@ -136,6 +181,10 @@ const PerfilCita = () => {
     } catch {
       Swal.fire("Error", "No se pudo cancelar la orden.", "error");
     }
+  };
+
+  const handleEditarOrden = (orden: OrdenExamen) => {
+    setOrdenEditando(orden);
   };
 
   // ============================================================================
@@ -165,7 +214,7 @@ const PerfilCita = () => {
   const paciente = useMemo(() => cita?.pacienteId, [cita]);
   const edad = useMemo(
     () => calcularEdad(paciente?.fechaNacimiento),
-    [paciente?.fechaNacimiento]
+    [paciente?.fechaNacimiento],
   );
 
   // ── Loading / error guards ────────────────────────────────
@@ -183,7 +232,10 @@ const PerfilCita = () => {
     return (
       <div className="perfil-error">
         <h2>No se pudo cargar la información</h2>
-        <p>{error || "Ocurrió un error inesperado al cargar los datos de la cita."}</p>
+        <p>
+          {error ||
+            "Ocurrió un error inesperado al cargar los datos de la cita."}
+        </p>
         <div style={{ display: "flex", gap: "0.75rem" }}>
           <button className="btn btn-primary" onClick={cargarCita}>
             Reintentar
@@ -217,13 +269,17 @@ const PerfilCita = () => {
             </h1>
             <div className="datos-basicos">
               <span>DNI: {paciente.dni}</span>
-              <span>F.Nac: {formatearFechaCorta(paciente.fechaNacimiento)}</span>
+              <span>
+                F.Nac: {formatearFechaCorta(paciente.fechaNacimiento)}
+              </span>
               {edad !== null && <span>{edad} años</span>}
             </div>
           </div>
         </div>
 
-        <span>{formatearFechaCorta(cita.fecha)} - {cita.hora}</span>
+        <span>
+          {formatearFechaCorta(cita.fecha)} - {cita.hora}
+        </span>
       </div>
 
       {/* TABS — key={t.id} is stable (string literal union, never reordered) */}
@@ -314,20 +370,18 @@ const PerfilCita = () => {
                 <h4>Citas</h4>
               </div>
               <div className="widget-body">
-                {citasPaciente.length === 0 ? (
-                  "Sin citas"
-                ) : (
-                  /* key={c._id} is a stable MongoDB ObjectId — never an index */
-                  citasPaciente.map((c) => (
-                    <button
-                      key={c._id}
-                      className="cita-widget-item"
-                      onClick={() => navigate(`/citas/${c._id}`)}
-                    >
-                      {formatearFechaCorta(c.fecha)} - {c.hora}
-                    </button>
-                  ))
-                )}
+                {citasPaciente.length === 0
+                  ? "Sin citas"
+                  : /* key={c._id} is a stable MongoDB ObjectId — never an index */
+                    citasPaciente.map((c) => (
+                      <button
+                        key={c._id}
+                        className="cita-widget-item"
+                        onClick={() => navigate(`/citas/${c._id}`)}
+                      >
+                        {formatearFechaCorta(c.fecha)} - {c.hora}
+                      </button>
+                    ))}
               </div>
             </div>
           </div>
@@ -344,8 +398,8 @@ const PerfilCita = () => {
 
       {tabActiva === "examenes" && (
         <div className="card-clinica perfil-examenes">
-          <div className="perfil-examenes-header">
-            <h3>Exámenes de Laboratorio</h3>
+          <div className="card-header">
+            <span>Exámenes de Laboratorio</span>
             {user?.rol === "MEDICO" && (
               <button
                 className="btn btn-primary btn-sm"
@@ -359,93 +413,307 @@ const PerfilCita = () => {
           {errorOrdenes ? (
             <div className="perfil-examenes-error">
               <p>{errorOrdenes}</p>
-              <button className="btn btn-primary btn-sm" onClick={cargarOrdenes}>
+              <button
+                className="btn btn-primary btn-sm"
+                onClick={cargarOrdenes}
+              >
                 Reintentar
               </button>
             </div>
-          ) : ordenes.length === 0 ? (
-            <p className="perfil-examenes-empty">No hay órdenes de examen para esta cita.</p>
+          ) : ordenes.length === 0 && historial.length === 0 ? (
+            <p className="perfil-examenes-empty">
+              No hay órdenes de examen para esta cita.
+            </p>
           ) : (
             <div className="perfil-examenes-lista">
-              {ordenes.map((orden) => (
-                <div key={orden._id} className="perfil-orden-card">
-                  <div className="perfil-orden-top">
-                    <span className="perfil-orden-fecha">
-                      {new Date(orden.fecha).toLocaleDateString("es-PE")}
-                    </span>
-                    <div className="perfil-orden-top-actions">
-                      <span className={`perfil-orden-estado perfil-orden-estado--${orden.estado.toLowerCase()}`}>
-                        {orden.estado === "PENDIENTE"  && "Pendiente"}
-                        {orden.estado === "EN_PROCESO" && "En proceso"}
-                        {orden.estado === "COMPLETADO" && "Completado"}
-                        {orden.estado === "CANCELADA"  && "Cancelada"}
+              {/* ── Órdenes de esta cita ── */}
+              {ordenes.length === 0 ? (
+                <p
+                  className="perfil-examenes-empty"
+                  style={{ marginBottom: "1rem" }}
+                >
+                  No hay órdenes para esta cita aún.
+                </p>
+              ) : (
+                ordenes.map((orden) => (
+                  <div key={orden._id} className="perfil-orden-card">
+                    <div className="perfil-orden-top">
+                      <span className="perfil-orden-fecha">
+                        {formatearFechaHora(orden.fecha.toString())}
                       </span>
-                      {(orden.estado === "PENDIENTE" || orden.estado === "EN_PROCESO") && user?.rol === "MEDICO" && (
-                        <button
-                          className="btn btn-danger btn-sm"
-                          onClick={() => handleCancelarOrden(orden._id)}
+                      <div className="perfil-orden-top-actions">
+                        <span
+                          className={`perfil-orden-estado perfil-orden-estado--${orden.estado.toLowerCase()}`}
                         >
-                          Cancelar Orden
-                        </button>
-                      )}
+                          {orden.estado === "PENDIENTE" && "Pendiente"}
+                          {orden.estado === "EN_PROCESO" && "En proceso"}
+                          {orden.estado === "COMPLETADO" && "Completado"}
+                          {orden.estado === "CANCELADA" && "Cancelada"}
+                        </span>
+                        {orden.estado === "PENDIENTE" &&
+                          user?.rol === "MEDICO" && (
+                            <>
+                              <button
+                                className="btn btn-secondary btn-sm"
+                                onClick={() => handleEditarOrden(orden)}
+                              >
+                                Editar
+                              </button>
+                              <button
+                                className="btn btn-danger btn-sm"
+                                onClick={() => handleCancelarOrden(orden._id)}
+                              >
+                                Cancelar Orden
+                              </button>
+                            </>
+                          )}
+                        {orden.estado === "EN_PROCESO" &&
+                          user?.rol === "MEDICO" && (
+                            <button
+                              className="btn btn-danger btn-sm"
+                              onClick={() => handleCancelarOrden(orden._id)}
+                            >
+                              Cancelar Orden
+                            </button>
+                          )}
+                      </div>
                     </div>
+                    {orden.observacionesGenerales && (
+                      <p className="perfil-orden-obs">
+                        {orden.observacionesGenerales}
+                      </p>
+                    )}
+                    <table className="perfil-orden-tabla">
+                      <thead>
+                        <tr>
+                          <th>Examen</th>
+                          <th>Tipo</th>
+                          <th>Observación</th>
+                          <th>Resultado</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {orden.items.map((item, i) => {
+                          const ex =
+                            typeof item.examenId === "object"
+                              ? (item.examenId as ExamenLaboratorio)
+                              : null;
+                          return (
+                            <tr key={i}>
+                              <td>{ex?.nombre ?? "—"}</td>
+                              <td>{ex ? TIPO_EXAMEN_LABEL[ex.tipo] : "—"}</td>
+                              <td>
+                                {item.observaciones || (
+                                  <span style={{ color: "var(--text-muted)" }}>
+                                    —
+                                  </span>
+                                )}
+                              </td>
+                              <td>
+                                {item.valorResultado ? (
+                                  <strong>
+                                    {item.valorResultado} {item.unidadResultado}
+                                  </strong>
+                                ) : (
+                                  <span style={{ color: "var(--text-muted)" }}>
+                                    Pendiente
+                                  </span>
+                                )}
+                              </td>
+                            </tr>
+                          );
+                        })}
+                      </tbody>
+                    </table>
                   </div>
-                  {orden.observacionesGenerales && (
-                    <p className="perfil-orden-obs">{orden.observacionesGenerales}</p>
+                ))
+              )}
+
+              {/* ── Historial de otras visitas ── */}
+              {historial.length > 0 && (
+                <div className="perfil-historial-seccion">
+                  <button
+                    className="perfil-historial-toggle"
+                    onClick={() => setHistorialAbierto((v) => !v)}
+                  >
+                    <span className="perfil-historial-toggle-label">
+                      <History size={14} />
+                      Historial de otras visitas ({historial.length})
+                    </span>
+                    {historialAbierto ? (
+                      <ChevronUp size={14} />
+                    ) : (
+                      <ChevronDown size={14} />
+                    )}
+                  </button>
+
+                  {historialAbierto && (
+                    <div className="perfil-historial-lista">
+                      {historial.map((orden) => (
+                        <div
+                          key={orden._id}
+                          className="perfil-orden-card perfil-orden-card--historial"
+                        >
+                          <div className="perfil-orden-top">
+                            <span className="perfil-orden-fecha">
+                              {formatearFechaHora(orden.fecha.toString())}
+                            </span>
+                            <span
+                              className={`perfil-orden-estado perfil-orden-estado--${orden.estado.toLowerCase()}`}
+                            >
+                              {orden.estado === "PENDIENTE" && "Pendiente"}
+                              {orden.estado === "EN_PROCESO" && "En proceso"}
+                              {orden.estado === "COMPLETADO" && "Completado"}
+                              {orden.estado === "CANCELADA" && "Cancelada"}
+                            </span>
+                          </div>
+                          {orden.observacionesGenerales && (
+                            <p className="perfil-orden-obs">
+                              {orden.observacionesGenerales}
+                            </p>
+                          )}
+                          <table className="perfil-orden-tabla">
+                            <thead>
+                              <tr>
+                                <th>Examen</th>
+                                <th>Tipo</th>
+                                <th>Observación</th>
+                                <th>Resultado</th>
+                              </tr>
+                            </thead>
+                            <tbody>
+                              {orden.items.map((item, i) => {
+                                const ex =
+                                  typeof item.examenId === "object"
+                                    ? (item.examenId as ExamenLaboratorio)
+                                    : null;
+                                return (
+                                  <tr key={i}>
+                                    <td>{ex?.nombre ?? "—"}</td>
+                                    <td>
+                                      {ex ? TIPO_EXAMEN_LABEL[ex.tipo] : "—"}
+                                    </td>
+                                    <td>
+                                      {item.observaciones || (
+                                        <span
+                                          style={{ color: "var(--text-muted)" }}
+                                        >
+                                          —
+                                        </span>
+                                      )}
+                                    </td>
+                                    <td>
+                                      {item.valorResultado ? (
+                                        <strong>
+                                          {item.valorResultado}{" "}
+                                          {item.unidadResultado}
+                                        </strong>
+                                      ) : (
+                                        <span
+                                          style={{ color: "var(--text-muted)" }}
+                                        >
+                                          —
+                                        </span>
+                                      )}
+                                    </td>
+                                  </tr>
+                                );
+                              })}
+                            </tbody>
+                          </table>
+                        </div>
+                      ))}
+                    </div>
                   )}
-                  <table className="perfil-orden-tabla">
-                    <thead>
-                      <tr>
-                        <th>Examen</th>
-                        <th>Tipo</th>
-                        <th>Resultado</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {orden.items.map((item, i) => {
-                        const ex = typeof item.examenId === "object" ? item.examenId as ExamenLaboratorio : null;
-                        return (
-                          <tr key={i}>
-                            <td>{ex?.nombre ?? "—"}</td>
-                            <td>{ex ? TIPO_EXAMEN_LABEL[ex.tipo] : "—"}</td>
-                            <td>
-                              {item.valorResultado
-                                ? <strong>{item.valorResultado} {item.unidadResultado}</strong>
-                                : <span style={{ color: "var(--text-muted)" }}>Pendiente</span>
-                              }
-                            </td>
-                          </tr>
-                        );
-                      })}
-                    </tbody>
-                  </table>
                 </div>
-              ))}
+              )}
             </div>
           )}
         </div>
       )}
 
-      {mostrarOrdenModal && cita && user?.rol === "MEDICO" && (() => {
-        const doctor = cita.doctorId && typeof cita.doctorId === "object" ? cita.doctorId : null;
-        const pacienteId = cita.pacienteId && typeof cita.pacienteId === "object"
-          ? cita.pacienteId._id
-          : String(cita.pacienteId);
-        const doctorId = doctor?._id ?? "";
-        const especialidadId = doctor?.especialidadId && typeof doctor.especialidadId === "object"
-          ? doctor.especialidadId._id
-          : "";
-        return (
-          <OrdenExamenModal
-            citaId={cita._id}
-            pacienteId={pacienteId}
-            doctorId={doctorId}
-            especialidadId={especialidadId}
-            onCerrar={() => setMostrarOrdenModal(false)}
-            onOrdenCreada={cargarOrdenes}
-          />
-        );
-      })()}
+      {mostrarOrdenModal &&
+        cita &&
+        user?.rol === "MEDICO" &&
+        (() => {
+          const doctor =
+            cita.doctorId && typeof cita.doctorId === "object"
+              ? cita.doctorId
+              : null;
+          const pacienteId =
+            cita.pacienteId && typeof cita.pacienteId === "object"
+              ? cita.pacienteId._id
+              : String(cita.pacienteId);
+          const doctorId = doctor?._id ?? "";
+          const especialidadId =
+            doctor?.especialidadId && typeof doctor.especialidadId === "object"
+              ? doctor.especialidadId._id
+              : "";
+          return (
+            <OrdenExamenModal
+              citaId={cita._id}
+              pacienteId={pacienteId}
+              doctorId={doctorId}
+              especialidadId={especialidadId}
+              onCerrar={() => setMostrarOrdenModal(false)}
+              onOrdenCreada={cargarOrdenes}
+            />
+          );
+        })()}
+
+      {/* ── Modal de edición de orden PENDIENTE ── */}
+      {ordenEditando &&
+        cita &&
+        (() => {
+          const doctor =
+            cita.doctorId && typeof cita.doctorId === "object"
+              ? cita.doctorId
+              : null;
+          const pacienteId =
+            cita.pacienteId && typeof cita.pacienteId === "object"
+              ? cita.pacienteId._id
+              : String(cita.pacienteId);
+          const doctorId = doctor?._id ?? "";
+          const especialidadId =
+            doctor?.especialidadId && typeof doctor.especialidadId === "object"
+              ? doctor.especialidadId._id
+              : "";
+          // Pre-cargar los exámenes e indicaciones existentes de la orden
+          const seleccionadosIniciales = new Set(
+            ordenEditando.items.map((it) =>
+              typeof it.examenId === "object"
+                ? it.examenId._id
+                : String(it.examenId),
+            ),
+          );
+          const obsItemIniciales = ordenEditando.items.reduce<
+            Record<string, string>
+          >((acc, it) => {
+            const id =
+              typeof it.examenId === "object"
+                ? it.examenId._id
+                : String(it.examenId);
+            acc[id] = it.observaciones ?? "";
+            return acc;
+          }, {});
+          return (
+            <OrdenExamenModal
+              citaId={cita._id}
+              pacienteId={pacienteId}
+              doctorId={doctorId}
+              especialidadId={especialidadId}
+              onCerrar={() => setOrdenEditando(null)}
+              onOrdenCreada={async () => {
+                setOrdenEditando(null);
+                await cargarOrdenes();
+              }}
+              ordenId={ordenEditando._id}
+              seleccionadosIniciales={seleccionadosIniciales}
+              obsItemIniciales={obsItemIniciales}
+              obsGeneralesInicial={ordenEditando.observacionesGenerales ?? ""}
+            />
+          );
+        })()}
     </div>
   );
 };

@@ -40,7 +40,7 @@
   display: flex;
   align-items: center;
   gap: 0.6rem;
-  color: var(--color-primary);
+  color: var(--primary);
 }
 
 .orden-modal-title h3 {
@@ -109,7 +109,7 @@
   align-items: center;
   justify-content: space-between;
   padding: 0.65rem 1rem;
-  background: var(--bg-subtle, #f8fafc);
+  background: var(--bg-card);
   border: none;
   cursor: pointer;
   font-size: 0.875rem;
@@ -128,7 +128,7 @@
 }
 
 .orden-grupo-badge {
-  background: var(--color-primary);
+  background: var(--primary);
   color: #fff;
   font-size: 0.7rem;
   font-weight: 700;
@@ -157,7 +157,7 @@
 }
 .orden-item input[type="checkbox"] {
   margin-top: 2px;
-  accent-color: var(--color-primary);
+  accent-color: var(--primary);
   flex-shrink: 0;
 }
 
@@ -185,12 +185,12 @@
   border: 1px solid var(--border-subtle);
   border-radius: var(--radius-sm);
   font-size: 0.8rem;
-  background: var(--bg-input, #fff);
+  background: transparent;
   color: var(--text-primary);
 }
 .orden-item-obs:focus {
   outline: none;
-  border-color: var(--color-primary);
+  border-color: var(--primary);
 }
 
 /* Observaciones generales */
@@ -208,16 +208,16 @@
 }
 .orden-obs-general textarea {
   padding: 0.6rem 0.8rem;
-  border: 1px solid var(--border-subtle);
+  border: 1px solid var(--text-muted);
   border-radius: var(--radius-md);
   font-size: 0.875rem;
   resize: vertical;
-  background: var(--bg-input, #fff);
+  background: transparent;
   color: var(--text-primary);
 }
 .orden-obs-general textarea:focus {
   outline: none;
-  border-color: var(--color-primary);
+  border-color: var(--primary);
 }
 
 /* Footer */
@@ -255,14 +255,14 @@
   cursor: not-allowed;
 }
 .orden-btn--primary {
-  background: var(--color-primary);
+  background: var(--primary);
   color: #fff;
 }
 .orden-btn--primary:hover:not(:disabled) {
-  background: var(--color-primary-dark, #0d9488);
+  background: var(--primary-dark);
 }
 .orden-btn--cancel {
-  background: var(--bg-subtle, #f1f5f9);
+  background: transparent;
   color: var(--text-secondary);
 }
 .orden-btn--cancel:hover {

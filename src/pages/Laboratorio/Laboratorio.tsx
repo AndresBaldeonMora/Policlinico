@@ -1,5 +1,14 @@
-import { useEffect, useState, useCallback } from "react";
-import { FlaskConical, ChevronDown, ChevronUp, CheckCircle, Clock, XCircle } from "lucide-react";
+import { useEffect, useState, useCallback, useMemo } from "react";
+import {
+  FlaskConical,
+  ChevronDown,
+  ChevronUp,
+  CheckCircle,
+  Clock,
+  XCircle,
+  Search,
+  X,
+} from "lucide-react";
 import type {
   OrdenExamen,
   ItemOrden,
@@ -9,19 +18,44 @@ import {
   ExamenService,
   TIPO_EXAMEN_LABEL,
 } from "../../services/examen.service";
+import {
+  EspecialidadApiService,
+  type Especialidad,
+} from "../../services/especialidad.service";
 import Swal from "sweetalert2";
 import { toastExito } from "../../utils/toast";
 import "./Laboratorio.css";
 
 // ─── Helpers ────────────────────────────────────────────────
-const formatFecha = (iso: string) =>
-  new Date(iso).toLocaleDateString("es-PE", { day: "2-digit", month: "short", year: "numeric" });
+const formatFecha = (iso: string) => {
+  const d = new Date(iso);
+  const fecha = d.toLocaleDateString("es-PE", {
+    day: "2-digit",
+    month: "short",
+    year: "numeric",
+  });
+  const hora = d.toLocaleTimeString("es-PE", {
+    hour: "2-digit",
+    minute: "2-digit",
+    hour12: true
+  });
+  return (
+    <>
+      <span style={{ display: "block" }}>{fecha}</span>
+      <span style={{ display: "block", fontSize: "0.85em", color: "var(--text-muted)" }}>{hora}</span>
+    </>
+  );
+};
 
 const ESTADO_CONFIG = {
-  PENDIENTE:   { label: "Pendiente",   clase: "lab-badge--pending",  icon: Clock },
-  EN_PROCESO:  { label: "En proceso",  clase: "lab-badge--process",  icon: Clock },
-  COMPLETADO:  { label: "Completado",  clase: "lab-badge--done",     icon: CheckCircle },
-  CANCELADA:   { label: "Cancelada",   clase: "lab-badge--cancel",   icon: XCircle },
+  PENDIENTE: { label: "Pendiente", clase: "lab-badge--pending", icon: Clock },
+  EN_PROCESO: { label: "En proceso", clase: "lab-badge--process", icon: Clock },
+  COMPLETADO: {
+    label: "Completado",
+    clase: "lab-badge--done",
+    icon: CheckCircle,
+  },
+  CANCELADA: { label: "Cancelada", clase: "lab-badge--cancel", icon: XCircle },
 };
 
 // ─── Modal de resultados ─────────────────────────────────────
@@ -31,8 +65,14 @@ interface ModalResultadosProps {
   onGuardado: () => void;
 }
 
-const ModalResultados = ({ orden, onCerrar, onGuardado }: ModalResultadosProps) => {
-  const [valores, setValores] = useState<Record<string, { valor: string; unidad: string }>>({});
+const ModalResultados = ({
+  orden,
+  onCerrar,
+  onGuardado,
+}: ModalResultadosProps) => {
+  const [valores, setValores] = useState<
+    Record<string, { valor: string; unidad: string }>
+  >({});
   const [guardando, setGuardando] = useState(false);
   const [error, setError] = useState("");
   const [camposVacios, setCamposVacios] = useState<Set<string>>(new Set());
@@ -43,23 +83,19 @@ const ModalResultados = ({ orden, onCerrar, onGuardado }: ModalResultadosProps) 
     setError("");
     setCamposVacios(new Set());
 
-    // Validar que todos los exámenes pendientes tengan un valor
-    const vacios = new Set<string>();
-    pendientes.forEach((item) => {
-      const ex = typeof item.examenId === "object" ? item.examenId as ExamenLaboratorio : null;
+    const seleccionados = pendientes.filter((item) => {
+      const ex = typeof item.examenId === "object" ? (item.examenId as ExamenLaboratorio) : null;
       const id = ex ? ex._id : String(item.examenId);
-      const val = valores[id]?.valor?.trim();
-      if (!val) vacios.add(id);
+      return !!valores[id]?.valor?.trim();
     });
 
-    if (vacios.size > 0) {
-      setCamposVacios(vacios);
-      setError(`Debes ingresar el resultado de todos los exámenes (${vacios.size} vacío${vacios.size > 1 ? "s" : ""}).`);
+    if (seleccionados.length === 0) {
+      setError("Debes ingresar el resultado de al menos un examen.");
       return;
     }
 
-    const resultados = pendientes.map((item) => {
-      const ex = typeof item.examenId === "object" ? item.examenId as ExamenLaboratorio : null;
+    const resultados = seleccionados.map((item) => {
+      const ex = typeof item.examenId === "object" ? (item.examenId as ExamenLaboratorio) : null;
       const id = ex ? ex._id : String(item.examenId);
       const v = valores[id];
       return {
@@ -77,7 +113,8 @@ const ModalResultados = ({ orden, onCerrar, onGuardado }: ModalResultadosProps) 
       onCerrar();
     } catch (err: any) {
       const mensaje =
-        err?.response?.data?.message || "Error al guardar resultados. Intenta de nuevo.";
+        err?.response?.data?.message ||
+        "Error al guardar resultados. Intenta de nuevo.";
       setError(mensaje);
     } finally {
       setGuardando(false);
@@ -98,38 +135,60 @@ const ModalResultados = ({ orden, onCerrar, onGuardado }: ModalResultadosProps) 
 
         <div className="lab-modal-body">
           {pendientes.length === 0 ? (
-            <p className="lab-modal-empty">Todos los exámenes ya tienen resultado.</p>
+            <p className="lab-modal-empty">
+              Todos los exámenes ya tienen resultado.
+            </p>
           ) : (
             <div className="lab-modal-items">
               {pendientes.map((item, i) => {
-                const ex = typeof item.examenId === "object" ? item.examenId as ExamenLaboratorio : null;
+                const ex =
+                  typeof item.examenId === "object"
+                    ? (item.examenId as ExamenLaboratorio)
+                    : null;
                 const id = ex ? ex._id : String(i);
                 return (
                   <div key={id} className="lab-modal-item">
                     <div className="lab-modal-item-nombre">
                       <span>{ex?.nombre ?? "—"}</span>
-                      {ex && <span className="lab-modal-item-tipo">{TIPO_EXAMEN_LABEL[ex.tipo]}</span>}
-                      {ex?.referenciaTexto && (
-                        <span className="lab-modal-item-ref">Ref: {ex.referenciaTexto}</span>
-                      )}
-                      {ex?.referenciaMin !== undefined && ex?.referenciaMax !== undefined && (
-                        <span className="lab-modal-item-ref">
-                          Ref: {ex.referenciaMin} – {ex.referenciaMax} {ex.unidad}
+                      {ex && (
+                        <span className="lab-modal-item-tipo">
+                          {TIPO_EXAMEN_LABEL[ex.tipo]}
                         </span>
                       )}
+                      {ex?.referenciaTexto && (
+                        <span className="lab-modal-item-ref">
+                          Ref: {ex.referenciaTexto}
+                        </span>
+                      )}
+                      {ex?.referenciaMin !== undefined &&
+                        ex?.referenciaMax !== undefined && (
+                          <span className="lab-modal-item-ref">
+                            Ref: {ex.referenciaMin} – {ex.referenciaMax}{" "}
+                            {ex.unidad}
+                          </span>
+                        )}
                     </div>
                     <div className="lab-modal-item-inputs">
                       <input
                         type="text"
                         placeholder="Valor *"
-                        className={camposVacios.has(id) ? "lab-input-error" : ""}
+                        className={
+                          camposVacios.has(id) ? "lab-input-error" : ""
+                        }
                         value={valores[id]?.valor ?? ""}
                         onChange={(e) => {
-                          setCamposVacios((prev) => { const next = new Set(prev); next.delete(id); return next; });
+                          setCamposVacios((prev) => {
+                            const next = new Set(prev);
+                            next.delete(id);
+                            return next;
+                          });
                           setError("");
                           setValores((prev) => ({
                             ...prev,
-                            [id]: { valor: e.target.value, unidad: prev[id]?.unidad ?? ex?.unidad ?? "" },
+                            [id]: {
+                              valor: e.target.value,
+                              unidad: prev[id]?.unidad ?? ex?.unidad ?? "",
+                            },
                           }));
                         }}
                       />
@@ -140,14 +199,19 @@ const ModalResultados = ({ orden, onCerrar, onGuardado }: ModalResultadosProps) 
                         onChange={(e) =>
                           setValores((prev) => ({
                             ...prev,
-                            [id]: { valor: prev[id]?.valor ?? "", unidad: e.target.value },
+                            [id]: {
+                              valor: prev[id]?.valor ?? "",
+                              unidad: e.target.value,
+                            },
                           }))
                         }
                         className="lab-modal-item-unidad"
                       />
                     </div>
                     {item.observaciones && (
-                      <p className="lab-modal-item-obs">Obs: {item.observaciones}</p>
+                      <p className="lab-modal-item-obs">
+                        Obs: {item.observaciones}
+                      </p>
                     )}
                   </div>
                 );
@@ -167,7 +231,18 @@ const ModalResultados = ({ orden, onCerrar, onGuardado }: ModalResultadosProps) 
               onClick={handleGuardar}
               disabled={guardando}
             >
-              {guardando ? "Guardando..." : "Guardar Resultados"}
+              {(() => {
+                if (guardando) return "Guardando...";
+                const inputsLlenos = pendientes.filter((item) => {
+                  const ex = typeof item.examenId === "object" ? (item.examenId as ExamenLaboratorio) : null;
+                  const id = ex ? ex._id : String(item.examenId);
+                  return !!valores[id]?.valor?.trim();
+                }).length;
+                if (inputsLlenos > 0 && inputsLlenos < pendientes.length) {
+                  return `Guardar Parcial (${inputsLlenos}/${pendientes.length})`;
+                }
+                return "Completar Orden";
+              })()}
             </button>
           )}
         </div>
@@ -183,7 +258,11 @@ interface FilaOrdenProps {
   onCancelarOrden: (ordenId: string) => void;
 }
 
-const FilaOrden = ({ orden, onCargarResultados, onCancelarOrden }: FilaOrdenProps) => {
+const FilaOrden = ({
+  orden,
+  onCargarResultados,
+  onCancelarOrden,
+}: FilaOrdenProps) => {
   const [expandido, setExpandido] = useState(false);
   const cfg = ESTADO_CONFIG[orden.estado] ?? ESTADO_CONFIG.PENDIENTE;
   const Icon = cfg.icon;
@@ -196,40 +275,63 @@ const FilaOrden = ({ orden, onCargarResultados, onCancelarOrden }: FilaOrdenProp
         <div className="lab-orden-col lab-orden-paciente">
           <div className="lab-avatar">{paciente.nombres.charAt(0)}</div>
           <div>
-            <span className="lab-nombre">{paciente.nombres} {paciente.apellidos}</span>
+            <span className="lab-nombre">
+              {paciente.nombres} {paciente.apellidos}
+            </span>
             <span className="lab-dni">DNI: {paciente.dni}</span>
           </div>
         </div>
         <div className="lab-orden-col">
-          <span className="lab-text-sm">{doctor.nombres} {doctor.apellidos}</span>
+          <span className="lab-text-sm">
+            {doctor.nombres} {doctor.apellidos}
+          </span>
           <span className="lab-text-muted">{orden.especialidadId.nombre}</span>
         </div>
         <div className="lab-orden-col">
           <span className="lab-text-sm">{formatFecha(orden.fecha)}</span>
-          <span className="lab-text-muted">{orden.items.length} examen{orden.items.length !== 1 ? "es" : ""}</span>
+          <span className="lab-text-muted">
+            {orden.items.length} examen{orden.items.length !== 1 ? "es" : ""}
+          </span>
         </div>
-        <div className="lab-orden-col lab-orden-actions">
+        <div
+          className="lab-orden-col lab-orden-actions"
+          style={{ justifyContent: "center" }}
+        >
           <span className={`lab-badge ${cfg.clase}`}>
             <Icon size={12} />
             {cfg.label}
           </span>
+        </div>
+        <div className="lab-orden-col lab-orden-actions">
           {(orden.estado === "PENDIENTE" || orden.estado === "EN_PROCESO") && (
             <>
               <button
                 className="lab-btn lab-btn--sm lab-btn--primary"
-                onClick={(e) => { e.stopPropagation(); onCargarResultados(orden); }}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  onCargarResultados(orden);
+                }}
               >
                 Cargar Resultados
               </button>
               <button
                 className="lab-btn lab-btn--sm lab-btn--danger"
-                onClick={(e) => { e.stopPropagation(); onCancelarOrden(orden._id); }}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  onCancelarOrden(orden._id);
+                }}
               >
                 Cancelar
               </button>
             </>
           )}
-          {expandido ? <ChevronUp size={16} className="lab-chevron" /> : <ChevronDown size={16} className="lab-chevron" />}
+        </div>
+        <div style={{ display: "flex", alignItems: "center" }}>
+          {expandido ? (
+            <ChevronUp size={16} className="lab-chevron" />
+          ) : (
+            <ChevronDown size={16} className="lab-chevron" />
+          )}
         </div>
       </div>
 
@@ -251,20 +353,34 @@ const FilaOrden = ({ orden, onCargarResultados, onCancelarOrden }: FilaOrdenProp
             </thead>
             <tbody>
               {orden.items.map((item: ItemOrden, i) => {
-                const ex = typeof item.examenId === "object" ? item.examenId as ExamenLaboratorio : null;
+                const ex =
+                  typeof item.examenId === "object"
+                    ? (item.examenId as ExamenLaboratorio)
+                    : null;
                 return (
                   <tr key={i}>
                     <td>{ex?.nombre ?? "—"}</td>
-                    <td><span className="lab-tipo-chip">{ex ? TIPO_EXAMEN_LABEL[ex.tipo] : "—"}</span></td>
                     <td>
-                      {item.valorResultado
-                        ? <span className="lab-resultado">{item.valorResultado} {item.unidadResultado}</span>
-                        : <span className="lab-text-muted">—</span>
-                      }
+                      <span className="lab-tipo-chip">
+                        {ex ? TIPO_EXAMEN_LABEL[ex.tipo] : "—"}
+                      </span>
                     </td>
                     <td>
-                      <span className={`lab-badge ${item.estadoItem === "COMPLETADO" ? "lab-badge--done" : "lab-badge--pending"}`}>
-                        {item.estadoItem === "COMPLETADO" ? "Listo" : "Pendiente"}
+                      {item.valorResultado ? (
+                        <span className="lab-resultado">
+                          {item.valorResultado} {item.unidadResultado}
+                        </span>
+                      ) : (
+                        <span className="lab-text-muted">—</span>
+                      )}
+                    </td>
+                    <td>
+                      <span
+                        className={`lab-badge ${item.estadoItem === "COMPLETADO" ? "lab-badge--done" : "lab-badge--pending"}`}
+                      >
+                        {item.estadoItem === "COMPLETADO"
+                          ? "Listo"
+                          : "Pendiente"}
                       </span>
                     </td>
                   </tr>
@@ -281,12 +397,31 @@ const FilaOrden = ({ orden, onCargarResultados, onCancelarOrden }: FilaOrdenProp
 // ─── Página principal ─────────────────────────────────────────
 type FiltroEstado = "TODOS" | "PENDIENTE" | "EN_PROCESO" | "COMPLETADO";
 
+interface FiltrosAvanzados {
+  paciente: string;
+  especialidadId: string;
+  fechaInicio: string;
+  fechaFin: string;
+}
+
+const ITEMS_POR_PAGINA = 10;
+
+const filtrosVacios: FiltrosAvanzados = {
+  paciente: "",
+  especialidadId: "",
+  fechaInicio: "",
+  fechaFin: "",
+};
+
 const Laboratorio = () => {
   const [ordenes, setOrdenes] = useState<OrdenExamen[]>([]);
   const [loading, setLoading] = useState(true);
   const [errorCarga, setErrorCarga] = useState("");
-  const [filtro, setFiltro] = useState<FiltroEstado>("PENDIENTE");
+  const [filtroEstado, setFiltroEstado] = useState<FiltroEstado>("PENDIENTE");
+  const [filtros, setFiltros] = useState<FiltrosAvanzados>(filtrosVacios);
+  const [paginaActual, setPaginaActual] = useState(1);
   const [ordenModal, setOrdenModal] = useState<OrdenExamen | null>(null);
+  const [especialidades, setEspecialidades] = useState<Especialidad[]>([]);
 
   const cargar = useCallback(async () => {
     setLoading(true);
@@ -295,13 +430,23 @@ const Laboratorio = () => {
       const data = await ExamenService.listarOrdenesPendientes();
       setOrdenes(data);
     } catch {
-      setErrorCarga("No se pudieron cargar las órdenes. Verifica tu conexión e intenta de nuevo.");
+      setErrorCarga(
+        "No se pudieron cargar las órdenes. Verifica tu conexión e intenta de nuevo.",
+      );
     } finally {
       setLoading(false);
     }
   }, []);
 
-  useEffect(() => { cargar(); }, [cargar]);
+  useEffect(() => {
+    cargar();
+  }, [cargar]);
+
+  useEffect(() => {
+    EspecialidadApiService.listar()
+      .then(setEspecialidades)
+      .catch(() => {});
+  }, []);
 
   const handleCancelarOrden = async (ordenId: string) => {
     const result = await Swal.fire({
@@ -324,9 +469,50 @@ const Laboratorio = () => {
     }
   };
 
-  const ordenesFiltradas = filtro === "TODOS"
-    ? ordenes
-    : ordenes.filter((o) => o.estado === filtro);
+  const ordenesFiltradas = useMemo(() => {
+    return ordenes.filter((orden) => {
+      if (filtroEstado !== "TODOS" && orden.estado !== filtroEstado)
+        return false;
+
+      if (filtros.paciente) {
+        const nombre =
+          `${orden.pacienteId.nombres} ${orden.pacienteId.apellidos}`.toLowerCase();
+        if (!nombre.includes(filtros.paciente.toLowerCase())) return false;
+      }
+
+      if (
+        filtros.especialidadId &&
+        orden.especialidadId._id !== filtros.especialidadId
+      )
+        return false;
+
+      if (filtros.fechaInicio || filtros.fechaFin) {
+        const d = new Date(orden.fecha);
+        const y = d.getFullYear();
+        const m = String(d.getMonth() + 1).padStart(2, '0');
+        const day = String(d.getDate()).padStart(2, '0');
+        const fechaOrdenLocal = `${y}-${m}-${day}`;
+
+        if (filtros.fechaInicio && fechaOrdenLocal < filtros.fechaInicio) return false;
+        if (filtros.fechaFin && fechaOrdenLocal > filtros.fechaFin) return false;
+      }
+
+      return true;
+    });
+  }, [ordenes, filtroEstado, filtros]);
+
+  const totalPaginas = Math.ceil(ordenesFiltradas.length / ITEMS_POR_PAGINA);
+
+  const ordenesPaginadas = useMemo(() => {
+    const inicio = (paginaActual - 1) * ITEMS_POR_PAGINA;
+    return ordenesFiltradas.slice(inicio, inicio + ITEMS_POR_PAGINA);
+  }, [ordenesFiltradas, paginaActual]);
+
+  const hayFiltrosActivos =
+    filtros.paciente ||
+    filtros.especialidadId ||
+    filtros.fechaInicio ||
+    filtros.fechaFin;
 
   const conteo = {
     TODOS: ordenes.length,
@@ -348,16 +534,108 @@ const Laboratorio = () => {
       </div>
 
       <div className="lab-filtros">
-        {(["PENDIENTE", "EN_PROCESO", "TODOS", "COMPLETADO"] as FiltroEstado[]).map((f) => (
+        {(
+          ["PENDIENTE", "EN_PROCESO", "TODOS", "COMPLETADO"] as FiltroEstado[]
+        ).map((f) => (
           <button
             key={f}
-            className={`lab-filtro-btn${filtro === f ? " active" : ""}`}
-            onClick={() => setFiltro(f)}
+            className={`lab-filtro-btn${filtroEstado === f ? " active" : ""}`}
+            onClick={() => {
+              setFiltroEstado(f);
+              setPaginaActual(1);
+            }}
           >
-            {f === "TODOS" ? "Todos" : f === "EN_PROCESO" ? "En proceso" : f === "COMPLETADO" ? "Completados" : "Pendientes"}
+            {f === "TODOS"
+              ? "Todos"
+              : f === "EN_PROCESO"
+                ? "En proceso"
+                : f === "COMPLETADO"
+                  ? "Completados"
+                  : "Pendientes"}
             <span className="lab-filtro-count">{conteo[f]}</span>
           </button>
         ))}
+      </div>
+
+      <div className="lab-filtros-avanzados">
+        <div className="lab-filtro-campo">
+          <span className="lab-filtro-label">Paciente</span>
+          <div style={{ position: "relative" }}>
+            <Search size={15} className="lab-filtro-campo-icon" />
+            <input
+              type="text"
+              placeholder="Buscar paciente..."
+              value={filtros.paciente}
+              onChange={(e) => {
+                setFiltros((p) => ({ ...p, paciente: e.target.value }));
+                setPaginaActual(1);
+              }}
+              className="lab-filtro-input"
+            />
+          </div>
+        </div>
+
+        <div className="lab-filtro-campo">
+          <span className="lab-filtro-label">Especialidad</span>
+          <select
+            value={filtros.especialidadId}
+            onChange={(e) => {
+              setFiltros((p) => ({ ...p, especialidadId: e.target.value }));
+              setPaginaActual(1);
+            }}
+            className="lab-filtro-select"
+          >
+            <option value="">Todas las especialidades</option>
+            {especialidades.map((esp) => (
+              <option key={esp.id} value={esp.id}>
+                {esp.nombre}
+              </option>
+            ))}
+          </select>
+        </div>
+
+        <div className="lab-filtro-campo">
+          <span className="lab-filtro-label">Desde</span>
+          <input
+            type="date"
+            value={filtros.fechaInicio}
+            onChange={(e) => {
+              setFiltros((p) => ({ ...p, fechaInicio: e.target.value }));
+              setPaginaActual(1);
+            }}
+            className="lab-filtro-date"
+          />
+        </div>
+
+        <div className="lab-filtro-campo">
+          <span className="lab-filtro-label">Hasta</span>
+          <input
+            type="date"
+            value={filtros.fechaFin}
+            onChange={(e) => {
+              setFiltros((p) => ({ ...p, fechaFin: e.target.value }));
+              setPaginaActual(1);
+            }}
+            className="lab-filtro-date"
+          />
+        </div>
+
+        {hayFiltrosActivos && (
+          <div className="lab-filtro-campo">
+            <span className="lab-filtro-label" style={{ visibility: "hidden" }}>
+              _
+            </span>
+            <button
+              className="lab-btn-limpiar"
+              onClick={() => {
+                setFiltros(filtrosVacios);
+                setPaginaActual(1);
+              }}
+            >
+              <X size={14} /> Limpiar
+            </button>
+          </div>
+        )}
       </div>
 
       {loading ? (
@@ -373,28 +651,74 @@ const Laboratorio = () => {
             Reintentar
           </button>
         </div>
-      ) : ordenesFiltradas.length === 0 ? (
-        <div className="lab-empty">
-          <FlaskConical size={40} />
-          <p>No hay órdenes {filtro !== "TODOS" ? `con estado "${filtro}"` : ""}</p>
-        </div>
       ) : (
-        <div className="lab-lista">
-          <div className="lab-lista-header">
-            <span>Paciente</span>
-            <span>Doctor / Especialidad</span>
-            <span>Fecha / Exámenes</span>
-            <span>Estado</span>
+        <>
+          <div className="lab-resultados-info">
+            <span>
+              {ordenesFiltradas.length} orden
+              {ordenesFiltradas.length !== 1 ? "es" : ""} encontrada
+              {ordenesFiltradas.length !== 1 ? "s" : ""}
+            </span>
           </div>
-          {ordenesFiltradas.map((orden) => (
-            <FilaOrden
-              key={orden._id}
-              orden={orden}
-              onCargarResultados={setOrdenModal}
-              onCancelarOrden={handleCancelarOrden}
-            />
-          ))}
-        </div>
+
+          {ordenesFiltradas.length === 0 ? (
+            <div className="lab-empty">
+              <FlaskConical size={40} />
+              <p>No hay órdenes con los filtros seleccionados</p>
+            </div>
+          ) : (
+            <div className="lab-lista">
+              <div className="lab-lista-header">
+                <span className="center">Paciente</span>
+                <span>Doctor / Especialidad</span>
+                <span>Fecha / Exámenes</span>
+                <span className="center">Estado</span>
+                <span className="center">Acciones</span>
+                <span></span>
+              </div>
+              {ordenesPaginadas.map((orden) => (
+                <FilaOrden
+                  key={orden._id}
+                  orden={orden}
+                  onCargarResultados={setOrdenModal}
+                  onCancelarOrden={handleCancelarOrden}
+                />
+              ))}
+            </div>
+          )}
+
+          {totalPaginas > 1 && (
+            <div className="lab-paginacion">
+              <button
+                className="lab-pag-btn"
+                disabled={paginaActual === 1}
+                onClick={() => setPaginaActual((p) => p - 1)}
+              >
+                Anterior
+              </button>
+
+              {Array.from({ length: totalPaginas }, (_, i) => i + 1).map(
+                (num) => (
+                  <button
+                    key={num}
+                    className={`lab-pag-btn${paginaActual === num ? " lab-pag-btn--active" : ""}`}
+                    onClick={() => setPaginaActual(num)}
+                  >
+                    {num}
+                  </button>
+                ),
+              )}
+
+              <button
+                className="lab-pag-btn"
+                disabled={paginaActual === totalPaginas}
+                onClick={() => setPaginaActual((p) => p + 1)}
+              >
+                Siguiente
+              </button>
+            </div>
+          )}
+        </>
       )}
 
       {ordenModal && (
