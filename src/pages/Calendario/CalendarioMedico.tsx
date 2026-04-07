@@ -1,13 +1,12 @@
-// src/pages/Calendario/Calendario.tsx
 import { useEffect, useReducer, useCallback, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
 import { CitaApiService } from "../../services/cita.service";
 import { DoctorApiService } from "../../services/doctor.service";
 import type { CitaTransformada } from "../../services/cita.service";
 import type { DoctorTransformado } from "../../services/doctor.service";
+import { useAuth } from "../../hooks/userAuth";
 import MiniCalendario from "./MiniCalendario";
 import CalendarioTopbar from "./CalendarioTopBar";
-import DoctoresPanel from "./DoctoresPanel";
 import VistaMes from "./VistaMes";
 import VistaSemana from "./VistaSemana";
 import VistaDia from "./VistaDia";
@@ -16,7 +15,6 @@ import "./Calendario.css";
 
 type Vista = "dia" | "semana" | "mes";
 
-const DOCTOR_TODOS_ID = "ALL";
 const HORA_INICIO = 8;
 const HORA_FIN = 17;
 const INTERVALO_MINUTOS = 15;
@@ -49,7 +47,6 @@ interface CalendarioState {
   fecha: Date;
   citas: CitaTransformada[];
   doctores: DoctorTransformado[];
-  doctorId: string;
   loading: boolean;
   citaSeleccionadaId: string | null;
 }
@@ -59,7 +56,6 @@ type CalendarioAction =
   | { type: "SET_FECHA"; fecha: Date }
   | { type: "SET_CITAS"; citas: CitaTransformada[] }
   | { type: "SET_DOCTORES"; doctores: DoctorTransformado[] }
-  | { type: "SET_DOCTOR_ID"; doctorId: string }
   | { type: "SET_LOADING"; value: boolean }
   | { type: "SELECCIONAR_CITA"; citaId: string | null };
 
@@ -68,28 +64,28 @@ const initialState: CalendarioState = {
   fecha: new Date(),
   citas: [],
   doctores: [],
-  doctorId: DOCTOR_TODOS_ID,
   loading: false,
   citaSeleccionadaId: null,
 };
 
 function calendarioReducer(state: CalendarioState, action: CalendarioAction): CalendarioState {
   switch (action.type) {
-    case "SET_VISTA":     return { ...state, vista: action.vista };
-    case "SET_FECHA":     return { ...state, fecha: action.fecha };
-    case "SET_CITAS":     return { ...state, citas: action.citas };
-    case "SET_DOCTORES":  return { ...state, doctores: action.doctores };
-    case "SET_DOCTOR_ID": return { ...state, doctorId: action.doctorId };
-    case "SET_LOADING":   return { ...state, loading: action.value };
-    case "SELECCIONAR_CITA": return { ...state, citaSeleccionadaId: action.citaId };
-    default:              return state;
+    case "SET_VISTA":         return { ...state, vista: action.vista };
+    case "SET_FECHA":         return { ...state, fecha: action.fecha };
+    case "SET_CITAS":         return { ...state, citas: action.citas };
+    case "SET_DOCTORES":      return { ...state, doctores: action.doctores };
+    case "SET_LOADING":       return { ...state, loading: action.value };
+    case "SELECCIONAR_CITA":  return { ...state, citaSeleccionadaId: action.citaId };
+    default:                  return state;
   }
 }
 
-const Calendario = () => {
+const CalendarioMedico = () => {
   const [state, dispatch] = useReducer(calendarioReducer, initialState);
-  const { vista, fecha, citas, doctores, doctorId, loading, citaSeleccionadaId } = state;
+  const { vista, fecha, citas, doctores, loading, citaSeleccionadaId } = state;
   const navigate = useNavigate();
+  const { user } = useAuth();
+  const medicoId = user?.medicoId ?? "";
 
   const cargarDoctores = useCallback(async () => {
     try {
@@ -100,18 +96,19 @@ const Calendario = () => {
   }, []);
 
   const cargarCitas = useCallback(async () => {
+    if (!medicoId) return;
     try {
       dispatch({ type: "SET_LOADING", value: true });
       dispatch({
         type: "SET_CITAS",
-        citas: await CitaApiService.obtenerCalendario(toISODateLocal(fecha), vista, doctorId),
+        citas: await CitaApiService.obtenerCalendario(toISODateLocal(fecha), vista, medicoId),
       });
     } catch {
       dispatch({ type: "SET_CITAS", citas: [] });
     } finally {
       dispatch({ type: "SET_LOADING", value: false });
     }
-  }, [fecha, vista, doctorId]);
+  }, [fecha, vista, medicoId]);
 
   useEffect(() => { cargarDoctores(); }, [cargarDoctores]);
   useEffect(() => { cargarCitas(); }, [cargarCitas]);
@@ -123,9 +120,8 @@ const Calendario = () => {
     else                         nueva.setDate(nueva.getDate() + delta);
     dispatch({ type: "SET_FECHA", fecha: nueva });
   }, [fecha, vista]);
-  
-  const irADetalleCita = useCallback((e: React.MouseEvent | React.KeyboardEvent, citaId: string) => {
-    e.stopPropagation();
+
+  const irADetalleCita = useCallback((_e: React.MouseEvent | React.KeyboardEvent, citaId: string) => {
     dispatch({ type: "SELECCIONAR_CITA", citaId });
   }, []);
 
@@ -166,11 +162,6 @@ const Calendario = () => {
       <div className="calendario-layout">
         <div className="calendario-left">
           <MiniCalendario fecha={fecha} onChange={(f) => dispatch({ type: "SET_FECHA", fecha: f })} />
-          <DoctoresPanel
-            doctores={doctores}
-            doctorId={doctorId}
-            onSeleccionar={(id) => dispatch({ type: "SET_DOCTOR_ID", doctorId: id })}
-          />
         </div>
 
         <div className="calendario-main">
@@ -191,7 +182,7 @@ const Calendario = () => {
                   horas={HORAS_LABORALES}
                   citas={citas}
                   doctores={doctores}
-                  doctorId={doctorId}
+                  doctorId={medicoId}
                   onVerCita={irADetalleCita}
                 />
               )}
@@ -201,7 +192,7 @@ const Calendario = () => {
                   horas={HORAS_LABORALES}
                   citas={citas}
                   doctores={doctores}
-                  doctorId={doctorId}
+                  doctorId={medicoId}
                   onVerCita={irADetalleCita}
                 />
               )}
@@ -210,7 +201,7 @@ const Calendario = () => {
                   diasDelMes={diasDelMes}
                   citas={citas}
                   doctores={doctores}
-                  doctorId={doctorId}
+                  doctorId={medicoId}
                   onVerCita={irADetalleCita}
                 />
               )}
@@ -231,4 +222,4 @@ const Calendario = () => {
   );
 };
 
-export default Calendario;
+export default CalendarioMedico;

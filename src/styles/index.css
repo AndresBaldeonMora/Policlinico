@@ -181,6 +181,23 @@ body {
   background-color: var(--border);
 }
 
+.btn-danger {
+  background: #dc2626;
+  color: #fff;
+  box-shadow: 0 1px 3px rgba(220, 38, 38, 0.2);
+}
+
+.btn-danger:hover {
+  background: #b91c1c;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(220, 38, 38, 0.3);
+}
+
+.btn-sm {
+  padding: 0.35rem 0.75rem;
+  font-size: 0.78rem;
+}
+
 /* ═══════════════════════════════════════════
    TYPOGRAPHY
 ═══════════════════════════════════════════ */

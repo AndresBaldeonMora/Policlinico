@@ -7,10 +7,11 @@ import ListaCitas from "./pages/ListaCitas/ListaCitas";
 import ListaMedicos from "./pages/ListaMedicos/ListaMedicos";
 import ListaPacientes from "./pages/ListaPacientes/ListaPacientes";
 import Calendario from "./pages/Calendario/Calendario";
-import MedicoDashboard from "./pages/MedicoDashboard/MedicoDashboard";
 import PerfilCita from "./pages/PerfilCita/PerfilCita";
-
+import Dashboard from "./pages/Dashboard/Dashboard";
 import Login from "./pages/Login/Login";
+import Laboratorio from "./pages/Laboratorio/Laboratorio";
+import CalendarioMedico from "./pages/Calendario/CalendarioMedico";
 
 import { AuthProvider } from "./context/AuthProvider";
 import { ThemeProvider } from "./context/ThemeContext";
@@ -31,7 +32,7 @@ function App() {
               path="/"
               element={
                 <ProtectedRoute roles={["RECEPCIONISTA"]}>
-                  <Calendario />
+                  <Dashboard />
                 </ProtectedRoute>
               }
             />
@@ -50,6 +51,15 @@ function App() {
               element={
                 <ProtectedRoute roles={["RECEPCIONISTA"]}>
                   <ListaCitas />
+                </ProtectedRoute>
+              }
+            />
+
+            <Route
+              path="/calendario"
+              element={
+                <ProtectedRoute roles={["RECEPCIONISTA"]}>
+                  <Calendario />
                 </ProtectedRoute>
               }
             />
@@ -83,10 +93,19 @@ function App() {
             />
 
             <Route
+              path="/laboratorio"
+              element={
+                <ProtectedRoute roles={["RECEPCIONISTA"]}>
+                  <Laboratorio />
+                </ProtectedRoute>
+              }
+            />
+
+            <Route
               path="/medico"
               element={
                 <ProtectedRoute roles={["MEDICO"]}>
-                  <MedicoDashboard />
+                  <CalendarioMedico />
                 </ProtectedRoute>
               }
             />

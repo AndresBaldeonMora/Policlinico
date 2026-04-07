@@ -37,10 +37,10 @@ const VistaSemana = ({ inicioSemana, horas, citas, doctores, doctorId, onVerCita
     citas.find((c) => {
       const fc = new Date(c.fecha);
       return (
-        fc.getFullYear() === dia.getFullYear() &&
-        fc.getMonth()    === dia.getMonth()    &&
-        fc.getDate()     === dia.getDate()     &&
-        c.hora           === hora              &&
+        fc.getUTCFullYear() === dia.getFullYear() &&
+        fc.getUTCMonth()    === dia.getMonth()    &&
+        fc.getUTCDate()     === dia.getDate()     &&
+        c.hora              === hora              &&
         getDoctorIdString(c.doctorId) === dId
       );
     });

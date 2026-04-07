@@ -21,9 +21,7 @@ const MiniCalendario = ({ fecha, onChange }: MiniCalendarioProps) => {
   for (let d = 1; d <= finMes.getDate(); d++) diasMes.push(d);
 
   const cambiarMes = (delta: number) => {
-    const nueva = new Date(fecha);
-    nueva.setMonth(nueva.getMonth() + delta);
-    onChange(nueva);
+    onChange(new Date(year, month + delta, 1));
   };
 
   return (

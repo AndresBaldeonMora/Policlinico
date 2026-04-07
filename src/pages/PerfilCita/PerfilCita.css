@@ -312,6 +312,111 @@
 [data-theme="dark"] .cita-widget-item:hover { background: var(--bg-hover); }
 [data-theme="dark"] .tab-demo { background: transparent; color: var(--text-muted); }
 
+/* ── Tab Exámenes ── */
+.perfil-examenes {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.perfil-examenes-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+.perfil-examenes-header h3 {
+  margin: 0;
+  font-size: 1rem;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.perfil-examenes-empty {
+  color: var(--text-muted);
+  font-size: 0.875rem;
+}
+
+.perfil-examenes-error {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 1.5rem;
+  color: #dc2626;
+  font-size: 0.875rem;
+}
+
+.perfil-examenes-lista {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.perfil-orden-card {
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md, 8px);
+  padding: 0.75rem 1rem;
+}
+
+.perfil-orden-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 0.5rem;
+}
+
+.perfil-orden-fecha {
+  font-size: 0.8rem;
+  color: var(--text-muted);
+}
+
+.perfil-orden-estado {
+  font-size: 0.75rem;
+  font-weight: 600;
+  padding: 0.15rem 0.5rem;
+  border-radius: 999px;
+}
+.perfil-orden-estado--pendiente  { background: #fef3c7; color: #d97706; }
+.perfil-orden-estado--en_proceso { background: #dbeafe; color: #2563eb; }
+.perfil-orden-estado--completado { background: #d1fae5; color: #059669; }
+.perfil-orden-estado--cancelada  { background: #fee2e2; color: #dc2626; }
+
+.perfil-orden-obs {
+  font-size: 0.82rem;
+  color: var(--text-muted);
+  font-style: italic;
+  margin: 0 0 0.5rem;
+}
+
+.perfil-orden-tabla {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.85rem;
+}
+.perfil-orden-tabla th {
+  text-align: left;
+  padding: 0.35rem 0.5rem;
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  border-bottom: 1px solid var(--border);
+}
+.perfil-orden-tabla td {
+  padding: 0.4rem 0.5rem;
+  border-bottom: 1px solid var(--border);
+  color: var(--text-primary);
+}
+.perfil-orden-tabla tr:last-child td {
+  border-bottom: none;
+}
+
+.btn-sm {
+  padding: 0.35rem 0.8rem;
+  font-size: 0.8rem;
+}
+
 @media (max-width: 900px) {
   .dashboard-layout { grid-template-columns: 1fr; }
 }

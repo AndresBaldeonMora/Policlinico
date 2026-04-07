@@ -7,7 +7,6 @@ interface Props {
   searchDNI: string;
   pacienteEncontrado: PacienteTransformado | null;
   pacienteSeleccionado: PacienteTransformado | null;
-  reniecLoading: boolean;
   onBuscar: (dni: string) => void;
   onSeleccionar: (paciente: PacienteTransformado) => void;
   onNuevoPaciente: () => void;
@@ -15,7 +14,7 @@ interface Props {
 
 const PasoPaciente = ({
   searchDNI, pacienteEncontrado, pacienteSeleccionado,
-  reniecLoading, onBuscar, onSeleccionar, onNuevoPaciente,
+  onBuscar, onSeleccionar, onNuevoPaciente,
 }: Props) => (
   <div className="form-step">
     <div className="step-header">
@@ -33,9 +32,7 @@ const PasoPaciente = ({
           onChange={(e) => onBuscar(e.target.value)}
           maxLength={DNI_LENGTH}
           placeholder="Ingrese los 8 dígitos..."
-          disabled={reniecLoading}
         />
-        {reniecLoading && <div className="search-icon-spinner">⌛</div>}
       </div>
 
       {pacienteEncontrado && !pacienteSeleccionado && (
@@ -53,20 +50,17 @@ const PasoPaciente = ({
             <span className="paciente-nombre">{pacienteEncontrado.nombres} {pacienteEncontrado.apellidos}</span>
             <div className="paciente-meta">
               <span>DNI: {pacienteEncontrado.dni}</span>
-              {pacienteEncontrado.id === "temp_reniec"
-                ? <span className="badge-reniec">Reniec</span>
-                : <span className="badge-bd">Registrado</span>}
             </div>
           </div>
-          <div style={{ marginLeft: "auto", color: "var(--primary)", fontSize: "0.8rem", fontWeight: 600 }}>Seleccionar</div>
+          <div style={{ marginLeft: "auto", color: "#16a34a", fontSize: "1.2rem" }}>👉</div>
         </div>
       )}
 
-      {esDNIValido(searchDNI) && !reniecLoading && !pacienteEncontrado && !pacienteSeleccionado && (
+      {esDNIValido(searchDNI)  && !pacienteEncontrado && !pacienteSeleccionado && (
         <div className="not-found-container">
           <p className="not-found-text">No encontramos resultados para este DNI.</p>
           <button type="button" onClick={onNuevoPaciente} className="btn-nuevo-paciente">
-            + Registrar Nuevo Paciente
+            ➕ Registrar Nuevo Paciente
           </button>
         </div>
       )}

@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Link, useLocation, useNavigate } from "react-router-dom";
+import { Link, useLocation} from "react-router-dom";
 import { useAuth } from "../../hooks/userAuth";
 import {
   Calendar,
@@ -8,37 +8,33 @@ import {
   Stethoscope,
   Users,
   LayoutDashboard,
-  LogOut,
   ChevronRight,
   PanelLeftClose,
   PanelLeftOpen,
+  FlaskConical,
 } from "lucide-react";
 import "./Sidebar.css";
 
 const Sidebar = () => {
   const location = useLocation();
-  const navigate = useNavigate();
-  const { logout, user } = useAuth();
+  const { user } = useAuth();
   const [collapsed, setCollapsed] = useState(false);
 
   const adminMenu = [
-    { path: "/", label: "Calendario", icon: Calendar, description: "Vista principal de citas" },
+    { path: "/", label: "Inicio", icon: LayoutDashboard, description: "Panel de inicio" },
+    { path: "/calendario", label: "Calendario", icon: Calendar, description: "Vista principal de citas" },
     { path: "/reserva-cita", label: "Solicitar Cita", icon: CalendarPlus, description: "Agendar nueva cita" },
     { path: "/lista-citas", label: "Gestion de Citas", icon: ClipboardList, description: "Administrar citas" },
     { path: "/medicos", label: "Medicos", icon: Stethoscope, description: "Directorio de doctores" },
-    { path: "/pacientes", label: "Pacientes", icon: Users, description: "Listado de pacientes" },
+    { path: "/pacientes",    label: "Pacientes",   icon: Users,         description: "Listado de pacientes" },
+    { path: "/laboratorio", label: "Laboratorio", icon: FlaskConical,  description: "Órdenes de exámenes" },
   ];
 
   const medicoMenu = [
-    { path: "/medico", label: "Mi Tablero", icon: LayoutDashboard, description: "Resumen de mis citas" },
+    { path: "/medico", label: "Calendario", icon: Calendar, description: "Mi calendario personal" },
   ];
 
   const menuItems = user?.rol === "MEDICO" ? medicoMenu : adminMenu;
-
-  const handleLogout = () => {
-    logout();
-    navigate("/login", { replace: true });
-  };
 
   const avatarLetter = user?.nombres?.charAt(0).toUpperCase() || "U";
 
@@ -118,10 +114,6 @@ const Sidebar = () => {
             <div className="sidebar-user-avatar">{avatarLetter}</div>
           </div>
         )}
-        <button className="btn-logout" onClick={handleLogout} title="Cerrar Sesion">
-          <LogOut size={18} strokeWidth={2} />
-          {!collapsed && <span>Cerrar Sesion</span>}
-        </button>
       </div>
     </aside>
   );

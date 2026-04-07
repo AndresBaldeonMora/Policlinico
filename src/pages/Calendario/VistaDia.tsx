@@ -1,4 +1,5 @@
 // src/pages/Calendario/VistaDia.tsx
+import { Fragment } from "react";
 import type { CitaTransformada } from "../../services/cita.service";
 import type { DoctorTransformado } from "../../services/doctor.service";
 import { getDoctorIdString } from "../../services/cita.service";
@@ -28,10 +29,10 @@ const VistaDia = ({ fecha, horas, citas, doctores, doctorId, onVerCita }: Props)
     citas.find((c) => {
       const fc = new Date(c.fecha);
       return (
-        fc.getFullYear() === fecha.getFullYear() &&
-        fc.getMonth()    === fecha.getMonth()    &&
-        fc.getDate()     === fecha.getDate()     &&
-        c.hora           === hora                &&
+        fc.getUTCFullYear() === fecha.getFullYear() &&
+        fc.getUTCMonth()    === fecha.getMonth()    &&
+        fc.getUTCDate()     === fecha.getDate()     &&
+        c.hora              === hora                &&
         getDoctorIdString(c.doctorId) === dId
       );
     });
@@ -53,8 +54,8 @@ const VistaDia = ({ fecha, horas, citas, doctores, doctorId, onVerCita }: Props)
         ))}
 
         {horas.map((hora) => (
-          <>
-            <div key={`hora-${hora}`} className="multi-hora-label">{hora}</div>
+          <Fragment key={hora}>
+            <div className="multi-hora-label">{hora}</div>
             {doctoresMostrados.map((doc) => {
               const cita = getCita(doc.id, hora);
               return (
@@ -82,7 +83,7 @@ const VistaDia = ({ fecha, horas, citas, doctores, doctorId, onVerCita }: Props)
                 </div>
               );
             })}
-          </>
+          </Fragment>
         ))}
       </div>
     </div>
