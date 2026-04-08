@@ -231,6 +231,59 @@
 .lab-badge--process  { background: var(--info-bg);     color: #2563eb; }
 .lab-badge--done     { background: var(--success-bg);  color: var(--primary); }
 .lab-badge--cancel   { background: var(--error-bg);    color: #dc2626; }
+.lab-badge--vencida  { background: #fef2f2;            color: #991b1b; }
+
+/* Código de orden */
+.lab-codigo {
+  font-family: monospace;
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: var(--primary);
+  background: var(--primary-lighter);
+  padding: 0.1rem 0.4rem;
+  border-radius: 4px;
+  display: inline-block;
+  margin-bottom: 0.2rem;
+}
+
+/* Indicador de vencimiento */
+.lab-venc {
+  display: flex;
+  align-items: center;
+  gap: 0.3rem;
+  width: 80px;
+}
+.lab-venc-bar {
+  flex: 1;
+  height: 4px;
+  background: #e5e7eb;
+  border-radius: 2px;
+  overflow: hidden;
+}
+.lab-venc-fill {
+  height: 100%;
+  border-radius: 2px;
+  transition: width 0.3s;
+}
+.lab-venc--ok .lab-venc-fill { background: #10b981; }
+.lab-venc--danger .lab-venc-fill { background: #f59e0b; }
+.lab-venc--expired .lab-venc-fill { background: #ef4444; }
+.lab-venc-text {
+  font-size: 0.7rem;
+  font-weight: 600;
+  white-space: nowrap;
+}
+.lab-venc--ok .lab-venc-text { color: #10b981; }
+.lab-venc--danger .lab-venc-text { color: #f59e0b; }
+.lab-venc--expired .lab-venc-text { color: #ef4444; }
+
+/* Búsqueda por código */
+.lab-busqueda-codigo {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  position: relative;
+}
 
 /* Detalle expandido */
 .lab-orden-detalle {

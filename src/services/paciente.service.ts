@@ -127,6 +127,14 @@ export class PacienteApiService {
     }
   }
 
+  static async obtenerHistorial(id: string, citasPagina = 1, ordenesPagina = 1): Promise<any> {
+    const params = new URLSearchParams({ citasPagina: String(citasPagina), ordenesPagina: String(ordenesPagina) });
+    const response = await api.get<{ success: boolean; data: any }>(
+      `/pacientes/${id}/historial?${params.toString()}`
+    );
+    return response.data.data;
+  }
+
   static async buscarPorDni(dni: string): Promise<PacienteTransformado | null> {
     try {
       const response = await api.get<{ success: boolean; data: Paciente }>(

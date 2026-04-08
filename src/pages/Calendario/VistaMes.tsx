@@ -1,6 +1,8 @@
 // src/pages/Calendario/VistaMes.tsx
+import { Lock } from "lucide-react";
 import type { CitaTransformada } from "../../services/cita.service";
 import type { DoctorTransformado } from "../../services/doctor.service";
+import type { Bloqueo } from "../../services/bloqueo.service";
 import { getDoctorIdString } from "../../services/cita.service";
 
 const DIAS_SEMANA = ["Lun", "Mar", "Mié", "Jue", "Vie", "Sáb", "Dom"] as const;
@@ -26,10 +28,11 @@ interface Props {
   citas: CitaTransformada[];
   doctores: DoctorTransformado[];
   doctorId: string;
+  bloqueos?: Bloqueo[];
   onVerCita: (e: React.MouseEvent | React.KeyboardEvent, citaId: string) => void;
 }
 
-const VistaMes = ({ diasDelMes, citas, doctores, doctorId, onVerCita}: Props) => {
+const VistaMes = ({ diasDelMes, citas, doctores, doctorId, bloqueos = [], onVerCita}: Props) => {
   const doctoresMostrados = doctorId === "ALL"
     ? doctores
     : doctores.filter((d) => d.id === doctorId);
@@ -42,6 +45,18 @@ const VistaMes = ({ diasDelMes, citas, doctores, doctorId, onVerCita}: Props) =>
         fc.getUTCMonth()    === dia.getMonth()    &&
         fc.getUTCDate()     === dia.getDate()     &&
         getDoctorIdString(c.doctorId) === dId
+      );
+    });
+
+  const isDiaBloqueado = (dia: Date, dId: string) =>
+    bloqueos.some((b) => {
+      const fb = new Date(b.fecha);
+      const doctorIdBloqueo = typeof b.doctorId === "object" ? b.doctorId._id : b.doctorId;
+      return (
+        fb.getUTCFullYear() === dia.getFullYear() &&
+        fb.getUTCMonth()    === dia.getMonth()    &&
+        fb.getUTCDate()     === dia.getDate()     &&
+        doctorIdBloqueo === dId
       );
     });
 
@@ -66,6 +81,7 @@ const VistaMes = ({ diasDelMes, citas, doctores, doctorId, onVerCita}: Props) =>
 
               const fechaISO = toISODateLocal(dia);
               const citasDelDia = getCitasPorFechaYDoctor(dia, doc.id);
+              const bloqueado = isDiaBloqueado(dia, doc.id);
               const hoy = new Date();
               const esHoy =
                 dia.getFullYear() === hoy.getFullYear() &&
@@ -75,10 +91,12 @@ const VistaMes = ({ diasDelMes, citas, doctores, doctorId, onVerCita}: Props) =>
               return (
                 <div
                   key={`${doc.id}-${fechaISO}`}
-                  className={`calendario-celda ${esHoy ? "calendario-celda--hoy" : ""}`}
+                  className={`calendario-celda ${esHoy ? "calendario-celda--hoy" : ""} ${bloqueado ? "calendario-celda--bloqueado" : ""}`}
+                  title={bloqueado ? "Día bloqueado" : undefined}
                 >
                   <span className={`dia-numero ${esHoy ? "dia-numero--hoy" : ""}`}>
                     {dia.getDate()}
+                    {bloqueado && <Lock size={10} style={{ marginLeft: 4, verticalAlign: "middle", opacity: 0.7 }} />}
                   </span>
                   {citasDelDia.map((cita) => (
                     <div

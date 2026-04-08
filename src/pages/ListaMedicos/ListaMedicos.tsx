@@ -10,12 +10,16 @@ import {
   Stethoscope,
   Mail,
   Phone,
+  Lock,
+  Unlock,
+  Calendar,
 } from "lucide-react";
 import "../ListaCitas/ListaCitas.css";
 import {
   DoctorApiService,
   type DoctorTransformado as DoctorBase,
 } from "../../services/doctor.service";
+import { BloqueoService, type Bloqueo } from "../../services/bloqueo.service";
 import { useAuth } from "../../hooks/userAuth";
 
 const normalizeString = (str: string): string =>
@@ -50,6 +54,58 @@ const ListaMedicos = () => {
   const [uploadTargetId, setUploadTargetId] = useState<string | null>(null);
   const { user } = useAuth();
   const esAdmin = user?.rol === "ADMIN";
+
+  // ── Bloqueos ──────────────────────────────────────────
+  const [doctorBloqueo, setDoctorBloqueo] = useState<Doctor | null>(null);
+  const [bloqueosDoctor, setBloqueosDoctor] = useState<Bloqueo[]>([]);
+  const [bloqueoForm, setBloqueoForm] = useState({ fecha: "", motivo: "No asistió", descripcion: "" });
+  const [bloqueoLoading, setBloqueoLoading] = useState(false);
+  const [showBloqueoModal, setShowBloqueoModal] = useState(false);
+
+  const cargarBloqueosDoctor = async (doctorId: string) => {
+    try {
+      const bloqueos = await BloqueoService.listar({ doctorId });
+      setBloqueosDoctor(bloqueos);
+    } catch {
+      setBloqueosDoctor([]);
+    }
+  };
+
+  const abrirPanelBloqueos = (doctor: Doctor) => {
+    setDoctorBloqueo(doctor);
+    cargarBloqueosDoctor(doctor.id);
+  };
+
+  const handleCrearBloqueo = async () => {
+    if (!doctorBloqueo || !bloqueoForm.fecha || !bloqueoForm.motivo) return;
+    setBloqueoLoading(true);
+    try {
+      await BloqueoService.crear({
+        doctorId: doctorBloqueo.id,
+        fecha: bloqueoForm.fecha,
+        motivo: bloqueoForm.motivo,
+        descripcion: bloqueoForm.descripcion || undefined,
+      });
+      showNotification("Bloqueo creado correctamente.", "success");
+      setShowBloqueoModal(false);
+      setBloqueoForm({ fecha: "", motivo: "No asistió", descripcion: "" });
+      cargarBloqueosDoctor(doctorBloqueo.id);
+    } catch (err: any) {
+      showNotification(err?.response?.data?.message || "Error al crear bloqueo.", "error");
+    } finally {
+      setBloqueoLoading(false);
+    }
+  };
+
+  const handleDesactivarBloqueo = async (bloqueoId: string) => {
+    try {
+      await BloqueoService.desactivar(bloqueoId);
+      showNotification("Bloqueo desactivado.", "success");
+      if (doctorBloqueo) cargarBloqueosDoctor(doctorBloqueo.id);
+    } catch {
+      showNotification("Error al desactivar bloqueo.", "error");
+    }
+  };
 
   const showNotification = (message: string, type: "success" | "error") => {
     setNotification({ message, type, visible: true });
@@ -189,6 +245,7 @@ const ListaMedicos = () => {
                   <th style={{ width: 150 }}>Especialidad</th>
                   <th style={{ width: 100 }}>CMP</th>
                   <th style={{ width: 200 }}>Contacto</th>
+                  <th style={{ width: 100 }}>Bloqueos</th>
                   <th style={{ width: 140 }}>CV</th>
                 </tr>
               </thead>
@@ -243,6 +300,16 @@ const ListaMedicos = () => {
                         </div>
                       </td>
                       <td>
+                        <button
+                          type="button"
+                          className="btn-action"
+                          onClick={() => abrirPanelBloqueos(d)}
+                          title="Ver/Bloquear día"
+                        >
+                          <Calendar size={15} />
+                        </button>
+                      </td>
+                      <td>
                         <div className="td-cv-actions">
                           {getCvUrl(d) && (
                             <button
@@ -270,7 +337,7 @@ const ListaMedicos = () => {
                   ))
                 ) : (
                   <tr>
-                    <td colSpan={5} className="td-empty">
+                    <td colSpan={6} className="td-empty">
                       <Stethoscope size={32} className="td-empty-icon" />
                       <p>No se encontraron medicos.</p>
                     </td>
@@ -278,6 +345,165 @@ const ListaMedicos = () => {
                 )}
               </tbody>
             </table>
+          </div>
+        </div>
+      )}
+
+      {/* Modal panel de bloqueos del doctor */}
+      {doctorBloqueo && !showBloqueoModal && (
+        <div
+          className="modal-overlay"
+          onClick={(e) => { if (e.target === e.currentTarget) setDoctorBloqueo(null); }}
+        >
+          <div className="modal-card-cv">
+            <div className="modal-cv-header">
+              <div style={{ display: "flex", alignItems: "center", gap: "0.5rem" }}>
+                <Lock size={20} />
+                <h3>Bloqueos — Dr. {doctorBloqueo.nombres} {doctorBloqueo.apellidos}</h3>
+              </div>
+              <button type="button" className="modal-cv-close" onClick={() => setDoctorBloqueo(null)}>
+                <X size={16} />
+              </button>
+            </div>
+
+            <div style={{ padding: "1rem", maxHeight: "400px", overflowY: "auto" }}>
+              {bloqueosDoctor.length === 0 ? (
+                <p style={{ color: "var(--text-secondary)", textAlign: "center", padding: "2rem 0" }}>
+                  No hay bloqueos activos para este doctor.
+                </p>
+              ) : (
+                <table className="dashboard-table" style={{ fontSize: "0.85rem" }}>
+                  <thead>
+                    <tr>
+                      <th>Fecha</th>
+                      <th>Motivo</th>
+                      <th>Descripción</th>
+                      <th>Acción</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {bloqueosDoctor.map((b) => (
+                      <tr key={b._id}>
+                        <td>
+                          {new Date(b.fecha).toLocaleDateString("es-PE", {
+                            day: "2-digit", month: "2-digit", year: "numeric", timeZone: "UTC",
+                          })}
+                        </td>
+                        <td>{b.motivo}</td>
+                        <td>{b.descripcion || "—"}</td>
+                        <td>
+                          <button
+                            type="button"
+                            className="btn-action"
+                            onClick={() => handleDesactivarBloqueo(b._id)}
+                            title="Desbloquear"
+                          >
+                            <Unlock size={14} />
+                          </button>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              )}
+            </div>
+
+            <div className="modal-actions">
+              <button type="button" className="btn btn-secondary" onClick={() => setDoctorBloqueo(null)}>
+                Cerrar
+              </button>
+              <button
+                type="button"
+                className="btn btn-primary"
+                onClick={() => setShowBloqueoModal(true)}
+              >
+                <Lock size={15} /> Bloquear día
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Modal crear bloqueo */}
+      {showBloqueoModal && doctorBloqueo && (
+        <div
+          className="modal-overlay"
+          onClick={(e) => { if (e.target === e.currentTarget) setShowBloqueoModal(false); }}
+        >
+          <div className="modal-card-cv" style={{ maxWidth: "450px" }}>
+            <div className="modal-cv-header">
+              <div style={{ display: "flex", alignItems: "center", gap: "0.5rem" }}>
+                <Lock size={20} />
+                <h3>Bloquear día</h3>
+              </div>
+              <button type="button" className="modal-cv-close" onClick={() => setShowBloqueoModal(false)}>
+                <X size={16} />
+              </button>
+            </div>
+
+            <div style={{ padding: "1rem", display: "flex", flexDirection: "column", gap: "1rem" }}>
+              <p style={{ margin: 0, color: "var(--text-secondary)", fontSize: "0.85rem" }}>
+                Dr. {doctorBloqueo.nombres} {doctorBloqueo.apellidos}
+              </p>
+
+              <div>
+                <label style={{ display: "block", marginBottom: "0.25rem", fontSize: "0.85rem", fontWeight: 500 }}>
+                  Fecha
+                </label>
+                <input
+                  type="date"
+                  value={bloqueoForm.fecha}
+                  onChange={(e) => setBloqueoForm((f) => ({ ...f, fecha: e.target.value }))}
+                  className="lista-search-input"
+                  style={{ width: "100%" }}
+                />
+              </div>
+
+              <div>
+                <label style={{ display: "block", marginBottom: "0.25rem", fontSize: "0.85rem", fontWeight: 500 }}>
+                  Motivo
+                </label>
+                <select
+                  value={bloqueoForm.motivo}
+                  onChange={(e) => setBloqueoForm((f) => ({ ...f, motivo: e.target.value }))}
+                  className="lista-search-input"
+                  style={{ width: "100%" }}
+                >
+                  <option value="No asistió">No asistió</option>
+                  <option value="Permiso médico">Permiso médico</option>
+                  <option value="Capacitación">Capacitación</option>
+                  <option value="Otro">Otro</option>
+                </select>
+              </div>
+
+              <div>
+                <label style={{ display: "block", marginBottom: "0.25rem", fontSize: "0.85rem", fontWeight: 500 }}>
+                  Descripción (opcional)
+                </label>
+                <input
+                  type="text"
+                  value={bloqueoForm.descripcion}
+                  onChange={(e) => setBloqueoForm((f) => ({ ...f, descripcion: e.target.value }))}
+                  placeholder="Detalle adicional..."
+                  className="lista-search-input"
+                  style={{ width: "100%" }}
+                />
+              </div>
+            </div>
+
+            <div className="modal-actions">
+              <button type="button" className="btn btn-secondary" onClick={() => setShowBloqueoModal(false)}>
+                Cancelar
+              </button>
+              <button
+                type="button"
+                className="btn btn-primary"
+                onClick={handleCrearBloqueo}
+                disabled={bloqueoLoading || !bloqueoForm.fecha || !bloqueoForm.motivo}
+              >
+                {bloqueoLoading ? "Guardando..." : "Confirmar bloqueo"}
+              </button>
+            </div>
           </div>
         </div>
       )}

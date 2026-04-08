@@ -8,6 +8,9 @@ import {
   XCircle,
   Search,
   X,
+  AlertTriangle,
+  Printer,
+  CalendarPlus,
 } from "lucide-react";
 import type {
   OrdenExamen,
@@ -18,6 +21,11 @@ import {
   ExamenService,
   TIPO_EXAMEN_LABEL,
 } from "../../services/examen.service";
+import {
+  DoctorApiService,
+  type DoctorTransformado,
+  type HorarioDisponible,
+} from "../../services/doctor.service";
 import {
   EspecialidadApiService,
   type Especialidad,
@@ -47,15 +55,43 @@ const formatFecha = (iso: string) => {
   );
 };
 
-const ESTADO_CONFIG = {
+const ESTADO_CONFIG: Record<string, { label: string; clase: string; icon: typeof Clock }> = {
   PENDIENTE: { label: "Pendiente", clase: "lab-badge--pending", icon: Clock },
   EN_PROCESO: { label: "En proceso", clase: "lab-badge--process", icon: Clock },
-  COMPLETADO: {
-    label: "Completado",
-    clase: "lab-badge--done",
-    icon: CheckCircle,
-  },
+  COMPLETADO: { label: "Completado", clase: "lab-badge--done", icon: CheckCircle },
   CANCELADA: { label: "Cancelada", clase: "lab-badge--cancel", icon: XCircle },
+  VENCIDA: { label: "Vencida", clase: "lab-badge--vencida", icon: AlertTriangle },
+};
+
+const calcularDiasRestantes = (fechaVencimiento?: string): number | null => {
+  if (!fechaVencimiento) return null;
+  const hoy = new Date();
+  hoy.setHours(0, 0, 0, 0);
+  const vence = new Date(fechaVencimiento);
+  vence.setHours(0, 0, 0, 0);
+  return Math.ceil((vence.getTime() - hoy.getTime()) / (1000 * 60 * 60 * 24));
+};
+
+const IndicadorVencimiento = ({ fechaVencimiento }: { fechaVencimiento?: string }) => {
+  const dias = calcularDiasRestantes(fechaVencimiento);
+  if (dias === null) return null;
+
+  let clase = "lab-venc--ok";
+  if (dias <= 0) clase = "lab-venc--expired";
+  else if (dias <= 7) clase = "lab-venc--danger";
+
+  const porcentaje = Math.max(0, Math.min(100, (dias / 30) * 100));
+
+  return (
+    <div className={`lab-venc ${clase}`} title={`${dias > 0 ? dias : 0} días restantes`}>
+      <div className="lab-venc-bar">
+        <div className="lab-venc-fill" style={{ width: `${porcentaje}%` }} />
+      </div>
+      <span className="lab-venc-text">
+        {dias <= 0 ? "Vencida" : `${dias}d`}
+      </span>
+    </div>
+  );
 };
 
 // ─── Modal de resultados ─────────────────────────────────────
@@ -256,12 +292,16 @@ interface FilaOrdenProps {
   orden: OrdenExamen;
   onCargarResultados: (orden: OrdenExamen) => void;
   onCancelarOrden: (ordenId: string) => void;
+  onGenerarCitaLab: (orden: OrdenExamen) => void;
+  onImprimir: (ordenId: string) => void;
 }
 
 const FilaOrden = ({
   orden,
   onCargarResultados,
   onCancelarOrden,
+  onGenerarCitaLab,
+  onImprimir,
 }: FilaOrdenProps) => {
   const [expandido, setExpandido] = useState(false);
   const cfg = ESTADO_CONFIG[orden.estado] ?? ESTADO_CONFIG.PENDIENTE;
@@ -288,42 +328,55 @@ const FilaOrden = ({
           <span className="lab-text-muted">{orden.especialidadId.nombre}</span>
         </div>
         <div className="lab-orden-col">
+          {orden.codigoOrden && (
+            <span className="lab-codigo">{orden.codigoOrden}</span>
+          )}
           <span className="lab-text-sm">{formatFecha(orden.fecha)}</span>
           <span className="lab-text-muted">
             {orden.items.length} examen{orden.items.length !== 1 ? "es" : ""}
           </span>
         </div>
-        <div
-          className="lab-orden-col lab-orden-actions"
-          style={{ justifyContent: "center" }}
-        >
+        <div className="lab-orden-col" style={{ alignItems: "center", gap: "0.4rem" }}>
           <span className={`lab-badge ${cfg.clase}`}>
             <Icon size={12} />
             {cfg.label}
           </span>
+          {orden.estado === "PENDIENTE" && (
+            <IndicadorVencimiento fechaVencimiento={orden.fechaVencimiento} />
+          )}
         </div>
         <div className="lab-orden-col lab-orden-actions">
+          {orden.estado === "PENDIENTE" && !orden.citaLabId && (
+            <button
+              className="lab-btn lab-btn--sm lab-btn--primary"
+              onClick={(e) => { e.stopPropagation(); onGenerarCitaLab(orden); }}
+              title="Generar cita de laboratorio"
+            >
+              <CalendarPlus size={13} /> Cita Lab
+            </button>
+          )}
           {(orden.estado === "PENDIENTE" || orden.estado === "EN_PROCESO") && (
-            <>
-              <button
-                className="lab-btn lab-btn--sm lab-btn--primary"
-                onClick={(e) => {
-                  e.stopPropagation();
-                  onCargarResultados(orden);
-                }}
-              >
-                Cargar Resultados
-              </button>
-              <button
-                className="lab-btn lab-btn--sm lab-btn--danger"
-                onClick={(e) => {
-                  e.stopPropagation();
-                  onCancelarOrden(orden._id);
-                }}
-              >
-                Cancelar
-              </button>
-            </>
+            <button
+              className="lab-btn lab-btn--sm lab-btn--primary"
+              onClick={(e) => { e.stopPropagation(); onCargarResultados(orden); }}
+            >
+              Resultados
+            </button>
+          )}
+          <button
+            className="lab-btn lab-btn--sm lab-btn--cancel"
+            onClick={(e) => { e.stopPropagation(); onImprimir(orden._id); }}
+            title="Imprimir orden"
+          >
+            <Printer size={13} />
+          </button>
+          {orden.estado === "PENDIENTE" && (
+            <button
+              className="lab-btn lab-btn--sm lab-btn--danger"
+              onClick={(e) => { e.stopPropagation(); onCancelarOrden(orden._id); }}
+            >
+              Cancelar
+            </button>
           )}
         </div>
         <div style={{ display: "flex", alignItems: "center" }}>
@@ -395,7 +448,145 @@ const FilaOrden = ({
 };
 
 // ─── Página principal ─────────────────────────────────────────
-type FiltroEstado = "TODOS" | "PENDIENTE" | "EN_PROCESO" | "COMPLETADO";
+type FiltroEstado = "TODOS" | "PENDIENTE" | "EN_PROCESO" | "COMPLETADO" | "VENCIDA";
+
+// ── Modal Generar Cita Lab ──
+interface ModalCitaLabProps {
+  orden: OrdenExamen;
+  onCerrar: () => void;
+  onGenerado: () => void;
+}
+
+const ModalCitaLab = ({ orden, onCerrar, onGenerado }: ModalCitaLabProps) => {
+  const [doctores, setDoctores] = useState<DoctorTransformado[]>([]);
+  const [doctorId, setDoctorId] = useState("");
+  const [fecha, setFecha] = useState("");
+  const [hora, setHora] = useState("");
+  const [horarios, setHorarios] = useState<HorarioDisponible[]>([]);
+  const [guardando, setGuardando] = useState(false);
+  const [error, setError] = useState("");
+
+  useEffect(() => {
+    DoctorApiService.listar().then(setDoctores).catch(() => {});
+  }, []);
+
+  useEffect(() => {
+    if (!doctorId || !fecha) { setHorarios([]); return; }
+    DoctorApiService.obtenerHorariosDisponibles(doctorId, fecha)
+      .then(setHorarios)
+      .catch(() => setHorarios([]));
+  }, [doctorId, fecha]);
+
+  const handleGenerar = async () => {
+    if (!doctorId || !fecha || !hora) return;
+    setGuardando(true);
+    setError("");
+    try {
+      await ExamenService.generarCitaLab(orden._id, { fecha, hora, doctorId });
+      toastExito("Cita de laboratorio generada correctamente");
+      onGenerado();
+      onCerrar();
+    } catch (err: any) {
+      setError(err?.response?.data?.message || "Error al generar cita");
+    } finally {
+      setGuardando(false);
+    }
+  };
+
+  return (
+    <div className="lab-modal-overlay" onClick={onCerrar}>
+      <div className="lab-modal-card" onClick={(e) => e.stopPropagation()} style={{ maxWidth: "500px" }}>
+        <div className="lab-modal-header">
+          <h3>Generar Cita de Laboratorio</h3>
+          <span className="lab-modal-paciente">
+            {orden.pacienteId.nombres} {orden.pacienteId.apellidos} — {orden.pacienteId.dni}
+          </span>
+          {orden.codigoOrden && (
+            <span className="lab-modal-paciente" style={{ fontWeight: 600 }}>
+              Orden: {orden.codigoOrden}
+            </span>
+          )}
+        </div>
+
+        <div className="lab-modal-body" style={{ display: "flex", flexDirection: "column", gap: "1rem" }}>
+          <div>
+            <label style={{ display: "block", marginBottom: "0.25rem", fontSize: "0.85rem", fontWeight: 500 }}>
+              Doctor de laboratorio
+            </label>
+            <select
+              value={doctorId}
+              onChange={(e) => { setDoctorId(e.target.value); setHora(""); }}
+              className="lab-filtro-select"
+              style={{ width: "100%" }}
+            >
+              <option value="">Seleccionar doctor...</option>
+              {doctores.map((d) => (
+                <option key={d.id} value={d.id}>
+                  Dr. {d.nombres} {d.apellidos} — {d.especialidad}
+                </option>
+              ))}
+            </select>
+          </div>
+
+          <div>
+            <label style={{ display: "block", marginBottom: "0.25rem", fontSize: "0.85rem", fontWeight: 500 }}>
+              Fecha
+            </label>
+            <input
+              type="date"
+              value={fecha}
+              onChange={(e) => { setFecha(e.target.value); setHora(""); }}
+              className="lab-filtro-date"
+              style={{ width: "100%" }}
+            />
+          </div>
+
+          {horarios.length > 0 && (
+            <div>
+              <label style={{ display: "block", marginBottom: "0.25rem", fontSize: "0.85rem", fontWeight: 500 }}>
+                Hora
+              </label>
+              <div style={{ display: "flex", flexWrap: "wrap", gap: "0.4rem" }}>
+                {horarios.map((h) => (
+                  <button
+                    key={h.hora}
+                    type="button"
+                    className={`lab-btn lab-btn--sm ${hora === h.hora ? "lab-btn--primary" : "lab-btn--cancel"}`}
+                    disabled={!h.disponible}
+                    onClick={() => setHora(h.hora)}
+                    style={{ opacity: h.disponible ? 1 : 0.4 }}
+                  >
+                    {h.hora}
+                  </button>
+                ))}
+              </div>
+            </div>
+          )}
+
+          <div style={{ fontSize: "0.8rem", color: "var(--text-muted)" }}>
+            <strong>Exámenes solicitados:</strong>{" "}
+            {orden.items.map((item) => {
+              const ex = typeof item.examenId === "object" ? (item.examenId as ExamenLaboratorio) : null;
+              return ex?.nombre ?? "—";
+            }).join(", ")}
+          </div>
+        </div>
+
+        <div className="lab-modal-footer">
+          {error && <p className="lab-modal-error">{error}</p>}
+          <button className="lab-btn lab-btn--cancel" onClick={onCerrar}>Cancelar</button>
+          <button
+            className="lab-btn lab-btn--primary"
+            onClick={handleGenerar}
+            disabled={guardando || !doctorId || !fecha || !hora}
+          >
+            {guardando ? "Generando..." : "Confirmar cita"}
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+};
 
 interface FiltrosAvanzados {
   paciente: string;
@@ -421,6 +612,8 @@ const Laboratorio = () => {
   const [filtros, setFiltros] = useState<FiltrosAvanzados>(filtrosVacios);
   const [paginaActual, setPaginaActual] = useState(1);
   const [ordenModal, setOrdenModal] = useState<OrdenExamen | null>(null);
+  const [ordenCitaLab, setOrdenCitaLab] = useState<OrdenExamen | null>(null);
+  const [busquedaCodigo, setBusquedaCodigo] = useState("");
   const [especialidades, setEspecialidades] = useState<Especialidad[]>([]);
 
   const cargar = useCallback(async () => {
@@ -447,6 +640,21 @@ const Laboratorio = () => {
       .then(setEspecialidades)
       .catch(() => {});
   }, []);
+
+  const handleBuscarPorCodigo = async () => {
+    if (!busquedaCodigo.trim()) return;
+    try {
+      const orden = await ExamenService.buscarPorCodigo(busquedaCodigo.trim());
+      setOrdenes([orden]);
+      setFiltroEstado("TODOS");
+    } catch {
+      Swal.fire("No encontrado", "No se encontró una orden con ese código.", "info");
+    }
+  };
+
+  const handleImprimir = (ordenId: string) => {
+    window.open(`/ordenes/${ordenId}/imprimir`, "_blank");
+  };
 
   const handleCancelarOrden = async (ordenId: string) => {
     const result = await Swal.fire({
@@ -514,11 +722,12 @@ const Laboratorio = () => {
     filtros.fechaInicio ||
     filtros.fechaFin;
 
-  const conteo = {
+  const conteo: Record<FiltroEstado, number> = {
     TODOS: ordenes.length,
     PENDIENTE: ordenes.filter((o) => o.estado === "PENDIENTE").length,
     EN_PROCESO: ordenes.filter((o) => o.estado === "EN_PROCESO").length,
     COMPLETADO: ordenes.filter((o) => o.estado === "COMPLETADO").length,
+    VENCIDA: ordenes.filter((o) => o.estado === "VENCIDA").length,
   };
 
   return (
@@ -533,9 +742,34 @@ const Laboratorio = () => {
         </div>
       </div>
 
+      {/* Búsqueda por código */}
+      <div className="lab-busqueda-codigo">
+        <Search size={15} className="lab-filtro-campo-icon" />
+        <input
+          type="text"
+          placeholder="Buscar por código de orden (ORD-...)..."
+          value={busquedaCodigo}
+          onChange={(e) => setBusquedaCodigo(e.target.value)}
+          onKeyDown={(e) => e.key === "Enter" && handleBuscarPorCodigo()}
+          className="lab-filtro-input"
+          style={{ paddingLeft: "2.2rem", flex: 1 }}
+        />
+        <button className="lab-btn lab-btn--sm lab-btn--primary" onClick={handleBuscarPorCodigo}>
+          Buscar
+        </button>
+        {busquedaCodigo && (
+          <button
+            className="lab-btn lab-btn--sm lab-btn--cancel"
+            onClick={() => { setBusquedaCodigo(""); cargar(); }}
+          >
+            Limpiar
+          </button>
+        )}
+      </div>
+
       <div className="lab-filtros">
         {(
-          ["PENDIENTE", "EN_PROCESO", "TODOS", "COMPLETADO"] as FiltroEstado[]
+          ["PENDIENTE", "EN_PROCESO", "TODOS", "COMPLETADO", "VENCIDA"] as FiltroEstado[]
         ).map((f) => (
           <button
             key={f}
@@ -545,13 +779,11 @@ const Laboratorio = () => {
               setPaginaActual(1);
             }}
           >
-            {f === "TODOS"
-              ? "Todos"
-              : f === "EN_PROCESO"
-                ? "En proceso"
-                : f === "COMPLETADO"
-                  ? "Completados"
-                  : "Pendientes"}
+            {f === "TODOS" ? "Todos"
+              : f === "EN_PROCESO" ? "En proceso"
+              : f === "COMPLETADO" ? "Completados"
+              : f === "VENCIDA" ? "Vencidas"
+              : "Pendientes"}
             <span className="lab-filtro-count">{conteo[f]}</span>
           </button>
         ))}
@@ -682,6 +914,8 @@ const Laboratorio = () => {
                   orden={orden}
                   onCargarResultados={setOrdenModal}
                   onCancelarOrden={handleCancelarOrden}
+                  onGenerarCitaLab={setOrdenCitaLab}
+                  onImprimir={handleImprimir}
                 />
               ))}
             </div>
@@ -726,6 +960,14 @@ const Laboratorio = () => {
           orden={ordenModal}
           onCerrar={() => setOrdenModal(null)}
           onGuardado={cargar}
+        />
+      )}
+
+      {ordenCitaLab && (
+        <ModalCitaLab
+          orden={ordenCitaLab}
+          onCerrar={() => setOrdenCitaLab(null)}
+          onGenerado={cargar}
         />
       )}
     </div>

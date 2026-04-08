@@ -1,0 +1,169 @@
+.imprimir-page {
+  max-width: 800px;
+  margin: 0 auto;
+  padding: 2rem;
+}
+
+.imprimir-contenido {
+  background: #fff;
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
+  padding: 2rem;
+  color: #111;
+  font-size: 0.9rem;
+  line-height: 1.5;
+}
+
+.imprimir-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 1rem;
+}
+
+.imprimir-titulo {
+  font-size: 1.4rem;
+  font-weight: 700;
+  margin: 0;
+  color: #0f766e;
+}
+
+.imprimir-subtitulo {
+  font-size: 0.85rem;
+  color: #6b7280;
+  margin: 0.15rem 0 0;
+}
+
+.imprimir-orden-info {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 0.2rem;
+  font-size: 0.82rem;
+  color: #374151;
+}
+
+.imprimir-codigo {
+  font-size: 1rem;
+  font-weight: 700;
+  color: #0f766e;
+  font-family: monospace;
+}
+
+.imprimir-divider {
+  border: none;
+  border-top: 2px solid #0f766e;
+  margin: 1rem 0;
+}
+
+.imprimir-seccion {
+  margin-bottom: 1.25rem;
+}
+
+.imprimir-seccion h3 {
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: #374151;
+  margin: 0 0 0.5rem;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+  border-bottom: 1px solid #e5e7eb;
+  padding-bottom: 0.3rem;
+}
+
+.imprimir-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.3rem 2rem;
+  font-size: 0.85rem;
+}
+
+.imprimir-tabla {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.85rem;
+}
+
+.imprimir-tabla th {
+  text-align: left;
+  padding: 0.5rem 0.6rem;
+  font-size: 0.78rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  border-bottom: 2px solid #d1d5db;
+  color: #374151;
+}
+
+.imprimir-tabla td {
+  padding: 0.45rem 0.6rem;
+  border-bottom: 1px solid #e5e7eb;
+}
+
+.imprimir-footer {
+  margin-top: 2rem;
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-end;
+}
+
+.imprimir-firma {
+  text-align: center;
+}
+
+.imprimir-firma-linea {
+  width: 200px;
+  border-bottom: 1px solid #111;
+  margin-bottom: 0.3rem;
+}
+
+.imprimir-firma p {
+  font-size: 0.78rem;
+  color: #6b7280;
+  margin: 0;
+}
+
+.imprimir-vigencia {
+  font-size: 0.78rem;
+  color: #6b7280;
+  font-style: italic;
+  margin: 0;
+}
+
+.imprimir-acciones {
+  display: flex;
+  justify-content: center;
+  gap: 1rem;
+  margin-top: 1.5rem;
+}
+
+.imprimir-loading {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 200px;
+  color: #6b7280;
+}
+
+/* Print styles */
+@media print {
+  .no-print {
+    display: none !important;
+  }
+
+  .imprimir-page {
+    padding: 0;
+    max-width: none;
+  }
+
+  .imprimir-contenido {
+    border: none;
+    border-radius: 0;
+    padding: 0;
+    box-shadow: none;
+  }
+
+  body {
+    background: #fff !important;
+  }
+}

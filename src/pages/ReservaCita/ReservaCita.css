@@ -469,6 +469,21 @@ select:focus {
   box-shadow: 0 2px 8px rgba(15, 118, 110, 0.4);
 }
 
+.dia-btn--bloqueado {
+  opacity: 0.4;
+  cursor: not-allowed !important;
+  text-decoration: line-through;
+  background: var(--bg-hover) !important;
+  border-color: var(--border) !important;
+  color: var(--text-secondary) !important;
+}
+
+.dia-btn--bloqueado:hover {
+  border-color: var(--border) !important;
+  color: var(--text-secondary) !important;
+  background: var(--bg-hover) !important;
+}
+
 .horarios-contenedor {
   background: var(--bg-card);
   border-radius: var(--radius-md);

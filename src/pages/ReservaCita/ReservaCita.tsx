@@ -5,6 +5,7 @@ import { PacienteApiService } from "../../services/paciente.service";
 import { EspecialidadApiService } from "../../services/especialidad.service";
 import { DoctorApiService } from "../../services/doctor.service";
 import { CitaApiService } from "../../services/cita.service";
+import { BloqueoService } from "../../services/bloqueo.service";
 
 import { reservaReducer, initialState, generarMesesDisponibles, generarDiasDelMes } from "./reservaCitaReducer";
 import type { MesOption, ReservaAction } from "./reservaCitaReducer";
@@ -76,6 +77,8 @@ const PasoActual = ({ state, dispatch, handleBuscarPaciente }: PasoActualProps) 
       <PasoDia
         diasDelMes={state.diasDelMes}
         diaSeleccionado={state.diaSeleccionado}
+        diasBloqueados={state.diasBloqueados}
+        doctorNombre={state.doctorSeleccionado ? `Dr. ${state.doctorSeleccionado.nombres} ${state.doctorSeleccionado.apellidos}` : ""}
         onSeleccionar={(dia) => dispatch({ type: "SELECCIONAR_DIA", dia })}
       />
     );
@@ -209,6 +212,31 @@ const ReservaCita = () => {
 
     obtenerHorarios();
   }, [diaSeleccionado, mesSeleccionado, doctorSeleccionado, prefillHasFecha]);
+
+  // ── Bloqueos por mes ──────────────────────────────────
+  useEffect(() => {
+    const cargarBloqueos = async () => {
+      if (!mesSeleccionado || !doctorSeleccionado) {
+        dispatch({ type: "SET_DIAS_BLOQUEADOS", dias: [] });
+        return;
+      }
+      try {
+        const bloqueos = await BloqueoService.listar({
+          doctorId: doctorSeleccionado.id,
+          mes: mesSeleccionado.numero + 1,
+          anio: mesSeleccionado.anio,
+        });
+        const diasBloqueados = bloqueos.map((b) => {
+          const f = new Date(b.fecha);
+          return f.getUTCDate();
+        });
+        dispatch({ type: "SET_DIAS_BLOQUEADOS", dias: diasBloqueados });
+      } catch {
+        dispatch({ type: "SET_DIAS_BLOQUEADOS", dias: [] });
+      }
+    };
+    cargarBloqueos();
+  }, [mesSeleccionado, doctorSeleccionado]);
 
   // ── Paciente handlers ─────────────────────────────────
   const handleBuscarPaciente = useCallback(async (dni: string) => {

@@ -11,6 +11,8 @@ import PerfilCita from "./pages/PerfilCita/PerfilCita";
 import Dashboard from "./pages/Dashboard/Dashboard";
 import Login from "./pages/Login/Login";
 import Laboratorio from "./pages/Laboratorio/Laboratorio";
+import Historial from "./pages/HistorialPaciente/Historial";
+import ImprimirOrden from "./pages/Laboratorio/ImprimirOrden";
 import CalendarioMedico from "./pages/Calendario/CalendarioMedico";
 
 // Páginas del administrador
@@ -98,10 +100,28 @@ function App() {
             />
 
             <Route
+              path="/pacientes/:id"
+              element={
+                <ProtectedRoute roles={["RECEPCIONISTA", "administrador"]}>
+                  <Historial />
+                </ProtectedRoute>
+              }
+            />
+
+            <Route
               path="/laboratorio"
               element={
                 <ProtectedRoute roles={["RECEPCIONISTA"]}>
                   <Laboratorio />
+                </ProtectedRoute>
+              }
+            />
+
+            <Route
+              path="/ordenes/:id/imprimir"
+              element={
+                <ProtectedRoute roles={["RECEPCIONISTA", "MEDICO"]}>
+                  <ImprimirOrden />
                 </ProtectedRoute>
               }
             />

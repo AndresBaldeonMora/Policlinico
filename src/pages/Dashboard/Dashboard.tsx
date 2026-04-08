@@ -1,15 +1,8 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { CitaApiService, type CitaProcesada } from "../../services/cita.service";
-import { PacienteApiService } from "../../services/paciente.service";
+import { ExamenService, type OrdenExamen } from "../../services/examen.service";
 import "./Dashboard.css";
-
-
-interface StatsState {
-  citasHoy: number;
-  pacientesTotal: number;
-  citasProximas: number;
-}
 
 const ESTADO_LABELS: Record<CitaProcesada["estado"], string> = {
   PENDIENTE: "Pendiente",
@@ -33,63 +26,50 @@ function esCitaHoy(fechaStr: string): boolean {
   );
 }
 
-function esCitaProxima2Horas(fechaStr: string, hora: string): boolean {
-  const ahora = new Date();
-  const fecha = parseFechaDMY(fechaStr);
-  const [h, m] = hora.split(":").map(Number);
-  const citaDate = new Date(fecha.getFullYear(), fecha.getMonth(), fecha.getDate(), h, m);
-  const diff = citaDate.getTime() - ahora.getTime();
-  return diff > 0 && diff <= 2 * 60 * 60 * 1000;
-}
-
 export default function Dashboard() {
   const navigate = useNavigate();
-  const [stats, setStats] = useState<StatsState>({
-    citasHoy: 0,
-    pacientesTotal: 0,
-    citasProximas: 0,
-  });
-  const [ultimasCitas, setUltimasCitas] = useState<CitaProcesada[]>([]);
+  const [citasHoy, setCitasHoy] = useState<CitaProcesada[]>([]);
+  const [ordenesPendientes, setOrdenesPendientes] = useState<OrdenExamen[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-  const fetchData = async () => {
-    try {
-      setLoading(true);
-      setError(null);
+    const fetchData = async () => {
+      try {
+        setLoading(true);
+        setError(null);
 
-      const [todasCitas, todosPacientes] = await Promise.all([
-        CitaApiService.listar(),
-        PacienteApiService.listar(),
-      ]);
+        const [todasCitas, ordenes] = await Promise.all([
+          CitaApiService.listar(),
+          ExamenService.listarOrdenesPendientes(),
+        ]);
 
-      const citasHoy = todasCitas.filter((c) => esCitaHoy(c.fecha)).length;
-      const citasProximas = todasCitas.filter((c) =>
-        esCitaProxima2Horas(c.fecha, c.hora)
-      ).length;
+        const hoy = todasCitas.filter((c) => esCitaHoy(c.fecha));
+        setCitasHoy(hoy);
 
-      setStats({
-        citasHoy,
-        pacientesTotal: todosPacientes.length,
-        citasProximas,
-      });
-      setUltimasCitas(todasCitas.slice(0, 5));
-    } catch {
-      setError("No se pudo cargar la información del dashboard.");
-    } finally {
-      setLoading(false);
-    }
-  };
+        // Órdenes pendientes que no tienen cita de laboratorio generada
+        const ordenesSinCitaLab = ordenes.filter(
+          (o) => o.estado === "PENDIENTE" && !o.citaLabId
+        );
+        setOrdenesPendientes(ordenesSinCitaLab);
+      } catch {
+        setError("No se pudo cargar la información del dashboard.");
+      } finally {
+        setLoading(false);
+      }
+    };
 
-  fetchData();
-}, []);
+    fetchData();
+  }, []);
+
+  const citasPendientesHoy = citasHoy.filter((c) => c.estado === "PENDIENTE").length;
+  const citasAtendidasHoy = citasHoy.filter((c) => c.estado === "ATENDIDA").length;
 
   return (
     <div className="dashboard">
       <div className="dashboard-top">
         <div className="dashboard-heading">
-          <h1 className="dashboard-title">Inicio</h1>
+          <h1 className="dashboard-title">Panel clínico</h1>
           <p className="dashboard-subtitle">Resumen del día</p>
         </div>
         <div className="dashboard-actions">
@@ -97,7 +77,13 @@ export default function Dashboard() {
             className="dashboard-btn dashboard-btn-secondary"
             onClick={() => navigate("/pacientes?nuevo=1")}
           >
-            Nuevo paciente
+            Buscar paciente
+          </button>
+          <button
+            className="dashboard-btn dashboard-btn-secondary"
+            onClick={() => navigate("/laboratorio")}
+          >
+            Ver laboratorio
           </button>
           <button
             className="dashboard-btn dashboard-btn-primary"
@@ -110,72 +96,125 @@ export default function Dashboard() {
 
       {error && <div className="dashboard-error">{error}</div>}
 
+      {/* Stats rápidos */}
       <div className="dashboard-stats">
         <div className="stat-card">
           <span className="stat-label">Citas hoy</span>
           <span className="stat-value">
-            {loading ? <span className="stat-skeleton" /> : stats.citasHoy}
+            {loading ? <span className="stat-skeleton" /> : citasHoy.length}
           </span>
         </div>
         <div className="stat-card">
-          <span className="stat-label">Pacientes registrados</span>
+          <span className="stat-label">Pendientes</span>
           <span className="stat-value">
-            {loading ? <span className="stat-skeleton" /> : stats.pacientesTotal}
+            {loading ? <span className="stat-skeleton" /> : citasPendientesHoy}
           </span>
         </div>
-        <div className="stat-card stat-card-accent">
-          <span className="stat-label">Próximas citas</span>
+        <div className="stat-card">
+          <span className="stat-label">Atendidas</span>
           <span className="stat-value">
-            {loading ? <span className="stat-skeleton" /> : stats.citasProximas}
+            {loading ? <span className="stat-skeleton" /> : citasAtendidasHoy}
+          </span>
+        </div>
+        <div className="stat-card stat-card-warning">
+          <span className="stat-label">Órdenes lab sin cita</span>
+          <span className="stat-value">
+            {loading ? <span className="stat-skeleton" /> : ordenesPendientes.length}
           </span>
         </div>
       </div>
 
+      {/* Agenda de hoy */}
       <div className="dashboard-section">
-        <h2 className="dashboard-section-title">Últimas citas registradas</h2>
+        <h2 className="dashboard-section-title">Agenda de hoy</h2>
         {loading ? (
           <div className="dashboard-table-skeleton">
             {[...Array(5)].map((_, i) => (
               <div key={i} className="table-row-skeleton" />
             ))}
           </div>
-        ) : ultimasCitas.length === 0 ? (
-          <p className="dashboard-empty">No hay citas registradas.</p>
+        ) : citasHoy.length === 0 ? (
+          <p className="dashboard-empty">No hay citas programadas para hoy.</p>
         ) : (
+          <div className="dashboard-table-wrapper">
+            <table className="dashboard-table">
+              <thead>
+                <tr>
+                  <th>Hora</th>
+                  <th>Paciente</th>
+                  <th>Doctor</th>
+                  <th>Especialidad</th>
+                  <th>Estado</th>
+                </tr>
+              </thead>
+              <tbody>
+                {citasHoy
+                  .sort((a, b) => a.hora.localeCompare(b.hora))
+                  .map((cita) => (
+                    <tr
+                      key={cita._id}
+                      className="dashboard-table-row"
+                      onClick={() => navigate(`/citas/${cita._id}`)}
+                    >
+                      <td className="td-hora">{cita.hora}</td>
+                      <td>{cita.paciente}</td>
+                      <td>{cita.doctor}</td>
+                      <td>{cita.especialidad}</td>
+                      <td>
+                        <span className={`estado-badge estado-${cita.estado}`}>
+                          {ESTADO_LABELS[cita.estado]}
+                        </span>
+                      </td>
+                    </tr>
+                  ))}
+              </tbody>
+            </table>
+          </div>
+        )}
+      </div>
+
+      {/* Órdenes de lab pendientes de cita */}
+      {ordenesPendientes.length > 0 && (
+        <div className="dashboard-section">
+          <h2 className="dashboard-section-title">
+            Órdenes de laboratorio pendientes de cita
+          </h2>
           <div className="dashboard-table-wrapper">
             <table className="dashboard-table">
               <thead>
                 <tr>
                   <th>Paciente</th>
                   <th>Doctor</th>
-                  <th>Fecha</th>
-                  <th>Hora</th>
-                  <th>Estado</th>
+                  <th>Especialidad</th>
+                  <th>Fecha orden</th>
+                  <th>Exámenes</th>
                 </tr>
               </thead>
               <tbody>
-                {ultimasCitas.map((cita) => (
-                  <tr
-                    key={cita._id}
-                    className="dashboard-table-row"
-                    onClick={() => navigate(`/citas/${cita._id}`)}
-                  >
-                    <td>{cita.paciente}</td>
-                    <td>{cita.doctor}</td>
-                    <td>{cita.fecha}</td>
-                    <td>{cita.hora}</td>
+                {ordenesPendientes.map((orden) => (
+                  <tr key={orden._id} className="dashboard-table-row">
                     <td>
-                      <span className={`estado-badge estado-${cita.estado}`}>
-                        {ESTADO_LABELS[cita.estado]}
-                      </span>
+                      {orden.pacienteId?.nombres} {orden.pacienteId?.apellidos}
                     </td>
+                    <td>
+                      {orden.doctorId?.nombres} {orden.doctorId?.apellidos}
+                    </td>
+                    <td>{orden.especialidadId?.nombre}</td>
+                    <td>
+                      {new Date(orden.fecha).toLocaleDateString("es-PE", {
+                        day: "2-digit",
+                        month: "2-digit",
+                        year: "numeric",
+                      })}
+                    </td>
+                    <td>{orden.items?.length ?? 0}</td>
                   </tr>
                 ))}
               </tbody>
             </table>
           </div>
-        )}
-      </div>
+        </div>
+      )}
     </div>
   );
 }

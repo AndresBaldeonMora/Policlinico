@@ -25,7 +25,7 @@ export interface ExamenLaboratorio {
 }
 
 // ── Tipos de órdenes ────────────────────────────────────────
-export type EstadoOrden = "PENDIENTE" | "EN_PROCESO" | "COMPLETADO" | "CANCELADA";
+export type EstadoOrden = "PENDIENTE" | "EN_PROCESO" | "COMPLETADO" | "CANCELADA" | "VENCIDA";
 export type EstadoItem  = "PENDIENTE" | "COMPLETADO";
 
 export interface ItemOrden {
@@ -43,6 +43,10 @@ export interface OrdenExamen {
   doctorId:   { _id: string; nombres: string; apellidos: string; cmp?: string };
   citaId?:    string;
   especialidadId: { _id: string; nombre: string };
+  codigoOrden?: string;
+  fechaVencimiento?: string;
+  citaLabId?: string;
+  motivoVencimiento?: string;
   items: ItemOrden[];
   estado: EstadoOrden;
   observacionesGenerales?: string;
@@ -123,6 +127,43 @@ export class ExamenService {
       `/ordenes/${ordenId}`,
       { items, observacionesGenerales }
     );
+    return res.data.data;
+  }
+
+  static async buscarPorCodigo(codigo: string): Promise<OrdenExamen> {
+    const res = await api.get<{ success: boolean; data: OrdenExamen }>(
+      `/ordenes/buscar?codigo=${encodeURIComponent(codigo)}`
+    );
+    return res.data.data;
+  }
+
+  static async listarSinCitaLab(): Promise<OrdenExamen[]> {
+    const res = await api.get<{ success: boolean; data: OrdenExamen[] }>("/ordenes/sin-cita-lab");
+    return res.data.data ?? [];
+  }
+
+  static async generarCitaLab(
+    ordenId: string,
+    payload: { fecha: string; hora: string; doctorId: string }
+  ): Promise<OrdenExamen> {
+    const res = await api.patch<{ success: boolean; data: OrdenExamen }>(
+      `/ordenes/${ordenId}/generar-cita-lab`,
+      payload
+    );
+    return res.data.data;
+  }
+
+  static async obtenerParaImprimir(ordenId: string): Promise<{
+    orden: OrdenExamen;
+    policlinico: { nombre: string; direccion: string; telefono: string };
+  }> {
+    const res = await api.get<{
+      success: boolean;
+      data: {
+        orden: OrdenExamen;
+        policlinico: { nombre: string; direccion: string; telefono: string };
+      };
+    }>(`/ordenes/${ordenId}/imprimir`);
     return res.data.data;
   }
 }
