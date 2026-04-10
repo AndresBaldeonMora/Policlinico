@@ -17,10 +17,8 @@ export interface ExamenLaboratorio {
   nombre: string;
   tipo: TipoExamen;
   descripcion?: string;
-  unidad?: string;
-  referenciaMin?: number;
-  referenciaMax?: number;
-  referenciaTexto?: string;
+  instrucciones?: string;
+  validezDias?: number;
   activo: boolean;
 }
 
@@ -52,6 +50,17 @@ export interface OrdenExamen {
   observacionesGenerales?: string;
   fecha: string;
   createdAt?: string;
+}
+
+// ── Cita de laboratorio generada ────────────────────────────
+export interface CitaLab {
+  _id: string;
+  pacienteId: string;
+  fecha: string;
+  fechaVigenciaHasta: string;
+  instrucciones?: string;
+  tipo: "LABORATORIO";
+  estado: string;
 }
 
 // ── Servicio ────────────────────────────────────────────────
@@ -142,15 +151,12 @@ export class ExamenService {
     return res.data.data ?? [];
   }
 
-  static async generarCitaLab(
-    ordenId: string,
-    payload: { fecha: string; hora: string; doctorId: string }
-  ): Promise<OrdenExamen> {
-    const res = await api.patch<{ success: boolean; data: OrdenExamen }>(
+  static async generarCitaLab(ordenId: string): Promise<{ orden: OrdenExamen; citaLab: CitaLab }> {
+    const res = await api.patch<{ success: boolean; data: OrdenExamen; citaLab: CitaLab }>(
       `/ordenes/${ordenId}/generar-cita-lab`,
-      payload
+      {}
     );
-    return res.data.data;
+    return { orden: res.data.data, citaLab: res.data.citaLab };
   }
 
   static async obtenerParaImprimir(ordenId: string): Promise<{

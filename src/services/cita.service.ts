@@ -50,6 +50,7 @@ export interface CitaProcesada {
   fecha: string;
   hora: string;
   estado: EstadoCita;
+  tipo?: "CONSULTA" | "LABORATORIO" | "REMOTA" | "DOMICILIO";
 }
 
 export interface CitaTransformada {

@@ -166,9 +166,11 @@
 }
 
 .lab-orden-actions {
-  flex-direction: column;
+  flex-direction: row;
   align-items: center;
-  gap: 0.4rem;
+  justify-content: center;
+  gap: 0.35rem;
+  flex-wrap: wrap;
 }
 
 /* Encabezado centrado para ciertas columnas */
@@ -277,12 +279,35 @@
 .lab-venc--danger .lab-venc-text { color: #f59e0b; }
 .lab-venc--expired .lab-venc-text { color: #ef4444; }
 
-/* Búsqueda por código */
-.lab-busqueda-codigo {
+/* Búsqueda por código (dentro del filtro avanzado) */
+.lab-filtro-codigo-grupo {
   display: flex;
+  gap: 0.4rem;
   align-items: center;
-  gap: 0.5rem;
-  position: relative;
+}
+
+.lab-filtro-input--codigo {
+  min-width: 130px;
+  max-width: 160px;
+}
+
+.lab-btn-codigo-buscar {
+  height: 2.25rem;
+  padding: 0 0.85rem;
+  background: var(--primary);
+  color: #fff;
+  border: none;
+  border-radius: var(--radius-sm);
+  font-size: 0.82rem;
+  font-weight: 500;
+  cursor: pointer;
+  white-space: nowrap;
+  font-family: inherit;
+  transition: background 0.15s;
+  flex-shrink: 0;
+}
+.lab-btn-codigo-buscar:hover {
+  background: var(--primary-dark);
 }
 
 /* Detalle expandido */
@@ -376,6 +401,46 @@
 .lab-btn--sm {
   padding: 0.3rem 0.7rem;
   font-size: 0.78rem;
+}
+
+/* Botones de acción en tabla (icon-only, tamaño uniforme) */
+.lab-action-btn {
+  width: 32px;
+  height: 32px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: none;
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  transition: background 0.15s, opacity 0.15s;
+  flex-shrink: 0;
+}
+.lab-action-btn:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+.lab-action-btn--primary {
+  background: var(--primary-lighter);
+  color: var(--primary);
+}
+.lab-action-btn--primary:hover:not(:disabled) {
+  background: var(--primary-light);
+}
+.lab-action-btn--neutral {
+  background: var(--bg-hover);
+  color: var(--text-secondary);
+  border: 1px solid var(--border);
+}
+.lab-action-btn--neutral:hover:not(:disabled) {
+  background: var(--border);
+}
+.lab-action-btn--danger {
+  background: #fee2e2;
+  color: #dc2626;
+}
+.lab-action-btn--danger:hover:not(:disabled) {
+  background: #fecaca;
 }
 
 /* Modal resultados */
@@ -702,4 +767,128 @@
     grid-template-columns: 1fr 1fr;
     grid-template-rows: auto auto;
   }
+}
+
+/* ── Modal Generar Cita Lab ─────────────────────────────────── */
+
+.lab-modal-card--citalab {
+  max-width: 520px;
+}
+
+.lab-modal-body--citalab {
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+}
+
+.lab-modal-codigo-tag {
+  display: inline-block;
+  margin-top: 0.35rem;
+  font-size: 0.78rem;
+  font-weight: 600;
+  color: var(--primary-dark);
+  background: var(--primary-lighter);
+  border: 1px solid var(--primary-light);
+  border-radius: 4px;
+  padding: 0.1rem 0.5rem;
+}
+
+/* Exámenes */
+.lab-citalab-examenes {
+  display: flex;
+  align-items: baseline;
+  gap: 0.5rem;
+  padding: 0.6rem 0.85rem;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--border);
+  background: var(--bg-hover);
+  font-size: 0.83rem;
+}
+.lab-citalab-examenes-label {
+  font-weight: 600;
+  color: var(--text-secondary);
+  flex-shrink: 0;
+}
+.lab-citalab-examenes-lista {
+  color: var(--text-primary);
+  line-height: 1.4;
+}
+
+/* Nota de restricción */
+.lab-citalab-nota {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.45rem;
+  padding: 0.55rem 0.85rem;
+  background: #fffbeb;
+  border: 1px solid #fcd34d;
+  border-radius: var(--radius-sm);
+  font-size: 0.8rem;
+  color: #92400e;
+  line-height: 1.45;
+}
+[data-theme="dark"] .lab-citalab-nota {
+  background: rgba(252, 211, 77, 0.08);
+  border-color: rgba(252, 211, 77, 0.25);
+  color: #fcd34d;
+}
+.lab-citalab-nota svg {
+  flex-shrink: 0;
+  margin-top: 1px;
+}
+
+/* Sección título */
+.lab-citalab-section-title {
+  margin: 0 0 0.6rem;
+  font-size: 0.83rem;
+  font-weight: 600;
+  color: var(--text-secondary);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+/* Loading inline */
+.lab-citalab-loading {
+  font-size: 0.83rem;
+  color: var(--text-muted);
+  padding: 0.5rem 0;
+}
+
+/* Período de vigencia */
+.lab-citalab-vigencia {
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  padding: 0.75rem 1rem;
+  background: var(--bg-hover);
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+}
+
+.lab-citalab-vigencia-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 0.85rem;
+}
+
+.lab-citalab-vigencia-label {
+  color: var(--text-muted);
+  font-weight: 500;
+}
+
+.lab-citalab-vigencia-val {
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.lab-citalab-vigencia-val--vence {
+  color: #d97706;
+}
+
+.lab-citalab-vigencia-info {
+  font-size: 0.78rem;
+  color: var(--text-muted);
+  margin: 0.25rem 0 0;
+  line-height: 1.4;
 }

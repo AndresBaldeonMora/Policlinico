@@ -22,11 +22,6 @@ import {
   TIPO_EXAMEN_LABEL,
 } from "../../services/examen.service";
 import {
-  DoctorApiService,
-  type DoctorTransformado,
-  type HorarioDisponible,
-} from "../../services/doctor.service";
-import {
   EspecialidadApiService,
   type Especialidad,
 } from "../../services/especialidad.service";
@@ -348,34 +343,36 @@ const FilaOrden = ({
         <div className="lab-orden-col lab-orden-actions">
           {orden.estado === "PENDIENTE" && !orden.citaLabId && (
             <button
-              className="lab-btn lab-btn--sm lab-btn--primary"
+              className="lab-action-btn lab-action-btn--primary"
               onClick={(e) => { e.stopPropagation(); onGenerarCitaLab(orden); }}
               title="Generar cita de laboratorio"
             >
-              <CalendarPlus size={13} /> Cita Lab
+              <CalendarPlus size={15} />
             </button>
           )}
           {(orden.estado === "PENDIENTE" || orden.estado === "EN_PROCESO") && (
             <button
-              className="lab-btn lab-btn--sm lab-btn--primary"
+              className="lab-action-btn lab-action-btn--primary"
               onClick={(e) => { e.stopPropagation(); onCargarResultados(orden); }}
+              title="Cargar resultados"
             >
-              Resultados
+              <FlaskConical size={15} />
             </button>
           )}
           <button
-            className="lab-btn lab-btn--sm lab-btn--cancel"
+            className="lab-action-btn lab-action-btn--neutral"
             onClick={(e) => { e.stopPropagation(); onImprimir(orden._id); }}
             title="Imprimir orden"
           >
-            <Printer size={13} />
+            <Printer size={15} />
           </button>
           {orden.estado === "PENDIENTE" && (
             <button
-              className="lab-btn lab-btn--sm lab-btn--danger"
+              className="lab-action-btn lab-action-btn--danger"
               onClick={(e) => { e.stopPropagation(); onCancelarOrden(orden._id); }}
+              title="Cancelar orden"
             >
-              Cancelar
+              <XCircle size={15} />
             </button>
           )}
         </div>
@@ -458,36 +455,39 @@ interface ModalCitaLabProps {
 }
 
 const ModalCitaLab = ({ orden, onCerrar, onGenerado }: ModalCitaLabProps) => {
-  const [doctores, setDoctores] = useState<DoctorTransformado[]>([]);
-  const [doctorId, setDoctorId] = useState("");
-  const [fecha, setFecha] = useState("");
-  const [hora, setHora] = useState("");
-  const [horarios, setHorarios] = useState<HorarioDisponible[]>([]);
   const [guardando, setGuardando] = useState(false);
   const [error, setError] = useState("");
 
-  useEffect(() => {
-    DoctorApiService.listar().then(setDoctores).catch(() => {});
-  }, []);
+  const hoy = new Date();
+  const fechaEmision = hoy.toLocaleDateString("es-PE", { day: "2-digit", month: "long", year: "numeric" });
+  const fechaVigencia = new Date(hoy);
+  fechaVigencia.setDate(fechaVigencia.getDate() + 7);
+  const fechaVigenciaStr = fechaVigencia.toLocaleDateString("es-PE", { day: "2-digit", month: "long", year: "numeric" });
 
-  useEffect(() => {
-    if (!doctorId || !fecha) { setHorarios([]); return; }
-    DoctorApiService.obtenerHorariosDisponibles(doctorId, fecha)
-      .then(setHorarios)
-      .catch(() => setHorarios([]));
-  }, [doctorId, fecha]);
+  const examenesList = orden.items
+    .map((item) => (typeof item.examenId === "object" ? (item.examenId as ExamenLaboratorio).nombre : null))
+    .filter(Boolean)
+    .join(" · ");
+
+  // Compilar instrucciones únicas de los exámenes de la orden
+  const instruccionesUnicas = [
+    ...new Set(
+      orden.items
+        .map((item) => (typeof item.examenId === "object" ? (item.examenId as ExamenLaboratorio).instrucciones : null))
+        .filter((i): i is string => !!i?.trim())
+    ),
+  ];
 
   const handleGenerar = async () => {
-    if (!doctorId || !fecha || !hora) return;
     setGuardando(true);
     setError("");
     try {
-      await ExamenService.generarCitaLab(orden._id, { fecha, hora, doctorId });
-      toastExito("Cita de laboratorio generada correctamente");
+      await ExamenService.generarCitaLab(orden._id);
+      toastExito("Autorización de laboratorio generada correctamente");
       onGenerado();
       onCerrar();
     } catch (err: any) {
-      setError(err?.response?.data?.message || "Error al generar cita");
+      setError(err?.response?.data?.message || "Error al generar la autorización");
     } finally {
       setGuardando(false);
     }
@@ -495,81 +495,51 @@ const ModalCitaLab = ({ orden, onCerrar, onGenerado }: ModalCitaLabProps) => {
 
   return (
     <div className="lab-modal-overlay" onClick={onCerrar}>
-      <div className="lab-modal-card" onClick={(e) => e.stopPropagation()} style={{ maxWidth: "500px" }}>
+      <div className="lab-modal-card lab-modal-card--citalab" onClick={(e) => e.stopPropagation()}>
         <div className="lab-modal-header">
-          <h3>Generar Cita de Laboratorio</h3>
+          <h3>Generar Autorización de Laboratorio</h3>
           <span className="lab-modal-paciente">
-            {orden.pacienteId.nombres} {orden.pacienteId.apellidos} — {orden.pacienteId.dni}
+            {orden.pacienteId.nombres} {orden.pacienteId.apellidos} — DNI {orden.pacienteId.dni}
           </span>
           {orden.codigoOrden && (
-            <span className="lab-modal-paciente" style={{ fontWeight: 600 }}>
-              Orden: {orden.codigoOrden}
-            </span>
+            <span className="lab-modal-codigo-tag">Orden: {orden.codigoOrden}</span>
           )}
         </div>
 
-        <div className="lab-modal-body" style={{ display: "flex", flexDirection: "column", gap: "1rem" }}>
-          <div>
-            <label style={{ display: "block", marginBottom: "0.25rem", fontSize: "0.85rem", fontWeight: 500 }}>
-              Doctor de laboratorio
-            </label>
-            <select
-              value={doctorId}
-              onChange={(e) => { setDoctorId(e.target.value); setHora(""); }}
-              className="lab-filtro-select"
-              style={{ width: "100%" }}
-            >
-              <option value="">Seleccionar doctor...</option>
-              {doctores.map((d) => (
-                <option key={d.id} value={d.id}>
-                  Dr. {d.nombres} {d.apellidos} — {d.especialidad}
-                </option>
-              ))}
-            </select>
+        <div className="lab-modal-body lab-modal-body--citalab">
+          {/* Exámenes solicitados */}
+          <div className="lab-citalab-examenes">
+            <span className="lab-citalab-examenes-label">Exámenes:</span>
+            <span className="lab-citalab-examenes-lista">{examenesList || "—"}</span>
           </div>
 
-          <div>
-            <label style={{ display: "block", marginBottom: "0.25rem", fontSize: "0.85rem", fontWeight: 500 }}>
-              Fecha
-            </label>
-            <input
-              type="date"
-              value={fecha}
-              onChange={(e) => { setFecha(e.target.value); setHora(""); }}
-              className="lab-filtro-date"
-              style={{ width: "100%" }}
-            />
+          {/* Período de vigencia */}
+          <div className="lab-citalab-vigencia">
+            <div className="lab-citalab-vigencia-row">
+              <span className="lab-citalab-vigencia-label">Fecha de emisión</span>
+              <span className="lab-citalab-vigencia-val">{fechaEmision}</span>
+            </div>
+            <div className="lab-citalab-vigencia-row">
+              <span className="lab-citalab-vigencia-label">Válida hasta</span>
+              <span className="lab-citalab-vigencia-val lab-citalab-vigencia-val--vence">{fechaVigenciaStr}</span>
+            </div>
+            <p className="lab-citalab-vigencia-info">
+              El paciente puede presentarse al laboratorio cualquier día hábil dentro del período de vigencia. Vencido el plazo, la autorización no puede ser reprogramada.
+            </p>
           </div>
 
-          {horarios.length > 0 && (
+          {/* Instrucciones de preparación */}
+          {instruccionesUnicas.length > 0 && (
             <div>
-              <label style={{ display: "block", marginBottom: "0.25rem", fontSize: "0.85rem", fontWeight: 500 }}>
-                Hora
-              </label>
-              <div style={{ display: "flex", flexWrap: "wrap", gap: "0.4rem" }}>
-                {horarios.map((h) => (
-                  <button
-                    key={h.hora}
-                    type="button"
-                    className={`lab-btn lab-btn--sm ${hora === h.hora ? "lab-btn--primary" : "lab-btn--cancel"}`}
-                    disabled={!h.disponible}
-                    onClick={() => setHora(h.hora)}
-                    style={{ opacity: h.disponible ? 1 : 0.4 }}
-                  >
-                    {h.hora}
-                  </button>
-                ))}
-              </div>
+              <p className="lab-citalab-section-title">Indicaciones de preparación</p>
+              {instruccionesUnicas.map((instr, i) => (
+                <div key={i} className="lab-citalab-nota">
+                  <AlertTriangle size={13} />
+                  <span style={{ whiteSpace: "pre-line" }}>{instr}</span>
+                </div>
+              ))}
             </div>
           )}
-
-          <div style={{ fontSize: "0.8rem", color: "var(--text-muted)" }}>
-            <strong>Exámenes solicitados:</strong>{" "}
-            {orden.items.map((item) => {
-              const ex = typeof item.examenId === "object" ? (item.examenId as ExamenLaboratorio) : null;
-              return ex?.nombre ?? "—";
-            }).join(", ")}
-          </div>
         </div>
 
         <div className="lab-modal-footer">
@@ -578,9 +548,9 @@ const ModalCitaLab = ({ orden, onCerrar, onGenerado }: ModalCitaLabProps) => {
           <button
             className="lab-btn lab-btn--primary"
             onClick={handleGenerar}
-            disabled={guardando || !doctorId || !fecha || !hora}
+            disabled={guardando}
           >
-            {guardando ? "Generando..." : "Confirmar cita"}
+            {guardando ? "Generando..." : "Confirmar Autorización"}
           </button>
         </div>
       </div>
@@ -720,7 +690,8 @@ const Laboratorio = () => {
     filtros.paciente ||
     filtros.especialidadId ||
     filtros.fechaInicio ||
-    filtros.fechaFin;
+    filtros.fechaFin ||
+    busquedaCodigo;
 
   const conteo: Record<FiltroEstado, number> = {
     TODOS: ordenes.length,
@@ -740,31 +711,6 @@ const Laboratorio = () => {
             <p>Gestión de órdenes de exámenes</p>
           </div>
         </div>
-      </div>
-
-      {/* Búsqueda por código */}
-      <div className="lab-busqueda-codigo">
-        <Search size={15} className="lab-filtro-campo-icon" />
-        <input
-          type="text"
-          placeholder="Buscar por código de orden (ORD-...)..."
-          value={busquedaCodigo}
-          onChange={(e) => setBusquedaCodigo(e.target.value)}
-          onKeyDown={(e) => e.key === "Enter" && handleBuscarPorCodigo()}
-          className="lab-filtro-input"
-          style={{ paddingLeft: "2.2rem", flex: 1 }}
-        />
-        <button className="lab-btn lab-btn--sm lab-btn--primary" onClick={handleBuscarPorCodigo}>
-          Buscar
-        </button>
-        {busquedaCodigo && (
-          <button
-            className="lab-btn lab-btn--sm lab-btn--cancel"
-            onClick={() => { setBusquedaCodigo(""); cargar(); }}
-          >
-            Limpiar
-          </button>
-        )}
       </div>
 
       <div className="lab-filtros">
@@ -790,6 +736,26 @@ const Laboratorio = () => {
       </div>
 
       <div className="lab-filtros-avanzados">
+        <div className="lab-filtro-campo">
+          <span className="lab-filtro-label">Código de orden</span>
+          <div className="lab-filtro-codigo-grupo">
+            <div style={{ position: "relative" }}>
+              <Search size={15} className="lab-filtro-campo-icon" />
+              <input
+                type="text"
+                placeholder="ORD-..."
+                value={busquedaCodigo}
+                onChange={(e) => setBusquedaCodigo(e.target.value)}
+                onKeyDown={(e) => e.key === "Enter" && handleBuscarPorCodigo()}
+                className="lab-filtro-input lab-filtro-input--codigo"
+              />
+            </div>
+            <button className="lab-btn-codigo-buscar" onClick={handleBuscarPorCodigo}>
+              Buscar
+            </button>
+          </div>
+        </div>
+
         <div className="lab-filtro-campo">
           <span className="lab-filtro-label">Paciente</span>
           <div style={{ position: "relative" }}>
@@ -861,7 +827,9 @@ const Laboratorio = () => {
               className="lab-btn-limpiar"
               onClick={() => {
                 setFiltros(filtrosVacios);
+                setBusquedaCodigo("");
                 setPaginaActual(1);
+                cargar();
               }}
             >
               <X size={14} /> Limpiar

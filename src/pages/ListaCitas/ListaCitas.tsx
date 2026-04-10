@@ -158,6 +158,7 @@ const ListaCitas = () => {
   };
 
   const filtrarCitas = citasData.filter((cita) => {
+    if (cita.tipo === "LABORATORIO") return false;
     const f = normalizeString(busqueda);
     return normalizeString(cita.dni).includes(f) || normalizeString(cita.doctor).includes(f) || normalizeString(cita.paciente).includes(f);
   });
