@@ -31,6 +31,7 @@ export interface ItemOrden {
   observaciones?: string;
   valorResultado?: string;
   unidadResultado?: string;
+  archivoUrl?: string;
   fechaResultado?: string;
   estadoItem: EstadoItem;
 }
@@ -102,8 +103,10 @@ export class ExamenService {
     return res.data.data ?? [];
   }
 
-  static async listarOrdenesPendientes(): Promise<OrdenExamen[]> {
-    const res = await api.get<{ success: boolean; data: OrdenExamen[] }>("/ordenes/pendientes");
+  static async listarOrdenesPendientes(todos = false): Promise<OrdenExamen[]> {
+    const res = await api.get<{ success: boolean; data: OrdenExamen[] }>(
+      `/ordenes/pendientes${todos ? "?todos=true" : ""}`
+    );
     return res.data.data ?? [];
   }
 
@@ -121,6 +124,18 @@ export class ExamenService {
       { resultados }
     );
     return res.data.data;
+  }
+
+  static async subirArchivo(ordenId: string, examenId: string, archivo: File): Promise<string> {
+    const formData = new FormData();
+    formData.append("archivo", archivo);
+    formData.append("examenId", examenId);
+    const res = await api.post<{ success: boolean; url: string }>(
+      `/ordenes/${ordenId}/subir-archivo`,
+      formData,
+      { headers: { "Content-Type": "multipart/form-data" } }
+    );
+    return res.data.url;
   }
 
   static async cancelarOrden(ordenId: string): Promise<void> {

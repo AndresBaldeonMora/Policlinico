@@ -26,8 +26,9 @@ import {
   type Especialidad,
 } from "../../services/especialidad.service";
 import Swal from "sweetalert2";
-import { toastExito } from "../../utils/toast";
+
 import "./Laboratorio.css";
+import "../ListaCitas/ListaCitas.css";
 
 // ─── Helpers ────────────────────────────────────────────────
 const formatFecha = (iso: string) => {
@@ -94,19 +95,38 @@ interface ModalResultadosProps {
   orden: OrdenExamen;
   onCerrar: () => void;
   onGuardado: () => void;
+  showNotification: (message: string, type: "success" | "error") => void;
 }
 
 const ModalResultados = ({
   orden,
   onCerrar,
   onGuardado,
+  showNotification,
 }: ModalResultadosProps) => {
   const [valores, setValores] = useState<
     Record<string, { valor: string; unidad: string }>
   >({});
+  const [archivos, setArchivos] = useState<Record<string, { file: File; url?: string; subiendo: boolean }>>({});
   const [guardando, setGuardando] = useState(false);
   const [error, setError] = useState("");
   const [camposVacios, setCamposVacios] = useState<Set<string>>(new Set());
+
+  const handleArchivo = async (id: string, file: File) => {
+    setArchivos((prev) => ({ ...prev, [id]: { file, subiendo: true } }));
+    try {
+      const url = await ExamenService.subirArchivo(orden._id, id, file);
+      setArchivos((prev) => ({ ...prev, [id]: { file, url, subiendo: false } }));
+      showNotification("Archivo subido correctamente", "success");
+    } catch {
+      setArchivos((prev) => {
+        const next = { ...prev };
+        delete next[id];
+        return next;
+      });
+      setError("Error al subir el archivo");
+    }
+  };
 
   const pendientes = orden.items.filter((i) => i.estadoItem === "PENDIENTE");
 
@@ -139,7 +159,7 @@ const ModalResultados = ({
     setGuardando(true);
     try {
       await ExamenService.cargarResultados(orden._id, resultados);
-      toastExito("Resultados guardados correctamente");
+      showNotification("Resultados guardados correctamente", "success");
       onGuardado();
       onCerrar();
     } catch (err: any) {
@@ -239,6 +259,28 @@ const ModalResultados = ({
                         className="lab-modal-item-unidad"
                       />
                     </div>
+                    <div className="lab-modal-item-archivo">
+                      {archivos[id]?.url ? (
+                        <a href={archivos[id].url} target="_blank" rel="noopener noreferrer" className="lab-archivo-link">
+                          📎 Archivo subido — ver
+                        </a>
+                      ) : archivos[id]?.subiendo ? (
+                        <span className="lab-archivo-subiendo">Subiendo archivo...</span>
+                      ) : (
+                        <label className="lab-archivo-btn">
+                          📎 Adjuntar archivo
+                          <input
+                            type="file"
+                            accept="image/*,.pdf,.doc,.docx,.xls,.xlsx"
+                            style={{ display: "none" }}
+                            onChange={(e) => {
+                              const f = e.target.files?.[0];
+                              if (f) handleArchivo(id, f);
+                            }}
+                          />
+                        </label>
+                      )}
+                    </div>
                     {item.observaciones && (
                       <p className="lab-modal-item-obs">
                         Obs: {item.observaciones}
@@ -299,6 +341,7 @@ const FilaOrden = ({
   onImprimir,
 }: FilaOrdenProps) => {
   const [expandido, setExpandido] = useState(false);
+  const [archivoPreview, setArchivoPreview] = useState<string | null>(null);
   const cfg = ESTADO_CONFIG[orden.estado] ?? ESTADO_CONFIG.PENDIENTE;
   const Icon = cfg.icon;
   const paciente = orden.pacienteId;
@@ -398,6 +441,7 @@ const FilaOrden = ({
                 <th>Examen</th>
                 <th>Tipo</th>
                 <th>Resultado</th>
+                <th>Archivo</th>
                 <th>Estado</th>
               </tr>
             </thead>
@@ -425,6 +469,18 @@ const FilaOrden = ({
                       )}
                     </td>
                     <td>
+                      {item.archivoUrl ? (
+                        <button
+                          className="lab-archivo-ver"
+                          onClick={() => setArchivoPreview(item.archivoUrl!)}
+                        >
+                          📄 Ver archivo
+                        </button>
+                      ) : (
+                        <span className="lab-text-muted">—</span>
+                      )}
+                    </td>
+                    <td>
                       <span
                         className={`lab-badge ${item.estadoItem === "COMPLETADO" ? "lab-badge--done" : "lab-badge--pending"}`}
                       >
@@ -440,6 +496,31 @@ const FilaOrden = ({
           </table>
         </div>
       )}
+
+      {archivoPreview && (
+        <div className="lab-modal-overlay" onClick={() => setArchivoPreview(null)}>
+          <div className="lab-preview-modal" onClick={(e) => e.stopPropagation()}>
+            <div className="lab-preview-header">
+              <h3>Vista previa del archivo</h3>
+              <button className="lab-preview-close" onClick={() => setArchivoPreview(null)}>✕</button>
+            </div>
+            <div className="lab-preview-body">
+              {archivoPreview.match(/\.(jpg|jpeg|png|gif|webp|avif|bmp)(\?|$)/i) ? (
+                <img src={archivoPreview} alt="Resultado" className="lab-preview-img" />
+              ) : archivoPreview.match(/\.pdf(\?|$)/i) ? (
+                <iframe src={archivoPreview} className="lab-preview-iframe" title="PDF" />
+              ) : (
+                <div className="lab-preview-fallback">
+                  <p>No se puede previsualizar este tipo de archivo.</p>
+                  <a href={archivoPreview} target="_blank" rel="noopener noreferrer" className="lab-btn lab-btn--primary">
+                    Descargar archivo
+                  </a>
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
@@ -452,9 +533,10 @@ interface ModalCitaLabProps {
   orden: OrdenExamen;
   onCerrar: () => void;
   onGenerado: () => void;
+  showNotification: (message: string, type: "success" | "error") => void;
 }
 
-const ModalCitaLab = ({ orden, onCerrar, onGenerado }: ModalCitaLabProps) => {
+const ModalCitaLab = ({ orden, onCerrar, onGenerado, showNotification }: ModalCitaLabProps) => {
   const [guardando, setGuardando] = useState(false);
   const [error, setError] = useState("");
 
@@ -483,7 +565,7 @@ const ModalCitaLab = ({ orden, onCerrar, onGenerado }: ModalCitaLabProps) => {
     setError("");
     try {
       await ExamenService.generarCitaLab(orden._id);
-      toastExito("Autorización de laboratorio generada correctamente");
+      showNotification("Autorización de laboratorio generada correctamente", "success");
       onGenerado();
       onCerrar();
     } catch (err: any) {
@@ -585,12 +667,18 @@ const Laboratorio = () => {
   const [ordenCitaLab, setOrdenCitaLab] = useState<OrdenExamen | null>(null);
   const [busquedaCodigo, setBusquedaCodigo] = useState("");
   const [especialidades, setEspecialidades] = useState<Especialidad[]>([]);
+  const [notification, setNotification] = useState<{ message: string; type: "success" | "error" | ""; visible: boolean }>({ message: "", type: "", visible: false });
+
+  const showNotification = (message: string, type: "success" | "error") => {
+    setNotification({ message, type, visible: true });
+    setTimeout(() => setNotification((prev) => ({ ...prev, visible: false })), 3000);
+  };
 
   const cargar = useCallback(async () => {
     setLoading(true);
     setErrorCarga("");
     try {
-      const data = await ExamenService.listarOrdenesPendientes();
+      const data = await ExamenService.listarOrdenesPendientes(true);
       setOrdenes(data);
     } catch {
       setErrorCarga(
@@ -640,7 +728,7 @@ const Laboratorio = () => {
     if (!result.isConfirmed) return;
     try {
       await ExamenService.cancelarOrden(ordenId);
-      toastExito("Orden cancelada correctamente");
+      showNotification("Orden cancelada correctamente", "success");
       await cargar();
     } catch {
       Swal.fire("Error", "No se pudo cancelar la orden.", "error");
@@ -652,7 +740,12 @@ const Laboratorio = () => {
       if (filtroEstado !== "TODOS" && orden.estado !== filtroEstado)
         return false;
 
-      if (filtros.paciente) {
+      if (busquedaCodigo && busquedaCodigo.length >= 3) {
+        const codigo = (orden.codigoOrden || "").toLowerCase();
+        if (!codigo.includes(busquedaCodigo.toLowerCase())) return false;
+      }
+
+      if (filtros.paciente && filtros.paciente.length >= 3) {
         const nombre =
           `${orden.pacienteId.nombres} ${orden.pacienteId.apellidos}`.toLowerCase();
         if (!nombre.includes(filtros.paciente.toLowerCase())) return false;
@@ -703,6 +796,7 @@ const Laboratorio = () => {
 
   return (
     <div className="lab-page">
+      {notification.visible && <div className={`notification ${notification.type}`}>{notification.message}</div>}
       <div className="lab-header">
         <div className="lab-header-title">
           <FlaskConical size={24} className="lab-header-icon" />
@@ -928,6 +1022,7 @@ const Laboratorio = () => {
           orden={ordenModal}
           onCerrar={() => setOrdenModal(null)}
           onGuardado={cargar}
+          showNotification={showNotification}
         />
       )}
 
@@ -936,6 +1031,7 @@ const Laboratorio = () => {
           orden={ordenCitaLab}
           onCerrar={() => setOrdenCitaLab(null)}
           onGenerado={cargar}
+          showNotification={showNotification}
         />
       )}
     </div>

@@ -44,7 +44,7 @@ export default function Dashboard() {
           ExamenService.listarOrdenesPendientes(),
         ]);
 
-        const hoy = todasCitas.filter((c) => esCitaHoy(c.fecha));
+        const hoy = todasCitas.filter((c) => esCitaHoy(c.fecha) && c.tipo !== "LABORATORIO");
         setCitasHoy(hoy);
 
         // Órdenes pendientes que no tienen cita de laboratorio generada
