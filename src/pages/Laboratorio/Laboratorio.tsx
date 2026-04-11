@@ -1,37 +1,39 @@
-import { useEffect, useState, useCallback, useMemo } from "react";
+import { useEffect, useState, useCallback, useRef, useMemo } from "react";
 import {
   FlaskConical,
   ChevronDown,
   ChevronUp,
   CheckCircle,
   Clock,
-  XCircle,
+  AlertTriangle,
   Search,
   X,
-  AlertTriangle,
-  Printer,
-  CalendarPlus,
+  ShieldCheck,
+  UserCheck,
+  Upload,
+  FileText,
+  ExternalLink,
+  RefreshCw,
+  CalendarClock,
 } from "lucide-react";
-import type {
-  OrdenExamen,
-  ItemOrden,
-  ExamenLaboratorio,
-} from "../../services/examen.service";
-import {
-  ExamenService,
-  TIPO_EXAMEN_LABEL,
-} from "../../services/examen.service";
-import {
-  EspecialidadApiService,
-  type Especialidad,
-} from "../../services/especialidad.service";
+import type { OrdenExamen, EstadoOrden } from "../../services/examen.service";
+import { ExamenService, TIPO_EXAMEN_LABEL } from "../../services/examen.service";
 import Swal from "sweetalert2";
 
 import "./Laboratorio.css";
 import "../ListaCitas/ListaCitas.css";
 
-// ─── Helpers ────────────────────────────────────────────────
+// ─── Helpers ─────────────────────────────────────────────────
 const formatFecha = (iso: string) => {
+  const d = new Date(iso);
+  return d.toLocaleDateString("es-PE", {
+    day: "2-digit",
+    month: "short",
+    year: "numeric",
+  });
+};
+
+const formatFechaHora = (iso: string) => {
   const d = new Date(iso);
   const fecha = d.toLocaleDateString("es-PE", {
     day: "2-digit",
@@ -41,22 +43,27 @@ const formatFecha = (iso: string) => {
   const hora = d.toLocaleTimeString("es-PE", {
     hour: "2-digit",
     minute: "2-digit",
-    hour12: true
+    hour12: true,
   });
   return (
     <>
       <span style={{ display: "block" }}>{fecha}</span>
-      <span style={{ display: "block", fontSize: "0.85em", color: "var(--text-muted)" }}>{hora}</span>
+      <span style={{ display: "block", fontSize: "0.82em", color: "var(--text-muted)" }}>
+        {hora}
+      </span>
     </>
   );
 };
 
-const ESTADO_CONFIG: Record<string, { label: string; clase: string; icon: typeof Clock }> = {
-  PENDIENTE: { label: "Pendiente", clase: "lab-badge--pending", icon: Clock },
-  EN_PROCESO: { label: "En proceso", clase: "lab-badge--process", icon: Clock },
-  COMPLETADO: { label: "Completado", clase: "lab-badge--done", icon: CheckCircle },
-  CANCELADA: { label: "Cancelada", clase: "lab-badge--cancel", icon: XCircle },
-  VENCIDA: { label: "Vencida", clase: "lab-badge--vencida", icon: AlertTriangle },
+// Convierte "YYYY-MM-DD" en fecha legible larga sin desfase de timezone
+const formatFechaLocalLarga = (dateStr: string): string => {
+  const [y, m, d] = dateStr.split("-").map(Number);
+  return new Date(y, m - 1, d).toLocaleDateString("es-PE", {
+    weekday: "long",
+    day: "numeric",
+    month: "long",
+    year: "numeric",
+  });
 };
 
 const calcularDiasRestantes = (fechaVencimiento?: string): number | null => {
@@ -68,15 +75,15 @@ const calcularDiasRestantes = (fechaVencimiento?: string): number | null => {
   return Math.ceil((vence.getTime() - hoy.getTime()) / (1000 * 60 * 60 * 24));
 };
 
-const IndicadorVencimiento = ({ fechaVencimiento }: { fechaVencimiento?: string }) => {
+const IndicadorVigencia = ({ fechaVencimiento }: { fechaVencimiento?: string }) => {
   const dias = calcularDiasRestantes(fechaVencimiento);
   if (dias === null) return null;
 
   let clase = "lab-venc--ok";
   if (dias <= 0) clase = "lab-venc--expired";
-  else if (dias <= 7) clase = "lab-venc--danger";
+  else if (dias <= 2) clase = "lab-venc--danger";
 
-  const porcentaje = Math.max(0, Math.min(100, (dias / 30) * 100));
+  const porcentaje = Math.max(0, Math.min(100, (dias / 7) * 100));
 
   return (
     <div className={`lab-venc ${clase}`} title={`${dias > 0 ? dias : 0} días restantes`}>
@@ -84,555 +91,536 @@ const IndicadorVencimiento = ({ fechaVencimiento }: { fechaVencimiento?: string 
         <div className="lab-venc-fill" style={{ width: `${porcentaje}%` }} />
       </div>
       <span className="lab-venc-text">
-        {dias <= 0 ? "Vencida" : `${dias}d`}
+        {dias <= 0 ? "Venció" : `${dias}d`}
       </span>
     </div>
   );
 };
 
-// ─── Modal de resultados ─────────────────────────────────────
-interface ModalResultadosProps {
+// ─── Configuración de tabs ────────────────────────────────────
+interface TabConfig {
+  estado: EstadoOrden;
+  label: string;
+  icon: typeof Clock;
+  badgeClass: string;
+  color: string;
+}
+
+const TABS: TabConfig[] = [
+  {
+    estado: "PENDIENTE",
+    label: "Por Autorizar",
+    icon: Clock,
+    badgeClass: "lab-badge--pending",
+    color: "#d97706",
+  },
+  {
+    estado: "EN_PROCESO",
+    label: "En Vigencia",
+    icon: CalendarClock,
+    badgeClass: "lab-badge--process",
+    color: "#2563eb",
+  },
+  {
+    estado: "ASISTIDO",
+    label: "En Análisis",
+    icon: FlaskConical,
+    badgeClass: "lab-badge--asistido",
+    color: "#7c3aed",
+  },
+  {
+    estado: "FINALIZADO",
+    label: "Resultados Entregados",
+    icon: CheckCircle,
+    badgeClass: "lab-badge--done",
+    color: "#059669",
+  },
+];
+
+// ─── Modal: Agendar Cita de Laboratorio (Generar Orden) ──────
+const NOMBRES_MESES = [
+  "Enero","Febrero","Marzo","Abril","Mayo","Junio",
+  "Julio","Agosto","Septiembre","Octubre","Noviembre","Diciembre",
+];
+const DIAS_SEMANA_SHORT = ["Lu","Ma","Mi","Ju","Vi","Sá","Do"];
+
+interface ModalGenerarOrdenProps {
   orden: OrdenExamen;
   onCerrar: () => void;
   onGuardado: () => void;
-  showNotification: (message: string, type: "success" | "error") => void;
 }
 
-const ModalResultados = ({
-  orden,
-  onCerrar,
-  onGuardado,
-  showNotification,
-}: ModalResultadosProps) => {
-  const [valores, setValores] = useState<
-    Record<string, { valor: string; unidad: string }>
-  >({});
-  const [archivos, setArchivos] = useState<Record<string, { file: File; url?: string; subiendo: boolean }>>({});
-  const [guardando, setGuardando] = useState(false);
-  const [error, setError] = useState("");
-  const [camposVacios, setCamposVacios] = useState<Set<string>>(new Set());
+const ModalGenerarOrden = ({ orden, onCerrar, onGuardado }: ModalGenerarOrdenProps) => {
+  const hoy = useMemo(() => {
+    const d = new Date();
+    d.setHours(0, 0, 0, 0);
+    return d;
+  }, []);
 
-  const handleArchivo = async (id: string, file: File) => {
-    setArchivos((prev) => ({ ...prev, [id]: { file, subiendo: true } }));
-    try {
-      const url = await ExamenService.subirArchivo(orden._id, id, file);
-      setArchivos((prev) => ({ ...prev, [id]: { file, url, subiendo: false } }));
-      showNotification("Archivo subido correctamente", "success");
-    } catch {
-      setArchivos((prev) => {
-        const next = { ...prev };
-        delete next[id];
-        return next;
-      });
-      setError("Error al subir el archivo");
-    }
+  const [calAño, setCalAño]   = useState(hoy.getFullYear());
+  const [calMes, setCalMes]   = useState(hoy.getMonth());
+  const [fechaSel, setFechaSel] = useState<string | null>(null);
+  const [disponibilidad, setDisponibilidad] = useState<Record<string, number>>({});
+  const [capacidad, setCapacidad] = useState(15);
+  const [cargandoDisp, setCargandoDisp] = useState(true);
+  const [enviando, setEnviando] = useState(false);
+  const [error, setError] = useState("");
+
+  // Cargar disponibilidad del mes visible
+  useEffect(() => {
+    setCargandoDisp(true);
+    const desde = new Date(calAño, calMes, 1).toISOString().slice(0, 10);
+    const hasta  = new Date(calAño, calMes + 1, 0).toISOString().slice(0, 10);
+    ExamenService.obtenerDisponibilidadLab(desde, hasta)
+      .then(({ data, capacidadDiaria }) => {
+        const mapa: Record<string, number> = {};
+        data.forEach((d) => { mapa[d.fecha] = d.ocupados; });
+        setDisponibilidad((prev) => ({ ...prev, ...mapa }));
+        setCapacidad(capacidadDiaria);
+      })
+      .catch(() => {})
+      .finally(() => setCargandoDisp(false));
+  }, [calAño, calMes]);
+
+  // Grilla del mes (Monday-first)
+  const diasDelMes = useMemo(() => {
+    const primerDia = new Date(calAño, calMes, 1).getDay(); // 0=Dom
+    const offset = primerDia === 0 ? 6 : primerDia - 1;
+    const total = new Date(calAño, calMes + 1, 0).getDate();
+    const arr: (number | null)[] = Array(offset).fill(null);
+    for (let d = 1; d <= total; d++) arr.push(d);
+    while (arr.length % 7 !== 0) arr.push(null);
+    return arr;
+  }, [calAño, calMes]);
+
+  const getFechaKey = (dia: number) =>
+    `${calAño}-${String(calMes + 1).padStart(2, "0")}-${String(dia).padStart(2, "0")}`;
+
+  const esDomingo  = (dia: number) => new Date(calAño, calMes, dia).getDay() === 0;
+  const esPasado   = (dia: number) => new Date(calAño, calMes, dia) < hoy;
+  const getOcupados = (dia: number) => disponibilidad[getFechaKey(dia)] ?? 0;
+  const estaLleno  = (dia: number) => getOcupados(dia) >= capacidad;
+  const esBloqueado = (dia: number) => esPasado(dia) || esDomingo(dia) || estaLleno(dia);
+
+  type EstadoDia = "pasado" | "cerrado" | "lleno" | "casi-lleno" | "disponible";
+  const getEstadoDia = (dia: number): EstadoDia => {
+    if (esPasado(dia)) return "pasado";
+    if (esDomingo(dia)) return "cerrado";
+    if (estaLleno(dia)) return "lleno";
+    if (capacidad - getOcupados(dia) <= 5) return "casi-lleno";
+    return "disponible";
   };
 
-  const pendientes = orden.items.filter((i) => i.estadoItem === "PENDIENTE");
+  // Navegación de meses
+  const primerMesDisp = new Date(hoy.getFullYear(), hoy.getMonth(), 1);
+  const puedeRetroceder = new Date(calAño, calMes, 1) > primerMesDisp;
 
-  const handleGuardar = async () => {
+  const irMesAnterior = () => {
+    if (!puedeRetroceder) return;
+    setFechaSel(null);
+    if (calMes === 0) { setCalMes(11); setCalAño((a) => a - 1); }
+    else setCalMes((m) => m - 1);
+  };
+
+  const irMesSiguiente = () => {
+    setFechaSel(null);
+    if (calMes === 11) { setCalMes(0); setCalAño((a) => a + 1); }
+    else setCalMes((m) => m + 1);
+  };
+
+  const handleSelDia = (dia: number) => {
+    if (esBloqueado(dia)) return;
+    const key = getFechaKey(dia);
+    setFechaSel((prev) => (prev === key ? null : key));
     setError("");
-    setCamposVacios(new Set());
+  };
 
-    const seleccionados = pendientes.filter((item) => {
-      const ex = typeof item.examenId === "object" ? (item.examenId as ExamenLaboratorio) : null;
-      const id = ex ? ex._id : String(item.examenId);
-      return !!valores[id]?.valor?.trim();
-    });
-
-    if (seleccionados.length === 0) {
-      setError("Debes ingresar el resultado de al menos un examen.");
+  const handleConfirmar = async () => {
+    if (!fechaSel) {
+      setError("Debe seleccionar una fecha para la toma de muestra.");
       return;
     }
-
-    const resultados = seleccionados.map((item) => {
-      const ex = typeof item.examenId === "object" ? (item.examenId as ExamenLaboratorio) : null;
-      const id = ex ? ex._id : String(item.examenId);
-      const v = valores[id];
-      return {
-        examenId: id,
-        valorResultado: v.valor.trim(),
-        unidadResultado: v.unidad.trim() || undefined,
-      };
-    });
-
-    setGuardando(true);
+    setEnviando(true);
+    setError("");
     try {
-      await ExamenService.cargarResultados(orden._id, resultados);
-      showNotification("Resultados guardados correctamente", "success");
+      await ExamenService.autorizarOrden(orden._id, fechaSel);
       onGuardado();
       onCerrar();
+      Swal.fire({
+        icon: "success",
+        title: "Orden generada",
+        html: `Orden <strong>${orden.codigoOrden ?? ""}</strong> en vigencia.<br>
+          Cita programada: <strong>${formatFechaLocalLarga(fechaSel)}</strong><br>
+          <span style="font-size:0.88em;color:#6b7280">Toma de muestras a las 7:00 a.m.</span>`,
+        confirmButtonColor: "var(--primary)",
+      });
     } catch (err: any) {
-      const mensaje =
-        err?.response?.data?.message ||
-        "Error al guardar resultados. Intenta de nuevo.";
-      setError(mensaje);
+      setError(err?.response?.data?.message ?? "No se pudo generar la orden.");
     } finally {
-      setGuardando(false);
+      setEnviando(false);
     }
   };
 
   const paciente = orden.pacienteId;
+  const nombrePaciente = `${paciente.nombres} ${paciente.apellidos}`;
+  const infoSel = fechaSel
+    ? { libres: capacidad - (disponibilidad[fechaSel] ?? 0) }
+    : null;
 
   return (
     <div className="lab-modal-overlay" onClick={onCerrar}>
-      <div className="lab-modal-card" onClick={(e) => e.stopPropagation()}>
+      <div
+        className="lab-modal-card"
+        style={{ maxWidth: 520 }}
+        onClick={(e) => e.stopPropagation()}
+      >
+        {/* Header */}
         <div className="lab-modal-header">
-          <h3>Cargar Resultados</h3>
-          <span className="lab-modal-paciente">
-            {paciente.nombres} {paciente.apellidos} — {paciente.dni}
-          </span>
+          <h3>Agendar Cita de Laboratorio</h3>
+          <p className="lab-modal-paciente">
+            Orden <strong>{orden.codigoOrden}</strong> — {nombrePaciente}
+          </p>
         </div>
 
-        <div className="lab-modal-body">
-          {pendientes.length === 0 ? (
-            <p className="lab-modal-empty">
-              Todos los exámenes ya tienen resultado.
-            </p>
-          ) : (
-            <div className="lab-modal-items">
-              {pendientes.map((item, i) => {
-                const ex =
-                  typeof item.examenId === "object"
-                    ? (item.examenId as ExamenLaboratorio)
-                    : null;
-                const id = ex ? ex._id : String(i);
+        {/* Body */}
+        <div className="lab-modal-body" style={{ padding: "1.25rem 1.5rem" }}>
+          {/* Horario fijo */}
+          <div className="lab-citalab-nota" style={{ marginBottom: "1.25rem" }}>
+            <CalendarClock size={14} style={{ flexShrink: 0, marginTop: 1 }} />
+            <span>
+              <strong>Toma de muestras:</strong> Lunes a Sábado · 7:00 a.m. – 11:00 a.m.
+              {" "}El paciente debe presentarse en ayuno de 8 a 12 horas previo a la toma.
+            </span>
+          </div>
+
+          {/* Calendario */}
+          <div className="lab-cal-container">
+            {/* Navegación */}
+            <div className="lab-cal-nav">
+              <button
+                className="lab-cal-nav-btn"
+                onClick={irMesAnterior}
+                disabled={!puedeRetroceder}
+                title="Mes anterior"
+              >
+                ‹
+              </button>
+              <span className="lab-cal-mes-label">
+                {NOMBRES_MESES[calMes]} {calAño}
+                {cargandoDisp && (
+                  <RefreshCw
+                    size={12}
+                    style={{ marginLeft: 6, animation: "spin 1s linear infinite", opacity: 0.5 }}
+                  />
+                )}
+              </span>
+              <button
+                className="lab-cal-nav-btn"
+                onClick={irMesSiguiente}
+                title="Mes siguiente"
+              >
+                ›
+              </button>
+            </div>
+
+            {/* Grilla */}
+            <div className="lab-cal-grid">
+              {DIAS_SEMANA_SHORT.map((d) => (
+                <div key={d} className="lab-cal-dow">{d}</div>
+              ))}
+              {diasDelMes.map((dia, idx) => {
+                if (dia === null) return <div key={`v-${idx}`} />;
+                const estado = getEstadoDia(dia);
+                const clave  = getFechaKey(dia);
+                const sel    = fechaSel === clave;
                 return (
-                  <div key={id} className="lab-modal-item">
-                    <div className="lab-modal-item-nombre">
-                      <span>{ex?.nombre ?? "—"}</span>
-                      {ex && (
-                        <span className="lab-modal-item-tipo">
-                          {TIPO_EXAMEN_LABEL[ex.tipo]}
-                        </span>
-                      )}
-                      {ex?.referenciaTexto && (
-                        <span className="lab-modal-item-ref">
-                          Ref: {ex.referenciaTexto}
-                        </span>
-                      )}
-                      {ex?.referenciaMin !== undefined &&
-                        ex?.referenciaMax !== undefined && (
-                          <span className="lab-modal-item-ref">
-                            Ref: {ex.referenciaMin} – {ex.referenciaMax}{" "}
-                            {ex.unidad}
-                          </span>
-                        )}
-                    </div>
-                    <div className="lab-modal-item-inputs">
-                      <input
-                        type="text"
-                        placeholder="Valor *"
-                        className={
-                          camposVacios.has(id) ? "lab-input-error" : ""
-                        }
-                        value={valores[id]?.valor ?? ""}
-                        onChange={(e) => {
-                          setCamposVacios((prev) => {
-                            const next = new Set(prev);
-                            next.delete(id);
-                            return next;
-                          });
-                          setError("");
-                          setValores((prev) => ({
-                            ...prev,
-                            [id]: {
-                              valor: e.target.value,
-                              unidad: prev[id]?.unidad ?? ex?.unidad ?? "",
-                            },
-                          }));
-                        }}
-                      />
-                      <input
-                        type="text"
-                        placeholder={ex?.unidad || "Unidad"}
-                        value={valores[id]?.unidad ?? ex?.unidad ?? ""}
-                        onChange={(e) =>
-                          setValores((prev) => ({
-                            ...prev,
-                            [id]: {
-                              valor: prev[id]?.valor ?? "",
-                              unidad: e.target.value,
-                            },
-                          }))
-                        }
-                        className="lab-modal-item-unidad"
-                      />
-                    </div>
-                    <div className="lab-modal-item-archivo">
-                      {archivos[id]?.url ? (
-                        <a href={archivos[id].url} target="_blank" rel="noopener noreferrer" className="lab-archivo-link">
-                          📎 Archivo subido — ver
-                        </a>
-                      ) : archivos[id]?.subiendo ? (
-                        <span className="lab-archivo-subiendo">Subiendo archivo...</span>
-                      ) : (
-                        <label className="lab-archivo-btn">
-                          📎 Adjuntar archivo
-                          <input
-                            type="file"
-                            accept="image/*,.pdf,.doc,.docx,.xls,.xlsx"
-                            style={{ display: "none" }}
-                            onChange={(e) => {
-                              const f = e.target.files?.[0];
-                              if (f) handleArchivo(id, f);
-                            }}
-                          />
-                        </label>
-                      )}
-                    </div>
-                    {item.observaciones && (
-                      <p className="lab-modal-item-obs">
-                        Obs: {item.observaciones}
-                      </p>
+                  <div
+                    key={clave}
+                    className={[
+                      "lab-cal-dia",
+                      `lab-cal-dia--${estado}`,
+                      sel ? "lab-cal-dia--selected" : "",
+                    ].join(" ")}
+                    onClick={() => handleSelDia(dia)}
+                    title={
+                      estado === "cerrado"    ? "Laboratorio cerrado (domingo)" :
+                      estado === "pasado"     ? "Fecha pasada" :
+                      estado === "lleno"      ? `Sin cupos (${getOcupados(dia)}/${capacidad})` :
+                      estado === "casi-lleno" ? `Solo ${capacidad - getOcupados(dia)} cupo(s) disponible(s)` :
+                      `${capacidad - getOcupados(dia)} cupo(s) disponible(s)`
+                    }
+                  >
+                    <span className="lab-cal-dia-num">{dia}</span>
+                    {estado !== "pasado" && estado !== "cerrado" && (
+                      <span className="lab-cal-dia-dot" />
                     )}
                   </div>
                 );
               })}
             </div>
-          )}
-        </div>
 
-        <div className="lab-modal-footer">
-          {error && <p className="lab-modal-error">{error}</p>}
-          <button className="lab-btn lab-btn--cancel" onClick={onCerrar}>
-            Cancelar
-          </button>
-          {pendientes.length > 0 && (
-            <button
-              className="lab-btn lab-btn--primary"
-              onClick={handleGuardar}
-              disabled={guardando}
-            >
-              {(() => {
-                if (guardando) return "Guardando...";
-                const inputsLlenos = pendientes.filter((item) => {
-                  const ex = typeof item.examenId === "object" ? (item.examenId as ExamenLaboratorio) : null;
-                  const id = ex ? ex._id : String(item.examenId);
-                  return !!valores[id]?.valor?.trim();
-                }).length;
-                if (inputsLlenos > 0 && inputsLlenos < pendientes.length) {
-                  return `Guardar Parcial (${inputsLlenos}/${pendientes.length})`;
-                }
-                return "Completar Orden";
-              })()}
-            </button>
-          )}
-        </div>
-      </div>
-    </div>
-  );
-};
-
-// ─── Fila de orden ────────────────────────────────────────────
-interface FilaOrdenProps {
-  orden: OrdenExamen;
-  onCargarResultados: (orden: OrdenExamen) => void;
-  onCancelarOrden: (ordenId: string) => void;
-  onGenerarCitaLab: (orden: OrdenExamen) => void;
-  onImprimir: (ordenId: string) => void;
-}
-
-const FilaOrden = ({
-  orden,
-  onCargarResultados,
-  onCancelarOrden,
-  onGenerarCitaLab,
-  onImprimir,
-}: FilaOrdenProps) => {
-  const [expandido, setExpandido] = useState(false);
-  const [archivoPreview, setArchivoPreview] = useState<string | null>(null);
-  const cfg = ESTADO_CONFIG[orden.estado] ?? ESTADO_CONFIG.PENDIENTE;
-  const Icon = cfg.icon;
-  const paciente = orden.pacienteId;
-  const doctor = orden.doctorId;
-
-  return (
-    <div className={`lab-orden${expandido ? " lab-orden--open" : ""}`}>
-      <div className="lab-orden-row" onClick={() => setExpandido(!expandido)}>
-        <div className="lab-orden-col lab-orden-paciente">
-          <div className="lab-avatar">{paciente.nombres.charAt(0)}</div>
-          <div>
-            <span className="lab-nombre">
-              {paciente.nombres} {paciente.apellidos}
-            </span>
-            <span className="lab-dni">DNI: {paciente.dni}</span>
+            {/* Leyenda */}
+            <div className="lab-cal-leyenda">
+              <span className="lab-cal-leyenda-item">
+                <span className="lab-cal-dot lab-cal-dot--disponible" /> Disponible
+              </span>
+              <span className="lab-cal-leyenda-item">
+                <span className="lab-cal-dot lab-cal-dot--casi-lleno" /> Pocos cupos
+              </span>
+              <span className="lab-cal-leyenda-item">
+                <span className="lab-cal-dot lab-cal-dot--lleno" /> Sin cupos
+              </span>
+            </div>
           </div>
-        </div>
-        <div className="lab-orden-col">
-          <span className="lab-text-sm">
-            {doctor.nombres} {doctor.apellidos}
-          </span>
-          <span className="lab-text-muted">{orden.especialidadId.nombre}</span>
-        </div>
-        <div className="lab-orden-col">
-          {orden.codigoOrden && (
-            <span className="lab-codigo">{orden.codigoOrden}</span>
-          )}
-          <span className="lab-text-sm">{formatFecha(orden.fecha)}</span>
-          <span className="lab-text-muted">
-            {orden.items.length} examen{orden.items.length !== 1 ? "es" : ""}
-          </span>
-        </div>
-        <div className="lab-orden-col" style={{ alignItems: "center", gap: "0.4rem" }}>
-          <span className={`lab-badge ${cfg.clase}`}>
-            <Icon size={12} />
-            {cfg.label}
-          </span>
-          {orden.estado === "PENDIENTE" && (
-            <IndicadorVencimiento fechaVencimiento={orden.fechaVencimiento} />
-          )}
-        </div>
-        <div className="lab-orden-col lab-orden-actions">
-          {orden.estado === "PENDIENTE" && !orden.citaLabId && (
-            <button
-              className="lab-action-btn lab-action-btn--primary"
-              onClick={(e) => { e.stopPropagation(); onGenerarCitaLab(orden); }}
-              title="Generar cita de laboratorio"
-            >
-              <CalendarPlus size={15} />
-            </button>
-          )}
-          {(orden.estado === "PENDIENTE" || orden.estado === "EN_PROCESO") && (
-            <button
-              className="lab-action-btn lab-action-btn--primary"
-              onClick={(e) => { e.stopPropagation(); onCargarResultados(orden); }}
-              title="Cargar resultados"
-            >
-              <FlaskConical size={15} />
-            </button>
-          )}
-          <button
-            className="lab-action-btn lab-action-btn--neutral"
-            onClick={(e) => { e.stopPropagation(); onImprimir(orden._id); }}
-            title="Imprimir orden"
-          >
-            <Printer size={15} />
-          </button>
-          {orden.estado === "PENDIENTE" && (
-            <button
-              className="lab-action-btn lab-action-btn--danger"
-              onClick={(e) => { e.stopPropagation(); onCancelarOrden(orden._id); }}
-              title="Cancelar orden"
-            >
-              <XCircle size={15} />
-            </button>
-          )}
-        </div>
-        <div style={{ display: "flex", alignItems: "center" }}>
-          {expandido ? (
-            <ChevronUp size={16} className="lab-chevron" />
-          ) : (
-            <ChevronDown size={16} className="lab-chevron" />
-          )}
-        </div>
-      </div>
 
-      {expandido && (
-        <div className="lab-orden-detalle">
-          {orden.observacionesGenerales && (
-            <p className="lab-orden-obs">
-              <strong>Indicaciones:</strong> {orden.observacionesGenerales}
+          {/* Info de fecha seleccionada */}
+          {fechaSel && infoSel && (
+            <div className="lab-cal-seleccion">
+              <div className="lab-cal-seleccion-fecha">
+                <CalendarClock size={14} />
+                <strong>{formatFechaLocalLarga(fechaSel)}</strong>
+                <span style={{ color: "var(--text-muted)", fontSize: "0.82rem" }}>
+                  · 7:00 a.m.
+                </span>
+              </div>
+              <div className="lab-cal-seleccion-cupos">
+                {infoSel.libres} de {capacidad} cupos disponibles para ese día
+              </div>
+            </div>
+          )}
+
+          {error && (
+            <p className="lab-modal-error" style={{ marginTop: "0.75rem" }}>
+              {error}
             </p>
           )}
-          <table className="lab-tabla">
-            <thead>
-              <tr>
-                <th>Examen</th>
-                <th>Tipo</th>
-                <th>Resultado</th>
-                <th>Archivo</th>
-                <th>Estado</th>
-              </tr>
-            </thead>
-            <tbody>
-              {orden.items.map((item: ItemOrden, i) => {
-                const ex =
-                  typeof item.examenId === "object"
-                    ? (item.examenId as ExamenLaboratorio)
-                    : null;
-                return (
-                  <tr key={i}>
-                    <td>{ex?.nombre ?? "—"}</td>
-                    <td>
-                      <span className="lab-tipo-chip">
-                        {ex ? TIPO_EXAMEN_LABEL[ex.tipo] : "—"}
-                      </span>
-                    </td>
-                    <td>
-                      {item.valorResultado ? (
-                        <span className="lab-resultado">
-                          {item.valorResultado} {item.unidadResultado}
-                        </span>
-                      ) : (
-                        <span className="lab-text-muted">—</span>
-                      )}
-                    </td>
-                    <td>
-                      {item.archivoUrl ? (
-                        <button
-                          className="lab-archivo-ver"
-                          onClick={() => setArchivoPreview(item.archivoUrl!)}
-                        >
-                          📄 Ver archivo
-                        </button>
-                      ) : (
-                        <span className="lab-text-muted">—</span>
-                      )}
-                    </td>
-                    <td>
-                      <span
-                        className={`lab-badge ${item.estadoItem === "COMPLETADO" ? "lab-badge--done" : "lab-badge--pending"}`}
-                      >
-                        {item.estadoItem === "COMPLETADO"
-                          ? "Listo"
-                          : "Pendiente"}
-                      </span>
-                    </td>
-                  </tr>
-                );
-              })}
-            </tbody>
-          </table>
         </div>
-      )}
 
-      {archivoPreview && (
-        <div className="lab-modal-overlay" onClick={() => setArchivoPreview(null)}>
-          <div className="lab-preview-modal" onClick={(e) => e.stopPropagation()}>
-            <div className="lab-preview-header">
-              <h3>Vista previa del archivo</h3>
-              <button className="lab-preview-close" onClick={() => setArchivoPreview(null)}>✕</button>
-            </div>
-            <div className="lab-preview-body">
-              {archivoPreview.match(/\.(jpg|jpeg|png|gif|webp|avif|bmp)(\?|$)/i) ? (
-                <img src={archivoPreview} alt="Resultado" className="lab-preview-img" />
-              ) : archivoPreview.match(/\.pdf(\?|$)/i) ? (
-                <iframe src={archivoPreview} className="lab-preview-iframe" title="PDF" />
-              ) : (
-                <div className="lab-preview-fallback">
-                  <p>No se puede previsualizar este tipo de archivo.</p>
-                  <a href={archivoPreview} target="_blank" rel="noopener noreferrer" className="lab-btn lab-btn--primary">
-                    Descargar archivo
-                  </a>
-                </div>
-              )}
-            </div>
-          </div>
+        {/* Footer */}
+        <div className="lab-modal-footer">
+          <button
+            className="lab-btn lab-btn--cancel"
+            onClick={onCerrar}
+            disabled={enviando}
+          >
+            Cancelar
+          </button>
+          <button
+            className="lab-btn lab-btn--primary"
+            onClick={handleConfirmar}
+            disabled={!fechaSel || enviando}
+          >
+            {enviando ? (
+              <>
+                <RefreshCw size={14} style={{ marginRight: 6, animation: "spin 1s linear infinite" }} />
+                Generando…
+              </>
+            ) : (
+              <>
+                <ShieldCheck size={14} style={{ marginRight: 6 }} />
+                Generar Orden
+              </>
+            )}
+          </button>
         </div>
-      )}
+      </div>
     </div>
   );
 };
 
-// ─── Página principal ─────────────────────────────────────────
-type FiltroEstado = "TODOS" | "PENDIENTE" | "EN_PROCESO" | "COMPLETADO" | "VENCIDA";
-
-// ── Modal Generar Cita Lab ──
-interface ModalCitaLabProps {
+// ─── Modal: Cargar Resultados (PDF) ──────────────────────────
+interface ModalResultadosProps {
   orden: OrdenExamen;
   onCerrar: () => void;
-  onGenerado: () => void;
-  showNotification: (message: string, type: "success" | "error") => void;
+  onGuardado: () => void;
 }
 
-const ModalCitaLab = ({ orden, onCerrar, onGenerado, showNotification }: ModalCitaLabProps) => {
-  const [guardando, setGuardando] = useState(false);
+const ModalCargarResultados = ({ orden, onCerrar, onGuardado }: ModalResultadosProps) => {
+  const [archivo, setArchivo] = useState<File | null>(null);
+  const [subiendo, setSubiendo] = useState(false);
   const [error, setError] = useState("");
+  const fileRef = useRef<HTMLInputElement>(null);
 
-  const hoy = new Date();
-  const fechaEmision = hoy.toLocaleDateString("es-PE", { day: "2-digit", month: "long", year: "numeric" });
-  const fechaVigencia = new Date(hoy);
-  fechaVigencia.setDate(fechaVigencia.getDate() + 7);
-  const fechaVigenciaStr = fechaVigencia.toLocaleDateString("es-PE", { day: "2-digit", month: "long", year: "numeric" });
+  const paciente = orden.pacienteId;
+  const nombrePaciente = `${paciente.nombres} ${paciente.apellidos}`;
 
-  const examenesList = orden.items
-    .map((item) => (typeof item.examenId === "object" ? (item.examenId as ExamenLaboratorio).nombre : null))
-    .filter(Boolean)
-    .join(" · ");
+  const handleFile = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    if (file.type !== "application/pdf") {
+      setError("Solo se aceptan archivos en formato PDF.");
+      return;
+    }
+    if (file.size > 10 * 1024 * 1024) {
+      setError("El archivo no debe superar los 10 MB.");
+      return;
+    }
+    setError("");
+    setArchivo(file);
+  };
 
-  // Compilar instrucciones únicas de los exámenes de la orden
-  const instruccionesUnicas = [
-    ...new Set(
-      orden.items
-        .map((item) => (typeof item.examenId === "object" ? (item.examenId as ExamenLaboratorio).instrucciones : null))
-        .filter((i): i is string => !!i?.trim())
-    ),
-  ];
-
-  const handleGenerar = async () => {
-    setGuardando(true);
+  const handleEnviar = async () => {
+    if (!archivo) {
+      setError("Debes seleccionar el archivo PDF con los resultados.");
+      return;
+    }
+    setSubiendo(true);
     setError("");
     try {
-      await ExamenService.generarCitaLab(orden._id);
-      showNotification("Autorización de laboratorio generada correctamente", "success");
-      onGenerado();
+      await ExamenService.finalizarOrden(orden._id, archivo);
+      onGuardado();
       onCerrar();
+      await Swal.fire({
+        icon: "success",
+        title: "Resultados entregados",
+        text: `Los resultados han sido cargados y se ha enviado una notificación por correo electrónico a ${nombrePaciente}.`,
+        confirmButtonColor: "var(--primary)",
+      });
     } catch (err: any) {
-      setError(err?.response?.data?.message || "Error al generar la autorización");
+      const msg =
+        err?.response?.data?.message ||
+        "Ocurrió un error al cargar los resultados. Inténtelo nuevamente.";
+      setError(msg);
     } finally {
-      setGuardando(false);
+      setSubiendo(false);
     }
   };
 
   return (
     <div className="lab-modal-overlay" onClick={onCerrar}>
-      <div className="lab-modal-card lab-modal-card--citalab" onClick={(e) => e.stopPropagation()}>
+      <div
+        className="lab-modal-card"
+        style={{ maxWidth: 520 }}
+        onClick={(e) => e.stopPropagation()}
+      >
+        {/* Header */}
         <div className="lab-modal-header">
-          <h3>Generar Autorización de Laboratorio</h3>
-          <span className="lab-modal-paciente">
-            {orden.pacienteId.nombres} {orden.pacienteId.apellidos} — DNI {orden.pacienteId.dni}
-          </span>
-          {orden.codigoOrden && (
-            <span className="lab-modal-codigo-tag">Orden: {orden.codigoOrden}</span>
-          )}
+          <h3>Cargar Resultados de Análisis</h3>
+          <p className="lab-modal-paciente">
+            Orden <strong>{orden.codigoOrden}</strong> — {nombrePaciente}
+          </p>
         </div>
 
-        <div className="lab-modal-body lab-modal-body--citalab">
+        {/* Body */}
+        <div className="lab-modal-body" style={{ padding: "1.25rem 1.5rem" }}>
+          {/* Instrucciones */}
+          <div className="lab-citalab-nota" style={{ marginBottom: "1.25rem" }}>
+            <FileText size={14} style={{ flexShrink: 0, marginTop: 1 }} />
+            <span>
+              Adjunte el documento PDF con los resultados del análisis. Una vez cargado,
+              el sistema enviará automáticamente una notificación al paciente con el
+              informe adjunto.
+            </span>
+          </div>
+
           {/* Exámenes solicitados */}
-          <div className="lab-citalab-examenes">
-            <span className="lab-citalab-examenes-label">Exámenes:</span>
-            <span className="lab-citalab-examenes-lista">{examenesList || "—"}</span>
+          <div style={{ marginBottom: "1.25rem" }}>
+            <p className="lab-citalab-section-title">Exámenes solicitados</p>
+            <div style={{ display: "flex", flexDirection: "column", gap: "0.35rem" }}>
+              {orden.items.map((item, idx) => {
+                const ex =
+                  typeof item.examenId === "object" ? item.examenId : null;
+                return (
+                  <div key={idx} className="lab-citalab-examenes">
+                    <span className="lab-citalab-examenes-label">
+                      {ex?.nombre ?? "—"}
+                    </span>
+                    {ex && (
+                      <span
+                        style={{
+                          fontSize: "0.75rem",
+                          color: "var(--text-muted)",
+                          background: "var(--bg-hover)",
+                          padding: "0.1rem 0.4rem",
+                          borderRadius: 4,
+                        }}
+                      >
+                        {TIPO_EXAMEN_LABEL[ex.tipo] ?? ex.tipo}
+                      </span>
+                    )}
+                  </div>
+                );
+              })}
+            </div>
           </div>
 
-          {/* Período de vigencia */}
-          <div className="lab-citalab-vigencia">
-            <div className="lab-citalab-vigencia-row">
-              <span className="lab-citalab-vigencia-label">Fecha de emisión</span>
-              <span className="lab-citalab-vigencia-val">{fechaEmision}</span>
-            </div>
-            <div className="lab-citalab-vigencia-row">
-              <span className="lab-citalab-vigencia-label">Válida hasta</span>
-              <span className="lab-citalab-vigencia-val lab-citalab-vigencia-val--vence">{fechaVigenciaStr}</span>
-            </div>
-            <p className="lab-citalab-vigencia-info">
-              El paciente puede presentarse al laboratorio cualquier día hábil dentro del período de vigencia. Vencido el plazo, la autorización no puede ser reprogramada.
+          {/* Zona de carga del archivo */}
+          <div
+            className="lab-upload-zone"
+            onClick={() => fileRef.current?.click()}
+            style={{
+              border: `2px dashed ${archivo ? "var(--primary)" : "var(--border)"}`,
+              borderRadius: "var(--radius-md)",
+              padding: "1.5rem",
+              textAlign: "center",
+              cursor: "pointer",
+              background: archivo ? "var(--primary-lighter)" : "var(--bg-body)",
+              transition: "all 0.15s",
+            }}
+          >
+            <Upload
+              size={28}
+              style={{
+                marginBottom: "0.5rem",
+                color: archivo ? "var(--primary)" : "var(--text-muted)",
+              }}
+            />
+            {archivo ? (
+              <>
+                <p style={{ margin: 0, fontWeight: 600, color: "var(--primary)" }}>
+                  {archivo.name}
+                </p>
+                <p style={{ margin: "0.25rem 0 0", fontSize: "0.8rem", color: "var(--text-muted)" }}>
+                  {(archivo.size / 1024).toFixed(1)} KB — Haga clic para cambiar
+                </p>
+              </>
+            ) : (
+              <>
+                <p style={{ margin: 0, fontWeight: 500, color: "var(--text-secondary)" }}>
+                  Haga clic para seleccionar el PDF de resultados
+                </p>
+                <p style={{ margin: "0.25rem 0 0", fontSize: "0.8rem", color: "var(--text-muted)" }}>
+                  Solo PDF · Máx. 10 MB
+                </p>
+              </>
+            )}
+            <input
+              ref={fileRef}
+              type="file"
+              accept="application/pdf"
+              style={{ display: "none" }}
+              onChange={handleFile}
+            />
+          </div>
+
+          {error && (
+            <p className="lab-modal-error" style={{ marginTop: "0.75rem" }}>
+              {error}
             </p>
-          </div>
-
-          {/* Instrucciones de preparación */}
-          {instruccionesUnicas.length > 0 && (
-            <div>
-              <p className="lab-citalab-section-title">Indicaciones de preparación</p>
-              {instruccionesUnicas.map((instr, i) => (
-                <div key={i} className="lab-citalab-nota">
-                  <AlertTriangle size={13} />
-                  <span style={{ whiteSpace: "pre-line" }}>{instr}</span>
-                </div>
-              ))}
-            </div>
           )}
         </div>
 
+        {/* Footer */}
         <div className="lab-modal-footer">
-          {error && <p className="lab-modal-error">{error}</p>}
-          <button className="lab-btn lab-btn--cancel" onClick={onCerrar}>Cancelar</button>
+          <button className="lab-btn lab-btn--cancel" onClick={onCerrar} disabled={subiendo}>
+            Cancelar
+          </button>
           <button
             className="lab-btn lab-btn--primary"
-            onClick={handleGenerar}
-            disabled={guardando}
+            onClick={handleEnviar}
+            disabled={!archivo || subiendo}
           >
-            {guardando ? "Generando..." : "Confirmar Autorización"}
+            {subiendo ? (
+              <>
+                <RefreshCw size={14} style={{ marginRight: 6, animation: "spin 1s linear infinite" }} />
+                Cargando resultados…
+              </>
+            ) : (
+              <>
+                <Upload size={14} style={{ marginRight: 6 }} />
+                Cargar y notificar al paciente
+              </>
+            )}
           </button>
         </div>
       </div>
@@ -640,402 +628,601 @@ const ModalCitaLab = ({ orden, onCerrar, onGenerado, showNotification }: ModalCi
   );
 };
 
-interface FiltrosAvanzados {
-  paciente: string;
-  especialidadId: string;
-  fechaInicio: string;
-  fechaFin: string;
+// ─── Fila de orden expandible ─────────────────────────────────
+interface FilaOrdenProps {
+  orden: OrdenExamen;
+  tabActivo: EstadoOrden;
+  onRefresh: () => void;
 }
 
-const ITEMS_POR_PAGINA = 10;
+const FilaOrden = ({ orden, tabActivo, onRefresh }: FilaOrdenProps) => {
+  const [abierta, setAbierta] = useState(false);
+  const [cargando, setCargando] = useState(false);
+  const [modalResultados, setModalResultados] = useState(false);
+  const [modalGenerarOrden, setModalGenerarOrden] = useState(false);
 
-const filtrosVacios: FiltrosAvanzados = {
-  paciente: "",
-  especialidadId: "",
-  fechaInicio: "",
-  fechaFin: "",
-};
+  const paciente = orden.pacienteId;
+  const doctor = orden.doctorId;
+  const especialidad = orden.especialidadId;
+  const nombrePaciente = `${paciente.nombres} ${paciente.apellidos}`;
+  const iniciales =
+    (paciente.nombres[0] ?? "") + (paciente.apellidos[0] ?? "");
 
-const Laboratorio = () => {
-  const [ordenes, setOrdenes] = useState<OrdenExamen[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [errorCarga, setErrorCarga] = useState("");
-  const [filtroEstado, setFiltroEstado] = useState<FiltroEstado>("PENDIENTE");
-  const [filtros, setFiltros] = useState<FiltrosAvanzados>(filtrosVacios);
-  const [paginaActual, setPaginaActual] = useState(1);
-  const [ordenModal, setOrdenModal] = useState<OrdenExamen | null>(null);
-  const [ordenCitaLab, setOrdenCitaLab] = useState<OrdenExamen | null>(null);
-  const [busquedaCodigo, setBusquedaCodigo] = useState("");
-  const [especialidades, setEspecialidades] = useState<Especialidad[]>([]);
-  const [notification, setNotification] = useState<{ message: string; type: "success" | "error" | ""; visible: boolean }>({ message: "", type: "", visible: false });
-
-  const showNotification = (message: string, type: "success" | "error") => {
-    setNotification({ message, type, visible: true });
-    setTimeout(() => setNotification((prev) => ({ ...prev, visible: false })), 3000);
-  };
-
-  const cargar = useCallback(async () => {
-    setLoading(true);
-    setErrorCarga("");
-    try {
-      const data = await ExamenService.listarOrdenesPendientes(true);
-      setOrdenes(data);
-    } catch {
-      setErrorCarga(
-        "No se pudieron cargar las órdenes. Verifica tu conexión e intenta de nuevo.",
-      );
-    } finally {
-      setLoading(false);
-    }
-  }, []);
-
-  useEffect(() => {
-    cargar();
-  }, [cargar]);
-
-  useEffect(() => {
-    EspecialidadApiService.listar()
-      .then(setEspecialidades)
-      .catch(() => {});
-  }, []);
-
-  const handleBuscarPorCodigo = async () => {
-    if (!busquedaCodigo.trim()) return;
-    try {
-      const orden = await ExamenService.buscarPorCodigo(busquedaCodigo.trim());
-      setOrdenes([orden]);
-      setFiltroEstado("TODOS");
-    } catch {
-      Swal.fire("No encontrado", "No se encontró una orden con ese código.", "info");
-    }
-  };
-
-  const handleImprimir = (ordenId: string) => {
-    window.open(`/ordenes/${ordenId}/imprimir`, "_blank");
-  };
-
-  const handleCancelarOrden = async (ordenId: string) => {
-    const result = await Swal.fire({
-      title: "¿Cancelar esta orden?",
-      text: "Esta acción no se puede deshacer. Los exámenes pendientes no se procesarán.",
-      icon: "warning",
+  // ── Acción: Registrar asistencia ──
+  const handleRegistrarAsistencia = async (e: React.MouseEvent) => {
+    e.stopPropagation();
+    const confirmado = await Swal.fire({
+      title: "Registrar asistencia",
+      html: `
+        <p style="margin:0 0 0.5rem">Confirmá la asistencia del paciente:</p>
+        <p style="margin:0;font-weight:600">${nombrePaciente}</p>
+        <p style="margin:0.25rem 0 0;font-size:0.875rem;color:#6b7280">Orden: ${orden.codigoOrden ?? ""}</p>
+      `,
+      icon: "question",
       showCancelButton: true,
-      confirmButtonColor: "#dc2626",
-      cancelButtonColor: "#64748b",
-      confirmButtonText: "Sí, cancelar orden",
-      cancelButtonText: "No, mantener",
+      confirmButtonColor: "var(--primary)",
+      cancelButtonColor: "#6b7280",
+      confirmButtonText: "Confirmar asistencia",
+      cancelButtonText: "Cancelar",
     });
-    if (!result.isConfirmed) return;
+    if (!confirmado.isConfirmed) return;
+
+    setCargando(true);
     try {
-      await ExamenService.cancelarOrden(ordenId);
-      showNotification("Orden cancelada correctamente", "success");
-      await cargar();
-    } catch {
-      Swal.fire("Error", "No se pudo cancelar la orden.", "error");
+      await ExamenService.registrarAsistencia(orden._id);
+      onRefresh();
+      Swal.fire({
+        icon: "success",
+        title: "Asistencia registrada",
+        text: "El paciente ha sido registrado como presente. La orden pasa a análisis.",
+        timer: 2500,
+        showConfirmButton: false,
+        toast: true,
+        position: "top-end",
+      });
+    } catch (err: any) {
+      Swal.fire({
+        icon: "error",
+        title: "Error",
+        text: err?.response?.data?.message ?? "No se pudo registrar la asistencia.",
+      });
+    } finally {
+      setCargando(false);
     }
-  };
-
-  const ordenesFiltradas = useMemo(() => {
-    return ordenes.filter((orden) => {
-      if (filtroEstado !== "TODOS" && orden.estado !== filtroEstado)
-        return false;
-
-      if (busquedaCodigo && busquedaCodigo.length >= 3) {
-        const codigo = (orden.codigoOrden || "").toLowerCase();
-        if (!codigo.includes(busquedaCodigo.toLowerCase())) return false;
-      }
-
-      if (filtros.paciente && filtros.paciente.length >= 3) {
-        const nombre =
-          `${orden.pacienteId.nombres} ${orden.pacienteId.apellidos}`.toLowerCase();
-        if (!nombre.includes(filtros.paciente.toLowerCase())) return false;
-      }
-
-      if (
-        filtros.especialidadId &&
-        orden.especialidadId._id !== filtros.especialidadId
-      )
-        return false;
-
-      if (filtros.fechaInicio || filtros.fechaFin) {
-        const d = new Date(orden.fecha);
-        const y = d.getFullYear();
-        const m = String(d.getMonth() + 1).padStart(2, '0');
-        const day = String(d.getDate()).padStart(2, '0');
-        const fechaOrdenLocal = `${y}-${m}-${day}`;
-
-        if (filtros.fechaInicio && fechaOrdenLocal < filtros.fechaInicio) return false;
-        if (filtros.fechaFin && fechaOrdenLocal > filtros.fechaFin) return false;
-      }
-
-      return true;
-    });
-  }, [ordenes, filtroEstado, filtros]);
-
-  const totalPaginas = Math.ceil(ordenesFiltradas.length / ITEMS_POR_PAGINA);
-
-  const ordenesPaginadas = useMemo(() => {
-    const inicio = (paginaActual - 1) * ITEMS_POR_PAGINA;
-    return ordenesFiltradas.slice(inicio, inicio + ITEMS_POR_PAGINA);
-  }, [ordenesFiltradas, paginaActual]);
-
-  const hayFiltrosActivos =
-    filtros.paciente ||
-    filtros.especialidadId ||
-    filtros.fechaInicio ||
-    filtros.fechaFin ||
-    busquedaCodigo;
-
-  const conteo: Record<FiltroEstado, number> = {
-    TODOS: ordenes.length,
-    PENDIENTE: ordenes.filter((o) => o.estado === "PENDIENTE").length,
-    EN_PROCESO: ordenes.filter((o) => o.estado === "EN_PROCESO").length,
-    COMPLETADO: ordenes.filter((o) => o.estado === "COMPLETADO").length,
-    VENCIDA: ordenes.filter((o) => o.estado === "VENCIDA").length,
   };
 
   return (
-    <div className="lab-page">
-      {notification.visible && <div className={`notification ${notification.type}`}>{notification.message}</div>}
-      <div className="lab-header">
-        <div className="lab-header-title">
-          <FlaskConical size={24} className="lab-header-icon" />
-          <div>
-            <h1>Laboratorio</h1>
-            <p>Gestión de órdenes de exámenes</p>
-          </div>
-        </div>
-      </div>
-
-      <div className="lab-filtros">
-        {(
-          ["PENDIENTE", "EN_PROCESO", "TODOS", "COMPLETADO", "VENCIDA"] as FiltroEstado[]
-        ).map((f) => (
-          <button
-            key={f}
-            className={`lab-filtro-btn${filtroEstado === f ? " active" : ""}`}
-            onClick={() => {
-              setFiltroEstado(f);
-              setPaginaActual(1);
-            }}
-          >
-            {f === "TODOS" ? "Todos"
-              : f === "EN_PROCESO" ? "En proceso"
-              : f === "COMPLETADO" ? "Completados"
-              : f === "VENCIDA" ? "Vencidas"
-              : "Pendientes"}
-            <span className="lab-filtro-count">{conteo[f]}</span>
-          </button>
-        ))}
-      </div>
-
-      <div className="lab-filtros-avanzados">
-        <div className="lab-filtro-campo">
-          <span className="lab-filtro-label">Código de orden</span>
-          <div className="lab-filtro-codigo-grupo">
-            <div style={{ position: "relative" }}>
-              <Search size={15} className="lab-filtro-campo-icon" />
-              <input
-                type="text"
-                placeholder="ORD-..."
-                value={busquedaCodigo}
-                onChange={(e) => setBusquedaCodigo(e.target.value)}
-                onKeyDown={(e) => e.key === "Enter" && handleBuscarPorCodigo()}
-                className="lab-filtro-input lab-filtro-input--codigo"
-              />
+    <>
+      {/* Fila principal */}
+      <div className={`lab-orden ${abierta ? "lab-orden--open" : ""}`}>
+        <div
+          className="lab-orden-row"
+          style={{
+            gridTemplateColumns: tabActivo === "EN_PROCESO"
+              ? "2fr 2fr 1.5fr 1.2fr 1.5fr 2fr 24px"
+              : "2fr 2fr 1.5fr 1.5fr 2fr 24px",
+          }}
+          onClick={() => setAbierta((v) => !v)}
+        >
+          {/* Paciente */}
+          <div className="lab-orden-col lab-orden-paciente">
+            <div className="lab-avatar">{iniciales.toUpperCase()}</div>
+            <div>
+              <span className="lab-nombre">{nombrePaciente}</span>
+              <span className="lab-dni">DNI: {paciente.dni}</span>
             </div>
-            <button className="lab-btn-codigo-buscar" onClick={handleBuscarPorCodigo}>
-              Buscar
-            </button>
           </div>
-        </div>
 
-        <div className="lab-filtro-campo">
-          <span className="lab-filtro-label">Paciente</span>
-          <div style={{ position: "relative" }}>
-            <Search size={15} className="lab-filtro-campo-icon" />
-            <input
-              type="text"
-              placeholder="Buscar paciente..."
-              value={filtros.paciente}
-              onChange={(e) => {
-                setFiltros((p) => ({ ...p, paciente: e.target.value }));
-                setPaginaActual(1);
-              }}
-              className="lab-filtro-input"
-            />
-          </div>
-        </div>
-
-        <div className="lab-filtro-campo">
-          <span className="lab-filtro-label">Especialidad</span>
-          <select
-            value={filtros.especialidadId}
-            onChange={(e) => {
-              setFiltros((p) => ({ ...p, especialidadId: e.target.value }));
-              setPaginaActual(1);
-            }}
-            className="lab-filtro-select"
-          >
-            <option value="">Todas las especialidades</option>
-            {especialidades.map((esp) => (
-              <option key={esp.id} value={esp.id}>
-                {esp.nombre}
-              </option>
-            ))}
-          </select>
-        </div>
-
-        <div className="lab-filtro-campo">
-          <span className="lab-filtro-label">Desde</span>
-          <input
-            type="date"
-            value={filtros.fechaInicio}
-            onChange={(e) => {
-              setFiltros((p) => ({ ...p, fechaInicio: e.target.value }));
-              setPaginaActual(1);
-            }}
-            className="lab-filtro-date"
-          />
-        </div>
-
-        <div className="lab-filtro-campo">
-          <span className="lab-filtro-label">Hasta</span>
-          <input
-            type="date"
-            value={filtros.fechaFin}
-            onChange={(e) => {
-              setFiltros((p) => ({ ...p, fechaFin: e.target.value }));
-              setPaginaActual(1);
-            }}
-            className="lab-filtro-date"
-          />
-        </div>
-
-        {hayFiltrosActivos && (
-          <div className="lab-filtro-campo">
-            <span className="lab-filtro-label" style={{ visibility: "hidden" }}>
-              _
+          {/* Médico / Especialidad */}
+          <div className="lab-orden-col">
+            <span className="lab-text-sm">
+              Dr. {doctor.nombres} {doctor.apellidos}
             </span>
-            <button
-              className="lab-btn-limpiar"
-              onClick={() => {
-                setFiltros(filtrosVacios);
-                setBusquedaCodigo("");
-                setPaginaActual(1);
-                cargar();
+            <span className="lab-text-muted">{especialidad.nombre}</span>
+          </div>
+
+          {/* Código + Fecha */}
+          <div className="lab-orden-col">
+            {orden.codigoOrden && (
+              <span className="lab-codigo">{orden.codigoOrden}</span>
+            )}
+            <span className="lab-text-muted">{formatFecha(orden.fecha)}</span>
+          </div>
+
+          {/* Cita Lab (solo tab En Vigencia) */}
+          {tabActivo === "EN_PROCESO" && (
+            <div className="lab-orden-col lab-orden-col--center">
+              {orden.fechaCitaLab ? (
+                <>
+                  <span style={{ fontSize: "0.85rem", fontWeight: 700, color: "var(--primary)" }}>
+                    {formatFecha(orden.fechaCitaLab)}
+                  </span>
+                  <span style={{ fontSize: "0.73rem", color: "var(--text-muted)" }}>
+                    7:00 a.m.
+                  </span>
+                </>
+              ) : (
+                <>
+                  <IndicadorVigencia fechaVencimiento={orden.fechaVencimiento} />
+                  {orden.fechaVencimiento && (
+                    <span className="lab-text-muted" style={{ fontSize: "0.75rem" }}>
+                      Vence {formatFecha(orden.fechaVencimiento)}
+                    </span>
+                  )}
+                </>
+              )}
+            </div>
+          )}
+
+          {/* Exámenes (cantidad) */}
+          <div className="lab-orden-col lab-orden-col--center">
+            <span
+              style={{
+                background: "var(--primary-lighter)",
+                color: "var(--primary)",
+                padding: "0.15rem 0.55rem",
+                borderRadius: 999,
+                fontSize: "0.78rem",
+                fontWeight: 700,
               }}
             >
-              <X size={14} /> Limpiar
-            </button>
+              {orden.items.length}{" "}
+              {orden.items.length === 1 ? "examen" : "exámenes"}
+            </span>
+          </div>
+
+          {/* Acciones contextuales por tab */}
+          <div
+            className="lab-orden-col lab-orden-actions"
+            onClick={(e) => e.stopPropagation()}
+          >
+            {tabActivo === "PENDIENTE" && (
+              <button
+                className="lab-btn lab-btn--primary lab-btn--sm"
+                onClick={(e) => { e.stopPropagation(); setModalGenerarOrden(true); }}
+                title="Seleccionar fecha y generar la orden de laboratorio"
+              >
+                <ShieldCheck size={13} style={{ marginRight: 4 }} />
+                Generar Orden
+              </button>
+            )}
+
+            {tabActivo === "EN_PROCESO" && (
+              <button
+                className="lab-btn lab-btn--primary lab-btn--sm"
+                disabled={cargando}
+                onClick={handleRegistrarAsistencia}
+                title="Registrar que el paciente se presentó al laboratorio"
+              >
+                <UserCheck size={13} style={{ marginRight: 4 }} />
+                Registrar asistencia
+              </button>
+            )}
+
+            {tabActivo === "ASISTIDO" && (
+              <button
+                className="lab-btn lab-btn--primary lab-btn--sm"
+                disabled={cargando}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setModalResultados(true);
+                }}
+                title="Cargar PDF con resultados y notificar al paciente por correo"
+              >
+                <Upload size={13} style={{ marginRight: 4 }} />
+                Cargar resultados
+              </button>
+            )}
+
+            {tabActivo === "FINALIZADO" && orden.archivoResultadoUrl && (
+              <a
+                href={orden.archivoResultadoUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="lab-btn lab-btn--sm"
+                style={{
+                  background: "var(--success-bg)",
+                  color: "#059669",
+                  display: "inline-flex",
+                  alignItems: "center",
+                  textDecoration: "none",
+                }}
+                onClick={(e) => e.stopPropagation()}
+              >
+                <ExternalLink size={13} style={{ marginRight: 4 }} />
+                Ver resultados
+              </a>
+            )}
+          </div>
+
+          {/* Chevron */}
+          <div className="lab-orden-col lab-orden-col--center">
+            {abierta ? (
+              <ChevronUp size={16} className="lab-chevron" />
+            ) : (
+              <ChevronDown size={16} className="lab-chevron" />
+            )}
+          </div>
+        </div>
+
+        {/* Detalle expandido */}
+        {abierta && (
+          <div className="lab-orden-detalle">
+            {orden.observacionesGenerales && (
+              <p className="lab-orden-obs">
+                <strong>Indicaciones clínicas:</strong> {orden.observacionesGenerales}
+              </p>
+            )}
+
+            {/* Fechas del ciclo de vida */}
+            <div
+              style={{
+                display: "flex",
+                gap: "1.5rem",
+                flexWrap: "wrap",
+                marginBottom: "0.75rem",
+                fontSize: "0.8rem",
+                color: "var(--text-muted)",
+              }}
+            >
+              <span>Emitida: {formatFecha(orden.fecha)}</span>
+              {orden.fechaAutorizacion && (
+                <span>Autorizada: {formatFecha(orden.fechaAutorizacion)}</span>
+              )}
+              {orden.fechaCitaLab && (
+                <span style={{ color: "var(--primary)", fontWeight: 600 }}>
+                  Cita lab: {formatFecha(orden.fechaCitaLab)} · 7:00 a.m.
+                </span>
+              )}
+              {orden.fechaAsistencia && (
+                <span>Asistencia registrada: {formatFecha(orden.fechaAsistencia)}</span>
+              )}
+              {orden.fechaResultados && (
+                <span>Resultados cargados: {formatFecha(orden.fechaResultados)}</span>
+              )}
+            </div>
+
+            {/* Tabla de exámenes */}
+            <table className="lab-tabla">
+              <thead>
+                <tr>
+                  <th>Examen</th>
+                  <th>Tipo</th>
+                  <th>Instrucciones / Observaciones</th>
+                  {(tabActivo === "FINALIZADO") && <th>Resultado</th>}
+                </tr>
+              </thead>
+              <tbody>
+                {orden.items.map((item, idx) => {
+                  const ex =
+                    typeof item.examenId === "object" ? item.examenId : null;
+                  return (
+                    <tr key={idx}>
+                      <td style={{ fontWeight: 500 }}>
+                        {ex?.nombre ?? "—"}
+                      </td>
+                      <td>
+                        {ex && (
+                          <span className="lab-tipo-chip">
+                            {TIPO_EXAMEN_LABEL[ex.tipo] ?? ex.tipo}
+                          </span>
+                        )}
+                      </td>
+                      <td style={{ fontSize: "0.82rem", color: "var(--text-secondary)" }}>
+                        {ex?.instrucciones || item.observaciones || "—"}
+                      </td>
+                      {tabActivo === "FINALIZADO" && (
+                        <td>
+                          {item.valorResultado ? (
+                            <span className="lab-resultado">
+                              {item.valorResultado}
+                              {item.unidadResultado
+                                ? ` ${item.unidadResultado}`
+                                : ""}
+                            </span>
+                          ) : (
+                            <span style={{ color: "var(--text-muted)", fontSize: "0.8rem" }}>
+                              Ver PDF adjunto
+                            </span>
+                          )}
+                        </td>
+                      )}
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+
+            {/* Enlace al PDF de resultados en tab finalizado */}
+            {tabActivo === "FINALIZADO" && orden.archivoResultadoUrl && (
+              <div style={{ marginTop: "0.75rem" }}>
+                <a
+                  href={orden.archivoResultadoUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="lab-archivo-link"
+                >
+                  <FileText size={14} />
+                  Descargar informe de resultados (PDF)
+                </a>
+              </div>
+            )}
+
           </div>
         )}
       </div>
 
-      {loading ? (
-        <div className="lab-loading">
-          <div className="spinner-small" />
-          <p>Cargando órdenes...</p>
-        </div>
-      ) : errorCarga ? (
-        <div className="lab-error">
-          <XCircle size={40} />
-          <p>{errorCarga}</p>
-          <button className="lab-btn lab-btn--primary" onClick={cargar}>
-            Reintentar
-          </button>
-        </div>
-      ) : (
-        <>
-          <div className="lab-resultados-info">
-            <span>
-              {ordenesFiltradas.length} orden
-              {ordenesFiltradas.length !== 1 ? "es" : ""} encontrada
-              {ordenesFiltradas.length !== 1 ? "s" : ""}
-            </span>
-          </div>
-
-          {ordenesFiltradas.length === 0 ? (
-            <div className="lab-empty">
-              <FlaskConical size={40} />
-              <p>No hay órdenes con los filtros seleccionados</p>
-            </div>
-          ) : (
-            <div className="lab-lista">
-              <div className="lab-lista-header">
-                <span className="center">Paciente</span>
-                <span>Doctor / Especialidad</span>
-                <span>Fecha / Exámenes</span>
-                <span className="center">Estado</span>
-                <span className="center">Acciones</span>
-                <span></span>
-              </div>
-              {ordenesPaginadas.map((orden) => (
-                <FilaOrden
-                  key={orden._id}
-                  orden={orden}
-                  onCargarResultados={setOrdenModal}
-                  onCancelarOrden={handleCancelarOrden}
-                  onGenerarCitaLab={setOrdenCitaLab}
-                  onImprimir={handleImprimir}
-                />
-              ))}
-            </div>
-          )}
-
-          {totalPaginas > 1 && (
-            <div className="lab-paginacion">
-              <button
-                className="lab-pag-btn"
-                disabled={paginaActual === 1}
-                onClick={() => setPaginaActual((p) => p - 1)}
-              >
-                Anterior
-              </button>
-
-              {Array.from({ length: totalPaginas }, (_, i) => i + 1).map(
-                (num) => (
-                  <button
-                    key={num}
-                    className={`lab-pag-btn${paginaActual === num ? " lab-pag-btn--active" : ""}`}
-                    onClick={() => setPaginaActual(num)}
-                  >
-                    {num}
-                  </button>
-                ),
-              )}
-
-              <button
-                className="lab-pag-btn"
-                disabled={paginaActual === totalPaginas}
-                onClick={() => setPaginaActual((p) => p + 1)}
-              >
-                Siguiente
-              </button>
-            </div>
-          )}
-        </>
-      )}
-
-      {ordenModal && (
-        <ModalResultados
-          orden={ordenModal}
-          onCerrar={() => setOrdenModal(null)}
-          onGuardado={cargar}
-          showNotification={showNotification}
+      {/* Modal generar orden (selector de fecha) */}
+      {modalGenerarOrden && (
+        <ModalGenerarOrden
+          orden={orden}
+          onCerrar={() => setModalGenerarOrden(false)}
+          onGuardado={onRefresh}
         />
       )}
 
-      {ordenCitaLab && (
-        <ModalCitaLab
-          orden={ordenCitaLab}
-          onCerrar={() => setOrdenCitaLab(null)}
-          onGenerado={cargar}
-          showNotification={showNotification}
+      {/* Modal cargar resultados */}
+      {modalResultados && (
+        <ModalCargarResultados
+          orden={orden}
+          onCerrar={() => setModalResultados(false)}
+          onGuardado={onRefresh}
         />
       )}
-    </div>
+    </>
   );
 };
 
-export default Laboratorio;
+// ─── Página principal ─────────────────────────────────────────
+export default function Laboratorio() {
+  const [tabActivo, setTabActivo] = useState<EstadoOrden>("PENDIENTE");
+  const [ordenes, setOrdenes] = useState<OrdenExamen[]>([]);
+  const [conteos, setConteos] = useState<Partial<Record<EstadoOrden, number>>>({});
+  const [cargando, setCargando] = useState(false);
+  const [error, setError] = useState("");
+  const [busqueda, setBusqueda] = useState("");
+  const [actualizando, setActualizando] = useState(false);
+  const inicializado = useRef(false);
+
+  // ── Cargar conteos de todos los estados ──
+  const cargarConteos = useCallback(async () => {
+    try {
+      const estados: EstadoOrden[] = [
+        "PENDIENTE",
+        "EN_PROCESO",
+        "ASISTIDO",
+        "FINALIZADO",
+      ];
+      const resultados = await Promise.all(
+        estados.map((e) => ExamenService.listarPorEstado(e))
+      );
+      const nuevosConteos: Partial<Record<EstadoOrden, number>> = {};
+      estados.forEach((e, i) => {
+        nuevosConteos[e] = resultados[i].length;
+      });
+      setConteos(nuevosConteos);
+    } catch {
+      // silencioso
+    }
+  }, []);
+
+  // ── Cargar órdenes del tab activo ──
+  const cargarOrdenes = useCallback(
+    async (estado: EstadoOrden) => {
+      setCargando(true);
+      setError("");
+      try {
+        const data = await ExamenService.listarPorEstado(estado);
+        setOrdenes(data);
+      } catch {
+        setError("No se pudieron cargar las órdenes. Verifique su conexión e intente nuevamente.");
+      } finally {
+        setCargando(false);
+      }
+    },
+    []
+  );
+
+  // ── Inicialización: procesar vencidas, luego cargar datos ──
+  useEffect(() => {
+    if (inicializado.current) return;
+    inicializado.current = true;
+
+    const inicializar = async () => {
+      try {
+        await ExamenService.procesarVencidas();
+      } catch {
+        // No bloquea la UI
+      }
+      await Promise.all([cargarOrdenes("PENDIENTE"), cargarConteos()]);
+    };
+    inicializar();
+  }, [cargarOrdenes, cargarConteos]);
+
+  // ── Cambio de tab ──
+  const cambiarTab = (estado: EstadoOrden) => {
+    setTabActivo(estado);
+    setBusqueda("");
+    cargarOrdenes(estado);
+  };
+
+  // ── Actualizar manualmente ──
+  const handleActualizar = async () => {
+    setActualizando(true);
+    try {
+      await ExamenService.procesarVencidas();
+      await Promise.all([cargarOrdenes(tabActivo), cargarConteos()]);
+    } finally {
+      setActualizando(false);
+    }
+  };
+
+  // ── Callback tras una acción en una fila ──
+  const handleRefresh = () => {
+    cargarOrdenes(tabActivo);
+    cargarConteos();
+  };
+
+  // ── Filtrar por búsqueda local ──
+  const ordenesFiltradas = ordenes.filter((o) => {
+    if (!busqueda.trim()) return true;
+    const q = busqueda.toLowerCase();
+    const p = o.pacienteId;
+    return (
+      `${p.nombres} ${p.apellidos}`.toLowerCase().includes(q) ||
+      p.dni.includes(q) ||
+      (o.codigoOrden ?? "").toLowerCase().includes(q)
+    );
+  });
+
+  const tabInfo = TABS.find((t) => t.estado === tabActivo)!;
+
+  return (
+    <div className="lab-page">
+      {/* ── Header ── */}
+      <div className="lab-header">
+        <div className="lab-header-title">
+          <FlaskConical size={28} className="lab-header-icon" />
+          <div>
+            <h1>Gestión de Órdenes de Análisis Clínicos</h1>
+            <p>Autorización, seguimiento y entrega de resultados de exámenes de laboratorio</p>
+          </div>
+        </div>
+        <button
+          className="lab-btn lab-btn--cancel lab-btn--sm"
+          onClick={handleActualizar}
+          disabled={actualizando || cargando}
+          title="Actualizar y procesar vencimientos"
+        >
+          <RefreshCw
+            size={14}
+            style={{
+              marginRight: 5,
+              animation: actualizando ? "spin 1s linear infinite" : undefined,
+            }}
+          />
+          {actualizando ? "Actualizando…" : "Actualizar"}
+        </button>
+      </div>
+
+      {/* ── Tabs de estado ── */}
+      <div className="lab-filtros" role="tablist">
+        {TABS.map((tab) => {
+          const Icon = tab.icon;
+          const activo = tabActivo === tab.estado;
+          return (
+            <button
+              key={tab.estado}
+              role="tab"
+              aria-selected={activo}
+              className={`lab-filtro-btn ${activo ? "active" : ""}`}
+              onClick={() => cambiarTab(tab.estado)}
+            >
+              <Icon size={14} />
+              <span>{tab.label}</span>
+              {conteos[tab.estado] !== undefined && (
+                <span className="lab-filtro-count">{conteos[tab.estado]}</span>
+              )}
+            </button>
+          );
+        })}
+      </div>
+
+      {/* ── Buscador ── */}
+      <div className="lab-filtros-avanzados">
+        <div className="lab-filtro-campo" style={{ flex: 1, minWidth: 280 }}>
+          <label className="lab-filtro-label">Buscar en {tabInfo.label}</label>
+          <div style={{ position: "relative", width: "100%" }}>
+            <Search
+              size={14}
+              style={{
+                position: "absolute",
+                left: "0.65rem",
+                top: "50%",
+                transform: "translateY(-50%)",
+                color: "var(--text-muted)",
+                pointerEvents: "none",
+              }}
+            />
+            <input
+              className="lab-filtro-input"
+              placeholder="Nombre, DNI o código de orden…"
+              value={busqueda}
+              onChange={(e) => setBusqueda(e.target.value)}
+              style={{ paddingLeft: "2.2rem" }}
+            />
+          </div>
+        </div>
+        {busqueda && (
+          <button
+            className="lab-btn-limpiar"
+            onClick={() => setBusqueda("")}
+            style={{ alignSelf: "flex-end" }}
+          >
+            <X size={13} />
+            Limpiar
+          </button>
+        )}
+        <span
+          className="lab-resultados-info"
+          style={{ alignSelf: "flex-end", paddingBottom: "0.1rem" }}
+        >
+          {ordenesFiltradas.length}{" "}
+          {ordenesFiltradas.length === 1 ? "resultado" : "resultados"}
+        </span>
+      </div>
+
+      {/* ── Contenido del tab ── */}
+      {cargando ? (
+        <div className="lab-loading">
+          <RefreshCw size={24} style={{ animation: "spin 1s linear infinite" }} />
+          <span>Cargando órdenes…</span>
+        </div>
+      ) : error ? (
+        <div className="lab-error">
+          <AlertTriangle size={24} />
+          <span>{error}</span>
+        </div>
+      ) : ordenesFiltradas.length === 0 ? (
+        <div className="lab-empty">
+          {tabInfo.icon && <tabInfo.icon size={32} style={{ opacity: 0.3 }} />}
+          <span>
+            {busqueda
+              ? "No se encontraron órdenes con ese criterio de búsqueda."
+              : `No hay órdenes en la sección "${tabInfo.label}".`}
+          </span>
+        </div>
+      ) : (
+        <div className="lab-lista">
+          {/* Cabecera */}
+          <div
+            className="lab-lista-header"
+            style={{
+              gridTemplateColumns:
+                tabActivo === "EN_PROCESO"
+                  ? "2fr 2fr 1.5fr 1.2fr 1.5fr 2fr 24px"
+                  : "2fr 2fr 1.5fr 1.5fr 2fr 24px",
+            }}
+          >
+            <span>Paciente</span>
+            <span>Médico / Especialidad</span>
+            <span>Código / Fecha</span>
+            {tabActivo === "EN_PROCESO" && <span>Cita Lab</span>}
+            <span className="center">Exámenes</span>
+            <span className="center">Acción</span>
+            <span />
+          </div>
+
+          {ordenesFiltradas.map((orden) => (
+            <FilaOrden
+              key={orden._id}
+              orden={orden}
+              tabActivo={tabActivo}
+              onRefresh={handleRefresh}
+            />
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}

@@ -1,6 +1,6 @@
 import api from "./api";
 
-// ── Tipos del catálogo ──────────────────────────────────────
+// ── Tipos del catálogo de exámenes ─────────────────────────
 export type TipoExamen =
   | "HEMATOLOGIA"
   | "BIOQUIMICA"
@@ -22,9 +22,16 @@ export interface ExamenLaboratorio {
   activo: boolean;
 }
 
-// ── Tipos de órdenes ────────────────────────────────────────
-export type EstadoOrden = "PENDIENTE" | "EN_PROCESO" | "COMPLETADO" | "CANCELADA" | "VENCIDA";
-export type EstadoItem  = "PENDIENTE" | "COMPLETADO";
+// ── Estados del ciclo de vida de una orden ──────────────────
+export type EstadoOrden =
+  | "PENDIENTE"   // Emitida por el médico, pendiente de autorización
+  | "EN_PROCESO"  // Autorizada por recepción, en período de vigencia (7 días)
+  | "ASISTIDO"    // El paciente se presentó al laboratorio
+  | "FINALIZADO"  // Resultados cargados y notificación enviada al paciente
+  | "CANCELADA"   // Anulada
+  | "VENCIDA";    // Expiró el período de vigencia sin asistencia
+
+export type EstadoItem = "PENDIENTE" | "COMPLETADO";
 
 export interface ItemOrden {
   examenId: ExamenLaboratorio | string;
@@ -38,35 +45,40 @@ export interface ItemOrden {
 
 export interface OrdenExamen {
   _id: string;
-  pacienteId: { _id: string; nombres: string; apellidos: string; dni: string; fechaNacimiento?: string; sexo?: string };
-  doctorId:   { _id: string; nombres: string; apellidos: string; cmp?: string };
-  citaId?:    string;
+  pacienteId: {
+    _id: string;
+    nombres: string;
+    apellidos: string;
+    dni: string;
+    fechaNacimiento?: string;
+    sexo?: string;
+    correo?: string;
+  };
+  doctorId: { _id: string; nombres: string; apellidos: string; cmp?: string };
+  citaId?: string;
   especialidadId: { _id: string; nombre: string };
   codigoOrden?: string;
+  // Ciclo de vida
+  fecha: string;
+  fechaAutorizacion?: string;
+  fechaCitaLab?: string;       // Día agendado para la toma de muestra
   fechaVencimiento?: string;
+  fechaAsistencia?: string;
+  fechaResultados?: string;
+  archivoResultadoUrl?: string;
+  // Otros
   citaLabId?: string;
   motivoVencimiento?: string;
   items: ItemOrden[];
   estado: EstadoOrden;
   observacionesGenerales?: string;
-  fecha: string;
   createdAt?: string;
-}
-
-// ── Cita de laboratorio generada ────────────────────────────
-export interface CitaLab {
-  _id: string;
-  pacienteId: string;
-  fecha: string;
-  fechaVigenciaHasta: string;
-  instrucciones?: string;
-  tipo: "LABORATORIO";
-  estado: string;
 }
 
 // ── Servicio ────────────────────────────────────────────────
 export class ExamenService {
-  // Catálogo
+
+  // ─── Catálogo de exámenes ──────────────────────────────────
   static async listarExamenes(tipo?: TipoExamen): Promise<ExamenLaboratorio[]> {
     const params = new URLSearchParams({ activo: "true" });
     if (tipo) params.set("tipo", tipo);
@@ -76,7 +88,7 @@ export class ExamenService {
     return res.data.data ?? [];
   }
 
-  // Órdenes
+  // ─── Crear orden (uso médico) ──────────────────────────────
   static async crearOrden(payload: {
     pacienteId: string;
     doctorId: string;
@@ -86,6 +98,74 @@ export class ExamenService {
     items: { examenId: string; observaciones?: string }[];
   }): Promise<OrdenExamen> {
     const res = await api.post<{ success: boolean; data: OrdenExamen }>("/ordenes", payload);
+    return res.data.data;
+  }
+
+  // ─── Listar por estado (tab principal del módulo) ──────────
+  static async listarPorEstado(estado: EstadoOrden): Promise<OrdenExamen[]> {
+    const res = await api.get<{ success: boolean; data: OrdenExamen[] }>(
+      `/ordenes?estado=${estado}`
+    );
+    return res.data.data ?? [];
+  }
+
+  // ─── Procesar vencimiento en lote (al abrir el módulo) ────
+  static async procesarVencidas(): Promise<{ actualizadas: number }> {
+    const res = await api.post<{ success: boolean; actualizadas: number }>(
+      "/ordenes/vencimiento"
+    );
+    return { actualizadas: res.data.actualizadas ?? 0 };
+  }
+
+  // ─── Disponibilidad del laboratorio por día ───────────────
+  static async obtenerDisponibilidadLab(
+    desde: string,
+    hasta: string
+  ): Promise<{ data: { fecha: string; ocupados: number }[]; capacidadDiaria: number }> {
+    const res = await api.get<{
+      success: boolean;
+      data: { fecha: string; ocupados: number }[];
+      capacidadDiaria: number;
+    }>(`/ordenes/disponibilidad-lab?desde=${desde}&hasta=${hasta}`);
+    return { data: res.data.data ?? [], capacidadDiaria: res.data.capacidadDiaria };
+  }
+
+  // ─── Flujo clínico: Autorizar orden (recepción) ────────────
+  // PENDIENTE → EN_PROCESO (vigencia 7 días)
+  // fechaCitaLab: "YYYY-MM-DD" — día agendado para la toma de muestra
+  static async autorizarOrden(ordenId: string, fechaCitaLab?: string): Promise<OrdenExamen> {
+    const res = await api.patch<{ success: boolean; data: OrdenExamen }>(
+      `/ordenes/${ordenId}/autorizar`,
+      fechaCitaLab ? { fechaCitaLab } : {}
+    );
+    return res.data.data;
+  }
+
+  // ─── Flujo clínico: Registrar asistencia del paciente ──────
+  // EN_PROCESO → ASISTIDO
+  static async registrarAsistencia(ordenId: string): Promise<OrdenExamen> {
+    const res = await api.patch<{ success: boolean; data: OrdenExamen }>(
+      `/ordenes/${ordenId}/registrar-asistencia`
+    );
+    return res.data.data;
+  }
+
+  // ─── Flujo clínico: Cargar resultados y finalizar ──────────
+  // ASISTIDO → FINALIZADO (sube PDF + envía correo al paciente)
+  static async finalizarOrden(ordenId: string, archivoPDF: File): Promise<OrdenExamen> {
+    const formData = new FormData();
+    formData.append("archivo", archivoPDF);
+    const res = await api.patch<{ success: boolean; data: OrdenExamen }>(
+      `/ordenes/${ordenId}/finalizar`,
+      formData,
+      { headers: { "Content-Type": "multipart/form-data" } }
+    );
+    return res.data.data;
+  }
+
+  // ─── Consultas generales ───────────────────────────────────
+  static async obtenerOrden(id: string): Promise<OrdenExamen> {
+    const res = await api.get<{ success: boolean; data: OrdenExamen }>(`/ordenes/${id}`);
     return res.data.data;
   }
 
@@ -103,75 +183,11 @@ export class ExamenService {
     return res.data.data ?? [];
   }
 
-  static async listarOrdenesPendientes(todos = false): Promise<OrdenExamen[]> {
-    const res = await api.get<{ success: boolean; data: OrdenExamen[] }>(
-      `/ordenes/pendientes${todos ? "?todos=true" : ""}`
-    );
-    return res.data.data ?? [];
-  }
-
-  static async obtenerOrden(id: string): Promise<OrdenExamen> {
-    const res = await api.get<{ success: boolean; data: OrdenExamen }>(`/ordenes/${id}`);
-    return res.data.data;
-  }
-
-  static async cargarResultados(
-    ordenId: string,
-    resultados: { examenId: string; valorResultado: string; unidadResultado?: string }[]
-  ): Promise<OrdenExamen> {
-    const res = await api.patch<{ success: boolean; data: OrdenExamen }>(
-      `/ordenes/${ordenId}/resultados`,
-      { resultados }
-    );
-    return res.data.data;
-  }
-
-  static async subirArchivo(ordenId: string, examenId: string, archivo: File): Promise<string> {
-    const formData = new FormData();
-    formData.append("archivo", archivo);
-    formData.append("examenId", examenId);
-    const res = await api.post<{ success: boolean; url: string }>(
-      `/ordenes/${ordenId}/subir-archivo`,
-      formData,
-      { headers: { "Content-Type": "multipart/form-data" } }
-    );
-    return res.data.url;
-  }
-
-  static async cancelarOrden(ordenId: string): Promise<void> {
-    await api.patch(`/ordenes/${ordenId}/cancelar`);
-  }
-
-  static async actualizarOrden(
-    ordenId: string,
-    items: { examenId: string; observaciones?: string }[],
-    observacionesGenerales?: string
-  ): Promise<OrdenExamen> {
-    const res = await api.patch<{ success: boolean; data: OrdenExamen }>(
-      `/ordenes/${ordenId}`,
-      { items, observacionesGenerales }
-    );
-    return res.data.data;
-  }
-
   static async buscarPorCodigo(codigo: string): Promise<OrdenExamen> {
     const res = await api.get<{ success: boolean; data: OrdenExamen }>(
       `/ordenes/buscar?codigo=${encodeURIComponent(codigo)}`
     );
     return res.data.data;
-  }
-
-  static async listarSinCitaLab(): Promise<OrdenExamen[]> {
-    const res = await api.get<{ success: boolean; data: OrdenExamen[] }>("/ordenes/sin-cita-lab");
-    return res.data.data ?? [];
-  }
-
-  static async generarCitaLab(ordenId: string): Promise<{ orden: OrdenExamen; citaLab: CitaLab }> {
-    const res = await api.patch<{ success: boolean; data: OrdenExamen; citaLab: CitaLab }>(
-      `/ordenes/${ordenId}/generar-cita-lab`,
-      {}
-    );
-    return { orden: res.data.data, citaLab: res.data.citaLab };
   }
 
   static async obtenerParaImprimir(ordenId: string): Promise<{
@@ -186,6 +202,43 @@ export class ExamenService {
       };
     }>(`/ordenes/${ordenId}/imprimir`);
     return res.data.data;
+  }
+
+  // ─── Compatibilidad (uso médico) ───────────────────────────
+  static async actualizarOrden(
+    ordenId: string,
+    items: { examenId: string; observaciones?: string }[],
+    observacionesGenerales?: string
+  ): Promise<OrdenExamen> {
+    const res = await api.patch<{ success: boolean; data: OrdenExamen }>(
+      `/ordenes/${ordenId}`,
+      { items, observacionesGenerales }
+    );
+    return res.data.data;
+  }
+
+  static async cancelarOrden(ordenId: string): Promise<void> {
+    await api.patch(`/ordenes/${ordenId}/cancelar`);
+  }
+
+  static async subirArchivo(ordenId: string, examenId: string, archivo: File): Promise<string> {
+    const formData = new FormData();
+    formData.append("archivo", archivo);
+    formData.append("examenId", examenId);
+    const res = await api.post<{ success: boolean; url: string }>(
+      `/ordenes/${ordenId}/subir-archivo`,
+      formData,
+      { headers: { "Content-Type": "multipart/form-data" } }
+    );
+    return res.data.url;
+  }
+
+  // Mantener por compatibilidad con PerfilCita del médico
+  static async listarOrdenesPendientes(todos = false): Promise<OrdenExamen[]> {
+    const res = await api.get<{ success: boolean; data: OrdenExamen[] }>(
+      `/ordenes/pendientes${todos ? "?todos=true" : ""}`
+    );
+    return res.data.data ?? [];
   }
 }
 
