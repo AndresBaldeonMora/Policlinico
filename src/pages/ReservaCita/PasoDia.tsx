@@ -1,26 +1,33 @@
 interface Props {
   diasDelMes: number[];
   diaSeleccionado: number | null;
+  diasBloqueados?: number[];
+  doctorNombre?: string;
   onSeleccionar: (dia: number) => void;
 }
 
-const PasoDia = ({ diasDelMes, diaSeleccionado, onSeleccionar }: Props) => (
+const PasoDia = ({ diasDelMes, diaSeleccionado, diasBloqueados = [], doctorNombre, onSeleccionar }: Props) => (
   <div className="form-step">
     <div className="step-header">
       <span className="step-number">4</span>
       <h3>Seleccionar Día</h3>
     </div>
     <div className="selector-dia">
-      {diasDelMes.map((d) => (
-        <button
-          key={d}
-          type="button"
-          className={`dia-btn ${diaSeleccionado === d ? "activo" : ""}`}
-          onClick={() => onSeleccionar(d)}
-        >
-          {d}
-        </button>
-      ))}
+      {diasDelMes.map((d) => {
+        const bloqueado = diasBloqueados.includes(d);
+        return (
+          <button
+            key={d}
+            type="button"
+            className={`dia-btn ${diaSeleccionado === d ? "activo" : ""} ${bloqueado ? "dia-btn--bloqueado" : ""}`}
+            onClick={() => !bloqueado && onSeleccionar(d)}
+            disabled={bloqueado}
+            title={bloqueado ? `${doctorNombre || "Doctor"} no disponible este día` : undefined}
+          >
+            {d}
+          </button>
+        );
+      })}
     </div>
   </div>
 );

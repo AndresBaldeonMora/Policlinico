@@ -58,6 +58,7 @@ export interface ReservaState {
   horariosPorDia: HorarioPorDia[];
   fechaSeleccionada: string;
   horaSeleccionada: string;
+  diasBloqueados: number[];
 }
 
 // ─── Acciones ─────────────────────────────────────────────
@@ -78,6 +79,7 @@ export type ReservaAction =
   // Mes / Día
   | { type: "SELECCIONAR_MES"; mes: MesOption; dias: number[] }
   | { type: "SELECCIONAR_DIA"; dia: number }
+  | { type: "SET_DIAS_BLOQUEADOS"; dias: number[] }
   // Hora
   | { type: "SET_HORARIOS"; horarios: HorarioPorDia[] }
   | { type: "SELECCIONAR_HORA"; hora: string; fechaISO: string }
@@ -125,6 +127,7 @@ export const initialState: ReservaState = {
   horariosPorDia: [],
   fechaSeleccionada: "",
   horaSeleccionada: "",
+  diasBloqueados: [],
 };
 
 // ─── Reducer ──────────────────────────────────────────────
@@ -176,6 +179,8 @@ export function reservaReducer(state: ReservaState, action: ReservaAction): Rese
       };
     case "SELECCIONAR_DIA":
       return { ...state, diaSeleccionado: action.dia };
+    case "SET_DIAS_BLOQUEADOS":
+      return { ...state, diasBloqueados: action.dias };
 
     case "SET_HORARIOS":
       return { ...state, horariosPorDia: action.horarios };

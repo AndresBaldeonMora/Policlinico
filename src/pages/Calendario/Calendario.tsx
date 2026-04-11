@@ -3,6 +3,7 @@ import { useEffect, useReducer, useCallback, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
 import { CitaApiService } from "../../services/cita.service";
 import { DoctorApiService } from "../../services/doctor.service";
+import { BloqueoService, type Bloqueo } from "../../services/bloqueo.service";
 import type { CitaTransformada } from "../../services/cita.service";
 import type { DoctorTransformado } from "../../services/doctor.service";
 import MiniCalendario from "./MiniCalendario";
@@ -52,6 +53,7 @@ interface CalendarioState {
   doctorId: string;
   loading: boolean;
   citaSeleccionadaId: string | null;
+  bloqueos: Bloqueo[];
 }
 
 type CalendarioAction =
@@ -61,7 +63,8 @@ type CalendarioAction =
   | { type: "SET_DOCTORES"; doctores: DoctorTransformado[] }
   | { type: "SET_DOCTOR_ID"; doctorId: string }
   | { type: "SET_LOADING"; value: boolean }
-  | { type: "SELECCIONAR_CITA"; citaId: string | null };
+  | { type: "SELECCIONAR_CITA"; citaId: string | null }
+  | { type: "SET_BLOQUEOS"; bloqueos: Bloqueo[] };
 
 const initialState: CalendarioState = {
   vista: "dia",
@@ -71,6 +74,7 @@ const initialState: CalendarioState = {
   doctorId: DOCTOR_TODOS_ID,
   loading: false,
   citaSeleccionadaId: null,
+  bloqueos: [],
 };
 
 function calendarioReducer(state: CalendarioState, action: CalendarioAction): CalendarioState {
@@ -82,13 +86,14 @@ function calendarioReducer(state: CalendarioState, action: CalendarioAction): Ca
     case "SET_DOCTOR_ID": return { ...state, doctorId: action.doctorId };
     case "SET_LOADING":   return { ...state, loading: action.value };
     case "SELECCIONAR_CITA": return { ...state, citaSeleccionadaId: action.citaId };
+    case "SET_BLOQUEOS":     return { ...state, bloqueos: action.bloqueos };
     default:              return state;
   }
 }
 
 const Calendario = () => {
   const [state, dispatch] = useReducer(calendarioReducer, initialState);
-  const { vista, fecha, citas, doctores, doctorId, loading, citaSeleccionadaId } = state;
+  const { vista, fecha, citas, doctores, doctorId, loading, citaSeleccionadaId, bloqueos } = state;
   const navigate = useNavigate();
 
   const cargarDoctores = useCallback(async () => {
@@ -113,8 +118,21 @@ const Calendario = () => {
     }
   }, [fecha, vista, doctorId]);
 
+  const cargarBloqueos = useCallback(async () => {
+    try {
+      const mes = fecha.getMonth() + 1;
+      const anio = fecha.getFullYear();
+      const params: { mes: number; anio: number; doctorId?: string } = { mes, anio };
+      if (doctorId !== DOCTOR_TODOS_ID) params.doctorId = doctorId;
+      dispatch({ type: "SET_BLOQUEOS", bloqueos: await BloqueoService.listar(params) });
+    } catch {
+      dispatch({ type: "SET_BLOQUEOS", bloqueos: [] });
+    }
+  }, [fecha, doctorId]);
+
   useEffect(() => { cargarDoctores(); }, [cargarDoctores]);
   useEffect(() => { cargarCitas(); }, [cargarCitas]);
+  useEffect(() => { cargarBloqueos(); }, [cargarBloqueos]);
 
   const cambiarFecha = useCallback((delta: number) => {
     const nueva = new Date(fecha);
@@ -211,6 +229,7 @@ const Calendario = () => {
                   citas={citas}
                   doctores={doctores}
                   doctorId={doctorId}
+                  bloqueos={bloqueos}
                   onVerCita={irADetalleCita}
                 />
               )}

@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from "react";
-import { useSearchParams } from "react-router-dom";
-import { Search, UserPlus, Pencil, Users,Trash2 } from "lucide-react";
+import { useSearchParams, useNavigate } from "react-router-dom";
+import { Search, UserPlus, Pencil, Users, Trash2, ClipboardList } from "lucide-react";
 import "../ListaCitas/ListaCitas.css";
 import "./ListaPacientes.css";
 import { PacienteApiService, type PacienteTransformado } from "../../services/paciente.service";
@@ -14,6 +14,7 @@ interface Props {
   puedeEliminar?: boolean;
 }
 const ListaPacientes = ({ puedeEliminar = false }: Props) => {
+  const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const highlightId = searchParams.get("highlight");
   const highlightRef = useRef<HTMLTableRowElement>(null);
@@ -150,6 +151,9 @@ const ListaPacientes = ({ puedeEliminar = false }: Props) => {
                           <Pencil size={15} />
                         </button> */}
                         <div className="ge-actions">
+                          <button className="btn-action" onClick={() => navigate(`/pacientes/${p._id}`)} title="Ver historial">
+                            <ClipboardList size={15} />
+                          </button>
                           <button className="btn-action" onClick={() => abrirEditar(p)} title="Editar">
                             <Pencil size={15} />
                           </button>

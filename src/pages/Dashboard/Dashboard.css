@@ -68,7 +68,7 @@
 
 .dashboard-stats {
   display: grid;
-  grid-template-columns: repeat(3, 1fr);
+  grid-template-columns: repeat(4, 1fr);
   gap: 1.25rem;
 }
 
@@ -84,6 +84,15 @@
 
 .stat-card-accent {
   border-left: 4px solid #10b981;
+}
+
+.stat-card-warning {
+  border-left: 4px solid #f59e0b;
+}
+
+.td-hora {
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
 }
 
 .stat-label {
