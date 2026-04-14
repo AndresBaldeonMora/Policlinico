@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { X, FlaskConical, ChevronDown, ChevronUp } from "lucide-react";
-import type { ExamenLaboratorio, TipoExamen } from "../../services/examen.service";
+import type { ExamenLaboratorioImagen, TipoExamen } from "../../services/examen.service";
 import { ExamenService, TIPO_EXAMEN_LABEL } from "../../services/examen.service";
 import { toastExito } from "../../utils/toast";
 import "./OrdenExamenModal.css";
@@ -19,7 +19,7 @@ interface Props {
   obsGeneralesInicial?: string;
 }
 
-type GrupoExamenes = Record<string, ExamenLaboratorio[]>;
+type GrupoExamenes = Record<string, ExamenLaboratorioImagen[]>;
 
 const OrdenExamenModal = ({
   citaId,
@@ -34,7 +34,7 @@ const OrdenExamenModal = ({
   obsGeneralesInicial,
 }: Props) => {
   const modoEdicion = Boolean(ordenId);
-  const [examenes, setExamenes] = useState<ExamenLaboratorio[]>([]);
+  const [examenes, setExamenes] = useState<ExamenLaboratorioImagen[]>([]);
   const [seleccionados, setSeleccionados] = useState<Set<string>>(seleccionadosIniciales ?? new Set());
   const [observaciones, setObservaciones] = useState<Record<string, string>>(obsItemIniciales ?? {});
   const [observacionesGenerales, setObservacionesGenerales] = useState(obsGeneralesInicial ?? "");
@@ -126,7 +126,7 @@ const OrdenExamenModal = ({
         <div className="orden-modal-header">
           <div className="orden-modal-title">
             <FlaskConical size={20} />
-            <h3>{modoEdicion ? "Editar Orden" : "Solicitar Exámenes de Laboratorio"}</h3>
+            <h3>{modoEdicion ? "Editar Orden" : "Solicitar Exámenes de Laboratorio / Imagen"}</h3>
           </div>
           <button className="orden-modal-close" onClick={onCerrar}>
             <X size={18} />

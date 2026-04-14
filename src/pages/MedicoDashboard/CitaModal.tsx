@@ -203,10 +203,10 @@ const CitaModal = ({ citaId, perfil, onCerrar, onCitaActualizada }: Props) => {
             </button>
           </div>
 
-          {perfil.especialidadId.tieneLaboratorio && (
+          {perfil.especialidadId.tieneLaboratorioImagen && (
             <div className="cita-modal-section">
               <div className="cita-modal-section-header">
-                <h4>Exámenes de Laboratorio</h4>
+                <h4>Exámenes de Laboratorio / Imagen</h4>
                 {cita.estado === "PENDIENTE" && (
                   <button
                     className="cita-modal-btn-lab"

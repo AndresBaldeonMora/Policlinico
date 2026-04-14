@@ -81,9 +81,9 @@ export default function Dashboard() {
           </button>
           <button
             className="dashboard-btn dashboard-btn-secondary"
-            onClick={() => navigate("/laboratorio")}
+            onClick={() => navigate("/laboratorio-imagen")}
           >
-            Ver laboratorio
+            Ver laboratorio / imagen
           </button>
           <button
             className="dashboard-btn dashboard-btn-primary"
@@ -177,7 +177,7 @@ export default function Dashboard() {
       {ordenesPendientes.length > 0 && (
         <div className="dashboard-section">
           <h2 className="dashboard-section-title">
-            Órdenes de laboratorio pendientes de cita
+            Órdenes de laboratorio / imagen pendientes de cita
           </h2>
           <div className="dashboard-table-wrapper">
             <table className="dashboard-table">

@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { useParams } from "react-router-dom";
-import { ExamenService, type OrdenExamen, type ExamenLaboratorio, TIPO_EXAMEN_LABEL } from "../../services/examen.service";
+import { ExamenService, type OrdenExamen, type ExamenLaboratorioImagen, TIPO_EXAMEN_LABEL } from "../../services/examen.service";
 import "./ImprimirOrden.css";
 
 const formatFechaLarga = (iso: string) =>
@@ -93,7 +93,7 @@ const ImprimirOrden = () => {
             </thead>
             <tbody>
               {orden.items.map((item, i) => {
-                const ex = typeof item.examenId === "object" ? (item.examenId as ExamenLaboratorio) : null;
+                const ex = typeof item.examenId === "object" ? (item.examenId as ExamenLaboratorioImagen) : null;
                 return (
                   <tr key={i}>
                     <td>{i + 1}</td>

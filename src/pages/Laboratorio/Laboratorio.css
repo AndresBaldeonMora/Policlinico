@@ -1207,3 +1207,75 @@
   font-weight: 500;
   padding-left: 1.4rem;
 }
+
+/* ── Preguntas Protocolares ───────────────────────────────── */
+.lab-protocolar-seccion {
+  background: var(--bg-muted, #f9fafb);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md, 8px);
+  padding: 1rem 1.1rem;
+}
+
+.lab-protocolar-examen-header {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-bottom: 0.4rem;
+  color: var(--primary);
+}
+
+.lab-protocolar-instrucciones {
+  font-size: 0.8rem;
+  color: var(--text-secondary);
+  background: var(--bg-hover);
+  border-radius: var(--radius-sm, 4px);
+  padding: 0.4rem 0.65rem;
+  margin-bottom: 0.25rem;
+  border-left: 3px solid var(--primary-light, #99e6e0);
+}
+
+.lab-protocolar-pregunta {
+  display: flex;
+  flex-direction: column;
+  gap: 0.3rem;
+}
+
+.lab-protocolar-label {
+  font-size: 0.85rem;
+  font-weight: 500;
+  color: var(--text-primary);
+}
+
+.lab-protocolar-req {
+  color: #dc2626;
+  margin-left: 3px;
+  font-weight: 700;
+}
+
+.lab-protocolar-opciones {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.lab-protocolar-opcion-btn {
+  padding: 0.3rem 1.1rem;
+  border-radius: var(--radius-sm, 4px);
+  border: 1.5px solid var(--border);
+  background: var(--bg-card, white);
+  color: var(--text-secondary);
+  font-size: 0.85rem;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+
+.lab-protocolar-opcion-btn:hover {
+  border-color: var(--primary);
+  color: var(--primary);
+}
+
+.lab-protocolar-opcion-btn.selected {
+  background: var(--primary);
+  border-color: var(--primary);
+  color: white;
+  font-weight: 600;
+}
