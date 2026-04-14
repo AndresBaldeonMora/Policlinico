@@ -628,6 +628,221 @@ const ModalCargarResultados = ({ orden, onCerrar, onGuardado }: ModalResultadosP
   );
 };
 
+// ─── Modal: Preguntas Protocolares + Registrar Asistencia ────
+interface ModalAsistenciaProps {
+  orden: OrdenExamen;
+  onCerrar: () => void;
+  onGuardado: () => void;
+}
+
+const ModalAsistencia = ({ orden, onCerrar, onGuardado }: ModalAsistenciaProps) => {
+  // respuestas[itemIndex][preguntaId] = valor string
+  const [respuestas, setRespuestas] = useState<Record<number, Record<string, string>>>({});
+  const [enviando, setEnviando] = useState(false);
+  const [error, setError] = useState("");
+
+  const paciente = orden.pacienteId;
+  const nombrePaciente = `${paciente.nombres} ${paciente.apellidos}`;
+
+  // Items que tienen preguntas protocolares
+  const itemsConPreguntas = orden.items
+    .map((item, idx) => {
+      const ex = typeof item.examenId === "object" ? item.examenId : null;
+      return { item, ex, idx };
+    })
+    .filter(({ ex }) => ex && ex.preguntasProtocolares && ex.preguntasProtocolares.length > 0);
+
+  const setRespuesta = (itemIdx: number, preguntaId: string, valor: string) => {
+    setRespuestas((prev) => ({
+      ...prev,
+      [itemIdx]: { ...(prev[itemIdx] ?? {}), [preguntaId]: valor },
+    }));
+    setError("");
+  };
+
+  const validar = (): string | null => {
+    for (const { ex, idx } of itemsConPreguntas) {
+      if (!ex?.preguntasProtocolares) continue;
+      for (const p of ex.preguntasProtocolares) {
+        if (p.obligatoria && !respuestas[idx]?.[p.id]?.trim()) {
+          return `Responda todas las preguntas obligatorias para "${ex.nombre}"`;
+        }
+      }
+    }
+    return null;
+  };
+
+  const handleConfirmar = async () => {
+    const err = validar();
+    if (err) { setError(err); return; }
+
+    const respuestasPayload = itemsConPreguntas
+      .map(({ ex, idx }) => {
+        const preguntasRespondidas = (ex?.preguntasProtocolares ?? [])
+          .filter((p) => respuestas[idx]?.[p.id] !== undefined)
+          .map((p) => ({
+            preguntaId: p.id,
+            preguntaTexto: p.texto,
+            respuesta: respuestas[idx][p.id],
+          }));
+        return preguntasRespondidas.length > 0
+          ? { itemIndex: idx, respuestas: preguntasRespondidas }
+          : null;
+      })
+      .filter(Boolean) as { itemIndex: number; respuestas: { preguntaId: string; preguntaTexto: string; respuesta: string }[] }[];
+
+    setEnviando(true);
+    try {
+      await ExamenService.registrarAsistencia(orden._id, respuestasPayload);
+      onGuardado();
+      onCerrar();
+      Swal.fire({
+        icon: "success",
+        title: "Asistencia registrada",
+        text: "El paciente ha sido registrado como presente. La orden pasa a análisis.",
+        timer: 2500,
+        showConfirmButton: false,
+        toast: true,
+        position: "top-end",
+      });
+    } catch (e: any) {
+      setError(e?.response?.data?.message ?? "No se pudo registrar la asistencia.");
+    } finally {
+      setEnviando(false);
+    }
+  };
+
+  return (
+    <div className="lab-modal-overlay" onClick={onCerrar}>
+      <div
+        className="lab-modal-card"
+        style={{ maxWidth: 600 }}
+        onClick={(e) => e.stopPropagation()}
+      >
+        {/* Header */}
+        <div className="lab-modal-header">
+          <h3>Preguntas Protocolares — Registro de Asistencia</h3>
+          <p className="lab-modal-paciente">
+            Orden <strong>{orden.codigoOrden}</strong> — {nombrePaciente} · DNI {paciente.dni}
+          </p>
+        </div>
+
+        {/* Body */}
+        <div className="lab-modal-body" style={{ padding: "1.25rem 1.5rem", maxHeight: "65vh", overflowY: "auto" }}>
+          {itemsConPreguntas.length === 0 ? (
+            <div className="lab-citalab-nota">
+              <UserCheck size={14} />
+              <span>
+                Ninguno de los exámenes de esta orden requiere preguntas protocolares.
+                Confirme la asistencia del paciente.
+              </span>
+            </div>
+          ) : (
+            <div style={{ display: "flex", flexDirection: "column", gap: "1.5rem" }}>
+              {itemsConPreguntas.map(({ ex, idx }) => (
+                <div key={idx} className="lab-protocolar-seccion">
+                  <div className="lab-protocolar-examen-header">
+                    <FlaskConical size={14} />
+                    <strong>{ex!.nombre}</strong>
+                    <span className="lab-tipo-chip" style={{ fontSize: "0.72rem" }}>
+                      {TIPO_EXAMEN_LABEL[ex!.tipo] ?? ex!.tipo}
+                    </span>
+                  </div>
+
+                  {ex!.instrucciones && (
+                    <div className="lab-protocolar-instrucciones">
+                      <span>{ex!.instrucciones}</span>
+                    </div>
+                  )}
+
+                  <div style={{ display: "flex", flexDirection: "column", gap: "0.75rem", marginTop: "0.75rem" }}>
+                    {ex!.preguntasProtocolares!.map((p) => (
+                      <div key={p.id} className="lab-protocolar-pregunta">
+                        <label className="lab-protocolar-label">
+                          {p.texto}
+                          {p.obligatoria && <span className="lab-protocolar-req">*</span>}
+                        </label>
+
+                        {p.tipo === "BOOLEAN" && (
+                          <div className="lab-protocolar-opciones">
+                            {["Sí", "No"].map((op) => (
+                              <button
+                                key={op}
+                                className={`lab-protocolar-opcion-btn ${
+                                  respuestas[idx]?.[p.id] === op ? "selected" : ""
+                                }`}
+                                onClick={() => setRespuesta(idx, p.id, op)}
+                              >
+                                {op}
+                              </button>
+                            ))}
+                          </div>
+                        )}
+
+                        {p.tipo === "TEXTO" && (
+                          <input
+                            className="lab-filtro-input"
+                            placeholder="Respuesta..."
+                            value={respuestas[idx]?.[p.id] ?? ""}
+                            onChange={(e) => setRespuesta(idx, p.id, e.target.value)}
+                          />
+                        )}
+
+                        {p.tipo === "SELECCION" && p.opciones && (
+                          <select
+                            className="lab-filtro-input"
+                            value={respuestas[idx]?.[p.id] ?? ""}
+                            onChange={(e) => setRespuesta(idx, p.id, e.target.value)}
+                          >
+                            <option value="">Seleccione...</option>
+                            {p.opciones.map((op) => (
+                              <option key={op} value={op}>{op}</option>
+                            ))}
+                          </select>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+
+          {error && (
+            <p className="lab-modal-error" style={{ marginTop: "0.75rem" }}>
+              {error}
+            </p>
+          )}
+        </div>
+
+        {/* Footer */}
+        <div className="lab-modal-footer">
+          <button className="lab-btn lab-btn--cancel" onClick={onCerrar} disabled={enviando}>
+            Cancelar
+          </button>
+          <button
+            className="lab-btn lab-btn--primary"
+            onClick={handleConfirmar}
+            disabled={enviando}
+          >
+            {enviando ? (
+              <>
+                <RefreshCw size={14} style={{ marginRight: 6, animation: "spin 1s linear infinite" }} />
+                Registrando…
+              </>
+            ) : (
+              <>
+                <UserCheck size={14} style={{ marginRight: 6 }} />
+                Confirmar asistencia
+              </>
+            )}
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+};
+
 // ─── Fila de orden expandible ─────────────────────────────────
 interface FilaOrdenProps {
   orden: OrdenExamen;
@@ -640,6 +855,7 @@ const FilaOrden = ({ orden, tabActivo, onRefresh }: FilaOrdenProps) => {
   const [cargando, setCargando] = useState(false);
   const [modalResultados, setModalResultados] = useState(false);
   const [modalGenerarOrden, setModalGenerarOrden] = useState(false);
+  const [modalAsistencia, setModalAsistencia] = useState(false);
 
   const paciente = orden.pacienteId;
   const doctor = orden.doctorId;
@@ -648,47 +864,10 @@ const FilaOrden = ({ orden, tabActivo, onRefresh }: FilaOrdenProps) => {
   const iniciales =
     (paciente.nombres[0] ?? "") + (paciente.apellidos[0] ?? "");
 
-  // ── Acción: Registrar asistencia ──
-  const handleRegistrarAsistencia = async (e: React.MouseEvent) => {
+  // ── Acción: Registrar asistencia → abre modal de preguntas protocolares ──
+  const handleRegistrarAsistencia = (e: React.MouseEvent) => {
     e.stopPropagation();
-    const confirmado = await Swal.fire({
-      title: "Registrar asistencia",
-      html: `
-        <p style="margin:0 0 0.5rem">Confirmá la asistencia del paciente:</p>
-        <p style="margin:0;font-weight:600">${nombrePaciente}</p>
-        <p style="margin:0.25rem 0 0;font-size:0.875rem;color:#6b7280">Orden: ${orden.codigoOrden ?? ""}</p>
-      `,
-      icon: "question",
-      showCancelButton: true,
-      confirmButtonColor: "var(--primary)",
-      cancelButtonColor: "#6b7280",
-      confirmButtonText: "Confirmar asistencia",
-      cancelButtonText: "Cancelar",
-    });
-    if (!confirmado.isConfirmed) return;
-
-    setCargando(true);
-    try {
-      await ExamenService.registrarAsistencia(orden._id);
-      onRefresh();
-      Swal.fire({
-        icon: "success",
-        title: "Asistencia registrada",
-        text: "El paciente ha sido registrado como presente. La orden pasa a análisis.",
-        timer: 2500,
-        showConfirmButton: false,
-        toast: true,
-        position: "top-end",
-      });
-    } catch (err: any) {
-      Swal.fire({
-        icon: "error",
-        title: "Error",
-        text: err?.response?.data?.message ?? "No se pudo registrar la asistencia.",
-      });
-    } finally {
-      setCargando(false);
-    }
+    setModalAsistencia(true);
   };
 
   return (
@@ -969,12 +1148,21 @@ const FilaOrden = ({ orden, tabActivo, onRefresh }: FilaOrdenProps) => {
           onGuardado={onRefresh}
         />
       )}
+
+      {/* Modal preguntas protocolares + asistencia */}
+      {modalAsistencia && (
+        <ModalAsistencia
+          orden={orden}
+          onCerrar={() => setModalAsistencia(false)}
+          onGuardado={onRefresh}
+        />
+      )}
     </>
   );
 };
 
 // ─── Página principal ─────────────────────────────────────────
-export default function Laboratorio() {
+export default function LaboratorioImagen() {
   const [tabActivo, setTabActivo] = useState<EstadoOrden>("PENDIENTE");
   const [ordenes, setOrdenes] = useState<OrdenExamen[]>([]);
   const [conteos, setConteos] = useState<Partial<Record<EstadoOrden, number>>>({});

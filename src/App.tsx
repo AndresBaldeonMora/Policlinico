@@ -8,9 +8,8 @@ import ListaMedicos from "./pages/ListaMedicos/ListaMedicos";
 import ListaPacientes from "./pages/ListaPacientes/ListaPacientes";
 import Calendario from "./pages/Calendario/Calendario";
 import PerfilCita from "./pages/PerfilCita/PerfilCita";
-import Dashboard from "./pages/Dashboard/Dashboard";
 import Login from "./pages/Login/Login";
-import Laboratorio from "./pages/Laboratorio/Laboratorio";
+import LaboratorioImagen from "./pages/Laboratorio/Laboratorio";
 import Historial from "./pages/HistorialPaciente/Historial";
 import ImprimirOrden from "./pages/Laboratorio/ImprimirOrden";
 import CalendarioMedico from "./pages/Calendario/CalendarioMedico";
@@ -39,7 +38,7 @@ function App() {
               path="/"
               element={
                 <ProtectedRoute roles={["RECEPCIONISTA"]}>
-                  <Dashboard />
+                  <Calendario />
                 </ProtectedRoute>
               }
             />
@@ -109,10 +108,10 @@ function App() {
             />
 
             <Route
-              path="/laboratorio"
+              path="/laboratorio-imagen"
               element={
                 <ProtectedRoute roles={["RECEPCIONISTA"]}>
-                  <Laboratorio />
+                  <LaboratorioImagen />
                 </ProtectedRoute>
               }
             />

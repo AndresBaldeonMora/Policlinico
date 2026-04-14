@@ -5,7 +5,7 @@ import {
   ChevronDown, ChevronUp, Clock, CheckCircle, XCircle, AlertTriangle,
 } from "lucide-react";
 import { PacienteApiService, type PacienteTransformado } from "../../services/paciente.service";
-import { TIPO_EXAMEN_LABEL, type ExamenLaboratorio, type ItemOrden } from "../../services/examen.service";
+import { TIPO_EXAMEN_LABEL, type ExamenLaboratorioImagen, type ItemOrden } from "../../services/examen.service";
 import "./Historial.css";
 
 const formatFecha = (iso: string) =>
@@ -254,7 +254,7 @@ const Historial = () => {
                               </thead>
                               <tbody>
                                 {item.items?.map((it: ItemOrden, i: number) => {
-                                  const ex = typeof it.examenId === "object" ? (it.examenId as ExamenLaboratorio) : null;
+                                  const ex = typeof it.examenId === "object" ? (it.examenId as ExamenLaboratorioImagen) : null;
                                   return (
                                     <tr key={i}>
                                       <td>{ex?.nombre ?? "—"}</td>

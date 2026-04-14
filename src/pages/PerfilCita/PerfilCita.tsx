@@ -21,7 +21,7 @@ import { perfilCitaReducer, initialState } from "./PerfilCitaReducer";
 import { useAuth } from "../../hooks/userAuth";
 import type {
   OrdenExamen,
-  ExamenLaboratorio,
+  ExamenLaboratorioImagen,
 } from "../../services/examen.service";
 import {
   ExamenService,
@@ -399,7 +399,7 @@ const PerfilCita = () => {
       {tabActiva === "examenes" && (
         <div className="card-clinica perfil-examenes">
           <div className="card-header">
-            <span>Exámenes de Laboratorio</span>
+            <span>Exámenes de Laboratorio / Imagen</span>
             {user?.rol === "MEDICO" && (
               <button
                 className="btn btn-primary btn-sm"
@@ -496,7 +496,7 @@ const PerfilCita = () => {
                         {orden.items.map((item, i) => {
                           const ex =
                             typeof item.examenId === "object"
-                              ? (item.examenId as ExamenLaboratorio)
+                              ? (item.examenId as ExamenLaboratorioImagen)
                               : null;
                           return (
                             <tr key={i}>
@@ -585,7 +585,7 @@ const PerfilCita = () => {
                               {orden.items.map((item, i) => {
                                 const ex =
                                   typeof item.examenId === "object"
-                                    ? (item.examenId as ExamenLaboratorio)
+                                    ? (item.examenId as ExamenLaboratorioImagen)
                                     : null;
                                 return (
                                   <tr key={i}>
