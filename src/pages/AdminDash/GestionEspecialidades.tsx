@@ -15,7 +15,7 @@ interface ModalState {
   abierto: boolean;
   especialidad: Especialidad | null;
   nombre: string;
-  tieneLaboratorio: boolean;
+  tieneLaboratorioImagen: boolean;
   examenesSeleccionados: string[];
   todosExamenes: ExamenResumen[];
   cargandoExamenes: boolean;
@@ -44,7 +44,7 @@ function modalReducer(state: ModalState, action: ModalAction): ModalState {
         abierto: true,
         especialidad: null,
         nombre: "",
-        tieneLaboratorio: false,
+        tieneLaboratorioImagen: false,
         examenesSeleccionados: [],
         todosExamenes: state.todosExamenes,
         cargandoExamenes: false,
@@ -56,7 +56,7 @@ function modalReducer(state: ModalState, action: ModalAction): ModalState {
         abierto: true,
         especialidad: action.especialidad,
         nombre: action.especialidad.nombre,
-        tieneLaboratorio: action.especialidad.tieneLaboratorio ?? false,
+        tieneLaboratorioImagen: action.especialidad.tieneLaboratorioImagen ?? false,
         examenesSeleccionados: action.especialidad.examenes?.map((e) => e._id) ?? [],
         todosExamenes: state.todosExamenes,
         cargandoExamenes: false,
@@ -70,7 +70,7 @@ function modalReducer(state: ModalState, action: ModalAction): ModalState {
     case "SET_LAB":
       return {
         ...state,
-        tieneLaboratorio: action.value,
+        tieneLaboratorioImagen: action.value,
         examenesSeleccionados: action.value ? state.examenesSeleccionados : [],
       };
     case "SET_EXAMENES_CATALOGO":
@@ -114,7 +114,7 @@ const GestionarEspecialidades = () => {
     abierto: false,
     especialidad: null,
     nombre: "",
-    tieneLaboratorio: false,
+    tieneLaboratorioImagen: false,
     examenesSeleccionados: [],
     todosExamenes: [],
     cargandoExamenes: false,
@@ -169,8 +169,8 @@ const GestionarEspecialidades = () => {
     try {
       const payload = {
         nombre: modal.nombre.trim(),
-        tieneLaboratorio: modal.tieneLaboratorio,
-        examenes: modal.tieneLaboratorio ? modal.examenesSeleccionados : [],
+        tieneLaboratorioImagen: modal.tieneLaboratorioImagen,
+        examenes: modal.tieneLaboratorioImagen ? modal.examenesSeleccionados : [],
       };
       if (modal.especialidad) {
         const actualizada = await EspecialidadApiService.actualizar(modal.especialidad.id, payload);
@@ -254,7 +254,7 @@ const GestionarEspecialidades = () => {
               <thead>
                 <tr>
                   <th>Especialidad</th>
-                  <th style={{ width: 150, textAlign: "center" }}>Laboratorio</th>
+                  <th style={{ width: 150, textAlign: "center" }}>Lab. / Imagen</th>
                   <th style={{ width: 180, textAlign: "center" }}>Exámenes</th>
                   <th style={{ width: 120, textAlign: "center" }}>Acciones</th>
                 </tr>
@@ -272,12 +272,12 @@ const GestionarEspecialidades = () => {
                         </div>
                       </td>
                       <td style={{ textAlign: "center", verticalAlign: "middle" }}>
-                        <span className={`ge-badge ${e.tieneLaboratorio ? "ge-badge--yes" : "ge-badge--no"}`}>
-                          {e.tieneLaboratorio ? "Sí" : "No"}
+                        <span className={`ge-badge ${e.tieneLaboratorioImagen ? "ge-badge--yes" : "ge-badge--no"}`}>
+                          {e.tieneLaboratorioImagen ? "Sí" : "No"}
                         </span>
                       </td>
                       <td style={{ textAlign: "center", verticalAlign: "middle" }}>
-                        {e.tieneLaboratorio ? (
+                        {e.tieneLaboratorioImagen ? (
                           <span className="ge-examenes-count">
                             {e.examenes?.length ?? 0} examen{(e.examenes?.length ?? 0) !== 1 ? "es" : ""}
                           </span>
@@ -370,23 +370,23 @@ const GestionarEspecialidades = () => {
                 </div>
 
                 <div className="pm-field">
-                  <label className="pm-label">¿Tiene laboratorio?</label>
+                  <label className="pm-label">¿Tiene laboratorio / imagen?</label>
                   <div className="ge-toggle-wrap">
                     <button
                       type="button"
-                      className={`ge-toggle ${modal.tieneLaboratorio ? "ge-toggle--on" : ""}`}
-                      onClick={() => dispatch({ type: "SET_LAB", value: !modal.tieneLaboratorio })}
+                      className={`ge-toggle ${modal.tieneLaboratorioImagen ? "ge-toggle--on" : ""}`}
+                      onClick={() => dispatch({ type: "SET_LAB", value: !modal.tieneLaboratorioImagen })}
                       disabled={modal.loading}
                     >
                       <span className="ge-toggle-knob" />
                     </button>
                     <span className="ge-toggle-label">
-                      {modal.tieneLaboratorio ? "Sí tiene laboratorio" : "No tiene laboratorio"}
+                      {modal.tieneLaboratorioImagen ? "Sí tiene lab. / imagen" : "No tiene lab. / imagen"}
                     </span>
                   </div>
                 </div>
 
-                {modal.tieneLaboratorio && (
+                {modal.tieneLaboratorioImagen && (
                   <div className="pm-field">
                     <label className="pm-label">
                       Exámenes asociados

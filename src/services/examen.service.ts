@@ -9,18 +9,42 @@ export type TipoExamen =
   | "MICROBIOLOGIA"
   | "INMUNOLOGIA"
   | "HORMONAS"
-  | "IMAGEN"
+  | "RADIOGRAFIA"
+  | "ECOGRAFIA"
+  | "TOMOGRAFIA"
+  | "RESONANCIA"
+  | "ELECTROCARDIOGRAMA"
   | "OTRO";
 
-export interface ExamenLaboratorio {
+export type TipoPregunta = "BOOLEAN" | "TEXTO" | "SELECCION";
+
+export interface PreguntaProtocolar {
+  id: string;
+  texto: string;
+  tipo: TipoPregunta;
+  obligatoria: boolean;
+  opciones?: string[];
+}
+
+export interface RespuestaProtocolar {
+  preguntaId: string;
+  preguntaTexto: string;
+  respuesta: string;
+}
+
+export interface ExamenLaboratorioImagen {
   _id: string;
   nombre: string;
   tipo: TipoExamen;
   descripcion?: string;
   instrucciones?: string;
+  preguntasProtocolares: PreguntaProtocolar[];
   validezDias?: number;
   activo: boolean;
 }
+
+// Alias de compatibilidad
+export type ExamenLaboratorio = ExamenLaboratorioImagen;
 
 // ── Estados del ciclo de vida de una orden ──────────────────
 export type EstadoOrden =
@@ -36,6 +60,7 @@ export type EstadoItem = "PENDIENTE" | "COMPLETADO";
 export interface ItemOrden {
   examenId: ExamenLaboratorio | string;
   observaciones?: string;
+  respuestasProtocolares?: RespuestaProtocolar[];
   valorResultado?: string;
   unidadResultado?: string;
   archivoUrl?: string;
@@ -143,9 +168,13 @@ export class ExamenService {
 
   // ─── Flujo clínico: Registrar asistencia del paciente ──────
   // EN_PROCESO → ASISTIDO
-  static async registrarAsistencia(ordenId: string): Promise<OrdenExamen> {
+  static async registrarAsistencia(
+    ordenId: string,
+    respuestasProtocolares?: { itemIndex: number; respuestas: RespuestaProtocolar[] }[]
+  ): Promise<OrdenExamen> {
     const res = await api.patch<{ success: boolean; data: OrdenExamen }>(
-      `/ordenes/${ordenId}/registrar-asistencia`
+      `/ordenes/${ordenId}/registrar-asistencia`,
+      respuestasProtocolares ? { respuestasProtocolares } : {}
     );
     return res.data.data;
   }
@@ -243,13 +272,34 @@ export class ExamenService {
 }
 
 export const TIPO_EXAMEN_LABEL: Record<TipoExamen, string> = {
-  HEMATOLOGIA:   "Hematología",
-  BIOQUIMICA:    "Bioquímica",
-  ORINA:         "Orina",
-  HECES:         "Heces",
-  MICROBIOLOGIA: "Microbiología",
-  INMUNOLOGIA:   "Inmunología / Serología",
-  HORMONAS:      "Hormonas",
-  IMAGEN:        "Imagen / Ecografía",
-  OTRO:          "Otro",
+  HEMATOLOGIA:       "Hematología",
+  BIOQUIMICA:        "Bioquímica",
+  ORINA:             "Orina",
+  HECES:             "Heces",
+  MICROBIOLOGIA:     "Microbiología",
+  INMUNOLOGIA:       "Inmunología / Serología",
+  HORMONAS:          "Hormonas",
+  RADIOGRAFIA:       "Radiografía",
+  ECOGRAFIA:         "Ecografía / Ultrasound",
+  TOMOGRAFIA:        "Tomografía",
+  RESONANCIA:        "Resonancia Magnética",
+  ELECTROCARDIOGRAMA:"Electrocardiograma",
+  OTRO:              "Otro",
+};
+
+// Agrupa los tipos en categorías visuales para la UI
+export const TIPO_EXAMEN_CATEGORIA: Record<TipoExamen, "LABORATORIO" | "IMAGEN"> = {
+  HEMATOLOGIA:       "LABORATORIO",
+  BIOQUIMICA:        "LABORATORIO",
+  ORINA:             "LABORATORIO",
+  HECES:             "LABORATORIO",
+  MICROBIOLOGIA:     "LABORATORIO",
+  INMUNOLOGIA:       "LABORATORIO",
+  HORMONAS:          "LABORATORIO",
+  RADIOGRAFIA:       "IMAGEN",
+  ECOGRAFIA:         "IMAGEN",
+  TOMOGRAFIA:        "IMAGEN",
+  RESONANCIA:        "IMAGEN",
+  ELECTROCARDIOGRAMA:"IMAGEN",
+  OTRO:              "LABORATORIO",
 };

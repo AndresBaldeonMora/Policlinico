@@ -25,7 +25,7 @@ export interface DoctorDTO {
   _id: string;
   nombres: string;
   apellidos: string;
-  especialidadId?: { _id: string; nombre: string; tieneLaboratorio?: boolean } | string;
+  especialidadId?: { _id: string; nombre: string; tieneLaboratorioImagen?: boolean } | string;
 }
 
 export interface Cita {

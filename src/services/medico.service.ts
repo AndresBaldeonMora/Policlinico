@@ -41,7 +41,7 @@ export interface MedicoPerfil {
   especialidadId: {
     _id: string;
     nombre: string;
-    tieneLaboratorio: boolean;
+    tieneLaboratorioImagen: boolean;
   };
   cmp?: string;
   cvUrl?: string;

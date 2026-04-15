@@ -7,7 +7,6 @@ import {
   ClipboardList,
   Stethoscope,
   Users,
-  LayoutDashboard,
   ChevronRight,
   PanelLeftClose,
   PanelLeftOpen,
@@ -24,13 +23,12 @@ const Sidebar = () => {
 
   // pequeña correcion : de adminMenu a recepcionistaMenu 
   const recepcionistaMenu  = [
-    { path: "/", label: "Inicio", icon: LayoutDashboard, description: "Panel de inicio" },
     { path: "/calendario", label: "Calendario", icon: Calendar, description: "Vista principal de citas" },
     { path: "/reserva-cita", label: "Solicitar Cita", icon: CalendarPlus, description: "Agendar nueva cita" },
     { path: "/lista-citas", label: "Gestion de Citas", icon: ClipboardList, description: "Administrar citas" },
     { path: "/medicos", label: "Medicos", icon: Stethoscope, description: "Directorio de doctores" },
     { path: "/pacientes",    label: "Pacientes",   icon: Users,         description: "Listado de pacientes" },
-    { path: "/laboratorio", label: "Laboratorio", icon: FlaskConical,  description: "Órdenes de exámenes" },
+    { path: "/laboratorio-imagen", label: "Laboratorio / Imagen", icon: FlaskConical,  description: "Órdenes de exámenes e imagen" },
   ];
 
   const medicoMenu = [
