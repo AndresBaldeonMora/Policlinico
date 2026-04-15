@@ -1,5 +1,14 @@
 import api from "./api";
 
+export interface MedicamentoPrescrito {
+  medicamentoId: string;
+  nombre: string;
+  dosis: string;
+  frecuencia: string;
+  duracion: string;
+  observaciones?: string;
+}
+
 export interface CitaMedico {
   _id: string;
   pacienteId: {
@@ -14,8 +23,13 @@ export interface CitaMedico {
   };
   fecha: string;
   hora: string;
-  estado: "PENDIENTE" | "ATENDIDA" | "CANCELADA";
+  tipo?: string;
+  estado: "PENDIENTE" | "ATENDIDA" | "CANCELADA" | "REPROGRAMADA";
   notas?: string;
+  notasClinicas?: string;
+  diagnostico?: string;
+  tratamiento?: string;
+  medicamentosPrescritos?: MedicamentoPrescrito[];
 }
 
 export interface MedicoPerfil {
@@ -73,6 +87,22 @@ export class MedicoApiService {
       estado: estadoActual,
       notas,
     });
+    return response.data.data;
+  }
+
+  static async guardarNotasClinicas(
+    citaId: string,
+    datos: { notasClinicas: string; diagnostico: string; tratamiento: string }
+  ): Promise<CitaMedico> {
+    const response = await api.patch(`/medico/citas/${citaId}/notas`, datos);
+    return response.data.data;
+  }
+
+  static async prescribirMedicamentos(
+    citaId: string,
+    medicamentos: MedicamentoPrescrito[]
+  ): Promise<CitaMedico> {
+    const response = await api.patch(`/medico/citas/${citaId}/medicamentos`, { medicamentos });
     return response.data.data;
   }
 }

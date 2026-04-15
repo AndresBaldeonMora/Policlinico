@@ -14,6 +14,7 @@ import Laboratorio from "./pages/Laboratorio/Laboratorio";
 import Historial from "./pages/HistorialPaciente/Historial";
 import ImprimirOrden from "./pages/Laboratorio/ImprimirOrden";
 import CalendarioMedico from "./pages/Calendario/CalendarioMedico";
+import MedicoCitas from "./pages/MedicoCitas/MedicoCitas";
 
 // Páginas del administrador
 import AdminDashboard      from "./pages/AdminDash/AdminDashboard";
@@ -93,7 +94,7 @@ function App() {
             <Route
               path="/pacientes"
               element={
-                <ProtectedRoute roles={["RECEPCIONISTA"]}>
+                <ProtectedRoute roles={["RECEPCIONISTA", "MEDICO"]}>
                   <ListaPacientes />
                 </ProtectedRoute>
               }
@@ -131,6 +132,15 @@ function App() {
               element={
                 <ProtectedRoute roles={["MEDICO"]}>
                   <CalendarioMedico />
+                </ProtectedRoute>
+              }
+            />
+
+            <Route
+              path="/medico/citas"
+              element={
+                <ProtectedRoute roles={["MEDICO"]}>
+                  <MedicoCitas />
                 </ProtectedRoute>
               }
             />

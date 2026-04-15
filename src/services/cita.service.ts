@@ -125,4 +125,25 @@ export class CitaApiService {
       throw new Error(response.data.message || "Error al cambiar estado de la cita");
     }
   }
+
+  static async marcarAsistencia(citaId: string): Promise<CitaTransformada> {
+    const response = await api.patch<{ success: boolean; data: CitaTransformada; message?: string }>(
+      `/citas/${citaId}/marcar-asistencia`
+    );
+    if (!response.data.success) {
+      throw new Error(response.data.message || "Error al confirmar asistencia");
+    }
+    return response.data.data;
+  }
+
+  static async cancelar(citaId: string, motivoCancelacion: string): Promise<CitaTransformada> {
+    const response = await api.put<{ success: boolean; data: CitaTransformada; message?: string }>(
+      `/citas/${citaId}/cancelar`,
+      { motivoCancelacion }
+    );
+    if (!response.data.success) {
+      throw new Error(response.data.message || "Error al cancelar la cita");
+    }
+    return response.data.data;
+  }
 }

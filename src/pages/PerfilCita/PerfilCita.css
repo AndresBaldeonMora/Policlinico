@@ -474,3 +474,369 @@
   align-items: center;
   gap: 0.4rem;
 }
+
+/* ── Barra de acciones de cita ── */
+.perfil-acciones {
+  display: flex;
+  gap: 0.75rem;
+  align-items: center;
+  padding: 0.75rem 1.25rem;
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  margin-bottom: 1rem;
+  flex-wrap: wrap;
+}
+
+.perfil-acciones .badge-estado-cita {
+  margin-left: auto;
+  padding: 0.25rem 0.75rem;
+  border-radius: var(--radius-sm);
+  font-size: 0.8rem;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+}
+
+.badge-estado-cita--pendiente    { background: var(--warning-bg);  color: #92400e; }
+.badge-estado-cita--atendida     { background: var(--success-bg);  color: #065f46; }
+.badge-estado-cita--cancelada    { background: var(--error-bg);    color: #991b1b; }
+.badge-estado-cita--reprogramada { background: var(--accent-lighter); color: var(--accent); }
+
+/* ── Formulario de Notas Clínicas ── */
+.notas-clinicas-form {
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+}
+
+.notas-form-grupo {
+  display: flex;
+  flex-direction: column;
+  gap: 0.3rem;
+}
+
+.notas-form-grupo label {
+  font-size: 0.82rem;
+  font-weight: 700;
+  color: var(--text-secondary);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.notas-form-input,
+.notas-form-textarea {
+  width: 100%;
+  padding: 0.55rem 0.75rem;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  font-size: 0.9rem;
+  font-family: inherit;
+  background: var(--bg-body);
+  color: var(--text-primary);
+  transition: border-color 0.15s var(--ease);
+  box-sizing: border-box;
+}
+
+.notas-form-input:focus,
+.notas-form-textarea:focus {
+  outline: none;
+  border-color: var(--primary);
+  box-shadow: 0 0 0 3px rgba(5, 150, 105, 0.1);
+}
+
+.notas-form-textarea {
+  resize: vertical;
+  min-height: 80px;
+}
+
+.notas-form-separador {
+  border: none;
+  border-top: 1px solid var(--border);
+  margin: 0;
+}
+
+/* ── Sección de Medicamentos Prescritos ── */
+.meds-seccion {
+  display: flex;
+  flex-direction: column;
+  gap: 0.875rem;
+  padding-top: 1rem;
+  border-top: 1px solid var(--border);
+}
+
+.meds-seccion-titulo {
+  font-size: 0.82rem;
+  font-weight: 700;
+  color: var(--text-secondary);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  margin: 0;
+}
+
+.meds-buscador {
+  position: relative;
+}
+
+.meds-dropdown {
+  position: absolute;
+  top: calc(100% + 4px);
+  left: 0;
+  right: 0;
+  z-index: 50;
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-md);
+  max-height: 200px;
+  overflow-y: auto;
+}
+
+.meds-dropdown-item {
+  display: block;
+  width: 100%;
+  padding: 0.6rem 0.875rem;
+  text-align: left;
+  border: none;
+  background: transparent;
+  cursor: pointer;
+  font-size: 0.875rem;
+  color: var(--text-primary);
+  font-family: inherit;
+  border-bottom: 1px solid var(--border-light);
+  transition: background 0.1s var(--ease);
+}
+
+.meds-dropdown-item:last-child { border-bottom: none; }
+.meds-dropdown-item:hover { background: var(--bg-hover); }
+
+.meds-dropdown-item-nombre { font-weight: 600; }
+.meds-dropdown-item-presentacion { font-size: 0.78rem; color: var(--text-muted); }
+
+.meds-form-nueva {
+  background: var(--info-bg);
+  border: 1px solid var(--secondary-lighter);
+  border-radius: var(--radius-md);
+  padding: 0.875rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.625rem;
+}
+
+.meds-form-nueva-titulo {
+  font-size: 0.85rem;
+  font-weight: 700;
+  color: var(--secondary);
+  margin: 0;
+}
+
+.meds-form-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr;
+  gap: 0.5rem;
+}
+
+.meds-form-campo label {
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: var(--text-muted);
+  display: block;
+  margin-bottom: 3px;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+}
+
+.meds-form-input-sm {
+  width: 100%;
+  padding: 0.4rem 0.5rem;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  font-size: 0.85rem;
+  font-family: inherit;
+  background: var(--bg-card);
+  color: var(--text-primary);
+  transition: border-color 0.15s var(--ease);
+  box-sizing: border-box;
+}
+
+.meds-form-input-sm:focus {
+  outline: none;
+  border-color: var(--primary);
+}
+
+.meds-form-obs { margin-bottom: 0.5rem; }
+
+/* Tabla de medicamentos prescritos */
+.meds-tabla-wrapper {
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  overflow: hidden;
+}
+
+.meds-tabla {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.85rem;
+}
+
+.meds-tabla thead tr {
+  background: var(--bg-body);
+  border-bottom: 1px solid var(--border);
+}
+
+.meds-tabla th {
+  padding: 0.5rem 0.75rem;
+  text-align: left;
+  font-size: 0.72rem;
+  font-weight: 700;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.meds-tabla td {
+  padding: 0.5rem 0.75rem;
+  border-bottom: 1px solid var(--border-light);
+  color: var(--text-primary);
+}
+
+.meds-tabla tr:last-child td { border-bottom: none; }
+
+.meds-tabla-nombre { font-weight: 600; }
+
+.meds-tabla-quitar {
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: var(--error);
+  font-size: 1.1rem;
+  line-height: 1;
+  padding: 0.1rem 0.25rem;
+  border-radius: var(--radius-sm);
+  transition: background 0.1s;
+}
+
+.meds-tabla-quitar:hover { background: var(--error-bg); }
+
+/* ── Tabla de MedicoCitas ── */
+.medico-citas-page { padding: 1.5rem; max-width: 1200px; }
+
+.medico-citas-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1.5rem;
+}
+
+.medico-citas-header h2 {
+  margin: 0;
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: var(--text-primary);
+}
+
+.medico-citas-count {
+  font-size: 0.85rem;
+  color: var(--text-muted);
+}
+
+.medico-citas-filtros {
+  display: flex;
+  gap: 0.75rem;
+  margin-bottom: 1.5rem;
+  flex-wrap: wrap;
+}
+
+.medico-citas-filtros input,
+.medico-citas-filtros select {
+  padding: 0.5rem 0.75rem;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  font-size: 0.9rem;
+  font-family: inherit;
+  background: var(--bg-card);
+  color: var(--text-primary);
+  transition: border-color 0.15s var(--ease);
+}
+
+.medico-citas-filtros input {
+  flex: 1;
+  min-width: 200px;
+}
+
+.medico-citas-filtros input:focus,
+.medico-citas-filtros select:focus {
+  outline: none;
+  border-color: var(--primary);
+}
+
+.medico-citas-tabla-wrapper {
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  overflow: hidden;
+  background: var(--bg-card);
+}
+
+.medico-citas-tabla {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.medico-citas-tabla thead tr {
+  background: var(--bg-body);
+  border-bottom: 2px solid var(--border);
+}
+
+.medico-citas-tabla th {
+  padding: 0.75rem 1rem;
+  text-align: left;
+  font-size: 0.75rem;
+  font-weight: 700;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.medico-citas-tabla td {
+  padding: 0.75rem 1rem;
+  border-bottom: 1px solid var(--border-light);
+  color: var(--text-primary);
+  font-size: 0.875rem;
+}
+
+.medico-citas-tabla tr:last-child td { border-bottom: none; }
+.medico-citas-tabla tr:hover td { background: var(--bg-hover); }
+
+.medico-citas-tabla .td-muted { color: var(--text-muted); }
+
+.medico-citas-vacio {
+  text-align: center;
+  padding: 3rem;
+  color: var(--text-muted);
+  font-size: 0.9rem;
+}
+
+/* ── Dark mode overrides para nuevas secciones ── */
+[data-theme="dark"] .perfil-acciones         { background: var(--bg-card); border-color: var(--border); }
+[data-theme="dark"] .meds-form-nueva         { background: rgba(14, 165, 233, 0.08); border-color: rgba(14, 165, 233, 0.2); }
+[data-theme="dark"] .meds-dropdown           { background: var(--bg-card); }
+[data-theme="dark"] .meds-tabla-wrapper      { border-color: var(--border); }
+[data-theme="dark"] .meds-tabla thead tr     { background: var(--bg-body); }
+[data-theme="dark"] .medico-citas-tabla-wrapper { background: var(--bg-card); }
+[data-theme="dark"] .medico-citas-tabla thead tr { background: var(--bg-body); }
+[data-theme="dark"] .notas-form-input,
+[data-theme="dark"] .notas-form-textarea,
+[data-theme="dark"] .meds-form-input-sm      { background: var(--bg-body); border-color: var(--border); color: var(--text-primary); }
+[data-theme="dark"] .badge-estado-cita--pendiente    { background: rgba(245,158,11,0.15);  color: #fcd34d; }
+[data-theme="dark"] .badge-estado-cita--atendida     { background: rgba(16,185,129,0.15);  color: #6ee7b7; }
+[data-theme="dark"] .badge-estado-cita--cancelada    { background: rgba(239,68,68,0.15);   color: #fca5a5; }
+[data-theme="dark"] .badge-estado-cita--reprogramada { background: rgba(37,99,235,0.15);   color: #93c5fd; }
+[data-theme="dark"] .perfil-orden-estado--pendiente  { background: rgba(245,158,11,0.15);  color: #fcd34d; }
+[data-theme="dark"] .perfil-orden-estado--en_proceso { background: rgba(37,99,235,0.15);   color: #93c5fd; }
+[data-theme="dark"] .perfil-orden-estado--completado { background: rgba(16,185,129,0.15);  color: #6ee7b7; }
+[data-theme="dark"] .perfil-orden-estado--cancelada  { background: rgba(239,68,68,0.15);   color: #fca5a5; }
+
+@media (max-width: 768px) {
+  .meds-form-grid { grid-template-columns: 1fr 1fr; }
+  .perfil-acciones { gap: 0.5rem; }
+  .medico-citas-filtros input { min-width: 100%; }
+}
