@@ -253,6 +253,12 @@ const PerfilCita = () => {
   // Búsqueda de medicamentos con debounce
   useEffect(() => {
     if (!busquedaMed.trim()) { setResultadosMed([]); return; }
+    // Si ya hay uno seleccionado y el texto coincide con su nombre, no buscar
+    if (medSeleccionado && busquedaMed === medSeleccionado.nombre) {
+      setResultadosMed([]);
+      setMostrarDropdown(false);
+      return;
+    }
     const timer = setTimeout(async () => {
       try {
         const res = await MedicamentoService.buscar(busquedaMed);
@@ -261,7 +267,7 @@ const PerfilCita = () => {
       } catch { setResultadosMed([]); }
     }, 300);
     return () => clearTimeout(timer);
-  }, [busquedaMed]);
+  }, [busquedaMed, medSeleccionado]);
 
   const seleccionarMed = (med: MedicamentoCatalogo) => {
     setMedSeleccionado(med);
@@ -565,118 +571,148 @@ const PerfilCita = () => {
         </div>
       )}
 
-      {tabActiva === "notas" && user?.rol === "MEDICO" && (
+      {tabActiva === "notas" && user?.rol === "MEDICO" && (() => {
+        const esConsultaFinalizada = cita.estado === "ATENDIDA";
+        return (
         <div className="card-clinica">
           <div className="card-header"><h3>Notas Clínicas</h3></div>
           <div className="card-body notas-clinicas-form">
-            <div className="notas-form-grupo">
-              <label>Diagnóstico principal *</label>
-              <input
-                className="notas-form-input"
-                value={notas.diagnostico}
-                onChange={(e) => setNotas((n) => ({ ...n, diagnostico: e.target.value }))}
-                placeholder="Ej: J06.9 - Infección aguda de vías respiratorias superiores"
-              />
-            </div>
-            <div className="notas-form-grupo">
-              <label>Observaciones clínicas</label>
-              <textarea
-                className="notas-form-textarea"
-                rows={4}
-                value={notas.notasClinicas}
-                onChange={(e) => setNotas((n) => ({ ...n, notasClinicas: e.target.value }))}
-                placeholder="Hallazgos del examen físico, signos vitales, observaciones..."
-              />
-            </div>
-            <div className="notas-form-grupo">
-              <label>Plan de tratamiento</label>
-              <textarea
-                className="notas-form-textarea"
-                rows={3}
-                value={notas.tratamiento}
-                onChange={(e) => setNotas((n) => ({ ...n, tratamiento: e.target.value }))}
-                placeholder="Indicaciones, restricciones, seguimiento..."
-              />
-            </div>
+            {esConsultaFinalizada && (
+              <div className="notas-consulta-finalizada">
+                ✓ Consulta finalizada — Los datos son de solo lectura por auditoría médica.
+              </div>
+            )}
+
+            {esConsultaFinalizada ? (
+              <>
+                <div className="notas-view-grupo">
+                  <label>Diagnóstico principal</label>
+                  <div className="notas-view-content">{notas.diagnostico || "—"}</div>
+                </div>
+                <div className="notas-view-grupo">
+                  <label>Observaciones clínicas</label>
+                  <div className="notas-view-content">{notas.notasClinicas || "—"}</div>
+                </div>
+                <div className="notas-view-grupo">
+                  <label>Plan de tratamiento</label>
+                  <div className="notas-view-content">{notas.tratamiento || "—"}</div>
+                </div>
+              </>
+            ) : (
+              <>
+                <div className="notas-form-grupo">
+                  <label>Diagnóstico principal *</label>
+                  <input
+                    className="notas-form-input"
+                    value={notas.diagnostico}
+                    onChange={(e) => setNotas((n) => ({ ...n, diagnostico: e.target.value }))}
+                    placeholder="Ej: J06.9 - Infección aguda de vías respiratorias superiores"
+                  />
+                </div>
+                <div className="notas-form-grupo">
+                  <label>Observaciones clínicas</label>
+                  <textarea
+                    className="notas-form-textarea"
+                    rows={4}
+                    value={notas.notasClinicas}
+                    onChange={(e) => setNotas((n) => ({ ...n, notasClinicas: e.target.value }))}
+                    placeholder="Hallazgos del examen físico, signos vitales, observaciones..."
+                  />
+                </div>
+                <div className="notas-form-grupo">
+                  <label>Plan de tratamiento</label>
+                  <textarea
+                    className="notas-form-textarea"
+                    rows={3}
+                    value={notas.tratamiento}
+                    onChange={(e) => setNotas((n) => ({ ...n, tratamiento: e.target.value }))}
+                    placeholder="Indicaciones, restricciones, seguimiento..."
+                  />
+                </div>
+              </>
+            )}
 
             {/* ── Medicamentos prescritos ── */}
             <div className="meds-seccion">
               <p className="meds-seccion-titulo">Medicamentos Prescritos</p>
 
-              {/* Buscador */}
-              <div className="meds-buscador">
-                <input
-                  className="notas-form-input"
-                  placeholder="Buscar medicamento por nombre..."
-                  value={busquedaMed}
-                  onChange={(e) => { setBusquedaMed(e.target.value); setMedSeleccionado(null); }}
-                  onFocus={() => resultadosMed.length > 0 && setMostrarDropdown(true)}
-                />
-                {mostrarDropdown && resultadosMed.length > 0 && (
-                  <div className="meds-dropdown">
-                    {resultadosMed.map((med) => (
-                      <button
-                        key={med._id}
-                        className="meds-dropdown-item"
-                        onMouseDown={() => seleccionarMed(med)}
-                      >
-                        <strong>{med.nombre}</strong>{" "}
-                        <span className="meds-dropdown-item-presentacion">{med.presentacion}</span>
-                      </button>
-                    ))}
+              {/* Buscador y formulario para agregar solo si NO está finalizada */}
+              {!esConsultaFinalizada && (
+                <>
+                  <div className="meds-buscador">
+                    <input
+                      className="notas-form-input"
+                      placeholder="Buscar medicamento por nombre..."
+                      value={busquedaMed}
+                      onChange={(e) => { setBusquedaMed(e.target.value); setMedSeleccionado(null); }}
+                      onFocus={() => resultadosMed.length > 0 && setMostrarDropdown(true)}
+                    />
+                    {mostrarDropdown && resultadosMed.length > 0 && (
+                      <div className="meds-dropdown">
+                        {resultadosMed.map((med) => (
+                          <button
+                            key={med._id}
+                            className="meds-dropdown-item"
+                            onMouseDown={() => seleccionarMed(med)}
+                          >
+                            <strong>{med.nombre}</strong>{" "}
+                            <span className="meds-dropdown-item-presentacion">{med.presentacion}</span>
+                          </button>
+                        ))}
+                      </div>
+                    )}
                   </div>
-                )}
-              </div>
 
-              {/* Formulario para dosis/frecuencia/duración */}
-              {medSeleccionado && (
-                <div className="meds-form-nueva">
-                  <p className="meds-form-nueva-titulo">
-                    {medSeleccionado.nombre} — {medSeleccionado.presentacion}
-                  </p>
-                  <div className="meds-form-grid">
-                    <div className="meds-form-campo">
-                      <label>Dosis *</label>
+                  {medSeleccionado && (
+                    <div className="meds-form-nueva">
+                      <p className="meds-form-nueva-titulo">
+                        {medSeleccionado.nombre} — {medSeleccionado.presentacion}
+                      </p>
+                      <div className="meds-form-grid">
+                        <div className="meds-form-campo">
+                          <label>Dosis *</label>
+                          <input
+                            className="meds-form-input-sm"
+                            placeholder="Ej: 500mg"
+                            value={medForm.dosis}
+                            onChange={(e) => setMedForm((f) => ({ ...f, dosis: e.target.value }))}
+                          />
+                        </div>
+                        <div className="meds-form-campo">
+                          <label>Frecuencia *</label>
+                          <input
+                            className="meds-form-input-sm"
+                            placeholder="Ej: Cada 8 horas"
+                            value={medForm.frecuencia}
+                            onChange={(e) => setMedForm((f) => ({ ...f, frecuencia: e.target.value }))}
+                          />
+                        </div>
+                        <div className="meds-form-campo">
+                          <label>Duración *</label>
+                          <input
+                            className="meds-form-input-sm"
+                            placeholder="Ej: 7 días"
+                            value={medForm.duracion}
+                            onChange={(e) => setMedForm((f) => ({ ...f, duracion: e.target.value }))}
+                          />
+                        </div>
+                      </div>
                       <input
-                        className="meds-form-input-sm"
-                        placeholder="Ej: 500mg"
-                        value={medForm.dosis}
-                        onChange={(e) => setMedForm((f) => ({ ...f, dosis: e.target.value }))}
+                        className="meds-form-input-sm meds-form-obs"
+                        placeholder="Observaciones (opcional)"
+                        value={medForm.observaciones}
+                        onChange={(e) => setMedForm((f) => ({ ...f, observaciones: e.target.value }))}
                       />
+                      <button
+                        className="btn btn-primary btn-sm"
+                        disabled={!medForm.dosis.trim() || !medForm.frecuencia.trim() || !medForm.duracion.trim()}
+                        onClick={agregarMedicamento}
+                      >
+                        + Agregar
+                      </button>
                     </div>
-                    <div className="meds-form-campo">
-                      <label>Frecuencia *</label>
-                      <input
-                        className="meds-form-input-sm"
-                        placeholder="Ej: Cada 8 horas"
-                        value={medForm.frecuencia}
-                        onChange={(e) => setMedForm((f) => ({ ...f, frecuencia: e.target.value }))}
-                      />
-                    </div>
-                    <div className="meds-form-campo">
-                      <label>Duración *</label>
-                      <input
-                        className="meds-form-input-sm"
-                        placeholder="Ej: 7 días"
-                        value={medForm.duracion}
-                        onChange={(e) => setMedForm((f) => ({ ...f, duracion: e.target.value }))}
-                      />
-                    </div>
-                  </div>
-                  <input
-                    className="meds-form-input-sm meds-form-obs"
-                    placeholder="Observaciones (opcional)"
-                    value={medForm.observaciones}
-                    onChange={(e) => setMedForm((f) => ({ ...f, observaciones: e.target.value }))}
-                  />
-                  <button
-                    className="btn btn-primary btn-sm"
-                    disabled={!medForm.dosis.trim() || !medForm.frecuencia.trim() || !medForm.duracion.trim()}
-                    onClick={agregarMedicamento}
-                  >
-                    + Agregar
-                  </button>
-                </div>
+                  )}
+                </>
               )}
 
               {/* Tabla de medicamentos prescritos */}
@@ -689,7 +725,7 @@ const PerfilCita = () => {
                         <th>Dosis</th>
                         <th>Frecuencia</th>
                         <th>Duración</th>
-                        <th></th>
+                        {!esConsultaFinalizada && <th></th>}
                       </tr>
                     </thead>
                     <tbody>
@@ -699,15 +735,17 @@ const PerfilCita = () => {
                           <td>{med.dosis}</td>
                           <td>{med.frecuencia}</td>
                           <td>{med.duracion}</td>
-                          <td>
-                            <button
-                              className="meds-tabla-quitar"
-                              onClick={() => quitarMedicamento(i)}
-                              title="Quitar"
-                            >
-                              ×
-                            </button>
-                          </td>
+                          {!esConsultaFinalizada && (
+                            <td>
+                              <button
+                                className="meds-tabla-quitar"
+                                onClick={() => quitarMedicamento(i)}
+                                title="Quitar"
+                              >
+                                ×
+                              </button>
+                            </td>
+                          )}
                         </tr>
                       ))}
                     </tbody>
@@ -715,38 +753,78 @@ const PerfilCita = () => {
                 </div>
               )}
 
-              {medsPrescritos.length > 0 && (
+              {!esConsultaFinalizada &&
+                (medsPrescritos.length > 0 ||
+                  (medSeleccionado &&
+                    medForm.dosis.trim() &&
+                    medForm.frecuencia.trim() &&
+                    medForm.duracion.trim())) && (
                 <button
                   className="btn btn-secondary btn-sm"
                   disabled={guardandoMeds}
-                  onClick={guardarMedicamentos}
+                  onClick={async () => {
+                    // Si hay un med en el formulario con campos obligatorios llenos,
+                    // agregarlo a la lista antes de guardar
+                    let listaFinal = medsPrescritos;
+                    if (
+                      medSeleccionado &&
+                      medForm.dosis.trim() &&
+                      medForm.frecuencia.trim() &&
+                      medForm.duracion.trim()
+                    ) {
+                      const nuevo: MedicamentoPrescrito = {
+                        medicamentoId: medSeleccionado._id,
+                        nombre: medSeleccionado.nombre,
+                        ...medForm,
+                      };
+                      listaFinal = [...medsPrescritos, nuevo];
+                      setMedsPrescritos(listaFinal);
+                      setMedSeleccionado(null);
+                      setBusquedaMed("");
+                      setMedForm({ dosis: "", frecuencia: "", duracion: "", observaciones: "" });
+                    }
+                    setGuardandoMeds(true);
+                    try {
+                      await MedicoApiService.prescribirMedicamentos(citaId!, listaFinal);
+                      toastExito("Medicamentos guardados correctamente");
+                    } catch {
+                      Swal.fire("Error", "No se pudieron guardar los medicamentos", "error");
+                    } finally {
+                      setGuardandoMeds(false);
+                    }
+                  }}
                 >
                   {guardandoMeds ? "Guardando..." : "Guardar Medicamentos"}
                 </button>
               )}
             </div>
 
-            <hr className="notas-form-separador" />
-            <button
-              className="btn btn-primary"
-              disabled={guardandoNotas || !notas.diagnostico.trim()}
-              onClick={async () => {
-                setGuardandoNotas(true);
-                try {
-                  await MedicoApiService.guardarNotasClinicas(citaId!, notas);
-                  toastExito("Notas guardadas correctamente");
-                } catch {
-                  Swal.fire("Error", "No se pudieron guardar las notas", "error");
-                } finally {
-                  setGuardandoNotas(false);
-                }
-              }}
-            >
-              {guardandoNotas ? "Guardando..." : "Guardar Notas"}
-            </button>
+            {!esConsultaFinalizada && (
+              <>
+                <hr className="notas-form-separador" />
+                <button
+                  className="btn btn-primary"
+                  disabled={guardandoNotas || !notas.diagnostico.trim()}
+                  onClick={async () => {
+                    setGuardandoNotas(true);
+                    try {
+                      await MedicoApiService.guardarNotasClinicas(citaId!, notas);
+                      toastExito("Notas guardadas correctamente");
+                    } catch {
+                      Swal.fire("Error", "No se pudieron guardar las notas", "error");
+                    } finally {
+                      setGuardandoNotas(false);
+                    }
+                  }}
+                >
+                  {guardandoNotas ? "Guardando..." : "Guardar Notas"}
+                </button>
+              </>
+            )}
           </div>
         </div>
-      )}
+        );
+      })()}
 
       {tabActiva === "historial" && (
         <div className="card-clinica">No hay visitas anteriores</div>
@@ -1062,6 +1140,24 @@ const PerfilCita = () => {
             acc[id] = it.observaciones ?? "";
             return acc;
           }, {});
+          const respuestasIniciales = ordenEditando.items.reduce<
+            Record<string, Record<string, string>>
+          >((acc, it) => {
+            const id =
+              typeof it.examenId === "object"
+                ? it.examenId._id
+                : String(it.examenId);
+            if (it.respuestasProtocolares?.length) {
+              acc[id] = it.respuestasProtocolares.reduce<Record<string, string>>(
+                (map, r) => {
+                  map[r.preguntaId] = r.respuesta;
+                  return map;
+                },
+                {},
+              );
+            }
+            return acc;
+          }, {});
           return (
             <OrdenExamenModal
               citaId={cita._id}
@@ -1077,6 +1173,7 @@ const PerfilCita = () => {
               seleccionadosIniciales={seleccionadosIniciales}
               obsItemIniciales={obsItemIniciales}
               obsGeneralesInicial={ordenEditando.observacionesGenerales ?? ""}
+              respuestasProtocolaresIniciales={respuestasIniciales}
             />
           );
         })()}

@@ -509,6 +509,63 @@
   gap: 1.25rem;
 }
 
+/* Banner de consulta finalizada (modo lectura) */
+.notas-consulta-finalizada {
+  background: var(--success-bg);
+  border: 1px solid var(--success, #10b981);
+  border-radius: var(--radius-md);
+  padding: 0.75rem 1rem;
+  color: #065f46;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.9rem;
+}
+
+/* Grupo en modo lectura */
+.notas-view-grupo {
+  display: flex;
+  flex-direction: column;
+  gap: 0.3rem;
+}
+
+.notas-view-grupo label {
+  font-size: 0.82rem;
+  font-weight: 700;
+  color: var(--text-secondary);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+/* Contenedor de contenido en lectura */
+.notas-view-content {
+  padding: 0.7rem 0.85rem;
+  background: var(--bg-body);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  color: var(--text-primary);
+  font-size: 0.9rem;
+  line-height: 1.5;
+  white-space: pre-wrap;
+  word-break: break-word;
+  font-family: inherit;
+  min-height: 1.5rem;
+}
+
+/* Dark mode overrides */
+[data-theme="dark"] .notas-consulta-finalizada {
+  background: rgba(16, 185, 129, 0.12);
+  border-color: rgba(16, 185, 129, 0.35);
+  color: #6ee7b7;
+}
+
+[data-theme="dark"] .notas-view-content {
+  background: var(--bg-body);
+  border-color: var(--border);
+  color: var(--text-primary);
+}
+
 .notas-form-grupo {
   display: flex;
   flex-direction: column;

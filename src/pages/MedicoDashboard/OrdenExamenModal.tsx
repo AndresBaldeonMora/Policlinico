@@ -1,6 +1,10 @@
 import { useEffect, useState } from "react";
 import { X, FlaskConical, ChevronDown, ChevronUp } from "lucide-react";
-import type { ExamenLaboratorioImagen, TipoExamen } from "../../services/examen.service";
+import type {
+  ExamenLaboratorioImagen,
+  TipoExamen,
+  RespuestaProtocolar,
+} from "../../services/examen.service";
 import { ExamenService, TIPO_EXAMEN_LABEL } from "../../services/examen.service";
 import { toastExito } from "../../utils/toast";
 import "./OrdenExamenModal.css";
@@ -17,6 +21,7 @@ interface Props {
   seleccionadosIniciales?: Set<string>;
   obsItemIniciales?: Record<string, string>;
   obsGeneralesInicial?: string;
+  respuestasProtocolaresIniciales?: Record<string, Record<string, string>>;
 }
 
 type GrupoExamenes = Record<string, ExamenLaboratorioImagen[]>;
@@ -32,16 +37,31 @@ const OrdenExamenModal = ({
   seleccionadosIniciales,
   obsItemIniciales,
   obsGeneralesInicial,
+  respuestasProtocolaresIniciales,
 }: Props) => {
   const modoEdicion = Boolean(ordenId);
   const [examenes, setExamenes] = useState<ExamenLaboratorioImagen[]>([]);
   const [seleccionados, setSeleccionados] = useState<Set<string>>(seleccionadosIniciales ?? new Set());
   const [observaciones, setObservaciones] = useState<Record<string, string>>(obsItemIniciales ?? {});
   const [observacionesGenerales, setObservacionesGenerales] = useState(obsGeneralesInicial ?? "");
+  // Respuestas protocolares: { examenId: { preguntaId: respuesta } }
+  const [respuestasProtocolo, setRespuestasProtocolo] = useState<
+    Record<string, Record<string, string>>
+  >(respuestasProtocolaresIniciales ?? {});
   const [loading, setLoading] = useState(true);
   const [guardando, setGuardando] = useState(false);
   const [gruposAbiertos, setGruposAbiertos] = useState<Set<string>>(new Set());
   const [error, setError] = useState("");
+
+  const handleRespuestaChange = (examenId: string, preguntaId: string, valor: string) => {
+    setRespuestasProtocolo((prev) => ({
+      ...prev,
+      [examenId]: {
+        ...(prev[examenId] || {}),
+        [preguntaId]: valor,
+      },
+    }));
+  };
 
   useEffect(() => {
     ExamenService.listarExamenes()
@@ -87,11 +107,42 @@ const OrdenExamenModal = ({
       return;
     }
 
+    // Validar preguntas protocolares obligatorias
+    for (const examenId of seleccionados) {
+      const examen = examenes.find((e) => e._id === examenId);
+      if (!examen?.preguntasProtocolares?.length) continue;
+      for (const preg of examen.preguntasProtocolares) {
+        if (!preg.obligatoria) continue;
+        const resp = respuestasProtocolo[examenId]?.[preg.id];
+        if (!resp || !resp.trim()) {
+          setError(
+            `Responde todas las preguntas obligatorias para "${examen.nombre}".`,
+          );
+          return;
+        }
+      }
+    }
+
     const obsGeneralesTrimmed = observacionesGenerales.trim();
-    const itemsPayload = [...seleccionados].map((examenId) => ({
-      examenId,
-      observaciones: (observaciones[examenId] || "").trim(),
-    }));
+    const itemsPayload = [...seleccionados].map((examenId) => {
+      const examen = examenes.find((e) => e._id === examenId);
+      const respuestas: RespuestaProtocolar[] =
+        examen?.preguntasProtocolares
+          ?.filter((p) => {
+            const r = respuestasProtocolo[examenId]?.[p.id];
+            return r !== undefined && r !== "";
+          })
+          .map((p) => ({
+            preguntaId: p.id,
+            preguntaTexto: p.texto,
+            respuesta: respuestasProtocolo[examenId][p.id],
+          })) ?? [];
+      return {
+        examenId,
+        observaciones: (observaciones[examenId] || "").trim(),
+        respuestasProtocolares: respuestas,
+      };
+    });
 
     setGuardando(true);
     try {
@@ -167,34 +218,141 @@ const OrdenExamenModal = ({
                       {abierto && (
                         <div className="orden-grupo-items">
                           {grupos[tipo].map((ex) => (
-                            <label key={ex._id} className="orden-item">
-                              <input
-                                type="checkbox"
-                                checked={seleccionados.has(ex._id)}
-                                onChange={() => toggleExamen(ex._id)}
-                              />
-                              <div className="orden-item-info">
-                                <span className="orden-item-nombre">{ex.nombre}</span>
-                                {ex.unidad && (
-                                  <span className="orden-item-unidad">{ex.unidad}</span>
-                                )}
-                              </div>
-                              {seleccionados.has(ex._id) && (
+                            <div key={ex._id} className="orden-item-wrapper">
+                              <label className="orden-item">
                                 <input
-                                  className="orden-item-obs"
-                                  type="text"
-                                  placeholder="Observación (opcional)"
-                                  value={observaciones[ex._id] || ""}
-                                  onChange={(e) =>
-                                    setObservaciones((prev) => ({
-                                      ...prev,
-                                      [ex._id]: e.target.value,
-                                    }))
-                                  }
-                                  onClick={(e) => e.stopPropagation()}
+                                  type="checkbox"
+                                  checked={seleccionados.has(ex._id)}
+                                  onChange={() => toggleExamen(ex._id)}
                                 />
-                              )}
-                            </label>
+                                <div className="orden-item-info">
+                                  <span className="orden-item-nombre">{ex.nombre}</span>
+                                  {ex.unidad && (
+                                    <span className="orden-item-unidad">{ex.unidad}</span>
+                                  )}
+                                </div>
+                                {seleccionados.has(ex._id) && (
+                                  <input
+                                    className="orden-item-obs"
+                                    type="text"
+                                    placeholder="Observación (opcional)"
+                                    value={observaciones[ex._id] || ""}
+                                    onChange={(e) =>
+                                      setObservaciones((prev) => ({
+                                        ...prev,
+                                        [ex._id]: e.target.value,
+                                      }))
+                                    }
+                                    onClick={(e) => e.stopPropagation()}
+                                  />
+                                )}
+                              </label>
+
+                              {/* Preguntas protocolares (fuera del label para evitar toggles accidentales) */}
+                              {seleccionados.has(ex._id) &&
+                                ex.preguntasProtocolares?.length > 0 && (
+                                  <div className="protocolar-preguntas">
+                                    <p className="protocolar-titulo">
+                                      Preguntas protocolares
+                                    </p>
+                                    {ex.preguntasProtocolares.map((preg) => {
+                                      const valor =
+                                        respuestasProtocolo[ex._id]?.[preg.id] ?? "";
+                                      return (
+                                        <div
+                                          key={preg.id}
+                                          className="protocolar-pregunta"
+                                        >
+                                          <label>
+                                            {preg.texto}
+                                            {preg.obligatoria && (
+                                              <span className="protocolar-required">
+                                                *
+                                              </span>
+                                            )}
+                                          </label>
+
+                                          {preg.tipo === "BOOLEAN" && (
+                                            <div className="protocolar-bool">
+                                              <label className="protocolar-bool-opt">
+                                                <input
+                                                  type="radio"
+                                                  name={`preg-${ex._id}-${preg.id}`}
+                                                  value="Sí"
+                                                  checked={valor === "Sí"}
+                                                  onChange={(e) =>
+                                                    handleRespuestaChange(
+                                                      ex._id,
+                                                      preg.id,
+                                                      e.target.value,
+                                                    )
+                                                  }
+                                                />
+                                                Sí
+                                              </label>
+                                              <label className="protocolar-bool-opt">
+                                                <input
+                                                  type="radio"
+                                                  name={`preg-${ex._id}-${preg.id}`}
+                                                  value="No"
+                                                  checked={valor === "No"}
+                                                  onChange={(e) =>
+                                                    handleRespuestaChange(
+                                                      ex._id,
+                                                      preg.id,
+                                                      e.target.value,
+                                                    )
+                                                  }
+                                                />
+                                                No
+                                              </label>
+                                            </div>
+                                          )}
+
+                                          {preg.tipo === "TEXTO" && (
+                                            <input
+                                              type="text"
+                                              className="protocolar-input"
+                                              placeholder="Responder..."
+                                              value={valor}
+                                              onChange={(e) =>
+                                                handleRespuestaChange(
+                                                  ex._id,
+                                                  preg.id,
+                                                  e.target.value,
+                                                )
+                                              }
+                                            />
+                                          )}
+
+                                          {preg.tipo === "SELECCION" && (
+                                            <select
+                                              className="protocolar-input"
+                                              value={valor}
+                                              onChange={(e) =>
+                                                handleRespuestaChange(
+                                                  ex._id,
+                                                  preg.id,
+                                                  e.target.value,
+                                                )
+                                              }
+                                            >
+                                              <option value="">
+                                                -- Seleccionar --
+                                              </option>
+                                              {preg.opciones?.map((op) => (
+                                                <option key={op} value={op}>
+                                                  {op}
+                                                </option>
+                                              ))}
+                                            </select>
+                                          )}
+                                        </div>
+                                      );
+                                    })}
+                                  </div>
+                                )}
+                            </div>
                           ))}
                         </div>
                       )}

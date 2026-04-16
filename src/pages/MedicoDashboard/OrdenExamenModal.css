@@ -280,3 +280,104 @@
   border: 1px solid #fecaca;
   border-radius: 6px;
 }
+
+/* Wrapper de cada examen (contiene label + preguntas protocolares) */
+.orden-item-wrapper {
+  border-top: 1px solid var(--border-subtle);
+}
+
+.orden-item-wrapper > .orden-item {
+  border-top: none;
+}
+
+/* ── Preguntas protocolares ── */
+.protocolar-preguntas {
+  margin: 0.25rem 1rem 0.75rem 2.25rem;
+  padding: 0.75rem 0.875rem;
+  background: var(--info-bg);
+  border: 1px solid var(--secondary-lighter);
+  border-left: 3px solid var(--secondary, #3b82f6);
+  border-radius: var(--radius-sm);
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+}
+
+.protocolar-titulo {
+  font-size: 0.72rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  color: var(--secondary, #3b82f6);
+  margin: 0;
+  letter-spacing: 0.04em;
+}
+
+.protocolar-pregunta {
+  display: flex;
+  flex-direction: column;
+  gap: 0.3rem;
+}
+
+.protocolar-pregunta > label {
+  font-size: 0.82rem;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.protocolar-required {
+  color: #dc2626;
+  margin-left: 3px;
+}
+
+.protocolar-input {
+  padding: 0.4rem 0.6rem;
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-sm);
+  font-size: 0.82rem;
+  background: var(--bg-card);
+  color: var(--text-primary);
+  font-family: inherit;
+  transition: border-color 0.15s var(--ease);
+  box-sizing: border-box;
+  width: 100%;
+}
+
+.protocolar-input:focus {
+  outline: none;
+  border-color: var(--secondary, #3b82f6);
+}
+
+.protocolar-bool {
+  display: flex;
+  gap: 1.25rem;
+  padding: 0.1rem 0;
+}
+
+.protocolar-bool-opt {
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+  font-size: 0.82rem;
+  cursor: pointer;
+  color: var(--text-primary);
+}
+
+.protocolar-bool-opt input[type="radio"] {
+  accent-color: var(--secondary, #3b82f6);
+}
+
+/* Dark mode */
+[data-theme="dark"] .protocolar-preguntas {
+  background: rgba(59, 130, 246, 0.08);
+  border-color: rgba(59, 130, 246, 0.25);
+}
+
+[data-theme="dark"] .protocolar-input {
+  background: var(--bg-body);
+  border-color: var(--border);
+  color: var(--text-primary);
+}
+
+[data-theme="dark"] .protocolar-input:focus {
+  border-color: rgba(59, 130, 246, 0.55);
+}
