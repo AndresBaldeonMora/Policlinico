@@ -120,7 +120,11 @@ export class ExamenService {
     citaId?: string;
     especialidadId: string;
     observacionesGenerales?: string;
-    items: { examenId: string; observaciones?: string }[];
+    items: {
+      examenId: string;
+      observaciones?: string;
+      respuestasProtocolares?: RespuestaProtocolar[];
+    }[];
   }): Promise<OrdenExamen> {
     const res = await api.post<{ success: boolean; data: OrdenExamen }>("/ordenes", payload);
     return res.data.data;
@@ -236,7 +240,11 @@ export class ExamenService {
   // ─── Compatibilidad (uso médico) ───────────────────────────
   static async actualizarOrden(
     ordenId: string,
-    items: { examenId: string; observaciones?: string }[],
+    items: {
+      examenId: string;
+      observaciones?: string;
+      respuestasProtocolares?: RespuestaProtocolar[];
+    }[],
     observacionesGenerales?: string
   ): Promise<OrdenExamen> {
     const res = await api.patch<{ success: boolean; data: OrdenExamen }>(
