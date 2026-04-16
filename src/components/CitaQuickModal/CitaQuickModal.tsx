@@ -29,6 +29,7 @@ const formatearFecha = (fecha: string) =>
     day: "2-digit",
     month: "long",
     year: "numeric",
+    timeZone: "UTC",
   });
 
 
@@ -291,17 +292,6 @@ const CitaQuickModal = ({ citaId, onCerrar, onCitaActualizada, onIrADetalle }: P
             </button>
           )}
         
-          {/* Cancelar (solo PENDIENTE/REPROGRAMADA) */}
-          {puedeCancelar && (
-            <button
-              className="cita-modal-btn cita-modal-btn--danger"
-              onClick={() => cambiarEstado("CANCELADA")}
-              disabled={isSubmitting}
-            >
-              {estadoPendiente === "CANCELADA" ? "Actualizando..." : "Cancelar Cita"}
-            </button>
-          )}
-          
           <button
             className="cita-modal-btn cita-modal-btn--secondary"
             onClick={() => onIrADetalle(cita._id)}
