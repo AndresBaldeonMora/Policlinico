@@ -417,6 +417,15 @@
   background: #1d4ed8;
 }
 
+.cita-chip--asistio {
+  background: #fef3c7; 
+  color: #b45309 ;
+  border-left-color: #b45309 
+}
+.cita-chip--asistio::before {
+  background: #b45309 
+}
+
 .cita-chip--atendida {
   background: #dcfce7;
   color: #15803d;
@@ -436,12 +445,12 @@
 }
 
 .cita-chip--reprogramada {
-  background: #fef9c3;
-  color: #a16207;
-  border-left-color: #a16207;
+  background: #e0e7ff;      
+  color: #4338ca;          
+  border-left-color: #4338ca;
 }
 .cita-chip--reprogramada::before {
-  background: #a16207;
+  background: #4338ca;
 }
 
 /* ═══════════════════════════════════════════

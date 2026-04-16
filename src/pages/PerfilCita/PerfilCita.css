@@ -497,10 +497,42 @@
   letter-spacing: 0.02em;
 }
 
-.badge-estado-cita--pendiente    { background: var(--warning-bg);  color: #92400e; }
+/* .badge-estado-cita--pendiente    { background: var(--warning-bg);  color: #92400e; }
 .badge-estado-cita--atendida     { background: var(--success-bg);  color: #065f46; }
 .badge-estado-cita--cancelada    { background: var(--error-bg);    color: #991b1b; }
-.badge-estado-cita--reprogramada { background: var(--accent-lighter); color: var(--accent); }
+.badge-estado-cita--reprogramada { background: var(--accent-lighter); color: var(--accent); } */
+.badge-estado-cita--pendiente    { background: var(--warning-bg);  color: #1987d1; }
+.badge-estado-cita--asistio      { background: #fef3c7;           color: #b45309; border: 1px solid #fed7aa; }
+.badge-estado-cita--atendida     { background: var(--success-bg);  color: #065f46; }
+.badge-estado-cita--reprogramada { background: #e0e7ff;           color: #4338ca; border: 1px solid #c7d2fe; }
+.badge-estado-cita--cancelada    { background: var(--error-bg);    color: #991b1b; }
+/* ── Dark mode ── */
+[data-theme="dark"] .badge-estado-cita--asistio {
+  background: rgba(245, 158, 11, 0.15);
+  color: #fcd34d;
+  border-color: rgba(245, 158, 11, 0.3);
+}
+
+[data-theme="dark"] .badge-estado-cita--reprogramada {
+  background: rgba(59, 130, 246, 0.15);
+  color: #93c5fd;
+  border-color: rgba(59, 130, 246, 0.3);
+}
+
+[data-theme="dark"] .badge-estado-cita--pendiente {
+  background: rgba(245, 158, 11, 0.15);
+  color: #fcd34d;
+}
+
+[data-theme="dark"] .badge-estado-cita--atendida {
+  background: rgba(16, 185, 129, 0.15);
+  color: #6ee7b7;
+}
+
+[data-theme="dark"] .badge-estado-cita--cancelada {
+  background: rgba(239, 68, 68, 0.15);
+  color: #fca5a5;
+}
 
 /* ── Formulario de Notas Clínicas ── */
 .notas-clinicas-form {

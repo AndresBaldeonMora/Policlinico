@@ -4,19 +4,24 @@ import type { CitaTransformada, CitaProcesada, EstadoCita } from "../../services
 import { X, ExternalLink } from "lucide-react";
 import "../../pages/MedicoDashboard/CitaModal.css";
 
+
 interface Props {
   citaId: string;
   onCerrar: () => void;
   onCitaActualizada: () => void;
   onIrADetalle: (citaId: string) => void;
+  modo?: "recepcionista" | "medico";
 }
+
 
 const ESTADO_BADGE: Record<string, { clase: string; label: string }> = {
   PENDIENTE:    { clase: "cita-modal-badge--info",    label: "Pendiente" },
+  ASISTIO:      { clase: "cita-modal-badge--warning", label: "Asistió" },
   ATENDIDA:     { clase: "cita-modal-badge--success", label: "Atendida" },
   CANCELADA:    { clase: "cita-modal-badge--danger",  label: "Cancelada" },
-  REPROGRAMADA: { clase: "cita-modal-badge--warning", label: "Reprogramada" },
+  REPROGRAMADA: { clase: "cita-modal-badge--reprogramada", label: "Reprogramada" },
 };
+
 
 const formatearFecha = (fecha: string) =>
   new Date(fecha).toLocaleDateString("es-PE", {
@@ -25,6 +30,7 @@ const formatearFecha = (fecha: string) =>
     month: "long",
     year: "numeric",
   });
+
 
 const calcularEdad = (fechaNacimiento?: string): string => {
   if (!fechaNacimiento) return "—";
@@ -36,6 +42,7 @@ const calcularEdad = (fechaNacimiento?: string): string => {
   return `${edad} años`;
 };
 
+
 const CitaQuickModal = ({ citaId, onCerrar, onCitaActualizada, onIrADetalle }: Props) => {
   const [cita, setCita] = useState<CitaTransformada | null>(null);
   const [historial, setHistorial] = useState<CitaProcesada[]>([]);
@@ -45,6 +52,7 @@ const CitaQuickModal = ({ citaId, onCerrar, onCitaActualizada, onIrADetalle }: P
   const submittingRef = useRef(false);
   const cardRef = useRef<HTMLDivElement>(null);
 
+
   const cargarDatos = useCallback(async () => {
     setLoading(true);
     setError("");
@@ -52,9 +60,11 @@ const CitaQuickModal = ({ citaId, onCerrar, onCitaActualizada, onIrADetalle }: P
       const detalle = await CitaApiService.obtenerPorId(citaId);
       setCita(detalle);
 
+
       const paciente = detalle.pacienteId && typeof detalle.pacienteId === "object"
         ? detalle.pacienteId
         : null;
+
 
       if (paciente) {
         const todasCitas = await CitaApiService.listar();
@@ -76,7 +86,9 @@ const CitaQuickModal = ({ citaId, onCerrar, onCitaActualizada, onIrADetalle }: P
     }
   }, [citaId]);
 
+
   useEffect(() => { cargarDatos(); }, [cargarDatos]);
+
 
   useEffect(() => {
     const handleEsc = (e: KeyboardEvent) => {
@@ -86,9 +98,11 @@ const CitaQuickModal = ({ citaId, onCerrar, onCitaActualizada, onIrADetalle }: P
     return () => document.removeEventListener("keydown", handleEsc);
   }, [onCerrar]);
 
+
   useEffect(() => {
     cardRef.current?.focus();
   }, [loading]);
+
 
   const cambiarEstado = useCallback(async (nuevoEstado: EstadoCita) => {
     if (!cita || submittingRef.current) return;
@@ -109,7 +123,9 @@ const CitaQuickModal = ({ citaId, onCerrar, onCitaActualizada, onIrADetalle }: P
     }
   }, [cita, citaId, onCitaActualizada]);
 
+
   const isSubmitting = estadoPendiente !== null;
+
 
   if (loading || !cita) {
     return (
@@ -134,10 +150,13 @@ const CitaQuickModal = ({ citaId, onCerrar, onCitaActualizada, onIrADetalle }: P
     );
   }
 
+
   const paciente = cita.pacienteId && typeof cita.pacienteId === "object" ? cita.pacienteId : null;
   const doctor = cita.doctorId && typeof cita.doctorId === "object" ? cita.doctorId : null;
   const badgeConfig = ESTADO_BADGE[cita.estado] ?? ESTADO_BADGE.PENDIENTE;
-  const puedeAccionar = cita.estado === "PENDIENTE" || cita.estado === "REPROGRAMADA";
+  const puedeMarcarAsistencia = cita.estado === "PENDIENTE" || cita.estado === "REPROGRAMADA";
+  const puedeCancelar = ["PENDIENTE", "REPROGRAMADA"].includes(cita.estado);
+
 
   return (
     <div className="cita-modal-overlay" onClick={onCerrar} role="presentation">
@@ -157,10 +176,12 @@ const CitaQuickModal = ({ citaId, onCerrar, onCitaActualizada, onIrADetalle }: P
           </button>
         </div>
 
+
         <div className="cita-modal-body">
           {error && (
             <div className="cita-modal-error-msg">{error}</div>
           )}
+
 
           <div className="cita-modal-section">
             <h4>Datos de la cita</h4>
@@ -179,6 +200,7 @@ const CitaQuickModal = ({ citaId, onCerrar, onCitaActualizada, onIrADetalle }: P
               </div>
             </div>
           </div>
+
 
           {paciente && (
             <div className="cita-modal-section">
@@ -206,6 +228,7 @@ const CitaQuickModal = ({ citaId, onCerrar, onCitaActualizada, onIrADetalle }: P
             </div>
           )}
 
+
           {doctor && (
             <div className="cita-modal-section">
               <h4>Doctor asignado</h4>
@@ -223,6 +246,7 @@ const CitaQuickModal = ({ citaId, onCerrar, onCitaActualizada, onIrADetalle }: P
               </div>
             </div>
           )}
+
 
           {historial.length > 0 && (
             <div className="cita-modal-section">
@@ -254,8 +278,46 @@ const CitaQuickModal = ({ citaId, onCerrar, onCitaActualizada, onIrADetalle }: P
           )}
         </div>
 
+
         <div className="cita-modal-footer">
-          {puedeAccionar && (
+          {/* Recepcionista: Marcar Asistencia (PENDIENTE/REPROGRAMADA → ASISTIO) */}
+          {puedeMarcarAsistencia && (
+            <button
+              className="cita-modal-btn cita-modal-btn--primary"
+              onClick={() => cambiarEstado("ASISTIO")}
+              disabled={isSubmitting}
+            >
+              {estadoPendiente === "ASISTIO" ? "Actualizando..." : "Marcar Asistencia"}
+            </button>
+          )}
+        
+          {/* Cancelar (solo PENDIENTE/REPROGRAMADA) */}
+          {puedeCancelar && (
+            <button
+              className="cita-modal-btn cita-modal-btn--danger"
+              onClick={() => cambiarEstado("CANCELADA")}
+              disabled={isSubmitting}
+            >
+              {estadoPendiente === "CANCELADA" ? "Actualizando..." : "Cancelar Cita"}
+            </button>
+          )}
+          
+          <button
+            className="cita-modal-btn cita-modal-btn--secondary"
+            onClick={() => onIrADetalle(cita._id)}
+            disabled={isSubmitting}
+          >
+            <ExternalLink size={14} /> Detalle Cita
+          </button>
+          
+          <button 
+            className="cita-modal-btn cita-modal-btn--cancel" 
+            onClick={onCerrar} 
+            disabled={isSubmitting}
+          >
+            Cerrar
+          </button>
+          {/* {puedeAccionar && (
             <>
               <button
                 className="cita-modal-btn cita-modal-btn--primary"
@@ -265,7 +327,8 @@ const CitaQuickModal = ({ citaId, onCerrar, onCitaActualizada, onIrADetalle }: P
                 {estadoPendiente === "ATENDIDA" ? "Actualizando..." : "Marcar como Atendida"}
               </button>
               <button
-                className={`cita-modal-btn cita-modal-btn--cancel ${!isSubmitting ? "cita-modal-btn--danger-text" : ""}`}
+                className="cita-modal-btn cita-modal-btn--danger"
+                // className={`cita-modal-btn cita-modal-btn--cancel ${!isSubmitting ? "cita-modal-btn--danger-text" : ""}`}
                 onClick={() => cambiarEstado("CANCELADA")}
                 disabled={isSubmitting}
               >
@@ -274,7 +337,8 @@ const CitaQuickModal = ({ citaId, onCerrar, onCitaActualizada, onIrADetalle }: P
             </>
           )}
           <button
-            className="cita-modal-btn cita-modal-btn--secondary cita-modal-btn--with-icon"
+            className="cita-modal-btn cita-modal-btn--secondary"
+            // className="cita-modal-btn cita-modal-btn--secondary cita-modal-btn--with-icon"
             onClick={() => onIrADetalle(cita._id)}
             disabled={isSubmitting}
           >
@@ -282,11 +346,12 @@ const CitaQuickModal = ({ citaId, onCerrar, onCitaActualizada, onIrADetalle }: P
           </button>
           <button className="cita-modal-btn cita-modal-btn--cancel" onClick={onCerrar} disabled={isSubmitting}>
             Cerrar
-          </button>
+          </button> */}
         </div>
       </div>
     </div>
   );
 };
+
 
 export default CitaQuickModal;

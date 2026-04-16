@@ -18,6 +18,7 @@ const esFechaValida = (d: Date) => !isNaN(d.getTime());
 
 const ESTADO_COLOR: Record<string, string> = {
   PENDIENTE:    "cita-chip--pendiente",
+  ASISTIO:      "cita-chip--asistio", 
   ATENDIDA:     "cita-chip--atendida",
   CANCELADA:    "cita-chip--cancelada",
   REPROGRAMADA: "cita-chip--reprogramada",

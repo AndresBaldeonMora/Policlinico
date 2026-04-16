@@ -8,6 +8,7 @@ const DIAS_SEMANA = ["Lun", "Mar", "Mié", "Jue", "Vie", "Sáb", "Dom"] as const
 
 const ESTADO_COLOR: Record<string, string> = {
   PENDIENTE:    "agenda-cita--pendiente",
+  ASISTIO:      "agenda-cita--asistio",
   ATENDIDA:     "agenda-cita--atendida",
   CANCELADA:    "agenda-cita--cancelada",
   REPROGRAMADA: "agenda-cita--reprogramada",

@@ -10,14 +10,17 @@ import CalendarioTopbar from "./CalendarioTopBar";
 import VistaMes from "./VistaMes";
 import VistaSemana from "./VistaSemana";
 import VistaDia from "./VistaDia";
-import CitaQuickModal from "../../components/CitaQuickModal/CitaQuickModal";
+// import CitaQuickModal from "../../components/CitaQuickModal/CitaQuickModal";
 import "./Calendario.css";
 
+
 type Vista = "dia" | "semana" | "mes";
+
 
 const HORA_INICIO = 8;
 const HORA_FIN = 17;
 const INTERVALO_MINUTOS = 15;
+
 
 const toISODateLocal = (d: Date): string => {
   const y = d.getFullYear();
@@ -25,6 +28,7 @@ const toISODateLocal = (d: Date): string => {
   const day = String(d.getDate()).padStart(2, "0");
   return `${y}-${m}-${day}`;
 };
+
 
 const obtenerInicioSemana = (d: Date): Date => {
   const inicio = new Date(d);
@@ -34,6 +38,7 @@ const obtenerInicioSemana = (d: Date): Date => {
   return inicio;
 };
 
+
 const HORAS_LABORALES = (() => {
   const totalMinutos = (HORA_FIN - HORA_INICIO) * 60;
   return Array.from({ length: Math.ceil(totalMinutos / INTERVALO_MINUTOS) }, (_, i) => {
@@ -42,14 +47,16 @@ const HORAS_LABORALES = (() => {
   });
 })();
 
+
 interface CalendarioState {
   vista: Vista;
   fecha: Date;
   citas: CitaTransformada[];
   doctores: DoctorTransformado[];
   loading: boolean;
-  citaSeleccionadaId: string | null;
+  // citaSeleccionadaId: string | null;
 }
+
 
 type CalendarioAction =
   | { type: "SET_VISTA"; vista: Vista }
@@ -57,7 +64,8 @@ type CalendarioAction =
   | { type: "SET_CITAS"; citas: CitaTransformada[] }
   | { type: "SET_DOCTORES"; doctores: DoctorTransformado[] }
   | { type: "SET_LOADING"; value: boolean }
-  | { type: "SELECCIONAR_CITA"; citaId: string | null };
+  // | { type: "SELECCIONAR_CITA"; citaId: string | null };
+
 
 const initialState: CalendarioState = {
   vista: "dia",
@@ -65,8 +73,9 @@ const initialState: CalendarioState = {
   citas: [],
   doctores: [],
   loading: false,
-  citaSeleccionadaId: null,
+  // citaSeleccionadaId: null,
 };
+
 
 function calendarioReducer(state: CalendarioState, action: CalendarioAction): CalendarioState {
   switch (action.type) {
@@ -75,17 +84,19 @@ function calendarioReducer(state: CalendarioState, action: CalendarioAction): Ca
     case "SET_CITAS":         return { ...state, citas: action.citas };
     case "SET_DOCTORES":      return { ...state, doctores: action.doctores };
     case "SET_LOADING":       return { ...state, loading: action.value };
-    case "SELECCIONAR_CITA":  return { ...state, citaSeleccionadaId: action.citaId };
+    // case "SELECCIONAR_CITA":  return { ...state, citaSeleccionadaId: action.citaId };
     default:                  return state;
   }
 }
 
+
 const CalendarioMedico = () => {
   const [state, dispatch] = useReducer(calendarioReducer, initialState);
-  const { vista, fecha, citas, doctores, loading, citaSeleccionadaId } = state;
+  const { vista, fecha, citas, doctores, loading } = state;
   const navigate = useNavigate();
   const { user } = useAuth();
   const medicoId = user?.medicoId ?? "";
+
 
   const cargarDoctores = useCallback(async () => {
     try {
@@ -94,6 +105,7 @@ const CalendarioMedico = () => {
       dispatch({ type: "SET_DOCTORES", doctores: [] });
     }
   }, []);
+
 
   const cargarCitas = useCallback(async () => {
     if (!medicoId) return;
@@ -110,8 +122,10 @@ const CalendarioMedico = () => {
     }
   }, [fecha, vista, medicoId]);
 
+
   useEffect(() => { cargarDoctores(); }, [cargarDoctores]);
   useEffect(() => { cargarCitas(); }, [cargarCitas]);
+
 
   const cambiarFecha = useCallback((delta: number) => {
     const nueva = new Date(fecha);
@@ -121,18 +135,25 @@ const CalendarioMedico = () => {
     dispatch({ type: "SET_FECHA", fecha: nueva });
   }, [fecha, vista]);
 
+
+  // const irADetalleCita = useCallback((_e: React.MouseEvent | React.KeyboardEvent, citaId: string) => {
+  //   dispatch({ type: "SELECCIONAR_CITA", citaId });
+  // }, []);
   const irADetalleCita = useCallback((_e: React.MouseEvent | React.KeyboardEvent, citaId: string) => {
-    dispatch({ type: "SELECCIONAR_CITA", citaId });
-  }, []);
-
-  const cerrarModal = useCallback(() => {
-    dispatch({ type: "SELECCIONAR_CITA", citaId: null });
-  }, []);
-
-  const irAPerfilCita = useCallback((citaId: string) => {
-    dispatch({ type: "SELECCIONAR_CITA", citaId: null });
     navigate(`/citas/${citaId}`);
   }, [navigate]);
+
+
+  // const cerrarModal = useCallback(() => {
+  //   dispatch({ type: "SELECCIONAR_CITA", citaId: null });
+  // }, []);
+
+
+  // const irAPerfilCita = useCallback((citaId: string) => {
+  //   dispatch({ type: "SELECCIONAR_CITA", citaId: null });
+  //   navigate(`/citas/${citaId}`);
+  // }, [navigate]);
+
 
   const diasDelMes = useMemo(() => {
     const anio = fecha.getFullYear();
@@ -146,7 +167,9 @@ const CalendarioMedico = () => {
     return dias;
   }, [fecha]);
 
+
   const inicioSemana = useMemo(() => obtenerInicioSemana(fecha), [fecha]);
+
 
   const tituloCalendario = (() => {
     if (vista === "mes") return fecha.toLocaleDateString("es-PE", { month: "long", year: "numeric" });
@@ -157,12 +180,14 @@ const CalendarioMedico = () => {
     return `${inicio.toLocaleDateString("es-PE")} – ${fin.toLocaleDateString("es-PE")}`;
   })();
 
+
   return (
     <div className="calendario-container">
       <div className="calendario-layout">
         <div className="calendario-left">
           <MiniCalendario fecha={fecha} onChange={(f) => dispatch({ type: "SET_FECHA", fecha: f })} />
         </div>
+
 
         <div className="calendario-main">
           <CalendarioTopbar
@@ -172,7 +197,9 @@ const CalendarioMedico = () => {
             onCambiarVista={(v) => dispatch({ type: "SET_VISTA", vista: v })}
           />
 
+
           {loading && <div className="loading-indicator">Cargando citas...</div>}
+
 
           {!loading && (
             <>
@@ -210,16 +237,18 @@ const CalendarioMedico = () => {
         </div>
       </div>
 
-      {citaSeleccionadaId && (
+
+      {/* {citaSeleccionadaId && (
         <CitaQuickModal
           citaId={citaSeleccionadaId}
           onCerrar={cerrarModal}
           onCitaActualizada={cargarCitas}
           onIrADetalle={irAPerfilCita}
         />
-      )}
+      )} */}
     </div>
   );
 };
+
 
 export default CalendarioMedico;
