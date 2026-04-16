@@ -2,7 +2,19 @@ import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { MedicoApiService } from "../../services/medico.service";
 import type { CitaMedico } from "../../services/medico.service";
-import "../../pages/PerfilCita/PerfilCita.css";
+import { Search, Calendar, Clock, User } from "lucide-react";
+import "../ListaCitas/ListaCitas.css";
+import "../ListaPacientes/ListaPacientes.css";
+
+const ESTADO_CONFIG: Record<string, { class: string; label: string }> = {
+  PENDIENTE:    { class: "badge-info",  label: "Pendiente" },
+  REPROGRAMADA: { class: "badge-warning", label: "Reprogramada" },
+  ATENDIDA:     { class: "badge-success",  label: "Atendida" },
+  CANCELADA:    { class: "badge-danger",   label: "Cancelada" },
+};
+
+const normalizeString = (str: string): string =>
+  (str || "").toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
 
 const MedicoCitas = () => {
   const [citas, setCitas]               = useState<CitaMedico[]>([]);
@@ -20,41 +32,46 @@ const MedicoCitas = () => {
 
   const citasFiltradas = citas.filter((c) => {
     const pasaEstado    = filtroEstado === "TODOS" || c.estado === filtroEstado;
-    const textoBusqueda = `${c.pacienteId.nombres} ${c.pacienteId.apellidos} ${c.pacienteId.dni}`.toLowerCase();
-    const pasaBusqueda  = !busqueda || textoBusqueda.includes(busqueda.toLowerCase());
+    const filtro = normalizeString(busqueda);
+    const pasaBusqueda  = normalizeString(`${c.pacienteId.nombres} ${c.pacienteId.apellidos}`).includes(filtro) ||
+                          normalizeString(c.pacienteId.dni).includes(filtro);
     return pasaEstado && pasaBusqueda;
   });
 
-  if (cargando) {
-    return (
-      <div className="loading-container">
-        <div className="loading-content">
-          <div className="spinner" />
-          <p className="loading-text">Cargando citas...</p>
+  return (
+    <div className="lista-page">
+      <div className="lista-page-header">
+        <div>
+          <h1>Mis Citas</h1>
+          <p className="lista-page-subtitle">{citasFiltradas.length} resultado{citasFiltradas.length !== 1 ? "s" : ""}</p>
         </div>
       </div>
-    );
-  }
 
-  return (
-    <div className="medico-citas-page">
-      <div className="medico-citas-header">
-        <h2>Mis Citas</h2>
-        <span className="medico-citas-count">
-          {citasFiltradas.length} resultado{citasFiltradas.length !== 1 ? "s" : ""}
-        </span>
-      </div>
-
-      <div className="medico-citas-filtros">
-        <input
-          type="text"
-          placeholder="Buscar por nombre o DNI..."
-          value={busqueda}
-          onChange={(e) => setBusqueda(e.target.value)}
-        />
+      <div style={{ display: 'flex', gap: '1rem', marginBottom: '1.25rem', alignItems: 'center' }}>
+        <div className="lista-search-bar" style={{ marginBottom: 0, flex: 1, maxWidth: '400px' }}>
+          <Search size={18} className="lista-search-icon" />
+          <input
+            type="text"
+            placeholder="Buscar por nombre o DNI..."
+            value={busqueda}
+            onChange={(e) => setBusqueda(e.target.value)}
+            className="lista-search-input"
+          />
+        </div>
+        
         <select
           value={filtroEstado}
           onChange={(e) => setFiltroEstado(e.target.value)}
+          style={{ 
+            width: '200px', 
+            padding: '0.625rem 0.875rem', 
+            borderRadius: 'var(--radius-md)', 
+            border: '1px solid var(--border)',
+            background: 'var(--bg-card)',
+            color: 'var(--text-primary)',
+            cursor: 'pointer',
+            fontSize: '0.85rem'
+          }}
         >
           <option value="TODOS">Todos los estados</option>
           <option value="PENDIENTE">Pendiente</option>
@@ -64,49 +81,74 @@ const MedicoCitas = () => {
         </select>
       </div>
 
-      {citasFiltradas.length === 0 ? (
-        <div className="medico-citas-vacio">
-          No hay citas que coincidan con los filtros.
+      {cargando ? (
+        <div className="lista-loading">
+          <div className="lista-loading-spinner" />
+          <p>Cargando citas...</p>
         </div>
       ) : (
-        <div className="medico-citas-tabla-wrapper">
-          <table className="medico-citas-tabla">
-            <thead>
-              <tr>
-                <th>Paciente</th>
-                <th>DNI</th>
-                <th>Fecha</th>
-                <th>Hora</th>
-                <th>Tipo</th>
-                <th>Estado</th>
-                <th>Acción</th>
-              </tr>
-            </thead>
-            <tbody>
-              {citasFiltradas.map((c) => (
-                <tr key={c._id}>
-                  <td>{c.pacienteId.nombres} {c.pacienteId.apellidos}</td>
-                  <td className="td-muted">{c.pacienteId.dni}</td>
-                  <td>{new Date(c.fecha).toLocaleDateString("es-PE", { timeZone: "UTC" })}</td>
-                  <td>{c.hora || "—"}</td>
-                  <td className="td-muted">{c.tipo || "CONSULTA"}</td>
-                  <td>
-                    <span className={`badge-estado-cita badge-estado-cita--${c.estado.toLowerCase()}`}>
-                      {c.estado}
-                    </span>
-                  </td>
-                  <td>
-                    <button
-                      className="btn btn-secondary btn-sm"
-                      onClick={() => navigate(`/citas/${c._id}`)}
-                    >
-                      Ver
-                    </button>
-                  </td>
+        <div className="lista-table-card">
+          <div className="table-container">
+            <table className="modern-table">
+              <thead>
+                <tr>
+                  <th style={{ width: 220 }}>Paciente</th>
+                  <th style={{ width: 120 }}>DNI</th>
+                  <th style={{ width: 140 }}>Fecha / Hora</th>
+                  <th style={{ width: 130 }}>Tipo</th>
+                  <th style={{ width: 130 }}>Estado</th>
+                  <th style={{ width: 80 }}>Acción</th>
                 </tr>
-              ))}
-            </tbody>
-          </table>
+              </thead>
+              <tbody>
+                {citasFiltradas.length > 0 ? (
+                  citasFiltradas.map((c) => {
+                    const estadoInfo = ESTADO_CONFIG[c.estado] || { class: "badge-warning", label: c.estado };
+                    const inicialPaciente = c.pacienteId.nombres.charAt(0).toUpperCase();
+
+                    return (
+                      <tr key={c._id}>
+                        <td>
+                          <div className="td-person">
+                            <div className="td-avatar">{inicialPaciente}</div>
+                            <div className="td-person-info">
+                              <span className="td-person-name">{c.pacienteId.nombres} {c.pacienteId.apellidos}</span>
+                            </div>
+                          </div>
+                        </td>
+                        <td><span className="td-mono">{c.pacienteId.dni}</span></td>
+                        <td>
+                          <div className="td-datetime">
+                            <span className="td-date"><Calendar size={13} /> {new Date(c.fecha).toLocaleDateString("es-PE", { timeZone: "UTC" })}</span>
+                            <span className="td-time"><Clock size={13} /> {c.hora || "—"}</span>
+                          </div>
+                        </td>
+                        <td><span className="td-specialty">{c.tipo || "CONSULTA"}</span></td>
+                        <td>
+                          <span className={`modern-badge ${estadoInfo.class}`}>
+                            <span className="modern-badge-dot" />
+                            {estadoInfo.label}
+                          </span>
+                        </td>
+                        <td className="td-center">
+                          <button className="btn-action" onClick={() => navigate(`/citas/${c._id}`)} title="Ver detalle">
+                            Ver
+                          </button>
+                        </td>
+                      </tr>
+                    );
+                  })
+                ) : (
+                   <tr>
+                     <td colSpan={6} className="td-empty">
+                       <User size={32} className="td-empty-icon" />
+                       <p>No hay citas que coincidan con los filtros.</p>
+                     </td>
+                   </tr>
+                )}
+              </tbody>
+            </table>
+          </div>
         </div>
       )}
     </div>
