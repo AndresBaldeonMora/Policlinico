@@ -567,6 +567,10 @@
   letter-spacing: 0.04em;
 }
 
+.doctores-panel__titulo {
+  padding: 0.25rem 0;
+}
+
 .doctores-lista {
   display: flex;
   flex-direction: column;
@@ -581,17 +585,21 @@
   font-weight: 500;
   color: var(--text-secondary);
   transition: all 0.15s var(--ease);
-}
-
-.doctor-item:hover {
-  background: var(--bg-hover);
-  color: var(--primary);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .doctor-item.activo {
   background: var(--primary-lighter);
   color: var(--primary);
   font-weight: 600;
+}
+
+.doctor-item--especialidad {
+  font-size: 0.8rem;
+  font-weight: 600;
+  text-transform: capitalize;
 }
 
 /* ═══════════════════════════════════════════
