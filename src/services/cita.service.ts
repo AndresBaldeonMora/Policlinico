@@ -1,7 +1,7 @@
 // src/services/cita.service.ts
 import api from "./api";
 
-export type EstadoCita = "PENDIENTE" | "ATENDIDA" | "CANCELADA" | "REPROGRAMADA";
+export type EstadoCita = "PENDIENTE" | "ASISTIO" | "ATENDIDA" | "CANCELADA" | "REPROGRAMADA";
 
 export interface CrearCitaDTO {
   pacienteId: string;

@@ -300,67 +300,163 @@ const PerfilCita = () => {
   // ── Handlers de acciones de cita ──────────────────────────────
 
   const handleConfirmarAsistencia = async () => {
+    const estadoActual = cita?.estado;
+    const mensaje = estadoActual === "REPROGRAMADA" 
+      ? "El paciente asistió a la cita reprogramada."
+      : "El paciente asistió a la cita.";
+      
     const result = await Swal.fire({
       title: "¿Confirmar asistencia?",
-      text: "La cita pasará al estado ATENDIDA.",
+      text: `${mensaje} Pasará al estado ASISTIO.`,
       icon: "question",
       showCancelButton: true,
-      confirmButtonText: "Sí, confirmar",
+      confirmButtonText: "Sí, confirmar asistencia",
       cancelButtonText: "No",
+      confirmButtonColor: "#10b981"
     });
+    
     if (!result.isConfirmed) return;
+    
     try {
-      await CitaApiService.marcarAsistencia(citaId!);
-      toastExito("Asistencia confirmada");
+      await CitaApiService.cambiarEstado(citaId!, "ASISTIO");
+      toastExito("Asistencia confirmada. Esperando finalización del médico.");
       cargarCita();
-    } catch {
+    } catch (error) {
       Swal.fire("Error", "No se pudo confirmar la asistencia", "error");
     }
   };
 
   const handleFinalizarConsulta = async () => {
-    if (!notas.diagnostico.trim()) {
-      Swal.fire("Diagnóstico requerido", "Guarda un diagnóstico en el tab 'Notas Clínicas' antes de finalizar.", "warning");
-      return;
-    }
+    // if (!notas.diagnostico.trim()) {
+    //   Swal.fire(
+    //     "Diagnóstico requerido", 
+    //     "Debes guardar un diagnóstico en el tab 'Notas Clínicas' antes de finalizar la consulta.",
+    //     "warning"
+    //   );
+    //   return;
+    // }
+
     const result = await Swal.fire({
       title: "¿Finalizar consulta?",
-      text: "La cita pasará al estado ATENDIDA.",
+      text: "La cita pasará al estado ATENDIDA. No podrás modificarla después.",
+      icon: "question",
       showCancelButton: true,
-      confirmButtonText: "Finalizar",
+      confirmButtonText: "Sí, finalizar consulta",
       cancelButtonText: "Cancelar",
+      confirmButtonColor: "#059669"
     });
+    
     if (!result.isConfirmed) return;
+    
     try {
-      await MedicoApiService.actualizarEstadoCita(citaId!, "ATENDIDA");
-      toastExito("Consulta finalizada");
+      // Guardar notas si existen (opcional)
+      if (notas.diagnostico.trim() || notas.notasClinicas.trim() || notas.tratamiento.trim()) {
+        await MedicoApiService.guardarNotasClinicas(citaId!, notas);
+      }
+      
+      // Cambiar estado a ATENDIDA
+      await CitaApiService.cambiarEstado(citaId!, "ATENDIDA");
+      toastExito("Consulta finalizada correctamente");
       cargarCita();
-    } catch {
+    } catch (error) {
       Swal.fire("Error", "No se pudo finalizar la consulta", "error");
     }
   };
 
   const handleCancelarCita = async () => {
+    const estadoActual = cita?.estado;
+    const mensaje = estadoActual === "REPROGRAMADA"
+      ? "Cancelar cita reprogramada"
+      : "Cancelar cita pendiente";
+      
     const { value: motivo } = await Swal.fire({
-      title: "Cancelar cita",
+      title: mensaje,
       input: "text",
       inputLabel: "Motivo de cancelación",
       inputPlaceholder: "Ej: Paciente canceló por teléfono",
       showCancelButton: true,
       confirmButtonColor: "#dc2626",
-      confirmButtonText: "Cancelar cita",
+      confirmButtonText: "Sí, cancelar cita",
       cancelButtonText: "No, mantener",
-      inputValidator: (v) => (!v ? "El motivo es obligatorio" : null),
+      inputValidator: (value) => {
+        if (!value) return "El motivo es obligatorio";
+        if (value.length < 5) return "El motivo debe tener al menos 5 caracteres";
+        return null;
+      }
     });
+    
     if (!motivo) return;
+    
     try {
       await CitaApiService.cancelar(citaId!, motivo);
       toastExito("Cita cancelada");
       cargarCita();
-    } catch {
+    } catch (error) {
       Swal.fire("Error", "No se pudo cancelar la cita", "error");
     }
   };
+  // const handleConfirmarAsistencia = async () => {
+  //   const result = await Swal.fire({
+  //     title: "¿Confirmar asistencia?",
+  //     text: "La cita pasará al estado ATENDIDA.",
+  //     icon: "question",
+  //     showCancelButton: true,
+  //     confirmButtonText: "Sí, confirmar",
+  //     cancelButtonText: "No",
+  //   });
+  //   if (!result.isConfirmed) return;
+  //   try {
+  //     await CitaApiService.marcarAsistencia(citaId!);
+  //     toastExito("Asistencia confirmada");
+  //     cargarCita();
+  //   } catch {
+  //     Swal.fire("Error", "No se pudo confirmar la asistencia", "error");
+  //   }
+  // };
+
+  // const handleFinalizarConsulta = async () => {
+  //   if (!notas.diagnostico.trim()) {
+  //     Swal.fire("Diagnóstico requerido", "Guarda un diagnóstico en el tab 'Notas Clínicas' antes de finalizar.", "warning");
+  //     return;
+  //   }
+  //   const result = await Swal.fire({
+  //     title: "¿Finalizar consulta?",
+  //     text: "La cita pasará al estado ATENDIDA.",
+  //     showCancelButton: true,
+  //     confirmButtonText: "Finalizar",
+  //     cancelButtonText: "Cancelar",
+  //   });
+  //   if (!result.isConfirmed) return;
+  //   try {
+  //     await MedicoApiService.actualizarEstadoCita(citaId!, "ATENDIDA");
+  //     toastExito("Consulta finalizada");
+  //     cargarCita();
+  //   } catch {
+  //     Swal.fire("Error", "No se pudo finalizar la consulta", "error");
+  //   }
+  // };
+
+  // const handleCancelarCita = async () => {
+  //   const { value: motivo } = await Swal.fire({
+  //     title: "Cancelar cita",
+  //     input: "text",
+  //     inputLabel: "Motivo de cancelación",
+  //     inputPlaceholder: "Ej: Paciente canceló por teléfono",
+  //     showCancelButton: true,
+  //     confirmButtonColor: "#dc2626",
+  //     confirmButtonText: "Cancelar cita",
+  //     cancelButtonText: "No, mantener",
+  //     inputValidator: (v) => (!v ? "El motivo es obligatorio" : null),
+  //   });
+  //   if (!motivo) return;
+  //   try {
+  //     await CitaApiService.cancelar(citaId!, motivo);
+  //     toastExito("Cita cancelada");
+  //     cargarCita();
+  //   } catch {
+  //     Swal.fire("Error", "No se pudo cancelar la cita", "error");
+  //   }
+  // };
 
   // ============================================================================
 
@@ -438,6 +534,43 @@ const PerfilCita = () => {
       {/* ACCIONES DE CITA */}
       {cita && (
         <div className="perfil-acciones">
+          {/* RECEPCIONISTA: Confirma asistencia (PENDIENTE o REPROGRAMADA → ASISTIO) */}
+          {user?.rol === "RECEPCIONISTA" && 
+          (cita.estado === "PENDIENTE" || cita.estado === "REPROGRAMADA") && (
+            <button className="btn btn-success" onClick={handleConfirmarAsistencia}>
+              ✓ Confirmar asistencia
+            </button>
+          )}
+
+          {user?.rol === "RECEPCIONISTA" && cita.estado === "ASISTIO" && (
+            <button className="btn btn-primary" onClick={handleFinalizarConsulta}>
+              Marcar como Atendida
+            </button>
+          )}
+          
+          {/* MÉDICO: Finaliza consulta (ASISTIO → ATENDIDA) */}
+          {user?.rol === "MEDICO" && cita.estado === "ASISTIO" && (
+            <button className="btn btn-primary" onClick={handleFinalizarConsulta}>
+              Finalizar consulta
+            </button>
+          )}
+          
+          {/* Cancelar cita solo para estados que NO han asistido */}
+          {(cita.estado === "PENDIENTE" || cita.estado === "REPROGRAMADA") && (
+            <button className="btn btn-danger" onClick={handleCancelarCita}>
+              Cancelar cita
+            </button>
+          )}
+          
+          <span className={`badge-estado-cita badge-estado-cita--${cita.estado === "ASISTIO" ? "asistio" : cita.estado.toLowerCase()}`}>
+            {cita.estado === "ASISTIO" ? "Asistió" : cita.estado}
+          </span>
+        </div>
+      )}
+
+      {/* ACCIONES DE CITA
+      {cita && (
+        <div className="perfil-acciones">
           {user?.rol === "RECEPCIONISTA" && cita.estado === "PENDIENTE" && (
             <button className="btn btn-success" onClick={handleConfirmarAsistencia}>
               ✓ Confirmar asistencia
@@ -457,7 +590,7 @@ const PerfilCita = () => {
             {cita.estado}
           </span>
         </div>
-      )}
+      )} */}
 
       {/* TABS — diferenciadas por rol */}
       <div className="tabs-principales">

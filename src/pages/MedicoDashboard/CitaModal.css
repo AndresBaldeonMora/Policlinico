@@ -118,6 +118,7 @@
   font-size: 0.72rem;
   font-weight: 700;
   white-space: nowrap;
+  width: fit-content;
 }
 
 .cita-modal-badge--info {
@@ -138,6 +139,16 @@
 .cita-modal-badge--warning {
   background: var(--warning-bg);
   color: var(--warning);
+}
+
+.cita-modal-badge--asistio {
+  background: #fef3c7;
+  color: #b45309;
+}
+
+.cita-modal-badge--reprogramada {
+  background: #e0e7ff;
+  color: #4338ca;
 }
 
 .cita-modal-textarea {
@@ -204,52 +215,94 @@
   border-top: 1px solid var(--border);
 }
 
+/* ── Botón base ── */
 .cita-modal-btn {
-  padding: 0.5rem 1.25rem;
-  border: none;
-  border-radius: var(--radius-md);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.35rem;
+  min-width: 8rem;
+  height: 2.25rem;           /* altura uniforme para todos */
+  padding: 0 1.25rem;        /* solo padding horizontal */
+  white-space: nowrap;
+
+  font-family: inherit;
   font-size: 0.85rem;
   font-weight: 600;
+  line-height: 1;
+
+  border: 1px solid transparent;
+  border-radius: var(--radius-md);
   cursor: pointer;
-  transition: all 0.15s var(--ease);
-  font-family: inherit;
+  transition: background  0.15s var(--ease),
+              box-shadow  0.15s var(--ease),
+              transform   0.15s var(--ease),
+              opacity     0.15s var(--ease);
 }
 
 .cita-modal-btn:disabled {
   opacity: 0.5;
   cursor: not-allowed;
+  pointer-events: none;
 }
 
+.cita-modal-btn:focus-visible {
+  outline: 2px solid var(--primary);
+  outline-offset: 2px;
+}
+
+/* Verde – acción principal */
 .cita-modal-btn--primary {
   background: var(--primary-gradient);
   color: var(--text-inverse);
+  border-color: transparent;
   box-shadow: 0 2px 8px rgba(5, 150, 105, 0.2);
 }
-
 .cita-modal-btn--primary:hover:not(:disabled) {
   transform: translateY(-1px);
   box-shadow: 0 4px 12px rgba(5, 150, 105, 0.3);
 }
 
+/* Verde outline – acción secundaria */
 .cita-modal-btn--secondary {
   background: var(--bg-card);
   color: var(--primary);
-  border: 1px solid var(--primary-light);
-  margin-top: 0.5rem;
+  border-color: var(--primary-light);
 }
-
 .cita-modal-btn--secondary:hover:not(:disabled) {
   background: var(--primary-lighter);
 }
 
-.cita-modal-btn--cancel {
-  background-color: var(--bg-hover);
-  color: var(--text-secondary);
-  border: 1px solid var(--border);
+/* Rojo – cancelar / eliminar */
+.cita-modal-btn--danger {
+  background: var(--error-bg);
+  color: var(--error);
+  border-color: var(--error);
+}
+.cita-modal-btn--danger:hover:not(:disabled) {
+  background: var(--error);
+  color: #fff;
 }
 
-.cita-modal-btn--cancel:hover {
-  background-color: var(--border);
+/* Amarillo – advertencia / reprogramar */
+.cita-modal-btn--warning {
+  background: var(--warning-bg);
+  color: var(--warning);
+  border-color: var(--warning);
+}
+.cita-modal-btn--warning:hover:not(:disabled) {
+  background: var(--warning);
+  color: #fff;
+}
+
+/* Neutro – cerrar / descartar */
+.cita-modal-btn--cancel {
+  background: var(--bg-hover);
+  color: var(--text-secondary);
+  border-color: var(--border);
+}
+.cita-modal-btn--cancel:hover:not(:disabled) {
+  background: var(--border);
 }
 
 .cita-modal-loading {
@@ -286,7 +339,7 @@
   gap: 0.5rem;
 }
 
-.cita-modal-btn--danger-text {
+/* .cita-modal-btn--danger-text {
   color: var(--error);
 }
 
@@ -294,7 +347,7 @@
   display: inline-flex;
   align-items: center;
   gap: 0.35rem;
-}
+} */
 
 .cita-modal-btn:focus-visible {
   outline: 2px solid var(--primary);
