@@ -528,6 +528,15 @@
   background: #a16207;
 }
 
+.agenda-cita--asistio {
+  background: #fef3c7;
+  color: #b45309;
+  border-left-color: #b45309;
+}
+.agenda-cita--asistio::before {
+  background: #b45309;
+}
+
 .agenda-cita-nombre {
   font-weight: 700;
   overflow: hidden;
