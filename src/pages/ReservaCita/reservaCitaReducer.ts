@@ -80,6 +80,7 @@ export type ReservaAction =
   | { type: "SELECCIONAR_MES"; mes: MesOption; dias: number[] }
   | { type: "SELECCIONAR_DIA"; dia: number }
   | { type: "SET_DIAS_BLOQUEADOS"; dias: number[] }
+  | { type: "REMOVE_DIA"; dia: number }
   // Hora
   | { type: "SET_HORARIOS"; horarios: HorarioPorDia[] }
   | { type: "SELECCIONAR_HORA"; hora: string; fechaISO: string }
@@ -181,6 +182,13 @@ export function reservaReducer(state: ReservaState, action: ReservaAction): Rese
       return { ...state, diaSeleccionado: action.dia };
     case "SET_DIAS_BLOQUEADOS":
       return { ...state, diasBloqueados: action.dias };
+    case "REMOVE_DIA":
+      return {
+        ...state,
+        diasDelMes: state.diasDelMes.filter((d) => d !== action.dia),
+        diaSeleccionado: null,
+        horarios: [],
+      };
 
     case "SET_HORARIOS":
       return { ...state, horariosPorDia: action.horarios };

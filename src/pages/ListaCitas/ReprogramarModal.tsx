@@ -135,21 +135,15 @@ const HorariosSelector = ({
               {dia.horarios
                 .filter((h) => h.disponible)
                 .map((horario) => (
-                  <label
+                  <button
                     key={horario.hora}
-                    className={`horario-radio-modal ${
-                      horaSeleccionada === horario.hora ? "seleccionado" : ""
-                    }`}
+                    type="button"
+                    className={`dia-btn ${horaSeleccionada === horario.hora ? "activo" : ""}`}
+                    onClick={() => onSelectHora(horario.hora)}
+                    style={{ width: "auto", padding: "0.5rem 0.875rem" }}
                   >
-                    <input
-                      type="radio"
-                      name="horario"
-                      value={horario.hora}
-                      checked={horaSeleccionada === horario.hora}
-                      onChange={() => onSelectHora(horario.hora)}
-                    />
-                    <span className="horario-texto">{horario.hora} hs</span>
-                  </label>
+                    {horario.hora}
+                  </button>
                 ))}
             </div>
           </div>
@@ -190,10 +184,6 @@ const ConfirmacionResumen = ({ editando }: ResumenProps) => (
         <span>{editando.hora} hs</span>
       </div>
     </div>
-    <p className="modal-resumen-note">
-      Revisa que la nueva fecha y hora sean correctas antes de confirmar. Esta
-      acción actualizará la cita del paciente.
-    </p>
   </div>
 );
 
@@ -241,9 +231,6 @@ const ReprogramarModal = ({
         {/* Header */}
         <div className="modal-header-reprogramar">
           <h3>Reprogramar Cita</h3>
-          <span className="modal-subtitle">
-            {editando.paciente} · {editando.doctor} · {editando.especialidad}
-          </span>
           <ModalStepper pasoModal={pasoModal} />
         </div>
 

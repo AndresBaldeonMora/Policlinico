@@ -84,7 +84,8 @@ export type ListaCitasAction =
   | { type: "SELECT_DIA"; payload: { dia: number; fechaISO: string } }
   | { type: "SET_HORA"; payload: string }
   | { type: "SET_CARGANDO_HORARIOS"; payload: boolean }
-  | { type: "SET_HORARIOS_POR_DIA"; payload: HorarioPorDia[] };
+  | { type: "SET_HORARIOS_POR_DIA"; payload: HorarioPorDia[] }
+  | { type: "REMOVE_DIA"; payload: number };
 
 // ── Reducer ──────────────────────────────────────────────────
 
@@ -175,6 +176,15 @@ export function listaCitasReducer(
 
     case "SET_HORARIOS_POR_DIA":
       return { ...state, horariosPorDia: action.payload };
+
+    case "REMOVE_DIA":
+      return {
+        ...state,
+        diasDelMes: state.diasDelMes.filter((d) => d !== action.payload),
+        diaSeleccionado: null,
+        horariosPorDia: [],
+        editando: state.editando ? { ...state.editando, fecha: "", hora: "" } : null,
+      };
 
     default:
       return state;

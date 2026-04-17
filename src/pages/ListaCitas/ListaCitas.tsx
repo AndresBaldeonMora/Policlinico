@@ -1,5 +1,5 @@
 import { useEffect, useReducer, useRef, useState } from "react";
-import { useSearchParams } from "react-router-dom";
+import { useSearchParams, useNavigate } from "react-router-dom";
 import "./ListaCitas.css";
 import { CitaApiService } from "../../services/cita.service";
 import type { CitaProcesada } from "../../services/cita.service";
@@ -11,6 +11,7 @@ import {
 } from "./ListaCitasReducer";
 import type { MesOption, HorarioPorDia } from "./ListaCitasReducer";
 import ReprogramarModal from "./ReprogramarModal";
+import CitaQuickModal from "../../components/CitaQuickModal/CitaQuickModal";
 
 const normalizeString = (str: string): string =>
   str.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
@@ -49,17 +50,20 @@ const Notification = ({ message, type, visible }: NotificationProps) => {
 };
 
 const ESTADO_CONFIG: Record<string, { class: string; label: string }> = {
-  PENDIENTE:    { class: "badge-info",  label: "Pendiente" },
-  REPROGRAMADA: { class: "badge-warning",     label: "Reprogramada" },
-  ATENDIDA:     { class: "badge-success",  label: "Atendida" },
-  CANCELADA:    { class: "badge-danger",   label: "Cancelada" },
+  PENDIENTE:    { class: "badge-info",    label: "Pendiente" },
+  REPROGRAMADA: { class: "badge-warning", label: "Reprogramada" },
+  ATENDIDA:     { class: "badge-success", label: "Atendida" },
+  CANCELADA:    { class: "badge-danger",  label: "Cancelada" },
+  ASISTIO:      { class: "badge-warning", label: "Asistió" },
 };
 
 const ListaCitas = () => {
   const [searchParams] = useSearchParams();
+  const navigate = useNavigate();
   const highlightId = searchParams.get("highlight");
   const highlightRef = useRef<HTMLTableRowElement>(null);
   const [state, dispatch] = useReducer(listaCitasReducer, initialState);
+  const [citaSeleccionadaId, setCitaSeleccionadaId] = useState<string | null>(null);
   const { notification, editando, pasoModal, mesesDisponibles, mesSeleccionado, diasDelMes, diaSeleccionado, horariosPorDia, cargandoHorarios } = state;
 
   const [citasData, setCitasData] = useState<CitaProcesada[]>([]);
@@ -109,6 +113,11 @@ const ListaCitas = () => {
     dispatch({ type: "SET_CARGANDO_HORARIOS", payload: true });
     try {
       const horariosDelDia = await DoctorApiService.obtenerHorariosDisponibles(doctorId, fechaISO);
+      const tieneDisponibles = horariosDelDia.some((h) => h.disponible);
+      if (!tieneDisponibles) {
+        dispatch({ type: "REMOVE_DIA", payload: dia });
+        return;
+      }
       const horarioInfo: HorarioPorDia = {
         fecha: formatearFechaCompleta(fechaDate), fechaISO,
         diaNombre: obtenerNombreDia(fechaDate), diaNumero: dia, horarios: horariosDelDia,
@@ -217,7 +226,9 @@ const ListaCitas = () => {
                       <tr
                         key={cita._id}
                         ref={highlightId === cita._id ? highlightRef : undefined}
-                        className={highlightId === cita._id ? "tr-highlight" : ""}
+                        className={`${highlightId === cita._id ? "tr-highlight" : ""} tr-clickable`}
+                        onClick={() => setCitaSeleccionadaId(cita._id)}
+                        style={{ cursor: "pointer" }}
                       >
                         <td className="td-id">{cita.id}</td>
                         <td>
@@ -250,7 +261,7 @@ const ListaCitas = () => {
                         </td>
                         <td>
                           {cita.estado !== "REPROGRAMADA" && (
-                            <button className="btn-action" title="Reprogramar cita" onClick={() => onReprogramar(cita)}>
+                            <button className="btn-action" title="Reprogramar cita" onClick={(e) => { e.stopPropagation(); onReprogramar(cita); }}>
                               <CalendarClock size={16} />
                             </button>
                           )}
@@ -281,6 +292,15 @@ const ListaCitas = () => {
           onSelectHora={(hora) => dispatch({ type: "SET_HORA", payload: hora })}
           onSiguiente={irASegundoPaso} onVolver={() => dispatch({ type: "SET_PASO_MODAL", payload: 1 })}
           onCerrar={cerrarModal} onConfirmar={confirmarReprogramar}
+        />
+      )}
+
+      {citaSeleccionadaId && (
+        <CitaQuickModal
+          citaId={citaSeleccionadaId}
+          onCerrar={() => setCitaSeleccionadaId(null)}
+          onCitaActualizada={cargarCitas}
+          onIrADetalle={(id) => { setCitaSeleccionadaId(null); navigate(`/citas/${id}`); }}
         />
       )}
     </div>

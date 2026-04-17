@@ -190,6 +190,13 @@ const ReservaCita = () => {
 
       try {
         const horariosData = await DoctorApiService.obtenerHorariosDisponibles(doctorSeleccionado.id, fechaISO);
+        const tieneDisponibles = horariosData.some((h) => h.disponible);
+
+        if (!tieneDisponibles) {
+          dispatch({ type: "REMOVE_DIA", dia: diaSeleccionado });
+          return;
+        }
+
         const fechaObj = new Date(mesSeleccionado.anio, mesSeleccionado.numero, diaSeleccionado);
 
         dispatch({
@@ -202,7 +209,6 @@ const ReservaCita = () => {
             horarios: horariosData,
           }],
         });
-
 
         if (!prefillHasFecha) dispatch({ type: "RESET_HORA" });
       } catch {

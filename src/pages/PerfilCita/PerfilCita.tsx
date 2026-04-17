@@ -1,20 +1,7 @@
-// ============================================================
-// PerfilCita.tsx  (refactored)
-//
-// Changes from original:
-//  1. 9 useState calls → useReducer for fetch + clinical data
-//     (tabActiva / tabDemo stay as useState — they are pure,
-//      independent UI state with no cross-slice interactions)
-//  2. Confirmed all .map() keys are already stable IDs —
-//     linter warning was a false positive; added comments to
-//     make intent explicit
-//  3. Fixed a11y: replaced `div role="button"` with `<button>`
-//     in the citas widget
-// ============================================================
 
 import { useEffect, useState, useCallback, useMemo, useReducer } from "react";
 import { useParams, useNavigate } from "react-router-dom";
-import { History, ChevronDown, ChevronUp } from "lucide-react";
+import { History, ChevronDown, ChevronUp, Check, Plus, X as XIcon, Printer } from "lucide-react";
 import "./PerfilCita.css";
 import { CitaApiService } from "../../services/cita.service";
 import { MedicoApiService } from "../../services/medico.service";
@@ -333,15 +320,6 @@ const PerfilCita = () => {
   };
 
   const handleFinalizarConsulta = async () => {
-    // if (!notas.diagnostico.trim()) {
-    //   Swal.fire(
-    //     "Diagnóstico requerido", 
-    //     "Debes guardar un diagnóstico en el tab 'Notas Clínicas' antes de finalizar la consulta.",
-    //     "warning"
-    //   );
-    //   return;
-    // }
-
     const result = await Swal.fire({
       title: "¿Finalizar consulta?",
       text: "La cita pasará al estado ATENDIDA. No podrás modificarla después.",
@@ -401,68 +379,6 @@ const PerfilCita = () => {
       Swal.fire("Error", "No se pudo cancelar la cita", "error");
     }
   };
-  // const handleConfirmarAsistencia = async () => {
-  //   const result = await Swal.fire({
-  //     title: "¿Confirmar asistencia?",
-  //     text: "La cita pasará al estado ATENDIDA.",
-  //     icon: "question",
-  //     showCancelButton: true,
-  //     confirmButtonText: "Sí, confirmar",
-  //     cancelButtonText: "No",
-  //   });
-  //   if (!result.isConfirmed) return;
-  //   try {
-  //     await CitaApiService.marcarAsistencia(citaId!);
-  //     toastExito("Asistencia confirmada");
-  //     cargarCita();
-  //   } catch {
-  //     Swal.fire("Error", "No se pudo confirmar la asistencia", "error");
-  //   }
-  // };
-
-  // const handleFinalizarConsulta = async () => {
-  //   if (!notas.diagnostico.trim()) {
-  //     Swal.fire("Diagnóstico requerido", "Guarda un diagnóstico en el tab 'Notas Clínicas' antes de finalizar.", "warning");
-  //     return;
-  //   }
-  //   const result = await Swal.fire({
-  //     title: "¿Finalizar consulta?",
-  //     text: "La cita pasará al estado ATENDIDA.",
-  //     showCancelButton: true,
-  //     confirmButtonText: "Finalizar",
-  //     cancelButtonText: "Cancelar",
-  //   });
-  //   if (!result.isConfirmed) return;
-  //   try {
-  //     await MedicoApiService.actualizarEstadoCita(citaId!, "ATENDIDA");
-  //     toastExito("Consulta finalizada");
-  //     cargarCita();
-  //   } catch {
-  //     Swal.fire("Error", "No se pudo finalizar la consulta", "error");
-  //   }
-  // };
-
-  // const handleCancelarCita = async () => {
-  //   const { value: motivo } = await Swal.fire({
-  //     title: "Cancelar cita",
-  //     input: "text",
-  //     inputLabel: "Motivo de cancelación",
-  //     inputPlaceholder: "Ej: Paciente canceló por teléfono",
-  //     showCancelButton: true,
-  //     confirmButtonColor: "#dc2626",
-  //     confirmButtonText: "Cancelar cita",
-  //     cancelButtonText: "No, mantener",
-  //     inputValidator: (v) => (!v ? "El motivo es obligatorio" : null),
-  //   });
-  //   if (!motivo) return;
-  //   try {
-  //     await CitaApiService.cancelar(citaId!, motivo);
-  //     toastExito("Cita cancelada");
-  //     cargarCita();
-  //   } catch {
-  //     Swal.fire("Error", "No se pudo cancelar la cita", "error");
-  //   }
-  // };
 
   // ============================================================================
 
@@ -532,19 +448,20 @@ const PerfilCita = () => {
           </div>
         </div>
 
-        <span>
-          {formatearFechaCorta(cita.fecha)} - {cita.hora}
-        </span>
+        <div className="perfil-header-cita">
+          <span className="perfil-header-cita-label">Fecha de cita</span>
+          <span className="perfil-header-cita-valor">{formatearFechaCorta(cita.fecha)} — {cita.hora}</span>
+        </div>
       </div>
 
       {/* ACCIONES DE CITA */}
       {cita && (
         <div className="perfil-acciones">
           {/* RECEPCIONISTA: Confirma asistencia (PENDIENTE o REPROGRAMADA → ASISTIO) */}
-          {user?.rol === "RECEPCIONISTA" && 
+          {user?.rol === "RECEPCIONISTA" &&
           (cita.estado === "PENDIENTE" || cita.estado === "REPROGRAMADA") && (
-            <button className="btn btn-success" onClick={handleConfirmarAsistencia}>
-              ✓ Confirmar asistencia
+            <button className="btn btn-primary" onClick={handleConfirmarAsistencia}>
+              <Check size={14} /> Confirmar asistencia
             </button>
           )}
 
@@ -574,29 +491,6 @@ const PerfilCita = () => {
         </div>
       )}
 
-      {/* ACCIONES DE CITA
-      {cita && (
-        <div className="perfil-acciones">
-          {user?.rol === "RECEPCIONISTA" && cita.estado === "PENDIENTE" && (
-            <button className="btn btn-success" onClick={handleConfirmarAsistencia}>
-              ✓ Confirmar asistencia
-            </button>
-          )}
-          {user?.rol === "MEDICO" && cita.estado === "PENDIENTE" && (
-            <button className="btn btn-primary" onClick={handleFinalizarConsulta}>
-              Finalizar consulta
-            </button>
-          )}
-          {["PENDIENTE", "REPROGRAMADA"].includes(cita.estado) && (
-            <button className="btn btn-danger" onClick={handleCancelarCita}>
-              Cancelar cita
-            </button>
-          )}
-          <span className={`badge-estado-cita badge-estado-cita--${cita.estado.toLowerCase()}`}>
-            {cita.estado}
-          </span>
-        </div>
-      )} */}
 
       {/* TABS — diferenciadas por rol */}
       <div className="tabs-principales">
@@ -620,7 +514,7 @@ const PerfilCita = () => {
                 <h3>Alergias</h3>
               </div>
               <div className="card-body">
-                {alergias.length === 0 ? "Nada grabado" : "—"}
+                {alergias.length === 0 ? "Sin registros" : "—"}
               </div>
             </div>
 
@@ -629,7 +523,7 @@ const PerfilCita = () => {
                 <h3>Problemas Medicos</h3>
               </div>
               <div className="card-body">
-                {problemasMedicos.length === 0 ? "Nada grabado" : "—"}
+                {problemasMedicos.length === 0 ? "Sin registros" : "—"}
               </div>
             </div>
 
@@ -638,7 +532,7 @@ const PerfilCita = () => {
                 <h3>Medicamentos</h3>
               </div>
               <div className="card-body">
-                {medicamentos.length === 0 ? "Nada grabado" : "—"}
+                {medicamentos.length === 0 ? "Sin registros" : "—"}
               </div>
             </div>
 
@@ -712,7 +606,7 @@ const PerfilCita = () => {
           <div className="card-body notas-clinicas-form">
             {esConsultaFinalizada && (
               <div className="notas-consulta-finalizada">
-                ✓ Consulta finalizada — Los datos son de solo lectura por auditoría médica.
+                <Check size={14} /> Consulta finalizada — Los datos son de solo lectura por auditoría médica.
               </div>
             )}
 
@@ -841,7 +735,7 @@ const PerfilCita = () => {
                         disabled={!medForm.dosis.trim() || !medForm.frecuencia.trim() || !medForm.duracion.trim()}
                         onClick={agregarMedicamento}
                       >
-                        + Agregar
+                        <Plus size={13} /> Agregar
                       </button>
                     </div>
                   )}
@@ -875,7 +769,7 @@ const PerfilCita = () => {
                                 onClick={() => quitarMedicamento(i)}
                                 title="Quitar"
                               >
-                                ×
+                                <XIcon size={14} />
                               </button>
                             </td>
                           )}
@@ -976,7 +870,7 @@ const PerfilCita = () => {
                 className="btn btn-primary btn-sm"
                 onClick={() => setMostrarOrdenModal(true)}
               >
-                + Nueva Orden
+                <Plus size={13} /> Nueva Orden
               </button>
             )}
           </div>
@@ -1025,7 +919,7 @@ const PerfilCita = () => {
                           className="btn btn-secondary btn-sm"
                           onClick={() => navigate(`/ordenes/${orden._id}/imprimir`)}
                         >
-                          Imprimir
+                          <Printer size={13} /> Imprimir
                         </button>
                         {orden.estado === "PENDIENTE" &&
                           user?.rol === "MEDICO" && (
