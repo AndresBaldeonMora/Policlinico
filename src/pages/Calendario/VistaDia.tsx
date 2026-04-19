@@ -3,6 +3,7 @@ import { Fragment } from "react";
 import type { CitaTransformada } from "../../services/cita.service";
 import type { DoctorTransformado } from "../../services/doctor.service";
 import { getDoctorIdString } from "../../services/cita.service";
+import { toISODateLocal, fechaISO } from "../../utils/fecha.utils";
 
 interface Props {
   fecha: Date;
