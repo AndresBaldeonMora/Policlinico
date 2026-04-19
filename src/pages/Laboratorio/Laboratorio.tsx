@@ -24,14 +24,13 @@ import "./Laboratorio.css";
 import "../ListaCitas/ListaCitas.css";
 
 // ─── Helpers ─────────────────────────────────────────────────
-const formatFecha = (iso: string) => {
-  const d = new Date(iso);
-  return d.toLocaleDateString("es-PE", {
+const formatFecha = (iso: string) =>
+  new Date(iso).toLocaleDateString("es-PE", {
     day: "2-digit",
     month: "short",
     year: "numeric",
+    timeZone: "UTC",
   });
-};
 
 const formatFechaHora = (iso: string) => {
   const d = new Date(iso);
@@ -39,11 +38,13 @@ const formatFechaHora = (iso: string) => {
     day: "2-digit",
     month: "short",
     year: "numeric",
+    timeZone: "UTC",
   });
   const hora = d.toLocaleTimeString("es-PE", {
     hour: "2-digit",
     minute: "2-digit",
     hour12: true,
+    timeZone: "UTC",
   });
   return (
     <>
@@ -55,7 +56,7 @@ const formatFechaHora = (iso: string) => {
   );
 };
 
-// Convierte "YYYY-MM-DD" en fecha legible larga sin desfase de timezone
+// "YYYY-MM-DD" → fecha larga en español (fecha local, sin desfase)
 const formatFechaLocalLarga = (dateStr: string): string => {
   const [y, m, d] = dateStr.split("-").map(Number);
   return new Date(y, m - 1, d).toLocaleDateString("es-PE", {

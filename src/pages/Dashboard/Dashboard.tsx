@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { CitaApiService, type CitaProcesada } from "../../services/cita.service";
 import { ExamenService, type OrdenExamen } from "../../services/examen.service";
+import { formatearFechaDMY } from "../../utils/fecha.utils";
 import "./Dashboard.css";
 
 const ESTADO_LABELS: Record<CitaProcesada["estado"], string> = {
@@ -203,11 +204,7 @@ export default function Dashboard() {
                     </td>
                     <td>{orden.especialidadId?.nombre}</td>
                     <td>
-                      {new Date(orden.fecha).toLocaleDateString("es-PE", {
-                        day: "2-digit",
-                        month: "2-digit",
-                        year: "numeric",
-                      })}
+                      {formatearFechaDMY(orden.fecha)}
                     </td>
                     <td>{orden.items?.length ?? 0}</td>
                   </tr>

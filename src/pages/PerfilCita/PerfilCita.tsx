@@ -76,12 +76,14 @@ const formatearFechaHora = (iso: string) => {
       day: "2-digit",
       month: "short",
       year: "numeric",
+      timeZone: "UTC",
     }) +
     " - " +
     d.toLocaleTimeString("es-PE", {
       hour: "2-digit",
       minute: "2-digit",
       hour12: true,
+      timeZone: "UTC",
     })
   );
 };

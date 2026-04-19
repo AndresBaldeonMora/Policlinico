@@ -12,6 +12,7 @@ import {
 import type { MesOption, HorarioPorDia } from "./ListaCitasReducer";
 import ReprogramarModal from "./ReprogramarModal";
 import CitaQuickModal from "../../components/CitaQuickModal/CitaQuickModal";
+import { hoyISO, isoADMY } from "../../utils/fecha.utils";
 
 const normalizeString = (str: string): string =>
   str.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
@@ -67,16 +68,6 @@ const TABS_ESTADO = [
   { estado: "CANCELADA",   label: "Cancelada" },
   { estado: "VENCIDA",     label: "Vencida" },
 ];
-
-const hoyISO = (): string => {
-  const h = new Date();
-  return `${h.getFullYear()}-${String(h.getMonth() + 1).padStart(2, "0")}-${String(h.getDate()).padStart(2, "0")}`;
-};
-
-const isoADMY = (iso: string): string => {
-  const [y, m, d] = iso.split("-");
-  return `${d}/${m}/${y}`;
-};
 
 const ListaCitas = () => {
   const [searchParams] = useSearchParams();

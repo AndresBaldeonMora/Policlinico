@@ -6,6 +6,7 @@ import { DoctorApiService } from "../../services/doctor.service";
 import { BloqueoService, type Bloqueo } from "../../services/bloqueo.service";
 import type { CitaTransformada } from "../../services/cita.service";
 import type { DoctorTransformado } from "../../services/doctor.service";
+import { toISODateLocal, obtenerInicioSemana } from "../../utils/fecha.utils";
 import MiniCalendario from "./MiniCalendario";
 import CalendarioTopbar from "./CalendarioTopBar";
 import DoctoresPanel from "./DoctoresPanel";
@@ -22,20 +23,6 @@ const HORA_INICIO = 8;
 const HORA_FIN = 17;
 const INTERVALO_MINUTOS = 15;
 
-const toISODateLocal = (d: Date): string => {
-  const y = d.getFullYear();
-  const m = String(d.getMonth() + 1).padStart(2, "0");
-  const day = String(d.getDate()).padStart(2, "0");
-  return `${y}-${m}-${day}`;
-};
-
-const obtenerInicioSemana = (d: Date): Date => {
-  const inicio = new Date(d);
-  const offset = (inicio.getDay() + 6) % 7;
-  inicio.setDate(inicio.getDate() - offset);
-  inicio.setHours(0, 0, 0, 0);
-  return inicio;
-};
 
 const HORAS_LABORALES = (() => {
   const totalMinutos = (HORA_FIN - HORA_INICIO) * 60;

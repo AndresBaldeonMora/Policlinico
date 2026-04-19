@@ -4,6 +4,7 @@ import type { CitaMedico, MedicoPerfil } from "../../services/medico.service";
 import { X, FlaskConical } from "lucide-react";
 import { ExamenService, OrdenExamen, TIPO_EXAMEN_LABEL } from "../../services/examen.service";
 import OrdenExamenModal from "./OrdenExamenModal";
+import { formatearFechaLarga, formatearFechaDMY } from "../../utils/fecha.utils";
 import "./CitaModal.css";
 
 interface Props {
@@ -20,14 +21,6 @@ const ESTADO_BADGE: Record<string, { clase: string; label: string }> = {
   REPROGRAMADA: { clase: "cita-modal-badge--warning", label: "Reprogramada" },
   VENCIDA:      { clase: "cita-modal-badge--danger",  label: "Vencida" },
 };
-
-const formatearFecha = (fecha: string) =>
-  new Date(fecha).toLocaleDateString("es-PE", {
-    weekday: "long",
-    day: "2-digit",
-    month: "long",
-    year: "numeric",
-  });
 
 const calcularEdad = (fechaNacimiento?: string): string => {
   if (!fechaNacimiento) return "—";
@@ -134,7 +127,7 @@ const CitaModal = ({ citaId, perfil, onCerrar, onCitaActualizada }: Props) => {
             <div className="cita-modal-grid">
               <div className="cita-modal-field">
                 <span className="cita-modal-label">Fecha</span>
-                <span className="cita-modal-value">{formatearFecha(cita.fecha)}</span>
+                <span className="cita-modal-value">{formatearFechaLarga(cita.fecha)}</span>
               </div>
               <div className="cita-modal-field">
                 <span className="cita-modal-label">Hora</span>
@@ -217,7 +210,7 @@ const CitaModal = ({ citaId, perfil, onCerrar, onCitaActualizada }: Props) => {
                     <div key={orden._id} className="cita-modal-orden-item">
                       <div className="cita-modal-orden-top">
                         <span className="cita-modal-orden-fecha">
-                          {new Date(orden.fecha).toLocaleDateString("es-PE")}
+                          {formatearFechaDMY(orden.fecha)}
                         </span>
                         <span className={`cita-modal-badge cita-modal-orden-estado--${orden.estado.toLowerCase()}`}>
                           {orden.estado === "PENDIENTE" && "Pendiente"}

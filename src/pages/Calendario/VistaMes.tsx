@@ -4,15 +4,9 @@ import type { CitaTransformada } from "../../services/cita.service";
 import type { DoctorTransformado } from "../../services/doctor.service";
 import type { Bloqueo } from "../../services/bloqueo.service";
 import { getDoctorIdString } from "../../services/cita.service";
+import { toISODateLocal, fechaISO } from "../../utils/fecha.utils";
 
 const DIAS_SEMANA = ["Lun", "Mar", "Mié", "Jue", "Vie", "Sáb", "Dom"] as const;
-
-const toISODateLocal = (d: Date): string => {
-  const y = d.getFullYear();
-  const m = String(d.getMonth() + 1).padStart(2, "0");
-  const day = String(d.getDate()).padStart(2, "0");
-  return `${y}-${m}-${day}`;
-};
 
 const esFechaValida = (d: Date) => !isNaN(d.getTime());
 
@@ -38,28 +32,21 @@ const VistaMes = ({ diasDelMes, citas, doctores, doctorId, bloqueos = [], onVerC
     ? doctores
     : doctores.filter((d) => d.id === doctorId);
 
-  const getCitasPorFechaYDoctor = (dia: Date, dId: string) =>
-    citas.filter((c) => {
-      const fc = new Date(c.fecha);
-      return (
-        fc.getUTCFullYear() === dia.getFullYear() &&
-        fc.getUTCMonth()    === dia.getMonth()    &&
-        fc.getUTCDate()     === dia.getDate()     &&
-        getDoctorIdString(c.doctorId) === dId
-      );
-    });
+  const getCitasPorFechaYDoctor = (dia: Date, dId: string) => {
+    const diaISO = toISODateLocal(dia);
+    return citas.filter((c) =>
+      fechaISO(c.fecha) === diaISO &&
+      getDoctorIdString(c.doctorId) === dId
+    );
+  };
 
-  const isDiaBloqueado = (dia: Date, dId: string) =>
-    bloqueos.some((b) => {
-      const fb = new Date(b.fecha);
+  const isDiaBloqueado = (dia: Date, dId: string) => {
+    const diaISO = toISODateLocal(dia);
+    return bloqueos.some((b) => {
       const doctorIdBloqueo = typeof b.doctorId === "object" ? b.doctorId._id : b.doctorId;
-      return (
-        fb.getUTCFullYear() === dia.getFullYear() &&
-        fb.getUTCMonth()    === dia.getMonth()    &&
-        fb.getUTCDate()     === dia.getDate()     &&
-        doctorIdBloqueo === dId
-      );
+      return fechaISO(b.fecha) === diaISO && doctorIdBloqueo === dId;
     });
+  };
 
   return (
     <div className="multi-mes-wrapper">

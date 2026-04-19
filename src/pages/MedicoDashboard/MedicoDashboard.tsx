@@ -15,6 +15,7 @@ import VistaDia from "../Calendario/VistaDia";
 import VistaSemana from "../Calendario/VistaSemana";
 import VistaMes from "../Calendario/VistaMes";
 import "./MedicoDashboard.css";
+import { toISODateLocal, obtenerInicioSemana } from "../../utils/fecha.utils";
 
 const HORA_INICIO = 8;
 const HORA_FIN = 17;
@@ -27,21 +28,6 @@ const HORAS_LABORALES = (() => {
     return `${String(Math.floor(mins / 60)).padStart(2, "0")}:${String(mins % 60).padStart(2, "0")}`;
   });
 })();
-
-const toISODateLocal = (d: Date): string => {
-  const y = d.getFullYear();
-  const m = String(d.getMonth() + 1).padStart(2, "0");
-  const day = String(d.getDate()).padStart(2, "0");
-  return `${y}-${m}-${day}`;
-};
-
-const obtenerInicioSemana = (d: Date): Date => {
-  const inicio = new Date(d);
-  const offset = (inicio.getDay() + 6) % 7;
-  inicio.setDate(inicio.getDate() - offset);
-  inicio.setHours(0, 0, 0, 0);
-  return inicio;
-};
 
 interface DashboardState {
   loading: boolean;

@@ -1,4 +1,5 @@
 import type { CitaMedico } from "../../services/medico.service";
+import { formatearFechaLarga } from "../../utils/fecha.utils";
 
 interface Props {
   citasHoy: CitaMedico[];
@@ -7,14 +8,6 @@ interface Props {
   onCambiarVista: (v: "hoy" | "todas") => void;
   onSeleccionarCita: (cita: CitaMedico) => void;
 }
-
-const formatearFecha = (fecha: string) =>
-  new Date(fecha).toLocaleDateString("es-PE", {
-    weekday: "long",
-    day: "2-digit",
-    month: "long",
-    year: "numeric",
-  });
 
 const CitasTabs = ({
   citasHoy,
@@ -74,7 +67,7 @@ const CitasTabs = ({
                   </div>
                   <div className="cita-fecha-hora">
                     <p className="label">Fecha</p>
-                    <p className="fecha">{formatearFecha(cita.fecha)}</p>
+                    <p className="fecha">{formatearFechaLarga(cita.fecha)}</p>
                     <p className="hora">{cita.hora}</p>
                   </div>
                   <div>

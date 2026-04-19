@@ -27,17 +27,14 @@ const VistaDia = ({ fecha, horas, citas, doctores, doctorId, onVerCita }: Props)
     ? doctores
     : doctores.filter((d) => d.id === doctorId);
 
+  const diaISO = toISODateLocal(fecha);
+
   const getCita = (dId: string, hora: string) =>
-    citas.find((c) => {
-      const fc = new Date(c.fecha);
-      return (
-        fc.getUTCFullYear() === fecha.getFullYear() &&
-        fc.getUTCMonth()    === fecha.getMonth()    &&
-        fc.getUTCDate()     === fecha.getDate()     &&
-        c.hora              === hora                &&
-        getDoctorIdString(c.doctorId) === dId
-      );
-    });
+    citas.find((c) =>
+      fechaISO(c.fecha) === diaISO &&
+      c.hora === hora &&
+      getDoctorIdString(c.doctorId) === dId
+    );
 
   return (
     <div className="multi-dia-wrapper">

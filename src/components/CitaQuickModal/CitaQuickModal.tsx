@@ -2,6 +2,7 @@ import { useEffect, useState, useCallback, useRef } from "react";
 import { CitaApiService } from "../../services/cita.service";
 import type { CitaTransformada, EstadoCita } from "../../services/cita.service";
 import { X, ExternalLink } from "lucide-react";
+import { formatearFechaLarga } from "../../utils/fecha.utils";
 import "../../pages/MedicoDashboard/CitaModal.css";
 
 
@@ -22,16 +23,6 @@ const ESTADO_BADGE: Record<string, { clase: string; label: string }> = {
   REPROGRAMADA: { clase: "cita-modal-badge--reprogramada", label: "Reprogramada" },
   VENCIDA:      { clase: "cita-modal-badge--danger",      label: "Vencida" },
 };
-
-
-const formatearFecha = (fecha: string) =>
-  new Date(fecha).toLocaleDateString("es-PE", {
-    weekday: "long",
-    day: "2-digit",
-    month: "long",
-    year: "numeric",
-    timeZone: "UTC",
-  });
 
 
 const calcularEdad = (fechaNacimiento?: string): string => {
@@ -170,7 +161,7 @@ const CitaQuickModal = ({ citaId, onCerrar, onCitaActualizada, onIrADetalle }: P
             <div className="cita-modal-grid">
               <div className="cita-modal-field">
                 <span className="cita-modal-label">Fecha</span>
-                <span className="cita-modal-value">{formatearFecha(cita.fecha)}</span>
+                <span className="cita-modal-value">{formatearFechaLarga(cita.fecha)}</span>
               </div>
               <div className="cita-modal-field">
                 <span className="cita-modal-label">Hora</span>
