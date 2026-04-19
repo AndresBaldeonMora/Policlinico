@@ -79,7 +79,7 @@ const CitasTabs = ({
                   </div>
                   <div>
                     <span className={`estado-badge ${cita.estado.toLowerCase()}`}>
-                      {cita.estado}
+                      {({ PENDIENTE: "Pendiente", ATENDIDA: "Atendida", CANCELADA: "Cancelada", REPROGRAMADA: "Reprogramada", ASISTIO: "Asistió", VENCIDA: "Vencida" } as Record<string, string>)[cita.estado] ?? cita.estado}
                     </span>
                   </div>
                 </div>

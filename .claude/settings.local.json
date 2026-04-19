@@ -3,7 +3,9 @@
     "allow": [
       "Bash(npx tsc:*)",
       "Bash(npx vite:*)",
-      "Bash(find c:/Users/fabrixiod/Documents/GitHub/Policlinico -type f \\\\\\(-name *.md -o -name *.txt \\\\\\))"
+      "Bash(find c:/Users/fabrixiod/Documents/GitHub/Policlinico -type f \\\\\\(-name *.md -o -name *.txt \\\\\\))",
+      "Read(//c/Users/andre/Documents/GitHub/proyecto-policlinico/**)",
+      "Bash(npm run *)"
     ]
   }
 }

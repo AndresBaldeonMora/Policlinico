@@ -486,7 +486,7 @@ const PerfilCita = () => {
           )}
           
           <span className={`badge-estado-cita badge-estado-cita--${cita.estado === "ASISTIO" ? "asistio" : cita.estado.toLowerCase()}`}>
-            {cita.estado === "ASISTIO" ? "Asistió" : cita.estado}
+            {({ PENDIENTE: "Pendiente", ATENDIDA: "Atendida", CANCELADA: "Cancelada", REPROGRAMADA: "Reprogramada", ASISTIO: "Asistió", VENCIDA: "Vencida" } as Record<string, string>)[cita.estado] ?? cita.estado}
           </span>
         </div>
       )}

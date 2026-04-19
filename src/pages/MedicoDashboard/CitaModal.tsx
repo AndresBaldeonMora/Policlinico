@@ -18,6 +18,7 @@ const ESTADO_BADGE: Record<string, { clase: string; label: string }> = {
   ATENDIDA:     { clase: "cita-modal-badge--success", label: "Atendida" },
   CANCELADA:    { clase: "cita-modal-badge--danger",  label: "Cancelada" },
   REPROGRAMADA: { clase: "cita-modal-badge--warning", label: "Reprogramada" },
+  VENCIDA:      { clase: "cita-modal-badge--danger",  label: "Vencida" },
 };
 
 const formatearFecha = (fecha: string) =>
@@ -40,7 +41,6 @@ const calcularEdad = (fechaNacimiento?: string): string => {
 
 const CitaModal = ({ citaId, perfil, onCerrar, onCitaActualizada }: Props) => {
   const [cita, setCita] = useState<CitaMedico | null>(null);
-  const [historial, setHistorial] = useState<CitaMedico[]>([]);
   const [notas, setNotas] = useState("");
   const [loading, setLoading] = useState(true);
   const [guardandoNotas, setGuardandoNotas] = useState(false);
@@ -64,15 +64,7 @@ const CitaModal = ({ citaId, perfil, onCerrar, onCitaActualizada }: Props) => {
       setCita(detalle);
       setNotas(detalle.notas ?? "");
 
-      const [todasCitas] = await Promise.all([
-        MedicoApiService.obtenerMisCitas(),
-        cargarOrdenes(),
-      ]);
-      const historialPaciente = todasCitas
-        .filter((c) => c.pacienteId._id === detalle.pacienteId._id && c._id !== citaId)
-        .sort((a, b) => new Date(b.fecha).getTime() - new Date(a.fecha).getTime())
-        .slice(0, 5);
-      setHistorial(historialPaciente);
+      await cargarOrdenes();
     } catch (error) {
       console.error("Error al cargar detalle:", error);
     } finally {
@@ -263,34 +255,6 @@ const CitaModal = ({ citaId, perfil, onCerrar, onCitaActualizada }: Props) => {
             </div>
           )}
 
-          {historial.length > 0 && (
-            <div className="cita-modal-section">
-              <h4>Historial de visitas</h4>
-              <div className="cita-modal-historial">
-                <table className="cita-modal-table">
-                  <thead>
-                    <tr>
-                      <th>Fecha</th>
-                      <th>Estado</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {historial.map((h) => {
-                      const hBadge = ESTADO_BADGE[h.estado] ?? ESTADO_BADGE.PENDIENTE;
-                      return (
-                        <tr key={h._id}>
-                          <td>{formatearFecha(h.fecha)}</td>
-                          <td>
-                            <span className={`cita-modal-badge ${hBadge.clase}`}>{hBadge.label}</span>
-                          </td>
-                        </tr>
-                      );
-                    })}
-                  </tbody>
-                </table>
-              </div>
-            </div>
-          )}
         </div>
 
         <div className="cita-modal-footer">

@@ -520,12 +520,12 @@
 }
 
 .agenda-cita--reprogramada {
-  background: #fef9c3;
-  color: #a16207;
-  border-left-color: #a16207;
+  background: #e0e7ff;
+  color: #4338ca;
+  border-left-color: #4338ca;
 }
 .agenda-cita--reprogramada::before {
-  background: #a16207;
+  background: #4338ca;
 }
 
 .agenda-cita--asistio {

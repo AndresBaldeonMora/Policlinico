@@ -1,4 +1,4 @@
-import { useEffect, useReducer, useRef, useState } from "react";
+import { useEffect, useReducer, useRef, useState, useMemo } from "react";
 import { useSearchParams, useNavigate } from "react-router-dom";
 import "./ListaCitas.css";
 import { CitaApiService } from "../../services/cita.service";
@@ -55,6 +55,27 @@ const ESTADO_CONFIG: Record<string, { class: string; label: string }> = {
   ATENDIDA:     { class: "badge-success", label: "Atendida" },
   CANCELADA:    { class: "badge-danger",  label: "Cancelada" },
   ASISTIO:      { class: "badge-warning", label: "Asistió" },
+  VENCIDA:      { class: "badge-danger",  label: "Vencida" },
+};
+
+const TABS_ESTADO = [
+  { estado: "TODOS",       label: "Todos" },
+  { estado: "PENDIENTE",   label: "Pendiente" },
+  { estado: "REPROGRAMADA",label: "Reprogramada" },
+  { estado: "ASISTIO",     label: "Asistió" },
+  { estado: "ATENDIDA",    label: "Atendida" },
+  { estado: "CANCELADA",   label: "Cancelada" },
+  { estado: "VENCIDA",     label: "Vencida" },
+];
+
+const hoyISO = (): string => {
+  const h = new Date();
+  return `${h.getFullYear()}-${String(h.getMonth() + 1).padStart(2, "0")}-${String(h.getDate()).padStart(2, "0")}`;
+};
+
+const isoADMY = (iso: string): string => {
+  const [y, m, d] = iso.split("-");
+  return `${d}/${m}/${y}`;
 };
 
 const ListaCitas = () => {
@@ -69,6 +90,9 @@ const ListaCitas = () => {
   const [citasData, setCitasData] = useState<CitaProcesada[]>([]);
   const [busqueda, setBusqueda] = useState("");
   const [cargandoLista, setCargandoLista] = useState(true);
+  const [filtroEstado, setFiltroEstado] = useState("TODOS");
+  const [filtroEspecialidad, setFiltroEspecialidad] = useState("TODAS");
+  const [fechaFiltro, setFechaFiltro] = useState(hoyISO);
 
   const showNotification = (message: string, type: "success" | "error") => {
     dispatch({ type: "SHOW_NOTIFICATION", payload: { message, type } });
@@ -166,11 +190,41 @@ const ListaCitas = () => {
     }
   };
 
-  const filtrarCitas = citasData.filter((cita) => {
-    if (cita.tipo === "LABORATORIO") return false;
+  const citasMedicas = useMemo(
+    () => citasData.filter((c) => c.tipo !== "LABORATORIO"),
+    [citasData]
+  );
+
+  const especialidades = useMemo(
+    () => ["TODAS", ...Array.from(new Set(citasMedicas.map((c) => c.especialidad))).sort()],
+    [citasMedicas]
+  );
+
+  const fechaDMY = fechaFiltro ? isoADMY(fechaFiltro) : null;
+
+  const citasPorFechaEspecialidad = useMemo(() => {
     const f = normalizeString(busqueda);
-    return normalizeString(cita.dni).includes(f) || normalizeString(cita.doctor).includes(f) || normalizeString(cita.paciente).includes(f);
-  });
+    return citasMedicas.filter((c) => {
+      if (fechaDMY && c.fecha !== fechaDMY) return false;
+      if (filtroEspecialidad !== "TODAS" && c.especialidad !== filtroEspecialidad) return false;
+      if (!f) return true;
+      return normalizeString(c.dni).includes(f) || normalizeString(c.doctor).includes(f) || normalizeString(c.paciente).includes(f);
+    });
+  }, [citasMedicas, fechaDMY, filtroEspecialidad, busqueda]);
+
+  const conteosPorEstado = useMemo(() => {
+    const m: Record<string, number> = { TODOS: citasPorFechaEspecialidad.length };
+    for (const c of citasPorFechaEspecialidad) m[c.estado] = (m[c.estado] ?? 0) + 1;
+    return m;
+  }, [citasPorFechaEspecialidad]);
+
+  const filtrarCitas = useMemo(() => {
+    const ESTADOS_VIGENTES = ["PENDIENTE", "REPROGRAMADA", "ASISTIO", "ATENDIDA"];
+    const base = filtroEstado === "TODOS"
+      ? citasPorFechaEspecialidad.filter((c) => ESTADOS_VIGENTES.includes(c.estado))
+      : citasPorFechaEspecialidad.filter((c) => c.estado === filtroEstado);
+    return [...base].sort((a, b) => (a.hora ?? "").localeCompare(b.hora ?? ""));
+  }, [citasPorFechaEspecialidad, filtroEstado]);
 
   return (
     <div className="lista-page">
@@ -178,23 +232,77 @@ const ListaCitas = () => {
 
       <div className="lista-page-header">
         <div>
-          <h1>Gestion de Citas</h1>
-          <p className="lista-page-subtitle">{citasData.length} citas programadas</p>
+          <h1>Gestión de Citas</h1>
+          <p className="lista-page-subtitle">{filtrarCitas.length} cita{filtrarCitas.length !== 1 ? "s" : ""} · {fechaDMY ?? "todas las fechas"}</p>
         </div>
       </div>
 
-      <div className="lista-search-bar">
-        <Search size={18} className="lista-search-icon" />
-        <input
-          type="text"
-          placeholder="Buscar por DNI, paciente o doctor..."
-          value={busqueda}
-          onChange={(e) => setBusqueda(e.target.value)}
-          className="lista-search-input"
-        />
-        {busqueda && (
-          <span className="lista-search-count">{filtrarCitas.length} resultado{filtrarCitas.length !== 1 ? "s" : ""}</span>
-        )}
+      {/* ── Filtros ── */}
+      <div className="lab-filtros-avanzados" style={{ marginBottom: "1rem" }}>
+        <div className="lab-filtro-campo">
+          <label className="lab-filtro-label">Fecha</label>
+          <input
+            type="date"
+            className="lab-filtro-date"
+            value={fechaFiltro}
+            onChange={(e) => setFechaFiltro(e.target.value)}
+          />
+        </div>
+        <div className="lab-filtro-campo">
+          <label className="lab-filtro-label">Especialidad</label>
+          <select
+            className="lab-filtro-select"
+            value={filtroEspecialidad}
+            onChange={(e) => setFiltroEspecialidad(e.target.value)}
+          >
+            {especialidades.map((esp) => (
+              <option key={esp} value={esp}>{esp === "TODAS" ? "Todas" : esp}</option>
+            ))}
+          </select>
+        </div>
+        <div className="lab-filtro-campo" style={{ flex: 1, minWidth: 200 }}>
+          <label className="lab-filtro-label">Buscar</label>
+          <div style={{ position: "relative", width: "100%" }}>
+            <Search
+              size={14}
+              style={{
+                position: "absolute",
+                left: "0.65rem",
+                top: "50%",
+                transform: "translateY(-50%)",
+                color: "var(--text-muted)",
+                pointerEvents: "none",
+              }}
+            />
+            <input
+              className="lab-filtro-input"
+              placeholder="DNI, paciente o doctor..."
+              value={busqueda}
+              onChange={(e) => setBusqueda(e.target.value)}
+              style={{ paddingLeft: "2.2rem" }}
+            />
+          </div>
+        </div>
+      </div>
+
+      {/* ── Tabs de estado ── */}
+      <div className="lab-filtros" style={{ marginBottom: "1rem" }} role="tablist">
+        {TABS_ESTADO.map((tab) => {
+          const count = conteosPorEstado[tab.estado] ?? 0;
+          if (tab.estado !== "TODOS" && count === 0) return null;
+          return (
+            <button
+              key={tab.estado}
+              role="tab"
+              aria-selected={filtroEstado === tab.estado}
+              className={`lab-filtro-btn${filtroEstado === tab.estado ? " active" : ""}`}
+              onClick={() => setFiltroEstado(tab.estado)}
+            >
+              <span>{tab.label}</span>
+              <span className="lab-filtro-count">{count}</span>
+            </button>
+          );
+        })}
       </div>
 
       {cargandoLista ? (
@@ -273,7 +381,7 @@ const ListaCitas = () => {
                   <tr>
                     <td colSpan={7} className="td-empty">
                       <User size={32} className="td-empty-icon" />
-                      <p>No se encontraron citas</p>
+                      <p>{fechaDMY ? `No hay citas para el ${fechaDMY}` : "No se encontraron citas"}</p>
                     </td>
                   </tr>
                 )}

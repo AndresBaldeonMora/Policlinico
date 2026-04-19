@@ -9,6 +9,8 @@ const ESTADO_LABELS: Record<CitaProcesada["estado"], string> = {
   ATENDIDA: "Atendida",
   CANCELADA: "Cancelada",
   REPROGRAMADA: "Reprogramada",
+  ASISTIO: "Asistió",
+  VENCIDA: "Vencida",
 };
 
 function parseFechaDMY(fechaStr: string): Date {

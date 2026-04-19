@@ -11,6 +11,7 @@ const ESTADO_CONFIG: Record<string, { class: string; label: string }> = {
   REPROGRAMADA: { class: "badge-warning", label: "Reprogramada" },
   ATENDIDA:     { class: "badge-success",  label: "Atendida" },
   CANCELADA:    { class: "badge-danger",   label: "Cancelada" },
+  VENCIDA:      { class: "badge-danger",   label: "Vencida" },
 };
 
 const normalizeString = (str: string): string =>

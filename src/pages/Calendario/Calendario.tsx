@@ -170,6 +170,12 @@ const Calendario = () => {
 
   const inicioSemana = useMemo(() => obtenerInicioSemana(fecha), [fecha]);
 
+  const ESTADOS_ACTIVOS = ["PENDIENTE", "REPROGRAMADA", "ASISTIO"];
+  const citasActivas = useMemo(
+    () => citas.filter((c) => ESTADOS_ACTIVOS.includes(c.estado)),
+    [citas] // eslint-disable-line react-hooks/exhaustive-deps
+  );
+
   const tituloCalendario = (() => {
     if (vista === "mes") return fecha.toLocaleDateString("es-PE", { month: "long", year: "numeric" });
     if (vista === "dia") return fecha.toLocaleDateString("es-PE", { weekday: "long", day: "numeric", month: "long", year: "numeric" });
@@ -207,7 +213,7 @@ const Calendario = () => {
                 <VistaDia
                   fecha={fecha}
                   horas={HORAS_LABORALES}
-                  citas={citas}
+                  citas={citasActivas}
                   doctores={doctores}
                   doctorId={doctorId}
                   onVerCita={irADetalleCita}
@@ -217,7 +223,7 @@ const Calendario = () => {
                 <VistaSemana
                   inicioSemana={inicioSemana}
                   horas={HORAS_LABORALES}
-                  citas={citas}
+                  citas={citasActivas}
                   doctores={doctores}
                   doctorId={doctorId}
                   onVerCita={irADetalleCita}
@@ -226,7 +232,7 @@ const Calendario = () => {
               {vista === "mes" && (
                 <VistaMes
                   diasDelMes={diasDelMes}
-                  citas={citas}
+                  citas={citasActivas}
                   doctores={doctores}
                   doctorId={doctorId}
                   bloqueos={bloqueos}

@@ -1,6 +1,6 @@
 import { useEffect, useState, useCallback, useRef } from "react";
 import { CitaApiService } from "../../services/cita.service";
-import type { CitaTransformada, CitaProcesada, EstadoCita } from "../../services/cita.service";
+import type { CitaTransformada, EstadoCita } from "../../services/cita.service";
 import { X, ExternalLink } from "lucide-react";
 import "../../pages/MedicoDashboard/CitaModal.css";
 
@@ -20,6 +20,7 @@ const ESTADO_BADGE: Record<string, { clase: string; label: string }> = {
   ATENDIDA:     { clase: "cita-modal-badge--success", label: "Atendida" },
   CANCELADA:    { clase: "cita-modal-badge--danger",  label: "Cancelada" },
   REPROGRAMADA: { clase: "cita-modal-badge--reprogramada", label: "Reprogramada" },
+  VENCIDA:      { clase: "cita-modal-badge--danger",      label: "Vencida" },
 };
 
 
@@ -46,7 +47,6 @@ const calcularEdad = (fechaNacimiento?: string): string => {
 
 const CitaQuickModal = ({ citaId, onCerrar, onCitaActualizada, onIrADetalle }: Props) => {
   const [cita, setCita] = useState<CitaTransformada | null>(null);
-  const [historial, setHistorial] = useState<CitaProcesada[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [estadoPendiente, setEstadoPendiente] = useState<EstadoCita | null>(null);
@@ -60,25 +60,6 @@ const CitaQuickModal = ({ citaId, onCerrar, onCitaActualizada, onIrADetalle }: P
     try {
       const detalle = await CitaApiService.obtenerPorId(citaId);
       setCita(detalle);
-
-
-      const paciente = detalle.pacienteId && typeof detalle.pacienteId === "object"
-        ? detalle.pacienteId
-        : null;
-
-
-      if (paciente) {
-        const todasCitas = await CitaApiService.listar();
-        const historialPaciente = todasCitas
-          .filter((c) => c.dni === paciente.dni && c._id !== citaId)
-          .sort((a, b) => {
-            const fechaA = new Date(a.fecha.split("/").reverse().join("-"));
-            const fechaB = new Date(b.fecha.split("/").reverse().join("-"));
-            return fechaB.getTime() - fechaA.getTime();
-          })
-          .slice(0, 5);
-        setHistorial(historialPaciente);
-      }
     } catch (err) {
       const message = err instanceof Error ? err.message : "Error al cargar la cita";
       setError(message);
@@ -249,34 +230,6 @@ const CitaQuickModal = ({ citaId, onCerrar, onCitaActualizada, onIrADetalle }: P
           )}
 
 
-          {historial.length > 0 && (
-            <div className="cita-modal-section">
-              <h4>Historial de visitas</h4>
-              <div className="cita-modal-historial">
-                <table className="cita-modal-table">
-                  <thead>
-                    <tr>
-                      <th>Fecha</th>
-                      <th>Estado</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {historial.map((h) => {
-                      const hBadge = ESTADO_BADGE[h.estado] ?? ESTADO_BADGE.PENDIENTE;
-                      return (
-                        <tr key={h._id}>
-                          <td>{h.fecha}</td>
-                          <td>
-                            <span className={`cita-modal-badge ${hBadge.clase}`}>{hBadge.label}</span>
-                          </td>
-                        </tr>
-                      );
-                    })}
-                  </tbody>
-                </table>
-              </div>
-            </div>
-          )}
         </div>
 
 
