@@ -7,11 +7,12 @@ import "../ListaCitas/ListaCitas.css";
 import "../ListaPacientes/ListaPacientes.css";
 
 const ESTADO_CONFIG: Record<string, { class: string; label: string }> = {
-  PENDIENTE:    { class: "badge-info",  label: "Pendiente" },
-  REPROGRAMADA: { class: "badge-warning", label: "Reprogramada" },
-  ATENDIDA:     { class: "badge-success",  label: "Atendida" },
-  CANCELADA:    { class: "badge-danger",   label: "Cancelada" },
-  VENCIDA:      { class: "badge-danger",   label: "Vencida" },
+  PENDIENTE:    { class: "badge-info",          label: "Pendiente" },
+  REPROGRAMADA: { class: "badge-reprogramada",  label: "Reprogramada" },
+  ATENDIDA:     { class: "badge-success",       label: "Atendida" },
+  CANCELADA:    { class: "badge-danger",        label: "Cancelada" },
+  ASISTIO:      { class: "badge-asistio",       label: "Asistió" },
+  VENCIDA:      { class: "badge-vencida",       label: "Vencida" },
 };
 
 const normalizeString = (str: string): string =>

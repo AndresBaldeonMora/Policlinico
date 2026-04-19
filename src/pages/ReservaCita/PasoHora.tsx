@@ -31,7 +31,7 @@ const PasoHora = ({ horariosPorDia, horaSeleccionada, onSeleccionar }: Props) =>
           if (horasFiltradas.length === 0) return (
             <div key={dia.fechaISO} className="dia-grupo">
               <p className="no-horarios-msg">
-                No hay horarios disponibles para hoy. Selecciona otro día.
+                No hay horarios disponibles para este día. Selecciona otro.
               </p>
             </div>
           );

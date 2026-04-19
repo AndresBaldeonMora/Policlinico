@@ -71,9 +71,18 @@ const CitasTabs = ({
                     <p className="hora">{cita.hora}</p>
                   </div>
                   <div>
-                    <span className={`estado-badge ${cita.estado.toLowerCase()}`}>
-                      {({ PENDIENTE: "Pendiente", ATENDIDA: "Atendida", CANCELADA: "Cancelada", REPROGRAMADA: "Reprogramada", ASISTIO: "Asistió", VENCIDA: "Vencida" } as Record<string, string>)[cita.estado] ?? cita.estado}
-                    </span>
+                    {(() => {
+                      const BADGE: Record<string, { clase: string; label: string }> = {
+                        PENDIENTE:    { clase: "badge-info",         label: "Pendiente" },
+                        REPROGRAMADA: { clase: "badge-reprogramada", label: "Reprogramada" },
+                        ATENDIDA:     { clase: "badge-success",      label: "Atendida" },
+                        CANCELADA:    { clase: "badge-danger",       label: "Cancelada" },
+                        ASISTIO:      { clase: "badge-asistio",      label: "Asistió" },
+                        VENCIDA:      { clase: "badge-vencida",      label: "Vencida" },
+                      };
+                      const b = BADGE[cita.estado] ?? { clase: "badge-info", label: cita.estado };
+                      return <span className={`badge ${b.clase}`}>{b.label}</span>;
+                    })()}
                   </div>
                 </div>
               </div>

@@ -225,7 +225,6 @@ const CitaQuickModal = ({ citaId, onCerrar, onCitaActualizada, onIrADetalle }: P
 
 
         <div className="cita-modal-footer">
-          {/* Recepcionista: Marcar Asistencia (PENDIENTE/REPROGRAMADA → ASISTIO) */}
           {puedeMarcarAsistencia && (
             <button
               className="cita-modal-btn cita-modal-btn--primary"
@@ -235,52 +234,32 @@ const CitaQuickModal = ({ citaId, onCerrar, onCitaActualizada, onIrADetalle }: P
               {estadoPendiente === "ASISTIO" ? "Actualizando..." : "Marcar Asistencia"}
             </button>
           )}
-        
-          <button
-            className="cita-modal-btn cita-modal-btn--secondary"
-            onClick={() => onIrADetalle(cita._id)}
-            disabled={isSubmitting}
-          >
-            <ExternalLink size={14} /> Detalle Cita
-          </button>
-          
-          <button 
-            className="cita-modal-btn cita-modal-btn--cancel" 
-            onClick={onCerrar} 
-            disabled={isSubmitting}
-          >
-            Cerrar
-          </button>
-          {/* {puedeAccionar && (
-            <>
-              <button
-                className="cita-modal-btn cita-modal-btn--primary"
-                onClick={() => cambiarEstado("ATENDIDA")}
-                disabled={isSubmitting}
-              >
-                {estadoPendiente === "ATENDIDA" ? "Actualizando..." : "Marcar como Atendida"}
-              </button>
-              <button
-                className="cita-modal-btn cita-modal-btn--danger"
-                // className={`cita-modal-btn cita-modal-btn--cancel ${!isSubmitting ? "cita-modal-btn--danger-text" : ""}`}
-                onClick={() => cambiarEstado("CANCELADA")}
-                disabled={isSubmitting}
-              >
-                {estadoPendiente === "CANCELADA" ? "Actualizando..." : "Cancelar Cita"}
-              </button>
-            </>
+
+          {puedeCancelar && (
+            <button
+              className="cita-modal-btn cita-modal-btn--danger"
+              onClick={() => cambiarEstado("CANCELADA")}
+              disabled={isSubmitting}
+            >
+              {estadoPendiente === "CANCELADA" ? "Cancelando..." : "Cancelar Cita"}
+            </button>
           )}
+
           <button
             className="cita-modal-btn cita-modal-btn--secondary"
-            // className="cita-modal-btn cita-modal-btn--secondary cita-modal-btn--with-icon"
             onClick={() => onIrADetalle(cita._id)}
             disabled={isSubmitting}
           >
             <ExternalLink size={14} /> Detalle Cita
           </button>
-          <button className="cita-modal-btn cita-modal-btn--cancel" onClick={onCerrar} disabled={isSubmitting}>
+
+          <button
+            className="cita-modal-btn cita-modal-btn--cancel"
+            onClick={onCerrar}
+            disabled={isSubmitting}
+          >
             Cerrar
-          </button> */}
+          </button>
         </div>
       </div>
     </div>

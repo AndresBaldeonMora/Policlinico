@@ -190,21 +190,15 @@ const ReservaCita = () => {
 
       try {
         const horariosData = await DoctorApiService.obtenerHorariosDisponibles(doctorSeleccionado.id, fechaISO);
-        const tieneDisponibles = horariosData.some((h) => h.disponible);
-
-        if (!tieneDisponibles) {
-          dispatch({ type: "REMOVE_DIA", dia: diaSeleccionado });
-          return;
-        }
-
         const fechaObj = new Date(mesSeleccionado.anio, mesSeleccionado.numero, diaSeleccionado);
+        const nombreDia = fechaObj.toLocaleDateString("es-PE", { weekday: "long" });
 
         dispatch({
           type: "SET_HORARIOS",
           horarios: [{
-            fecha: fechaObj.toLocaleDateString(),
+            fecha: fechaObj.toLocaleDateString("es-PE", { day: "2-digit", month: "2-digit", year: "numeric" }),
             fechaISO,
-            diaNombre: fechaObj.toLocaleDateString("es-ES", { weekday: "long" }),
+            diaNombre: nombreDia.charAt(0).toUpperCase() + nombreDia.slice(1),
             diaNumero: diaSeleccionado,
             horarios: horariosData,
           }],

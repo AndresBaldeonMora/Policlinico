@@ -3,7 +3,7 @@ import { useSearchParams, useNavigate } from "react-router-dom";
 import "./ListaCitas.css";
 import { CitaApiService } from "../../services/cita.service";
 import type { CitaProcesada } from "../../services/cita.service";
-import { CalendarClock, Search, Calendar, Clock, User, Stethoscope } from "lucide-react";
+import { CalendarClock, XCircle, Search, Calendar, Clock, User, Stethoscope } from "lucide-react";
 import { DoctorApiService } from "../../services/doctor.service";
 import {
   listaCitasReducer,
@@ -51,12 +51,12 @@ const Notification = ({ message, type, visible }: NotificationProps) => {
 };
 
 const ESTADO_CONFIG: Record<string, { class: string; label: string }> = {
-  PENDIENTE:    { class: "badge-info",    label: "Pendiente" },
-  REPROGRAMADA: { class: "badge-warning", label: "Reprogramada" },
-  ATENDIDA:     { class: "badge-success", label: "Atendida" },
-  CANCELADA:    { class: "badge-danger",  label: "Cancelada" },
-  ASISTIO:      { class: "badge-warning", label: "Asistió" },
-  VENCIDA:      { class: "badge-danger",  label: "Vencida" },
+  PENDIENTE:    { class: "badge-info",          label: "Pendiente" },
+  REPROGRAMADA: { class: "badge-reprogramada",  label: "Reprogramada" },
+  ATENDIDA:     { class: "badge-success",       label: "Atendida" },
+  CANCELADA:    { class: "badge-danger",        label: "Cancelada" },
+  ASISTIO:      { class: "badge-asistio",       label: "Asistió" },
+  VENCIDA:      { class: "badge-vencida",       label: "Vencida" },
 };
 
 const TABS_ESTADO = [
@@ -76,6 +76,7 @@ const ListaCitas = () => {
   const highlightRef = useRef<HTMLTableRowElement>(null);
   const [state, dispatch] = useReducer(listaCitasReducer, initialState);
   const [citaSeleccionadaId, setCitaSeleccionadaId] = useState<string | null>(null);
+  const [citaParaCancelar, setCitaParaCancelar] = useState<CitaProcesada | null>(null);
   const { notification, editando, pasoModal, mesesDisponibles, mesSeleccionado, diasDelMes, diaSeleccionado, horariosPorDia, cargandoHorarios } = state;
 
   const [citasData, setCitasData] = useState<CitaProcesada[]>([]);
@@ -128,11 +129,6 @@ const ListaCitas = () => {
     dispatch({ type: "SET_CARGANDO_HORARIOS", payload: true });
     try {
       const horariosDelDia = await DoctorApiService.obtenerHorariosDisponibles(doctorId, fechaISO);
-      const tieneDisponibles = horariosDelDia.some((h) => h.disponible);
-      if (!tieneDisponibles) {
-        dispatch({ type: "REMOVE_DIA", payload: dia });
-        return;
-      }
       const horarioInfo: HorarioPorDia = {
         fecha: formatearFechaCompleta(fechaDate), fechaISO,
         diaNombre: obtenerNombreDia(fechaDate), diaNumero: dia, horarios: horariosDelDia,
@@ -142,6 +138,19 @@ const ListaCitas = () => {
       showNotification("Error al cargar horarios", "error");
     } finally {
       dispatch({ type: "SET_CARGANDO_HORARIOS", payload: false });
+    }
+  };
+
+  const confirmarCancelacion = async () => {
+    if (!citaParaCancelar) return;
+    try {
+      await CitaApiService.cancelar(citaParaCancelar._id, "Cancelado por recepcionista");
+      showNotification("Cita cancelada correctamente.", "success");
+      setCitaParaCancelar(null);
+      cargarCitas();
+    } catch (err) {
+      showNotification(err instanceof Error ? err.message : "Error al cancelar la cita.", "error");
+      setCitaParaCancelar(null);
     }
   };
 
@@ -358,12 +367,25 @@ const ListaCitas = () => {
                             {estadoInfo.label}
                           </span>
                         </td>
-                        <td>
-                          {cita.estado !== "REPROGRAMADA" && (
-                            <button className="btn-action" title="Reprogramar cita" onClick={(e) => { e.stopPropagation(); onReprogramar(cita); }}>
+                        <td onClick={(e) => e.stopPropagation()}>
+                          <div style={{ display: "flex", gap: "0.25rem" }}>
+                            <button
+                              className="btn-action"
+                              title="Reprogramar cita"
+                              disabled={cita.estado !== "PENDIENTE"}
+                              onClick={() => onReprogramar(cita)}
+                            >
                               <CalendarClock size={16} />
                             </button>
-                          )}
+                            <button
+                              className="btn-action btn-action--danger"
+                              title="Cancelar cita"
+                              disabled={cita.estado !== "PENDIENTE" && cita.estado !== "REPROGRAMADA"}
+                              onClick={() => setCitaParaCancelar(cita)}
+                            >
+                              <XCircle size={16} />
+                            </button>
+                          </div>
                         </td>
                       </tr>
                     );
@@ -392,6 +414,19 @@ const ListaCitas = () => {
           onSiguiente={irASegundoPaso} onVolver={() => dispatch({ type: "SET_PASO_MODAL", payload: 1 })}
           onCerrar={cerrarModal} onConfirmar={confirmarReprogramar}
         />
+      )}
+
+      {citaParaCancelar && (
+        <div className="confirm-overlay" onClick={() => setCitaParaCancelar(null)}>
+          <div className="confirm-modal" onClick={(e) => e.stopPropagation()}>
+            <h3>Cancelar cita</h3>
+            <p>¿Estás seguro de que deseas cancelar la cita de <strong>{citaParaCancelar.paciente}</strong>?</p>
+            <div className="confirm-actions">
+              <button className="btn btn-secondary" onClick={() => setCitaParaCancelar(null)}>Volver</button>
+              <button className="btn btn-danger" onClick={confirmarCancelacion}>Sí, cancelar</button>
+            </div>
+          </div>
+        </div>
       )}
 
       {citaSeleccionadaId && (

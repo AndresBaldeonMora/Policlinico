@@ -373,6 +373,15 @@
 .badge-danger { background: #fee2e2; color: #b91c1c; }
 .badge-danger .modern-badge-dot { background: #b91c1c; }
 
+.badge-asistio { background: #fef3c7; color: #b45309; }
+.badge-asistio .modern-badge-dot { background: #b45309; }
+
+.badge-reprogramada { background: #e0e7ff; color: #4338ca; }
+.badge-reprogramada .modern-badge-dot { background: #4338ca; }
+
+.badge-vencida { background: #fee2e2; color: #991b1b; }
+.badge-vencida .modern-badge-dot { background: #991b1b; }
+
 /* ── Action Button ── */
 .btn-action {
   background: none;
@@ -389,10 +398,63 @@
   height: 32px;
 }
 
-.btn-action:hover {
+.btn-action:hover:not(:disabled) {
   background: var(--primary-lighter);
   border-color: var(--primary-light);
   color: var(--primary);
+}
+
+.btn-action--danger:hover:not(:disabled) {
+  background: #fef2f2;
+  border-color: #fca5a5;
+  color: #dc2626;
+}
+
+.btn-action:disabled {
+  opacity: 0.35;
+  cursor: not-allowed;
+  pointer-events: none;
+}
+
+/* ── Confirmation modal ── */
+.confirm-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.45);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+}
+
+.confirm-modal {
+  background: var(--bg-card);
+  border-radius: var(--radius-lg);
+  padding: 1.75rem 2rem;
+  max-width: 380px;
+  width: 90%;
+  box-shadow: var(--shadow-xl);
+  border: 1px solid var(--border);
+}
+
+.confirm-modal h3 {
+  font-size: 1.05rem;
+  font-weight: 700;
+  color: var(--text-primary);
+  margin-bottom: 0.75rem;
+}
+
+.confirm-modal p {
+  font-size: 0.9rem;
+  color: var(--text-secondary);
+  line-height: 1.5;
+  margin-bottom: 1.5rem;
+}
+
+.confirm-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 0.625rem;
 }
 
 .btn-action--upload:hover {

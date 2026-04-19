@@ -221,8 +221,18 @@
 }
 
 .estado-REPROGRAMADA {
-  background: #fef9c3;
-  color: #a16207;
+  background: #e0e7ff;
+  color: #4338ca;
+}
+
+.estado-ASISTIO {
+  background: #fef3c7;
+  color: #b45309;
+}
+
+.estado-VENCIDA {
+  background: #fee2e2;
+  color: #991b1b;
 }
 
 @keyframes pulse {
