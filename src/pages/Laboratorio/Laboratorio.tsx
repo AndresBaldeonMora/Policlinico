@@ -136,6 +136,13 @@ const TABS: TabConfig[] = [
     badgeClass: "lab-badge--done",
     color: "#059669",
   },
+  {
+    estado: "VENCIDA",
+    label: "Vencidas",
+    icon: AlertTriangle,
+    badgeClass: "lab-badge--vencida",
+    color: "#dc2626",
+  },
 ];
 
 // ─── Modal: Agendar Cita de Laboratorio (Generar Orden) ──────
@@ -1181,6 +1188,7 @@ export default function LaboratorioImagen() {
         "EN_PROCESO",
         "ASISTIDO",
         "FINALIZADO",
+        "VENCIDA",
       ];
       const resultados = await Promise.all(
         estados.map((e) => ExamenService.listarPorEstado(e))

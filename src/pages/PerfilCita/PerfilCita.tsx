@@ -467,12 +467,6 @@ const PerfilCita = () => {
             </button>
           )}
 
-          {user?.rol === "RECEPCIONISTA" && cita.estado === "ASISTIO" && (
-            <button className="btn btn-primary" onClick={handleFinalizarConsulta}>
-              Marcar como Atendida
-            </button>
-          )}
-          
           {/* MÉDICO: Finaliza consulta (ASISTIO → ATENDIDA) */}
           {user?.rol === "MEDICO" && cita.estado === "ASISTIO" && (
             <button className="btn btn-primary" onClick={handleFinalizarConsulta}>
