@@ -45,20 +45,22 @@ const Sidebar = () => {
     { path: "/admin/pacientes",      label: "Pacientes",      icon: Users,       description: "CRUD pacientes" },
   ];
 
-  // Versión mas factible para 3 a mas roles
+  const pacienteMenu: typeof recepcionistaMenu = [];
+
   const menuMap: Record<string, typeof recepcionistaMenu> = {
     RECEPCIONISTA: recepcionistaMenu,
     MEDICO:        medicoMenu,
     administrador: administradorMenu,
+    paciente:      pacienteMenu,
   };
 
-  // const menuItems = user?.rol === "MEDICO" ? medicoMenu : adminMenu;
   const menuItems = menuMap[user?.rol ?? ""] ?? recepcionistaMenu;
 
   const subtitleMap: Record<string, string> = {
     MEDICO:        "Portal Médico",
     administrador: "Portal Administración",
     RECEPCIONISTA: "Portal Recepcionista",
+    paciente:      "Portal Paciente",
   };
   const subtitle = subtitleMap[user?.rol ?? ""] ?? "Sistema";
 

@@ -15,6 +15,9 @@ import ImprimirOrden from "./pages/Laboratorio/ImprimirOrden";
 import CalendarioMedico from "./pages/Calendario/CalendarioMedico";
 import MedicoCitas from "./pages/MedicoCitas/MedicoCitas";
 
+// Páginas del paciente
+import PacienteDashboard from "./pages/PacienteDashboard/PacienteDashboard";
+
 // Páginas del administrador
 import AdminDashboard      from "./pages/AdminDash/AdminDashboard";
 import GestionEspecialidades from "./pages/AdminDash/GestionEspecialidades";
@@ -140,6 +143,15 @@ function App() {
               element={
                 <ProtectedRoute roles={["MEDICO"]}>
                   <MedicoCitas />
+                </ProtectedRoute>
+              }
+            />
+
+            <Route
+              path="/paciente"
+              element={
+                <ProtectedRoute roles={["paciente"]}>
+                  <PacienteDashboard />
                 </ProtectedRoute>
               }
             />

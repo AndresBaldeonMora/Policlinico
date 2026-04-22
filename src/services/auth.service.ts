@@ -1,6 +1,6 @@
 import { supabase } from "./supabaseClient";
 
-export type UserRole = "MEDICO" | "RECEPCIONISTA" | "administrador" | "cliente";
+export type UserRole = "MEDICO" | "RECEPCIONISTA" | "administrador" | "cliente" | "paciente";
 
 export interface AuthUser {
   id: string;
