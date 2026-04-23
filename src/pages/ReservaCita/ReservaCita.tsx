@@ -1,4 +1,5 @@
 import { useEffect, useReducer, useCallback } from "react";
+import { useAuth } from "../../hooks/userAuth";
 import { useSearchParams } from "react-router-dom";
 
 import { PacienteApiService } from "../../services/paciente.service";
@@ -114,6 +115,9 @@ const PasoActual = ({ state, dispatch, handleBuscarPaciente }: PasoActualProps) 
 
 // ─── Componente principal ─────────────────────────────────
 const ReservaCita = () => {
+  const { user } = useAuth();
+  const esPaciente = user?.rol === "paciente";
+
   const [state, dispatch] = useReducer(reservaReducer, initialState);
   const [searchParams] = useSearchParams();
   const fechaParam = searchParams.get("fecha") || "";
@@ -131,10 +135,21 @@ const ReservaCita = () => {
         DoctorApiService.listar(),
       ]);
       dispatch({ type: "CARGA_EXITO", pacientes, especialidades, doctores, meses: generarMesesDisponibles() });
+
+      if (esPaciente && user?.correo) {
+        const pacienteLocal = pacientes.find(p => p.correo?.toLowerCase() === user.correo.toLowerCase());
+        if (pacienteLocal && pacienteLocal.id) {
+          dispatch({ type: "SELECCIONAR_PACIENTE", paciente: pacienteLocal });
+        } else if (pacienteLocal) {
+          dispatch({ type: "CARGA_ERROR", message: "Tu usuario no está vinculado a un paciente válido (ID faltante). Contacta a recepción." });
+        } else {
+          dispatch({ type: "CARGA_ERROR", message: "No se encontró un paciente registrado con tu correo. Contacta a recepción." });
+        }
+      }
     } catch {
       dispatch({ type: "CARGA_ERROR", message: "Error de conexión al cargar datos." });
     }
-  }, []);
+  }, [esPaciente, user?.correo]);
 
   useEffect(() => { cargarDatos(); }, [cargarDatos]);
 
@@ -338,6 +353,7 @@ const ReservaCita = () => {
       <div className="card">
         <StepperHeader
           pasoActual={state.pasoActual}
+          esPaciente={esPaciente}
           irAlPaso={(paso: number) => { if (paso < state.pasoActual) dispatch({ type: "IR_PASO", paso }); }}
         />
 
@@ -356,7 +372,10 @@ const ReservaCita = () => {
             <button
               type="button"
               className="btn btn-secondary"
-              onClick={() => dispatch({ type: "IR_PASO", paso: Math.max(state.pasoActual - 1, 1) })}
+              onClick={() => {
+                const prev = (esPaciente && state.pasoActual === 7) ? 5 : state.pasoActual - 1;
+                dispatch({ type: "IR_PASO", paso: Math.max(prev, 1) });
+              }}
               disabled={state.pasoActual === 1 || state.loading}
             >
               Anterior
@@ -366,7 +385,10 @@ const ReservaCita = () => {
               <button
                 type="button"
                 className="btn btn-primary"
-                onClick={() => dispatch({ type: "IR_PASO", paso: Math.min(state.pasoActual + 1, PASOS_TOTALES) })}
+                onClick={() => {
+                  const next = (esPaciente && state.pasoActual === 5) ? 7 : state.pasoActual + 1;
+                  dispatch({ type: "IR_PASO", paso: Math.min(next, PASOS_TOTALES) });
+                }}
                 disabled={!isPasoValido(state.pasoActual)}
               >
                 Siguiente

@@ -83,6 +83,7 @@ export interface OrdenExamen {
   citaId?: string;
   especialidadId: { _id: string; nombre: string };
   codigoOrden?: string;
+  tipoOrden?: string;
   // Ciclo de vida
   fecha: string;
   fechaAutorizacion?: string;

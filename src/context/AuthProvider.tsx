@@ -23,41 +23,53 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         const appMeta = u.app_metadata ?? {};
         const rolMeta = (appMeta.role ?? meta.rol) as UserRole | undefined;
 
+        const populateUserAndSet = async (finalRol: UserRole) => {
+          let nombres = (meta.nombres as string) ?? "";
+          let apellidos = (meta.apellidos as string) ?? "";
+
+          // Si es paciente y faltan sus datos en Supabase, buscamos en DB
+          if (finalRol === "paciente" && !nombres) {
+            try {
+              // Import dinámico para evitar ciclos de dependencia en context
+              const { PacienteApiService } = await import("../services/paciente.service");
+              const pacientes = await PacienteApiService.listar();
+              const p = pacientes.find(x => x.correo?.toLowerCase() === u.email?.toLowerCase());
+              if (p) {
+                nombres = p.nombres;
+                apellidos = p.apellidos;
+              }
+            } catch (e) {
+              console.error("No se pudo obtener datos extra del paciente", e);
+            }
+          }
+
+          setUser({
+            id: u.id,
+            correo: u.email!,
+            nombres,
+            apellidos,
+            rol: finalRol,
+            medicoId: meta.medicoId as string | undefined,
+          });
+          setLoading(false);
+        };
+
         if (!rolMeta) {
           // No tiene rol en token — buscar en profiles antes de renderizar
-          supabase
-            .from("profiles")
-            .select("role")
-            .eq("id", u.id)
-            .single()
-            .then(({ data: profile }) => {
-              setUser({
-                id: u.id,
-                correo: u.email!,
-                nombres: (meta.nombres as string) ?? "",
-                apellidos: (meta.apellidos as string) ?? "",
-                rol: ((profile?.role ?? "cliente") as UserRole),
-                medicoId: meta.medicoId as string | undefined,
-              });
+          (async () => {
+            try {
+              const { data: profile } = await supabase.from("profiles").select("role").eq("id", u.id).single();
+              await populateUserAndSet((profile?.role ?? "cliente") as UserRole);
+            } catch (err) {
+              console.error(err);
               setLoading(false);
-            });
+            }
+          })();
           return;
         }
-        // // // Renderiza inmediatamente con el rol de user_metadata (puede ser undefined)
-        // // const rolMeta = (meta.rol as UserRole) ?? "cliente";
-        // const rolMeta = meta.rol as UserRole;
-        setUser({
-          id: u.id,
-          correo: u.email!,
-          nombres: (meta.nombres as string) ?? "",
-          apellidos: (meta.apellidos as string) ?? "",
-          // rol: rolMeta,
-           rol: rolMeta,
-          medicoId: meta.medicoId as string | undefined,
-        });
-        setLoading(false);
-        // // Solo consulta profiles si NO tiene rol en user_metadata
-        // if (!rolMeta) {
+
+        // Tiene rol en metadata, lo armamos directamente
+        populateUserAndSet(rolMeta).catch(console.error);
         //   // Luego actualiza el rol desde profiles (sin bloquear el render)
         //   supabase
         //     .from("profiles")
