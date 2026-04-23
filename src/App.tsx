@@ -1,6 +1,7 @@
 import { BrowserRouter, Routes, Route, Outlet } from "react-router-dom";
 import Header from "./components/Layout/Header";
 import Sidebar from "./components/Layout/Sidebar";
+import PacienteLayout from "./components/Layout/PacienteLayout";
 
 import ReservaCita from "./pages/ReservaCita/ReservaCita";
 import ListaCitas from "./pages/ListaCitas/ListaCitas";
@@ -147,14 +148,7 @@ function App() {
               }
             />
 
-            <Route
-              path="/paciente"
-              element={
-                <ProtectedRoute roles={["paciente"]}>
-                  <PacienteDashboard />
-                </ProtectedRoute>
-              }
-            />
+
 
             <Route
               path="/admin"
@@ -190,6 +184,18 @@ function App() {
               }
             />
           </Route>
+
+          {/* ================== PACIENTE (own layout) ================== */}
+          <Route
+            path="/paciente"
+            element={
+              <ProtectedRoute roles={["paciente"]}>
+                <PacienteLayout>
+                  <PacienteDashboard />
+                </PacienteLayout>
+              </ProtectedRoute>
+            }
+          />
         </Routes>
         </BrowserRouter>
       </ThemeProvider>

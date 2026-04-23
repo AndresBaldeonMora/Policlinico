@@ -1,0 +1,64 @@
+/* ═══════════════════════════════════════════
+   PACIENTE FOOTER
+═══════════════════════════════════════════ */
+
+.paciente-footer {
+  background-color: var(--bg-card);
+  border-top: 1px solid var(--border);
+  padding: 1rem 1.5rem;
+  margin-top: auto;
+}
+
+.paciente-footer__content {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  flex-wrap: wrap;
+}
+
+.paciente-footer__brand {
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: var(--text-primary);
+  margin: 0;
+}
+
+.paciente-footer__info {
+  display: flex;
+  align-items: center;
+  gap: 1.25rem;
+  flex-wrap: wrap;
+}
+
+.paciente-footer__detail {
+  font-size: 0.75rem;
+  color: var(--text-muted);
+  margin: 0;
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+}
+
+.paciente-footer__copy {
+  font-size: 0.7rem;
+  color: var(--text-muted);
+  margin: 0;
+}
+
+/* ═══════════════════════════════════════════
+   RESPONSIVE
+═══════════════════════════════════════════ */
+@media (max-width: 768px) {
+  .paciente-footer__content {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.5rem;
+  }
+
+  .paciente-footer__info {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.25rem;
+  }
+}
