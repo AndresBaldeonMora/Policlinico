@@ -13,7 +13,9 @@ import LaboratorioImagen from "./pages/Laboratorio/Laboratorio";
 import Historial from "./pages/HistorialPaciente/Historial";
 import ImprimirOrden from "./pages/Laboratorio/ImprimirOrden";
 import CalendarioMedico from "./pages/Calendario/CalendarioMedico";
+import MedicoDashboard from "./pages/MedicoDashboard/MedicoDashboard";
 import MedicoCitas from "./pages/MedicoCitas/MedicoCitas";
+import NotaSOAP from "./pages/NotaSOAP/NotaSOAP";
 
 // Páginas del paciente
 import PacienteDashboard from "./pages/PacienteDashboard/PacienteDashboard";
@@ -105,7 +107,7 @@ function App() {
             <Route
               path="/pacientes/:id"
               element={
-                <ProtectedRoute roles={["RECEPCIONISTA", "administrador"]}>
+                <ProtectedRoute roles={["RECEPCIONISTA", "MEDICO", "administrador"]}>
                   <Historial />
                 </ProtectedRoute>
               }
@@ -133,6 +135,15 @@ function App() {
               path="/medico"
               element={
                 <ProtectedRoute roles={["MEDICO"]}>
+                  <MedicoDashboard />
+                </ProtectedRoute>
+              }
+            />
+
+            <Route
+              path="/medico/calendario"
+              element={
+                <ProtectedRoute roles={["MEDICO"]}>
                   <CalendarioMedico />
                 </ProtectedRoute>
               }
@@ -143,6 +154,15 @@ function App() {
               element={
                 <ProtectedRoute roles={["MEDICO"]}>
                   <MedicoCitas />
+                </ProtectedRoute>
+              }
+            />
+
+            <Route
+              path="/medico/citas/:citaId/consulta"
+              element={
+                <ProtectedRoute roles={["MEDICO"]}>
+                  <NotaSOAP />
                 </ProtectedRoute>
               }
             />
