@@ -118,7 +118,7 @@ export default function ModalReferencia({ cita, onClose }: Props) {
           {/* Documentos adjuntos */}
           <div>
             <div className="modal-section-title">Documentación Adjunta</div>
-            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 6 }}>
+            <div style={{ display: "flex", flexDirection: "column", gap: 5 }}>
               {DOCS_OPCIONES.map(d => (
                 <label key={d} className={`soap-check-item ${form.docsAdjuntos.includes(d) ? "checked" : ""}`}>
                   <input type="checkbox" checked={form.docsAdjuntos.includes(d)} onChange={() => toggleDoc(d)}

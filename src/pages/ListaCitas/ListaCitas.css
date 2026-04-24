@@ -696,7 +696,7 @@
   font-size: 0.85rem;
 }
 
-.modal-body input {
+.modal-body input:not([type="checkbox"]):not([type="radio"]) {
   width: 100%;
   border-radius: var(--radius-md);
   border: 1px solid var(--border);
@@ -1299,7 +1299,7 @@
   background: var(--bg-card);
 }
 
-[data-theme="dark"] .modal-body input {
+[data-theme="dark"] .modal-body input:not([type="checkbox"]):not([type="radio"]) {
   background: var(--bg-body);
   color: var(--text-primary);
   border-color: var(--border);

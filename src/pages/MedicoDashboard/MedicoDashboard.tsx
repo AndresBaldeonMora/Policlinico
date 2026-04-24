@@ -125,7 +125,7 @@ export default function MedicoDashboard() {
                   <div
                     key={c._id}
                     className="dash-cita-row"
-                    onClick={() => navigate(`/citas/${c._id}`)}
+                    onClick={() => navigate(`/medico/citas/${c._id}/consulta`)}
                   >
                     <div className="dash-cita-hora">{c.hora}</div>
                     <div className="dash-cita-avatar">{iniciales}</div>

@@ -1,7 +1,7 @@
 
 import { useEffect, useState, useCallback, useMemo, useReducer } from "react";
 import { useParams, useNavigate } from "react-router-dom";
-import { History, ChevronDown, ChevronUp, Check, Plus, X as XIcon, Printer } from "lucide-react";
+import { History, ChevronDown, ChevronUp, Check, Plus, X as XIcon, Printer, FileText, AlertTriangle, Pill, User as UserIcon, Calendar, Clock } from "lucide-react";
 import "./PerfilCita.css";
 import { CitaApiService } from "../../services/cita.service";
 import { MedicoApiService } from "../../services/medico.service";
@@ -28,7 +28,15 @@ import { toastExito } from "../../utils/toast";
 // ============================================================================
 
 type TabPrincipal = "dashboard" | "historial" | "documentos" | "examenes" | "notas";
-type TabDemografico = "quien" | "contacto";
+
+const BADGE_ESTADO: Record<string, { cls: string; label: string }> = {
+  PENDIENTE:    { cls: "badge-info",         label: "Pendiente" },
+  REPROGRAMADA: { cls: "badge-reprogramada", label: "Reprogramada" },
+  ATENDIDA:     { cls: "badge-success",      label: "Atendida" },
+  CANCELADA:    { cls: "badge-danger",       label: "Cancelada" },
+  ASISTIO:      { cls: "badge-asistio",      label: "Asistió" },
+  VENCIDA:      { cls: "badge-vencida",      label: "Vencida" },
+};
 
 // ============================================================================
 // CONSTANTS
@@ -47,15 +55,6 @@ const TABS_MEDICO: { id: TabPrincipal; label: string }[] = [
   { id: "examenes", label: "Examenes" },
   { id: "historial", label: "Historico de Visitas" },
   { id: "documentos", label: "Documentos" },
-];
-
-// ============================================================================
-// TABS
-// ============================================================================
-
-const TABS_DEMOGRAFICOS: { id: TabDemografico; label: string }[] = [
-  { id: "quien", label: "Quién" },
-  { id: "contacto", label: "Contacto" },
 ];
 
 // ============================================================================
@@ -125,7 +124,6 @@ const PerfilCita = () => {
 
   // ── useState: pure UI toggles (no shared state, no side effects) ──
   const [tabActiva, setTabActiva] = useState<TabPrincipal>("dashboard");
-  const [tabDemo, setTabDemo] = useState<TabDemografico>("quien");
 
   // ── Notas Clínicas (solo MEDICO) ──────────────────────────────
   const [notas, setNotas] = useState({ diagnostico: "", notasClinicas: "", tratamiento: "" });
@@ -389,6 +387,13 @@ const PerfilCita = () => {
     () => calcularEdad(paciente?.fechaNacimiento),
     [paciente?.fechaNacimiento],
   );
+  const doctor = useMemo(
+    () => (cita?.doctorId && typeof cita.doctorId === "object" ? cita.doctorId : null),
+    [cita?.doctorId],
+  );
+  const doctorNombre = doctor ? `${doctor.nombres} ${doctor.apellidos}` : null;
+  const especialidadNombre = doctor?.especialidadId && typeof doctor.especialidadId === "object"
+    ? doctor.especialidadId.nombre : null;
 
   // ── Loading / error guards ────────────────────────────────
 
@@ -450,9 +455,25 @@ const PerfilCita = () => {
           </div>
         </div>
 
-        <div className="perfil-header-cita">
-          <span className="perfil-header-cita-label">Fecha de cita</span>
-          <span className="perfil-header-cita-valor">{formatearFechaCorta(cita.fecha)} — {cita.hora}</span>
+        <div className="perfil-header-meta">
+          <div className="perfil-header-meta-item">
+            <span className="perfil-header-cita-label">Fecha · Hora</span>
+            <span className="perfil-header-cita-valor">
+              {formatearFechaCorta(cita.fecha)} · {cita.hora}
+            </span>
+          </div>
+          {doctorNombre && (
+            <div className="perfil-header-meta-item">
+              <span className="perfil-header-cita-label">Médico</span>
+              <span className="perfil-header-cita-valor">Dr. {doctorNombre}</span>
+            </div>
+          )}
+          {especialidadNombre && (
+            <div className="perfil-header-meta-item">
+              <span className="perfil-header-cita-label">Especialidad</span>
+              <span className="perfil-header-cita-valor">{especialidadNombre}</span>
+            </div>
+          )}
         </div>
       </div>
 
@@ -505,89 +526,182 @@ const PerfilCita = () => {
       {tabActiva === "dashboard" && (
         <div className="dashboard-layout">
           <div className="columna-principal">
-            <div className="card-clinica">
-              <div className="card-header">
-                <h3>Alergias</h3>
-              </div>
-              <div className="card-body">
-                {alergias.length === 0 ? "Sin registros" : "—"}
-              </div>
-            </div>
-
-            <div className="card-clinica">
-              <div className="card-header">
-                <h3>Problemas Medicos</h3>
-              </div>
-              <div className="card-body">
-                {problemasMedicos.length === 0 ? "Sin registros" : "—"}
-              </div>
-            </div>
-
-            <div className="card-clinica">
-              <div className="card-header">
-                <h3>Medicamentos</h3>
-              </div>
-              <div className="card-body">
-                {medicamentos.length === 0 ? "Sin registros" : "—"}
-              </div>
-            </div>
-
-            <div className="card-clinica">
-              <div className="card-header">
-                <h3>Datos Demograficos</h3>
+            <div className="clinical-grid">
+              {/* Alergias */}
+              <div className="card-clinica">
+                <div className="card-header">
+                  <span>Alergias</span>
+                </div>
+                <div className="card-body">
+                  {alergias.length === 0 ? (
+                    <div className="perfil-card-empty">
+                      <AlertTriangle size={22} />
+                      <span>Sin alergias registradas</span>
+                    </div>
+                  ) : alergias.map(a => (
+                    <div key={a.id} className="item-clinico">
+                      <span>{a.sustancia} — {a.reaccion}</span>
+                      <span className={`badge-small ${a.severidad}`}>{a.severidad}</span>
+                    </div>
+                  ))}
+                </div>
               </div>
 
-              {/* key={t.id} is stable (string literal union) */}
-              <div className="tabs-demograficos">
-                {TABS_DEMOGRAFICOS.map((t) => (
-                  <button
-                    key={t.id}
-                    className={`tab-demo ${tabDemo === t.id ? "activa" : ""}`}
-                    onClick={() => setTabDemo(t.id)}
-                  >
-                    {t.label}
-                  </button>
-                ))}
+              {/* Problemas Médicos */}
+              <div className="card-clinica">
+                <div className="card-header">
+                  <span>Problemas Médicos</span>
+                </div>
+                <div className="card-body">
+                  {problemasMedicos.length === 0 ? (
+                    <div className="perfil-card-empty">
+                      <FileText size={22} />
+                      <span>Sin problemas registrados</span>
+                    </div>
+                  ) : problemasMedicos.map(p => (
+                    <div key={p.id} className="item-clinico">
+                      <span>{p.descripcion}</span>
+                      <span className={`badge-small ${p.estado}`}>{p.estado}</span>
+                    </div>
+                  ))}
+                </div>
               </div>
 
-              <div className="card-body">
-                {tabDemo === "quien" && (
-                  <>
-                    <strong>Nombre:</strong> {paciente.nombres}{" "}
-                    {paciente.apellidos}
-                    <br />
-                    <strong>DNI:</strong> {paciente.dni}
-                  </>
-                )}
-                {tabDemo === "contacto" && (
-                  <>
-                    <strong>Teléfono:</strong> {paciente.telefono || "—"}
-                    <br />
-                    <strong>Correo:</strong> {paciente.correo || "—"}
-                  </>
-                )}
+              {/* Medicamentos habituales */}
+              <div className="card-clinica">
+                <div className="card-header">
+                  <span>Medicamentos Habituales</span>
+                </div>
+                <div className="card-body">
+                  {medicamentos.length === 0 ? (
+                    <div className="perfil-card-empty">
+                      <Pill size={22} />
+                      <span>Sin medicamentos registrados</span>
+                    </div>
+                  ) : medicamentos.map(m => (
+                    <div key={m.id} className="item-clinico">
+                      <span>{m.nombre} — {m.dosis}</span>
+                      <span className="fecha-small">{m.frecuencia}</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              {/* Datos del Paciente */}
+              <div className="card-clinica">
+                <div className="card-header">
+                  <span>Datos del Paciente</span>
+                </div>
+                <div className="card-body">
+                  <div className="demo-info-grid">
+                    <div className="demo-info-item">
+                      <label>Nombre completo</label>
+                      <span>{paciente.nombres} {paciente.apellidos}</span>
+                    </div>
+                    <div className="demo-info-item">
+                      <label>DNI</label>
+                      <span>{paciente.dni}</span>
+                    </div>
+                    {edad !== null && (
+                      <div className="demo-info-item">
+                        <label>Edad</label>
+                        <span>{edad} años</span>
+                      </div>
+                    )}
+                    <div className="demo-info-item">
+                      <label>Fecha de nacimiento</label>
+                      <span>{formatearFechaCorta(paciente.fechaNacimiento)}</span>
+                    </div>
+                    <div className="demo-info-item">
+                      <label>Teléfono</label>
+                      <span>{paciente.telefono || "—"}</span>
+                    </div>
+                    <div className="demo-info-item">
+                      <label>Correo</label>
+                      <span>{paciente.correo || "—"}</span>
+                    </div>
+                  </div>
+                </div>
               </div>
             </div>
           </div>
 
           <div className="columna-lateral">
+            {/* Info de la cita */}
             <div className="widget">
               <div className="widget-header">
-                <h4>Citas</h4>
+                <span>Información de la Cita</span>
               </div>
               <div className="widget-body">
-                {citasPaciente.length === 0
-                  ? "Sin citas"
-                  : /* key={c._id} is a stable MongoDB ObjectId — never an index */
-                    citasPaciente.map((c) => (
+                <div className="cita-info-stack">
+                  <div className="cita-info-item">
+                    <Calendar size={13} />
+                    <div>
+                      <label>Fecha</label>
+                      <span>{formatearFechaCorta(cita.fecha)}</span>
+                    </div>
+                  </div>
+                  <div className="cita-info-item">
+                    <Clock size={13} />
+                    <div>
+                      <label>Hora</label>
+                      <span>{cita.hora}</span>
+                    </div>
+                  </div>
+                  {doctorNombre && (
+                    <div className="cita-info-item">
+                      <UserIcon size={13} />
+                      <div>
+                        <label>Médico</label>
+                        <span>Dr. {doctorNombre}</span>
+                      </div>
+                    </div>
+                  )}
+                  {especialidadNombre && (
+                    <div className="cita-info-item">
+                      <FileText size={13} />
+                      <div>
+                        <label>Especialidad</label>
+                        <span>{especialidadNombre}</span>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              </div>
+            </div>
+
+            {/* Historial de citas del paciente */}
+            <div className="widget">
+              <div className="widget-header">
+                <span>Citas del Paciente</span>
+                {citasPaciente.length > 0 && (
+                  <span className="widget-count">{citasPaciente.length}</span>
+                )}
+              </div>
+              <div className="widget-body">
+                {citasPaciente.length === 0 ? (
+                  <p className="widget-empty">Sin citas anteriores</p>
+                ) : (
+                  citasPaciente.map((c) => {
+                    const b = BADGE_ESTADO[c.estado] ?? { cls: "badge-info", label: c.estado };
+                    return (
                       <button
                         key={c._id}
                         className="cita-widget-item"
                         onClick={() => navigate(`/citas/${c._id}`)}
                       >
-                        {formatearFechaCorta(c.fecha)} - {c.hora}
+                        <div className="cita-widget-fecha">
+                          <span>{formatearFechaCorta(c.fecha)}</span>
+                          <span className="cita-widget-hora">{c.hora}</span>
+                        </div>
+                        <span className={`modern-badge ${b.cls}`}>
+                          <span className="modern-badge-dot" />
+                          {b.label}
+                        </span>
                       </button>
-                    ))}
+                    );
+                  })
+                )}
               </div>
             </div>
           </div>
@@ -850,11 +964,23 @@ const PerfilCita = () => {
       })()}
 
       {tabActiva === "historial" && (
-        <div className="card-clinica">No hay visitas anteriores</div>
+        <div className="card-clinica">
+          <div className="card-header"><span>Historial de Visitas</span></div>
+          <div className="card-body perfil-tab-empty">
+            <History size={36} />
+            <p>No hay visitas anteriores registradas</p>
+          </div>
+        </div>
       )}
 
       {tabActiva === "documentos" && (
-        <div className="card-clinica">No hay documentos cargados</div>
+        <div className="card-clinica">
+          <div className="card-header"><span>Documentos</span></div>
+          <div className="card-body perfil-tab-empty">
+            <FileText size={36} />
+            <p>No hay documentos cargados</p>
+          </div>
+        </div>
       )}
 
       {tabActiva === "examenes" && (

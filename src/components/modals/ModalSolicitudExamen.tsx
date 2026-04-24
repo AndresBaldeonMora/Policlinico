@@ -88,7 +88,7 @@ export default function ModalSolicitudExamen({ cita, onClose, onAdd }: Props) {
           {Object.entries(EXAMENES[tab] || {}).map(([group, exams]) => (
             <div key={group} style={{ marginBottom: 16 }}>
               <div className="modal-group-label">{group}</div>
-              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 6 }}>
+              <div style={{ display: "flex", flexDirection: "column", gap: 5 }}>
                 {exams.map(ex => (
                   <label key={ex} className={`soap-check-item ${isChecked(ex) ? "checked" : ""}`} style={{ padding: "7px 10px" }}>
                     <input type="checkbox" checked={isChecked(ex)} onChange={() => toggle(ex)}
