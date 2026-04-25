@@ -16,6 +16,8 @@ import CalendarioMedico from "./pages/Calendario/CalendarioMedico";
 import MedicoDashboard from "./pages/MedicoDashboard/MedicoDashboard";
 import MedicoCitas from "./pages/MedicoCitas/MedicoCitas";
 import NotaSOAP from "./pages/NotaSOAP/NotaSOAP";
+import MedicoListaPacientes from "./pages/MedicoListaPacientes/MedicoListaPacientes";
+import HistoriaClinicaMedico from "./pages/HistoriaClinicaMedico/HistoriaClinicaMedico";
 
 // Páginas del paciente
 import PacienteDashboard from "./pages/PacienteDashboard/PacienteDashboard";
@@ -163,6 +165,24 @@ function App() {
               element={
                 <ProtectedRoute roles={["MEDICO"]}>
                   <NotaSOAP />
+                </ProtectedRoute>
+              }
+            />
+
+            <Route
+              path="/medico/pacientes"
+              element={
+                <ProtectedRoute roles={["MEDICO"]}>
+                  <MedicoListaPacientes />
+                </ProtectedRoute>
+              }
+            />
+
+            <Route
+              path="/medico/pacientes/:pacienteId"
+              element={
+                <ProtectedRoute roles={["MEDICO"]}>
+                  <HistoriaClinicaMedico />
                 </ProtectedRoute>
               }
             />

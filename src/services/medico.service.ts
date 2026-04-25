@@ -105,4 +105,13 @@ export class MedicoApiService {
     const response = await api.patch(`/medico/citas/${citaId}/medicamentos`, { medicamentos });
     return response.data.data;
   }
+
+  static async obtenerHistorialPaciente(pacienteId: string): Promise<{
+    paciente: any;
+    citas: { data: any[]; total: number; pagina: number; totalPaginas: number };
+    ordenes: { data: any[]; total: number; pagina: number; totalPaginas: number };
+  }> {
+    const response = await api.get(`/pacientes/${pacienteId}/historial`);
+    return response.data.data;
+  }
 }

@@ -1,13 +1,9 @@
 
 import { useEffect, useState, useCallback, useMemo, useReducer } from "react";
 import { useParams, useNavigate } from "react-router-dom";
-import { History, ChevronDown, ChevronUp, Check, Plus, X as XIcon, Printer, FileText, AlertTriangle, Pill, User as UserIcon, Calendar, Clock } from "lucide-react";
+import { History, ChevronDown, ChevronUp, Check, Plus, Printer, FileText, AlertTriangle, Pill, User as UserIcon, Calendar, Clock, Stethoscope } from "lucide-react";
 import "./PerfilCita.css";
 import { CitaApiService } from "../../services/cita.service";
-import { MedicoApiService } from "../../services/medico.service";
-import type { MedicamentoPrescrito } from "../../services/medico.service";
-import { MedicamentoService } from "../../services/medicamento.service";
-import type { Medicamento as MedicamentoCatalogo } from "../../services/medicamento.service";
 import { perfilCitaReducer, initialState } from "./PerfilCitaReducer";
 import { useAuth } from "../../hooks/userAuth";
 import type {
@@ -27,7 +23,7 @@ import { toastExito } from "../../utils/toast";
 // TYPES (UI-only — not shared with reducer)
 // ============================================================================
 
-type TabPrincipal = "dashboard" | "historial" | "documentos" | "examenes" | "notas";
+type TabPrincipal = "dashboard" | "historial" | "documentos" | "examenes";
 
 const BADGE_ESTADO: Record<string, { cls: string; label: string }> = {
   PENDIENTE:    { cls: "badge-info",         label: "Pendiente" },
@@ -51,9 +47,8 @@ const TABS_RECEPCIONISTA: { id: TabPrincipal; label: string }[] = [
 
 const TABS_MEDICO: { id: TabPrincipal; label: string }[] = [
   { id: "dashboard", label: "Dashboard" },
-  { id: "notas", label: "Notas Clínicas" },
-  { id: "examenes", label: "Examenes" },
-  { id: "historial", label: "Historico de Visitas" },
+  { id: "examenes", label: "Exámenes" },
+  { id: "historial", label: "Histórico de Visitas" },
   { id: "documentos", label: "Documentos" },
 ];
 
@@ -124,21 +119,6 @@ const PerfilCita = () => {
 
   // ── useState: pure UI toggles (no shared state, no side effects) ──
   const [tabActiva, setTabActiva] = useState<TabPrincipal>("dashboard");
-
-  // ── Notas Clínicas (solo MEDICO) ──────────────────────────────
-  const [notas, setNotas] = useState({ diagnostico: "", notasClinicas: "", tratamiento: "" });
-  const [guardandoNotas, setGuardandoNotas] = useState(false);
-
-  // ── Prescripción de medicamentos ──────────────────────────────
-  const [medsPrescritos, setMedsPrescritos] = useState<MedicamentoPrescrito[]>([]);
-  const [busquedaMed, setBusquedaMed]       = useState("");
-  const [resultadosMed, setResultadosMed]   = useState<MedicamentoCatalogo[]>([]);
-  const [mostrarDropdown, setMostrarDropdown] = useState(false);
-  const [guardandoMeds, setGuardandoMeds]   = useState(false);
-  const [medForm, setMedForm] = useState<Omit<MedicamentoPrescrito, "medicamentoId" | "nombre">>({
-    dosis: "", frecuencia: "", duracion: "", observaciones: "",
-  });
-  const [medSeleccionado, setMedSeleccionado] = useState<MedicamentoCatalogo | null>(null);
 
   // ── Exámenes ──────────────────────────────────────────────
   const [ordenes, setOrdenes] = useState<OrdenExamen[]>([]);
@@ -223,73 +203,6 @@ const PerfilCita = () => {
     cargarCita();
   }, [cargarCita]);
 
-  // Inicializar notas y medicamentos cuando cargue la cita
-  useEffect(() => {
-    if (cita) {
-      setNotas({
-        diagnostico:   (cita as any).diagnostico    ?? "",
-        notasClinicas: (cita as any).notasClinicas  ?? "",
-        tratamiento:   (cita as any).tratamiento    ?? "",
-      });
-      if ((cita as any).medicamentosPrescritos?.length) {
-        setMedsPrescritos((cita as any).medicamentosPrescritos);
-      }
-    }
-  }, [cita]);
-
-  // Búsqueda de medicamentos con debounce
-  useEffect(() => {
-    if (!busquedaMed.trim()) { setResultadosMed([]); return; }
-    // Si ya hay uno seleccionado y el texto coincide con su nombre, no buscar
-    if (medSeleccionado && busquedaMed === medSeleccionado.nombre) {
-      setResultadosMed([]);
-      setMostrarDropdown(false);
-      return;
-    }
-    const timer = setTimeout(async () => {
-      try {
-        const res = await MedicamentoService.buscar(busquedaMed);
-        setResultadosMed(res);
-        setMostrarDropdown(true);
-      } catch { setResultadosMed([]); }
-    }, 300);
-    return () => clearTimeout(timer);
-  }, [busquedaMed, medSeleccionado]);
-
-  const seleccionarMed = (med: MedicamentoCatalogo) => {
-    setMedSeleccionado(med);
-    setBusquedaMed(med.nombre);
-    setMostrarDropdown(false);
-    setResultadosMed([]);
-  };
-
-  const agregarMedicamento = () => {
-    if (!medSeleccionado || !medForm.dosis.trim() || !medForm.frecuencia.trim() || !medForm.duracion.trim()) return;
-    setMedsPrescritos((prev) => [
-      ...prev,
-      { medicamentoId: medSeleccionado._id, nombre: medSeleccionado.nombre, ...medForm },
-    ]);
-    setMedSeleccionado(null);
-    setBusquedaMed("");
-    setMedForm({ dosis: "", frecuencia: "", duracion: "", observaciones: "" });
-  };
-
-  const quitarMedicamento = (idx: number) => {
-    setMedsPrescritos((prev) => prev.filter((_, i) => i !== idx));
-  };
-
-  const guardarMedicamentos = async () => {
-    setGuardandoMeds(true);
-    try {
-      await MedicoApiService.prescribirMedicamentos(citaId!, medsPrescritos);
-      toastExito("Medicamentos guardados correctamente");
-    } catch {
-      Swal.fire("Error", "No se pudieron guardar los medicamentos", "error");
-    } finally {
-      setGuardandoMeds(false);
-    }
-  };
-
   // ── Handlers de acciones de cita ──────────────────────────────
 
   const handleConfirmarAsistencia = async () => {
@@ -319,32 +232,8 @@ const PerfilCita = () => {
     }
   };
 
-  const handleFinalizarConsulta = async () => {
-    const result = await Swal.fire({
-      title: "¿Finalizar consulta?",
-      text: "La cita pasará al estado ATENDIDA. No podrás modificarla después.",
-      icon: "question",
-      showCancelButton: true,
-      confirmButtonText: "Sí, finalizar consulta",
-      cancelButtonText: "Cancelar",
-      confirmButtonColor: "#059669"
-    });
-    
-    if (!result.isConfirmed) return;
-    
-    try {
-      // Guardar notas si existen (opcional)
-      if (notas.diagnostico.trim() || notas.notasClinicas.trim() || notas.tratamiento.trim()) {
-        await MedicoApiService.guardarNotasClinicas(citaId!, notas);
-      }
-      
-      // Cambiar estado a ATENDIDA
-      await CitaApiService.cambiarEstado(citaId!, "ATENDIDA");
-      toastExito("Consulta finalizada correctamente");
-      cargarCita();
-    } catch (error) {
-      Swal.fire("Error", "No se pudo finalizar la consulta", "error");
-    }
+  const handleAtenderPaciente = () => {
+    navigate(`/medico/citas/${citaId}/consulta`);
   };
 
   const handleCancelarCita = async () => {
@@ -488,10 +377,17 @@ const PerfilCita = () => {
             </button>
           )}
 
-          {/* MÉDICO: Finaliza consulta (ASISTIO → ATENDIDA) */}
+          {/* MÉDICO: Ir a consulta SOAP (ASISTIO → NotaSOAP) */}
           {user?.rol === "MEDICO" && cita.estado === "ASISTIO" && (
-            <button className="btn btn-primary" onClick={handleFinalizarConsulta}>
-              Finalizar consulta
+            <button className="btn btn-primary" onClick={handleAtenderPaciente}>
+              <Stethoscope size={14} /> Atender paciente
+            </button>
+          )}
+
+          {/* MÉDICO: Ver nota SOAP si ya fue atendida */}
+          {user?.rol === "MEDICO" && cita.estado === "ATENDIDA" && (
+            <button className="btn btn-secondary" onClick={handleAtenderPaciente}>
+              <FileText size={14} /> Ver nota SOAP
             </button>
           )}
           
@@ -707,261 +603,6 @@ const PerfilCita = () => {
           </div>
         </div>
       )}
-
-      {tabActiva === "notas" && user?.rol === "MEDICO" && (() => {
-        const esConsultaFinalizada = cita.estado === "ATENDIDA";
-        return (
-        <div className="card-clinica">
-          <div className="card-header"><h3>Notas Clínicas</h3></div>
-          <div className="card-body notas-clinicas-form">
-            {esConsultaFinalizada && (
-              <div className="notas-consulta-finalizada">
-                <Check size={14} /> Consulta finalizada — Los datos son de solo lectura por auditoría médica.
-              </div>
-            )}
-
-            {esConsultaFinalizada ? (
-              <>
-                <div className="notas-view-grupo">
-                  <label>Diagnóstico principal</label>
-                  <div className="notas-view-content">{notas.diagnostico || "—"}</div>
-                </div>
-                <div className="notas-view-grupo">
-                  <label>Observaciones clínicas</label>
-                  <div className="notas-view-content">{notas.notasClinicas || "—"}</div>
-                </div>
-                <div className="notas-view-grupo">
-                  <label>Plan de tratamiento</label>
-                  <div className="notas-view-content">{notas.tratamiento || "—"}</div>
-                </div>
-              </>
-            ) : (
-              <>
-                <div className="notas-form-grupo">
-                  <label>Diagnóstico principal *</label>
-                  <input
-                    className="notas-form-input"
-                    value={notas.diagnostico}
-                    onChange={(e) => setNotas((n) => ({ ...n, diagnostico: e.target.value }))}
-                    placeholder="Ej: J06.9 - Infección aguda de vías respiratorias superiores"
-                  />
-                </div>
-                <div className="notas-form-grupo">
-                  <label>Observaciones clínicas</label>
-                  <textarea
-                    className="notas-form-textarea"
-                    rows={4}
-                    value={notas.notasClinicas}
-                    onChange={(e) => setNotas((n) => ({ ...n, notasClinicas: e.target.value }))}
-                    placeholder="Hallazgos del examen físico, signos vitales, observaciones..."
-                  />
-                </div>
-                <div className="notas-form-grupo">
-                  <label>Plan de tratamiento</label>
-                  <textarea
-                    className="notas-form-textarea"
-                    rows={3}
-                    value={notas.tratamiento}
-                    onChange={(e) => setNotas((n) => ({ ...n, tratamiento: e.target.value }))}
-                    placeholder="Indicaciones, restricciones, seguimiento..."
-                  />
-                </div>
-              </>
-            )}
-
-            {/* ── Medicamentos prescritos ── */}
-            <div className="meds-seccion">
-              <p className="meds-seccion-titulo">Medicamentos Prescritos</p>
-
-              {/* Buscador y formulario para agregar solo si NO está finalizada */}
-              {!esConsultaFinalizada && (
-                <>
-                  <div className="meds-buscador">
-                    <input
-                      className="notas-form-input"
-                      placeholder="Buscar medicamento por nombre..."
-                      value={busquedaMed}
-                      onChange={(e) => { setBusquedaMed(e.target.value); setMedSeleccionado(null); }}
-                      onFocus={() => resultadosMed.length > 0 && setMostrarDropdown(true)}
-                    />
-                    {mostrarDropdown && resultadosMed.length > 0 && (
-                      <div className="meds-dropdown">
-                        {resultadosMed.map((med) => (
-                          <button
-                            key={med._id}
-                            className="meds-dropdown-item"
-                            onMouseDown={() => seleccionarMed(med)}
-                          >
-                            <strong>{med.nombre}</strong>{" "}
-                            <span className="meds-dropdown-item-presentacion">{med.presentacion}</span>
-                          </button>
-                        ))}
-                      </div>
-                    )}
-                  </div>
-
-                  {medSeleccionado && (
-                    <div className="meds-form-nueva">
-                      <p className="meds-form-nueva-titulo">
-                        {medSeleccionado.nombre} — {medSeleccionado.presentacion}
-                      </p>
-                      <div className="meds-form-grid">
-                        <div className="meds-form-campo">
-                          <label>Dosis *</label>
-                          <input
-                            className="meds-form-input-sm"
-                            placeholder="Ej: 500mg"
-                            value={medForm.dosis}
-                            onChange={(e) => setMedForm((f) => ({ ...f, dosis: e.target.value }))}
-                          />
-                        </div>
-                        <div className="meds-form-campo">
-                          <label>Frecuencia *</label>
-                          <input
-                            className="meds-form-input-sm"
-                            placeholder="Ej: Cada 8 horas"
-                            value={medForm.frecuencia}
-                            onChange={(e) => setMedForm((f) => ({ ...f, frecuencia: e.target.value }))}
-                          />
-                        </div>
-                        <div className="meds-form-campo">
-                          <label>Duración *</label>
-                          <input
-                            className="meds-form-input-sm"
-                            placeholder="Ej: 7 días"
-                            value={medForm.duracion}
-                            onChange={(e) => setMedForm((f) => ({ ...f, duracion: e.target.value }))}
-                          />
-                        </div>
-                      </div>
-                      <input
-                        className="meds-form-input-sm meds-form-obs"
-                        placeholder="Observaciones (opcional)"
-                        value={medForm.observaciones}
-                        onChange={(e) => setMedForm((f) => ({ ...f, observaciones: e.target.value }))}
-                      />
-                      <button
-                        className="btn btn-primary btn-sm"
-                        disabled={!medForm.dosis.trim() || !medForm.frecuencia.trim() || !medForm.duracion.trim()}
-                        onClick={agregarMedicamento}
-                      >
-                        <Plus size={13} /> Agregar
-                      </button>
-                    </div>
-                  )}
-                </>
-              )}
-
-              {/* Tabla de medicamentos prescritos */}
-              {medsPrescritos.length > 0 && (
-                <div className="meds-tabla-wrapper">
-                  <table className="meds-tabla">
-                    <thead>
-                      <tr>
-                        <th>Medicamento</th>
-                        <th>Dosis</th>
-                        <th>Frecuencia</th>
-                        <th>Duración</th>
-                        {!esConsultaFinalizada && <th></th>}
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {medsPrescritos.map((med, i) => (
-                        <tr key={i}>
-                          <td className="meds-tabla-nombre">{med.nombre}</td>
-                          <td>{med.dosis}</td>
-                          <td>{med.frecuencia}</td>
-                          <td>{med.duracion}</td>
-                          {!esConsultaFinalizada && (
-                            <td>
-                              <button
-                                className="meds-tabla-quitar"
-                                onClick={() => quitarMedicamento(i)}
-                                title="Quitar"
-                              >
-                                <XIcon size={14} />
-                              </button>
-                            </td>
-                          )}
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                </div>
-              )}
-
-              {!esConsultaFinalizada &&
-                (medsPrescritos.length > 0 ||
-                  (medSeleccionado &&
-                    medForm.dosis.trim() &&
-                    medForm.frecuencia.trim() &&
-                    medForm.duracion.trim())) && (
-                <button
-                  className="btn btn-secondary btn-sm"
-                  disabled={guardandoMeds}
-                  onClick={async () => {
-                    // Si hay un med en el formulario con campos obligatorios llenos,
-                    // agregarlo a la lista antes de guardar
-                    let listaFinal = medsPrescritos;
-                    if (
-                      medSeleccionado &&
-                      medForm.dosis.trim() &&
-                      medForm.frecuencia.trim() &&
-                      medForm.duracion.trim()
-                    ) {
-                      const nuevo: MedicamentoPrescrito = {
-                        medicamentoId: medSeleccionado._id,
-                        nombre: medSeleccionado.nombre,
-                        ...medForm,
-                      };
-                      listaFinal = [...medsPrescritos, nuevo];
-                      setMedsPrescritos(listaFinal);
-                      setMedSeleccionado(null);
-                      setBusquedaMed("");
-                      setMedForm({ dosis: "", frecuencia: "", duracion: "", observaciones: "" });
-                    }
-                    setGuardandoMeds(true);
-                    try {
-                      await MedicoApiService.prescribirMedicamentos(citaId!, listaFinal);
-                      toastExito("Medicamentos guardados correctamente");
-                    } catch {
-                      Swal.fire("Error", "No se pudieron guardar los medicamentos", "error");
-                    } finally {
-                      setGuardandoMeds(false);
-                    }
-                  }}
-                >
-                  {guardandoMeds ? "Guardando..." : "Guardar Medicamentos"}
-                </button>
-              )}
-            </div>
-
-            {!esConsultaFinalizada && (
-              <>
-                <hr className="notas-form-separador" />
-                <button
-                  className="btn btn-primary"
-                  disabled={guardandoNotas || !notas.diagnostico.trim()}
-                  onClick={async () => {
-                    setGuardandoNotas(true);
-                    try {
-                      await MedicoApiService.guardarNotasClinicas(citaId!, notas);
-                      toastExito("Notas guardadas correctamente");
-                    } catch {
-                      Swal.fire("Error", "No se pudieron guardar las notas", "error");
-                    } finally {
-                      setGuardandoNotas(false);
-                    }
-                  }}
-                >
-                  {guardandoNotas ? "Guardando..." : "Guardar Notas"}
-                </button>
-              </>
-            )}
-          </div>
-        </div>
-        );
-      })()}
 
       {tabActiva === "historial" && (
         <div className="card-clinica">
