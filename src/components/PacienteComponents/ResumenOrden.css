@@ -1,0 +1,185 @@
+/* ═══════════════════════════════════════════
+   RESUMEN ORDEN — Portal Paciente
+═══════════════════════════════════════════ */
+
+.resumen-orden {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  padding: 1.25rem;
+  transition: box-shadow 0.2s var(--ease);
+}
+
+.resumen-orden:hover {
+  box-shadow: var(--shadow-md);
+}
+
+/* ── Header row ── */
+.resumen-orden__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  margin-bottom: 1rem;
+}
+
+.resumen-orden__header-left {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  min-width: 0;
+}
+
+.resumen-orden__header-icon {
+  width: 40px;
+  height: 40px;
+  border-radius: var(--radius-md);
+  background: var(--accent-lighter);
+  color: var(--accent);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.resumen-orden__header-title {
+  font-size: 0.9rem;
+  font-weight: 700;
+  color: var(--text-primary);
+  margin: 0;
+}
+
+.resumen-orden__badges {
+  display: flex;
+  gap: 0.35rem;
+  flex-wrap: wrap;
+}
+
+/* ── Body rows ── */
+.resumen-orden__body {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.resumen-orden__row {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.84rem;
+  color: var(--text-secondary);
+}
+
+.resumen-orden__row-icon {
+  color: var(--text-muted);
+  flex-shrink: 0;
+}
+
+.resumen-orden__row-label {
+  font-weight: 500;
+  color: var(--text-primary);
+}
+
+.resumen-orden__codigo {
+  font-family: "SFMono-Regular", "Consolas", "Liberation Mono", "Menlo", monospace;
+  font-size: 0.82rem;
+  font-weight: 600;
+  color: var(--accent);
+  letter-spacing: 0.02em;
+}
+
+/* ── Action ── */
+.resumen-orden__action {
+  margin-top: 1rem;
+  display: flex;
+  justify-content: flex-end;
+}
+
+/* ── Empty state ── */
+.resumen-orden__empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 1.5rem 0;
+  text-align: center;
+}
+
+.resumen-orden__empty-icon {
+  color: var(--text-muted);
+  opacity: 0.5;
+}
+
+.resumen-orden__empty-text {
+  font-size: 0.85rem;
+  color: var(--text-muted);
+  margin: 0;
+}
+
+/* ── Skeleton ── */
+.resumen-orden__skeleton-line {
+  height: 14px;
+  background: var(--bg-hover);
+  border-radius: var(--radius-sm);
+  animation: resumen-orden-pulse 1.5s ease-in-out infinite;
+  will-change: opacity;
+}
+
+.resumen-orden__skeleton-line--short {
+  width: 45%;
+}
+
+.resumen-orden__skeleton-line--medium {
+  width: 65%;
+}
+
+.resumen-orden__skeleton-line--long {
+  width: 85%;
+}
+
+.resumen-orden__skeleton-circle {
+  width: 40px;
+  height: 40px;
+  border-radius: var(--radius-md);
+  background: var(--bg-hover);
+  flex-shrink: 0;
+  animation: resumen-orden-pulse 1.5s ease-in-out infinite;
+  will-change: opacity;
+}
+
+.resumen-orden__skeleton-badge {
+  width: 70px;
+  height: 22px;
+  border-radius: 999px;
+  background: var(--bg-hover);
+  animation: resumen-orden-pulse 1.5s ease-in-out infinite;
+  will-change: opacity;
+}
+
+@keyframes resumen-orden-pulse {
+  0%, 100% { opacity: 1; }
+  50%      { opacity: 0.4; }
+}
+
+/* ── Estado badges (scoped) ── */
+.resumen-orden__badge {
+  display: inline-block;
+  padding: 0.2rem 0.6rem;
+  border-radius: 999px;
+  font-size: 0.72rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.02em;
+}
+
+.resumen-orden__badge--pendiente  { background: var(--warning-bg); color: var(--warning); }
+.resumen-orden__badge--en_proceso { background: var(--info-bg);    color: var(--info); }
+.resumen-orden__badge--asistido   { background: var(--success-bg); color: var(--success); }
+.resumen-orden__badge--finalizado { background: var(--bg-hover);   color: var(--text-muted); }
+.resumen-orden__badge--cancelada  { background: var(--error-bg);   color: var(--error); }
+.resumen-orden__badge--vencida    { background: var(--error-bg);   color: var(--error); }
+
+/* Tipo badges */
+.resumen-orden__badge--laboratorio { background: var(--info-bg);     color: var(--info); }
+.resumen-orden__badge--imagen      { background: var(--success-bg);  color: var(--success); }
+.resumen-orden__badge--mixta       { background: var(--warning-bg);  color: var(--warning); }
