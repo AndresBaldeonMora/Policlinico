@@ -17,7 +17,7 @@ import MedicoCitas from "./pages/MedicoCitas/MedicoCitas";
 
 // Páginas del paciente
 import PacienteDashboard from "./pages/PacienteDashboard/PacienteDashboard";
-
+import HistorialCitasPaciente from "./pages/PacienteDashboard/HistorialCitasPaciente";
 // Páginas del administrador
 import AdminDashboard      from "./pages/AdminDash/AdminDashboard";
 import GestionEspecialidades from "./pages/AdminDash/GestionEspecialidades";
@@ -152,6 +152,15 @@ function App() {
               element={
                 <ProtectedRoute roles={["paciente"]}>
                   <PacienteDashboard />
+                </ProtectedRoute>
+              }
+            />
+
+            <Route
+              path="/paciente/historial"
+              element={
+                <ProtectedRoute roles={["paciente"]}>
+                  <HistorialCitasPaciente />
                 </ProtectedRoute>
               }
             />

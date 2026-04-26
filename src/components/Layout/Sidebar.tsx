@@ -12,10 +12,10 @@ import {
   PanelLeftOpen,
   FlaskConical,
   ShieldCheck,
-  BookOpen
+  BookOpen,
+  LayoutDashboard
 } from "lucide-react";
 import "./Sidebar.css";
-
 const Sidebar = () => {
   const location = useLocation();
   const { user } = useAuth();
@@ -45,7 +45,10 @@ const Sidebar = () => {
     { path: "/admin/pacientes",      label: "Pacientes",      icon: Users,       description: "CRUD pacientes" },
   ];
 
-  const pacienteMenu: typeof recepcionistaMenu = [];
+  const pacienteMenu = [
+    { path: "/paciente",          label: "Inicio",          icon: LayoutDashboard, description: "Mi panel principal" },
+    { path: "/paciente/historial", label: "Mis Citas",       icon: ClipboardList,   description: "Historial de citas" },
+  ];
 
   const menuMap: Record<string, typeof recepcionistaMenu> = {
     RECEPCIONISTA: recepcionistaMenu,
