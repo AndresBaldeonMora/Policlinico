@@ -1,10 +1,15 @@
 import { useEffect, useRef, useState } from "react";
 import { useSearchParams, useNavigate } from "react-router-dom";
-import { Search, UserPlus, Pencil, Users, Trash2, ClipboardList } from "lucide-react";
+import { Search, UserPlus, Pencil, Users, Trash2, ClipboardList, KeyRound, ShieldCheck, ShieldOff } from "lucide-react";
 import "../ListaCitas/ListaCitas.css";
 import "./ListaPacientes.css";
-import { PacienteApiService, type PacienteTransformado } from "../../services/paciente.service";
+import {
+  PacienteApiService,
+  type PacienteTransformado,
+  type CredencialesPortal,
+} from "../../services/paciente.service";
 import PacienteModal from "./PacienteModal";
+import CredencialesModal from "../../components/modals/CredencialesModal";
 
 const normalizeString = (str: string): string =>
   (str || "").toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
@@ -24,6 +29,11 @@ const ListaPacientes = ({ puedeEliminar = false }: Props) => {
   const [notification, setNotification] = useState<NotificationState>({ message: "", type: "", visible: false });
   const [modalAbierto, setModalAbierto] = useState(false);
   const [pacienteEditando, setPacienteEditando] = useState<PacienteTransformado | null>(null);
+  const [credencialesData, setCredencialesData] = useState<{
+    paciente: PacienteTransformado;
+    credenciales: CredencialesPortal;
+  } | null>(null);
+  const [creandoCuentaId, setCreandoCuentaId] = useState<string | null>(null);
 
   const showNotification = (message: string, type: "success" | "error") => {
     setNotification({ message, type, visible: true });
@@ -65,14 +75,40 @@ const ListaPacientes = ({ puedeEliminar = false }: Props) => {
   const abrirNuevo = () => { setPacienteEditando(null); setModalAbierto(true); };
   const abrirEditar = (p: PacienteTransformado) => { setPacienteEditando(p); setModalAbierto(true); };
 
-  const handleGuardado = (p: PacienteTransformado) => {
+  const handleGuardado = (p: PacienteTransformado, credenciales?: CredencialesPortal) => {
     setModalAbierto(false);
+    const pacienteConFlag = credenciales ? { ...p, tieneCuentaPortal: true } : p;
     setPacientes((prev) => {
-      const idx = prev.findIndex((x) => x._id === p._id);
-      if (idx >= 0) { const next = [...prev]; next[idx] = p; return next; }
-      return [p, ...prev];
+      const idx = prev.findIndex((x) => x._id === pacienteConFlag._id);
+      if (idx >= 0) { const next = [...prev]; next[idx] = pacienteConFlag; return next; }
+      return [pacienteConFlag, ...prev];
     });
-    showNotification(pacienteEditando ? "Paciente actualizado correctamente." : "Paciente registrado correctamente.", "success");
+    if (credenciales) {
+      setCredencialesData({ paciente: pacienteConFlag, credenciales });
+      showNotification("Paciente registrado y cuenta de portal creada.", "success");
+    } else {
+      showNotification(pacienteEditando ? "Paciente actualizado correctamente." : "Paciente registrado correctamente.", "success");
+    }
+  };
+
+  const handleCrearCuenta = async (p: PacienteTransformado) => {
+    if (!p.correo) {
+      showNotification("Este paciente no tiene correo registrado. Edítalo primero.", "error");
+      return;
+    }
+    setCreandoCuentaId(p._id);
+    try {
+      const credenciales = await PacienteApiService.crearCuentaPortal(p._id);
+      setPacientes((prev) =>
+        prev.map((x) => (x._id === p._id ? { ...x, tieneCuentaPortal: true } : x))
+      );
+      setCredencialesData({ paciente: p, credenciales });
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : "Error al crear cuenta";
+      showNotification(msg, "error");
+    } finally {
+      setCreandoCuentaId(null);
+    }
   };
 
   const handleEliminar = async (id: string) => {
@@ -122,7 +158,8 @@ const ListaPacientes = ({ puedeEliminar = false }: Props) => {
                   <th style={{ width: 130 }}>Telefono</th>
                   <th>Correo</th>
                   <th style={{ width: 80 }}>Edad</th>
-                  <th style={{ width: 80 }}>Accion</th>
+                  <th style={{ width: 90 }}>Portal</th>
+                  <th style={{ width: 110 }}>Accion</th>
                 </tr>
               </thead>
               <tbody>
@@ -147,10 +184,32 @@ const ListaPacientes = ({ puedeEliminar = false }: Props) => {
                       <td className="td-truncate">{p.correo || <span className="td-muted">--</span>}</td>
                       <td className="td-center">{p.edad != null ? `${p.edad}` : <span className="td-muted">--</span>}</td>
                       <td className="td-center">
-                        {/* <button className="btn-action" onClick={() => abrirEditar(p)} title="Editar paciente">
-                          <Pencil size={15} />
-                        </button> */}
+                        {p.tieneCuentaPortal ? (
+                          <span className="lp-badge lp-badge--ok" title="Tiene cuenta de portal">
+                            <ShieldCheck size={13} /> Activa
+                          </span>
+                        ) : (
+                          <span className="lp-badge lp-badge--off" title="Sin cuenta de portal">
+                            <ShieldOff size={13} /> Sin cuenta
+                          </span>
+                        )}
+                      </td>
+                      <td className="td-center">
                         <div className="ge-actions">
+                          {!p.tieneCuentaPortal && (
+                            <button
+                              className="btn-action btn-action--primary"
+                              onClick={() => handleCrearCuenta(p)}
+                              disabled={creandoCuentaId === p._id || !p.correo}
+                              title={p.correo ? "Crear cuenta de portal" : "Falta correo"}
+                            >
+                              {creandoCuentaId === p._id ? (
+                                <span className="lp-spinner-sm" />
+                              ) : (
+                                <KeyRound size={14} />
+                              )}
+                            </button>
+                          )}
                           <button className="btn-action" onClick={() => navigate(`/pacientes/${p._id}`)} title="Ver historial">
                             <ClipboardList size={15} />
                           </button>
@@ -168,7 +227,7 @@ const ListaPacientes = ({ puedeEliminar = false }: Props) => {
                   ))
                 ) : (
                   <tr>
-                    <td colSpan={6} className="td-empty">
+                    <td colSpan={7} className="td-empty">
                       <Users size={32} className="td-empty-icon" />
                       <p>{busqueda ? "No se encontraron pacientes con ese criterio." : "No hay pacientes registrados."}</p>
                     </td>
@@ -182,6 +241,14 @@ const ListaPacientes = ({ puedeEliminar = false }: Props) => {
 
       {modalAbierto && (
         <PacienteModal paciente={pacienteEditando} onGuardado={handleGuardado} onCancelar={() => setModalAbierto(false)} />
+      )}
+
+      {credencialesData && (
+        <CredencialesModal
+          paciente={credencialesData.paciente}
+          credenciales={credencialesData.credenciales}
+          onCerrar={() => setCredencialesData(null)}
+        />
       )}
     </div>
   );

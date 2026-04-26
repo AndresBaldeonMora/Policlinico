@@ -1,4 +1,4 @@
-import { supabase } from "./supabaseClient";
+import axios from "axios";
 
 export type UserRole = "MEDICO" | "RECEPCIONISTA" | "administrador" | "cliente" | "paciente";
 
@@ -9,80 +9,98 @@ export interface AuthUser {
   apellidos: string;
   rol: UserRole;
   medicoId?: string;
+  pacienteId?: string;
 }
 
-async function getRoleForUser(
-  userId: string,
-  meta: Record<string, unknown>
-): Promise<UserRole> {
+const API_BASE_URL = import.meta.env.VITE_API_URL ?? "http://localhost:3000/api";
+const TOKEN_KEY = "pcl_token";
+const USER_KEY  = "pcl_user";
 
-  // Si user_metadata ya tiene el rol (MEDICO/RECEPCIONISTA), úsalo directo
-  if (meta.rol) return meta.rol as UserRole;
+// Backend devuelve roles en MAYÚSCULAS. Normalizamos para mantener compat con el código existente.
+function normalizeRol(rol: string): UserRole {
+  const r = String(rol ?? "").toUpperCase();
+  switch (r) {
+    case "MEDICO":         return "MEDICO";
+    case "RECEPCIONISTA":  return "RECEPCIONISTA";
+    case "ADMINISTRADOR":  return "administrador";
+    case "PACIENTE":       return "paciente";
+    default:               return "cliente";
+  }
+}
 
-  const { data: profile } = await supabase
-    .from("profiles")
-    .select("role")
-    .eq("id", userId)
-    .single();
+interface BackendLoginResponse {
+  token: string;
+  user: {
+    id: string;
+    nombres: string;
+    apellidos: string;
+    correo: string;
+    rol: string;
+    medicoId?: string;
+    pacienteId?: string;
+  };
+}
 
-  if (profile?.role) return profile.role as UserRole;
-
-  // // fallback para usuarios con rol en user_metadata (MEDICO / RECEPCIONISTA)
-  // return (meta.rol as UserRole) ?? "cliente";
-  return "cliente";
+function toAuthUser(u: BackendLoginResponse["user"]): AuthUser {
+  return {
+    id:         u.id,
+    correo:     u.correo,
+    nombres:    u.nombres ?? "",
+    apellidos:  u.apellidos ?? "",
+    rol:        normalizeRol(u.rol),
+    medicoId:   u.medicoId,
+    pacienteId: u.pacienteId,
+  };
 }
 
 export const AuthService = {
   login: async (correo: string, password: string): Promise<AuthUser> => {
-    const { data, error } = await supabase.auth.signInWithPassword({
-      email: correo,
-      password,
-    });
-
-    if (error) {
-      if (error.message.includes("Invalid login credentials")) {
-        throw new Error("Correo o contrasena incorrectos.");
+    try {
+      const { data } = await axios.post<BackendLoginResponse>(
+        `${API_BASE_URL}/auth/login`,
+        { correo, password }
+      );
+      const user = toAuthUser(data.user);
+      localStorage.setItem(TOKEN_KEY, data.token);
+      localStorage.setItem(USER_KEY, JSON.stringify(user));
+      return user;
+    } catch (err: any) {
+      const msg = err?.response?.data?.message;
+      if (err?.response?.status === 401) {
+        throw new Error("Correo o contraseña incorrectos.");
       }
-      throw new Error(error.message);
+      throw new Error(msg ?? err?.message ?? "Error al iniciar sesión");
     }
-
-    const meta = data.user?.user_metadata ?? {};
-    const rol = await getRoleForUser(data.user!.id, meta);
-
-    return {
-      id: data.user!.id,
-      correo: data.user!.email!,
-      nombres: meta.nombres as string ?? "",
-      apellidos: meta.apellidos as string ?? "",
-      rol,
-      medicoId: meta.medicoId as string | undefined,
-    };
   },
 
   logout: async (): Promise<void> => {
-    await supabase.auth.signOut();
+    localStorage.removeItem(TOKEN_KEY);
+    localStorage.removeItem(USER_KEY);
   },
 
-  getSession: async (): Promise<AuthUser | null> => {
-    const { data } = await supabase.auth.getSession();
-    if (!data.session?.user) return null;
-
-    const u = data.session.user;
-    const meta = u.user_metadata ?? {};
-    const rol = await getRoleForUser(u.id, meta);
-
-    return {
-      id: u.id,
-      correo: u.email!,
-      nombres: meta.nombres as string ?? "",
-      apellidos: meta.apellidos as string ?? "",
-      rol,
-      medicoId: meta.medicoId as string | undefined,
-    };
+  // Lee el usuario persistido de localStorage (sin pegar al servidor).
+  getStoredUser: (): AuthUser | null => {
+    const raw = localStorage.getItem(USER_KEY);
+    if (!raw) return null;
+    try {
+      return JSON.parse(raw) as AuthUser;
+    } catch {
+      return null;
+    }
   },
 
-  getToken: async (): Promise<string | null> => {
-    const { data } = await supabase.auth.getSession();
-    return data.session?.access_token ?? null;
+  getToken: (): string | null => localStorage.getItem(TOKEN_KEY),
+
+  // Verifica si el JWT no ha expirado (decodifica el payload sin librería externa).
+  isTokenValid: (): boolean => {
+    const token = localStorage.getItem(TOKEN_KEY);
+    if (!token) return false;
+    try {
+      const payload = JSON.parse(atob(token.split(".")[1]));
+      if (typeof payload.exp !== "number") return true;
+      return payload.exp * 1000 > Date.now();
+    } catch {
+      return false;
+    }
   },
 };

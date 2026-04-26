@@ -18,6 +18,7 @@ export interface Paciente {
   apoderadoParentesco?: string;
   apoderadoTelefono?: string;
   edad?: number;
+  tieneCuentaPortal?: boolean;
   createdAt?: string;
   updatedAt?: string;
 }
@@ -39,6 +40,17 @@ export interface PacienteTransformado {
   apoderadoParentesco?: string;
   apoderadoTelefono?: string;
   edad?: number;
+  tieneCuentaPortal?: boolean;
+}
+
+export interface CredencialesPortal {
+  correo: string;
+  passwordTemporal: string;
+}
+
+export interface ResultadoCrearPaciente {
+  paciente: PacienteTransformado;
+  credenciales?: CredencialesPortal;
 }
 
 interface AxiosErrorResponse {
@@ -63,24 +75,54 @@ const transformarPaciente = (p: Paciente): PacienteTransformado => ({
   apoderadoParentesco: p.apoderadoParentesco,
   apoderadoTelefono: p.apoderadoTelefono,
   edad: p.edad,
+  tieneCuentaPortal: p.tieneCuentaPortal,
 });
 
 export class PacienteApiService {
+  // Crea paciente — opcionalmente crea también cuenta de portal con `crearCuentaPortal: true`.
+  // Si se solicita la cuenta, la respuesta incluirá `credenciales` para entregar al paciente.
   static async crear(
-    datos: Omit<Paciente, "_id" | "id" | "edad">
-  ): Promise<PacienteTransformado> {
+    datos: Omit<Paciente, "_id" | "id" | "edad" | "tieneCuentaPortal"> & {
+      crearCuentaPortal?: boolean;
+      passwordPortal?: string;
+    }
+  ): Promise<ResultadoCrearPaciente> {
     try {
-      const response = await api.post<{ success: boolean; data: Paciente }>(
-        "/pacientes",
-        datos
-      );
+      const response = await api.post<{
+        success: boolean;
+        data: Paciente;
+        credenciales?: CredencialesPortal;
+      }>("/pacientes", datos);
       if (response.data.success && response.data.data) {
-        return transformarPaciente(response.data.data);
+        return {
+          paciente: transformarPaciente(response.data.data),
+          credenciales: response.data.credenciales,
+        };
       }
       throw new Error("Respuesta inesperada del servidor");
     } catch (error: unknown) {
       const err = error as AxiosErrorResponse;
       throw new Error(err.response?.data?.message || "Error al crear paciente");
+    }
+  }
+
+  // Crea cuenta de portal para un paciente existente (sin tocar sus datos clínicos).
+  static async crearCuentaPortal(
+    pacienteId: string,
+    passwordPortal?: string
+  ): Promise<CredencialesPortal> {
+    try {
+      const response = await api.post<{
+        success: boolean;
+        credenciales: CredencialesPortal;
+      }>(`/pacientes/${pacienteId}/crear-cuenta`, { passwordPortal });
+      if (response.data.success && response.data.credenciales) {
+        return response.data.credenciales;
+      }
+      throw new Error("Respuesta inesperada del servidor");
+    } catch (error: unknown) {
+      const err = error as AxiosErrorResponse;
+      throw new Error(err.response?.data?.message || "Error al crear cuenta de portal");
     }
   }
 
