@@ -3,7 +3,7 @@ import { CitaApiService } from "../services/cita.service";
 import type { CitaProcesada } from "../services/cita.service";
 import { ExamenService } from "../services/examen.service";
 import type { OrdenExamen } from "../services/examen.service";
-import type { CitaResumen, OrdenResumen } from "../components/PacienteComponents/types";
+import type { CitaResumen, OrdenResumen } from "../components/types";
 
 /**
  * The backend sends `tipoOrden` on OrdenExamen but the frontend

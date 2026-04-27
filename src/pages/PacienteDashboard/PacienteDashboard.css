@@ -2,6 +2,12 @@
    PACIENTE DASHBOARD — Home
 ═══════════════════════════════════════════ */
 
+
+/* ── Layout wrapper ── */
+.paciente-dashboard {
+  padding: 1.5rem;
+}
+
 /* ── Welcome section ── */
 .paciente-dashboard__welcome {
   margin-bottom: 1.5rem;

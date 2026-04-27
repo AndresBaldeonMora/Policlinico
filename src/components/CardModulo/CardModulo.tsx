@@ -1,6 +1,6 @@
 import { useCallback } from "react";
 import { useNavigate } from "react-router-dom";
-import type { CardModuloProps } from "./types";
+import type { CardModuloProps } from "../types";
 import "./CardModulo.css";
 
 const CardModulo = ({ titulo, descripcion, icono, ruta, color, badge }: CardModuloProps) => {

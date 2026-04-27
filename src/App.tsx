@@ -1,7 +1,6 @@
 import { BrowserRouter, Routes, Route, Outlet } from "react-router-dom";
 import Header from "./components/Layout/Header";
 import Sidebar from "./components/Layout/Sidebar";
-import PacienteLayout from "./components/Layout/PacienteLayout";
 
 import ReservaCita from "./pages/ReservaCita/ReservaCita";
 import ListaCitas from "./pages/ListaCitas/ListaCitas";
@@ -183,19 +182,17 @@ function App() {
                 </ProtectedRoute>
               }
             />
-          </Route>
 
-          {/* ================== PACIENTE (own layout) ================== */}
-          <Route
-            path="/paciente"
-            element={
-              <ProtectedRoute roles={["paciente"]}>
-                <PacienteLayout>
+            {/* ================== PACIENTE (shared layout) ================== */}
+            <Route
+              path="/paciente"
+              element={
+                <ProtectedRoute roles={["paciente"]}>
                   <PacienteDashboard />
-                </PacienteLayout>
-              </ProtectedRoute>
-            }
-          />
+                </ProtectedRoute>
+              }
+            />
+          </Route>
         </Routes>
         </BrowserRouter>
       </ThemeProvider>

@@ -12,7 +12,9 @@ import {
   PanelLeftOpen,
   FlaskConical,
   ShieldCheck,
-  BookOpen
+  BookOpen,
+  Home,
+  User,
 } from "lucide-react";
 import "./Sidebar.css";
 
@@ -45,7 +47,13 @@ const Sidebar = () => {
     { path: "/admin/pacientes",      label: "Pacientes",      icon: Users,       description: "CRUD pacientes" },
   ];
 
-  const pacienteMenu: typeof recepcionistaMenu = [];
+  const pacienteMenu = [
+    { path: "/paciente",           label: "Inicio",        icon: Home,          description: "Inicio del portal" },
+    { path: "/paciente/citas",     label: "Mis Citas",     icon: Calendar,      description: "Ver mis citas" },
+    { path: "/paciente/historial", label: "Mi Historial",  icon: ClipboardList, description: "Historial médico" },
+    { path: "/paciente/ordenes",   label: "Mis Órdenes",   icon: FlaskConical,  description: "Órdenes de exámenes" },
+    { path: "/paciente/perfil",    label: "Mi Perfil",     icon: User,          description: "Datos personales" },
+  ];
 
   const menuMap: Record<string, typeof recepcionistaMenu> = {
     RECEPCIONISTA: recepcionistaMenu,
@@ -64,11 +72,18 @@ const Sidebar = () => {
   };
   const subtitle = subtitleMap[user?.rol ?? ""] ?? "Sistema";
 
-  const avatarLetter = user?.nombres?.charAt(0).toUpperCase() || "U";
+  const avatarLetter = user?.nombres?.trim() ? user.nombres.trim().charAt(0).toUpperCase() : "U";
+  const nombreCompleto = `${user?.nombres ?? ""} ${user?.apellidos ?? ""}`.trim();
 
   return (
-    <aside className={`sidebar${collapsed ? " sidebar--collapsed" : ""}`}>
-      <div className="sidebar-header">
+    <>
+      <div 
+        className="sidebar-overlay" 
+        onClick={() => document.body.classList.remove('mobile-sidebar-open')} 
+        aria-hidden="true" 
+      />
+      <aside className={`sidebar${collapsed ? " sidebar--collapsed" : ""}`}>
+        <div className="sidebar-header">
         <div className="logo">
           <div className="logo-icon">
             <svg width="36" height="36" viewBox="0 0 36 36" fill="none">
@@ -133,7 +148,7 @@ const Sidebar = () => {
             <div className="sidebar-user-avatar">{avatarLetter}</div>
             <div className="sidebar-user-info">
               <span className="sidebar-user-name">
-                {user ? `${user.nombres} ${user.apellidos}` : "Usuario"}
+                {nombreCompleto ? nombreCompleto : "Usuario"}
               </span>
               <span className="sidebar-user-role">{user?.rol || "Sin rol"}</span>
             </div>
@@ -145,6 +160,7 @@ const Sidebar = () => {
         )}
       </div>
     </aside>
+    </>
   );
 };
 

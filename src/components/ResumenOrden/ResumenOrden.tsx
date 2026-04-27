@@ -1,7 +1,7 @@
 import { useCallback } from "react";
 import { FlaskConical, Calendar, Hash, ClipboardList, PackageX } from "lucide-react";
 import { formatearFechaDMY } from "../../utils/fecha.utils";
-import type { OrdenResumen } from "./types";
+import type { OrdenResumen } from "../types";
 import "./ResumenOrden.css";
 
 /* ── Helpers estáticos (fuera del componente) ── */

@@ -12,9 +12,9 @@ import {
 import { useAuth } from "../../hooks/userAuth";
 import { usePacienteDashboard } from "../../hooks/usePacienteDashboard";
 import { formatearFechaLarga } from "../../utils/fecha.utils";
-import { CardModulo } from "../../components/PacienteComponents/CardModulo";
-import { ResumenCita } from "../../components/PacienteComponents/ResumenCita";
-import { ResumenOrden } from "../../components/PacienteComponents/ResumenOrden";
+import { CardModulo } from "../../components/CardModulo/CardModulo";
+import { ResumenCita } from "../../components/ResumenCita/ResumenCita";
+import { ResumenOrden } from "../../components/ResumenOrden/ResumenOrden";
 import "./PacienteDashboard.css";
 
 /* ── Fecha de hoy para el subtítulo (estable por render) ── */
@@ -95,12 +95,14 @@ const PacienteDashboard = () => {
     }
   }, [loading, proximaCita]);
 
+  const nombreCompleto = `${user?.nombres ?? ""} ${user?.apellidos ?? ""}`.trim();
+
   return (
-    <div>
+    <div className="paciente-dashboard">
       {/* ── Sección 1: Bienvenida ── */}
       <div className="paciente-dashboard__welcome">
         <h1 className="paciente-dashboard__welcome-title">
-          Bienvenido, {user?.nombres ?? "Paciente"}
+          Bienvenido, {nombreCompleto ? nombreCompleto : "Paciente"}
         </h1>
         <p className="paciente-dashboard__welcome-date">{fechaHoy}</p>
       </div>

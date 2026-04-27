@@ -1,7 +1,7 @@
 import { useCallback } from "react";
 import { Calendar, Clock, Stethoscope, CalendarX } from "lucide-react";
 import { formatearFechaLarga } from "../../utils/fecha.utils";
-import type { CitaResumen } from "./types";
+import type { CitaResumen } from "../types";
 import "./ResumenCita.css";
 
 /* ── Helpers estáticos (fuera del componente) ── */
