@@ -194,6 +194,11 @@ const PerfilCita = () => {
     try {
       const data = await CitaApiService.obtenerPorId(citaId);
       dispatch({ type: "FETCH_SUCCESS", payload: data });
+      // Cargar historial clínico del paciente
+      const pac = data.pacienteId;
+      if (pac.alergias) dispatch({ type: "SET_ALERGIAS", payload: pac.alergias as any });
+      if (pac.medicamentosHabituales) dispatch({ type: "SET_MEDICAMENTOS", payload: pac.medicamentosHabituales as any });
+      if (pac.problemasMedicos) dispatch({ type: "SET_PROBLEMAS_MEDICOS", payload: pac.problemasMedicos as any });
     } catch {
       dispatch({ type: "FETCH_ERROR", payload: "No se pudo cargar la cita" });
     }
@@ -344,63 +349,30 @@ const PerfilCita = () => {
           </div>
         </div>
 
-        <div className="perfil-header-meta">
-          <div className="perfil-header-meta-item">
-            <span className="perfil-header-cita-label">Fecha · Hora</span>
-            <span className="perfil-header-cita-valor">
-              {formatearFechaCorta(cita.fecha)} · {cita.hora}
-            </span>
-          </div>
-          {doctorNombre && (
-            <div className="perfil-header-meta-item">
-              <span className="perfil-header-cita-label">Médico</span>
-              <span className="perfil-header-cita-valor">Dr. {doctorNombre}</span>
-            </div>
-          )}
-          {especialidadNombre && (
-            <div className="perfil-header-meta-item">
-              <span className="perfil-header-cita-label">Especialidad</span>
-              <span className="perfil-header-cita-valor">{especialidadNombre}</span>
-            </div>
-          )}
-        </div>
       </div>
 
-      {/* ACCIONES DE CITA */}
+      {/* ACCIONES DE CITA — solo si hay botones que mostrar */}
       {cita && (
+        (user?.rol === "RECEPCIONISTA" && (cita.estado === "PENDIENTE" || cita.estado === "REPROGRAMADA")) ||
+        (user?.rol === "MEDICO" && (cita.estado === "ASISTIO" || cita.estado === "ATENDIDA"))
+      ) && (
         <div className="perfil-acciones">
-          {/* RECEPCIONISTA: Confirma asistencia (PENDIENTE o REPROGRAMADA → ASISTIO) */}
           {user?.rol === "RECEPCIONISTA" &&
           (cita.estado === "PENDIENTE" || cita.estado === "REPROGRAMADA") && (
             <button className="btn btn-primary" onClick={handleConfirmarAsistencia}>
               <Check size={14} /> Confirmar asistencia
             </button>
           )}
-
-          {/* MÉDICO: Ir a consulta SOAP (ASISTIO → NotaSOAP) */}
           {user?.rol === "MEDICO" && cita.estado === "ASISTIO" && (
             <button className="btn btn-primary" onClick={handleAtenderPaciente}>
               <Stethoscope size={14} /> Atender paciente
             </button>
           )}
-
-          {/* MÉDICO: Ver nota SOAP si ya fue atendida */}
           {user?.rol === "MEDICO" && cita.estado === "ATENDIDA" && (
             <button className="btn btn-secondary" onClick={handleAtenderPaciente}>
               <FileText size={14} /> Ver nota SOAP
             </button>
           )}
-          
-          {/* Cancelar cita solo para estados que NO han asistido */}
-          {(cita.estado === "PENDIENTE" || cita.estado === "REPROGRAMADA") && (
-            <button className="btn btn-danger" onClick={handleCancelarCita}>
-              Cancelar cita
-            </button>
-          )}
-          
-          <span className={`badge-estado-cita badge-estado-cita--${cita.estado === "ASISTIO" ? "asistio" : cita.estado.toLowerCase()}`}>
-            {({ PENDIENTE: "Pendiente", ATENDIDA: "Atendida", CANCELADA: "Cancelada", REPROGRAMADA: "Reprogramada", ASISTIO: "Asistió", VENCIDA: "Vencida" } as Record<string, string>)[cita.estado] ?? cita.estado}
-          </span>
         </div>
       )}
 

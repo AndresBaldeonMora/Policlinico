@@ -42,7 +42,8 @@ const parsearSOAP = (notasClinicas?: string): SOAPParsed | null => {
 };
 
 export default function HistoriaClinicaMedico() {
-  const { pacienteId } = useParams<{ pacienteId: string }>();
+  const params = useParams<{ pacienteId?: string; id?: string }>();
+  const pacienteId = params.pacienteId ?? params.id;
   const navigate = useNavigate();
 
   const [tab,      setTab]      = useState<Tab>("resumen");
