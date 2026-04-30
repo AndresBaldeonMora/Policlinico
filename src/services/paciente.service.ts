@@ -1,6 +1,34 @@
 // src/services/paciente.service.ts
 import api from "./api";
 
+export interface Alergia {
+  _id?: string;
+  sustancia: string;
+  reaccion: string;
+  severidad: "leve" | "moderada" | "severa";
+}
+
+export interface MedicamentoHabitual {
+  _id?: string;
+  nombre: string;
+  dosis: string;
+  frecuencia: string;
+  activo: boolean;
+}
+
+export interface ProblemaMedico {
+  _id?: string;
+  descripcion: string;
+  estado: "activo" | "resuelto";
+  fechaInicio?: string;
+}
+
+export interface HistorialClinico {
+  alergias: Alergia[];
+  medicamentosHabituales: MedicamentoHabitual[];
+  problemasMedicos: ProblemaMedico[];
+}
+
 export interface Paciente {
   _id: string;
   id?: string;
@@ -17,6 +45,9 @@ export interface Paciente {
   apoderadoNombre?: string;
   apoderadoParentesco?: string;
   apoderadoTelefono?: string;
+  alergias?: Alergia[];
+  medicamentosHabituales?: MedicamentoHabitual[];
+  problemasMedicos?: ProblemaMedico[];
   edad?: number;
   createdAt?: string;
   updatedAt?: string;
@@ -131,6 +162,17 @@ export class PacienteApiService {
     const params = new URLSearchParams({ citasPagina: String(citasPagina), ordenesPagina: String(ordenesPagina) });
     const response = await api.get<{ success: boolean; data: any }>(
       `/pacientes/${id}/historial?${params.toString()}`
+    );
+    return response.data.data;
+  }
+
+  static async actualizarHistorialClinico(
+    id: string,
+    datos: Partial<HistorialClinico>
+  ): Promise<Paciente> {
+    const response = await api.patch<{ success: boolean; data: Paciente }>(
+      `/pacientes/${id}/historial-clinico`,
+      datos
     );
     return response.data.data;
   }

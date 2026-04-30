@@ -12,8 +12,11 @@ import Login from "./pages/Login/Login";
 import LaboratorioImagen from "./pages/Laboratorio/Laboratorio";
 import Historial from "./pages/HistorialPaciente/Historial";
 import ImprimirOrden from "./pages/Laboratorio/ImprimirOrden";
-import CalendarioMedico from "./pages/Calendario/CalendarioMedico";
+import MedicoDashboard from "./pages/MedicoDashboard/MedicoDashboard";
 import MedicoCitas from "./pages/MedicoCitas/MedicoCitas";
+import NotaSOAP from "./pages/NotaSOAP/NotaSOAP";
+import MedicoListaPacientes from "./pages/MedicoListaPacientes/MedicoListaPacientes";
+import HistoriaClinicaMedico from "./pages/HistoriaClinicaMedico/HistoriaClinicaMedico";
 
 // Páginas del paciente
 import PacienteDashboard from "./pages/PacienteDashboard/PacienteDashboard";
@@ -105,8 +108,8 @@ function App() {
             <Route
               path="/pacientes/:id"
               element={
-                <ProtectedRoute roles={["RECEPCIONISTA", "administrador"]}>
-                  <Historial />
+                <ProtectedRoute roles={["RECEPCIONISTA", "MEDICO", "administrador"]}>
+                  <HistoriaClinicaMedico />
                 </ProtectedRoute>
               }
             />
@@ -133,7 +136,7 @@ function App() {
               path="/medico"
               element={
                 <ProtectedRoute roles={["MEDICO"]}>
-                  <CalendarioMedico />
+                  <MedicoDashboard />
                 </ProtectedRoute>
               }
             />
@@ -147,7 +150,41 @@ function App() {
               }
             />
 
+            <Route
+              path="/medico/citas/:citaId/consulta"
+              element={
+                <ProtectedRoute roles={["MEDICO"]}>
+                  <NotaSOAP />
+                </ProtectedRoute>
+              }
+            />
 
+            <Route
+              path="/medico/pacientes"
+              element={
+                <ProtectedRoute roles={["MEDICO"]}>
+                  <MedicoListaPacientes />
+                </ProtectedRoute>
+              }
+            />
+
+            <Route
+              path="/medico/pacientes/:pacienteId"
+              element={
+                <ProtectedRoute roles={["MEDICO"]}>
+                  <HistoriaClinicaMedico />
+                </ProtectedRoute>
+              }
+            />
+
+            <Route
+              path="/paciente"
+              element={
+                <ProtectedRoute roles={["paciente"]}>
+                  <PacienteDashboard />
+                </ProtectedRoute>
+              }
+            />
 
             <Route
               path="/admin"

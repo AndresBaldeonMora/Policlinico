@@ -1,0 +1,397 @@
+/* ============================================================
+   Historia Clínica Médico — Styles
+   ============================================================ */
+
+.hcm-page {
+  padding: 24px;
+  max-width: 1200px;
+  margin: 0 auto;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+/* ── Loading ── */
+.hcm-loading {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 240px;
+  color: var(--text-muted);
+  font-size: 0.95rem;
+}
+
+/* ── Breadcrumb ── */
+.hcm-breadcrumb {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 0.82rem;
+  color: var(--text-muted);
+}
+.hcm-back-btn {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: var(--primary);
+  font-size: 0.82rem;
+  font-weight: 600;
+  padding: 0;
+}
+.hcm-back-btn:hover { text-decoration: underline; }
+.hcm-sep { color: var(--border); }
+.hcm-current { color: var(--text-primary); font-weight: 500; }
+
+/* ── Header Card ── */
+.hcm-header-card {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  padding: 20px 24px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 20px;
+  box-shadow: var(--shadow-sm);
+}
+.hcm-header-left {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+.hcm-avatar {
+  width: 52px;
+  height: 52px;
+  border-radius: 50%;
+  background: var(--primary-lighter);
+  color: var(--primary);
+  font-size: 1.1rem;
+  font-weight: 800;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+.hcm-header-name {
+  font-size: 1.05rem;
+  font-weight: 700;
+  color: var(--text-primary);
+  margin-bottom: 3px;
+}
+.hcm-header-meta {
+  font-size: 0.82rem;
+  color: var(--text-muted);
+  margin-bottom: 4px;
+}
+.hcm-header-contact {
+  display: flex;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+.hcm-header-contact span {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 0.78rem;
+  color: var(--text-muted);
+}
+.hcm-header-stats {
+  display: flex;
+  gap: 24px;
+  flex-shrink: 0;
+}
+.hcm-stat {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+}
+.hcm-stat-num {
+  font-size: 1.4rem;
+  font-weight: 800;
+  color: var(--primary);
+  line-height: 1;
+}
+.hcm-stat-label {
+  font-size: 0.72rem;
+  color: var(--text-muted);
+  white-space: nowrap;
+}
+
+/* ── Tabs ── */
+.hcm-tabs {
+  display: flex;
+  border-bottom: 2px solid var(--border);
+  gap: 0;
+}
+.hcm-tab {
+  background: none;
+  border: none;
+  border-bottom: 2px solid transparent;
+  margin-bottom: -2px;
+  padding: 10px 20px;
+  font-size: 0.88rem;
+  font-weight: 600;
+  color: var(--text-muted);
+  cursor: pointer;
+  transition: color 0.15s, border-color 0.15s;
+}
+.hcm-tab:hover { color: var(--text-primary); }
+.hcm-tab.active {
+  color: var(--primary);
+  border-bottom-color: var(--primary);
+}
+
+/* ── Resumen layout ── */
+.hcm-resumen-layout {
+  display: grid;
+  grid-template-columns: 300px 1fr;
+  gap: 20px;
+  align-items: flex-start;
+}
+@media (max-width: 860px) {
+  .hcm-resumen-layout { grid-template-columns: 1fr; }
+}
+
+/* ── Clinical cards (col izq) ── */
+.hcm-col-left {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+.hcm-clinical-card {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  padding: 16px;
+}
+.hcm-clinical-title {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.78rem;
+  font-weight: 700;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.6px;
+  margin-bottom: 12px;
+}
+.hcm-dx-item {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 7px 0;
+  border-bottom: 1px solid var(--border);
+  flex-wrap: wrap;
+}
+.hcm-dx-item:last-child { border-bottom: none; }
+.hcm-dx-code {
+  font-size: 0.75rem;
+  font-weight: 700;
+  color: var(--primary);
+  background: var(--primary-lighter);
+  padding: 2px 7px;
+  border-radius: 5px;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+.hcm-dx-name {
+  font-size: 0.82rem;
+  color: var(--text-primary);
+  flex: 1;
+}
+.hcm-dx-tipo {
+  font-size: 0.7rem;
+  font-weight: 600;
+  padding: 1px 6px;
+  border-radius: 4px;
+  flex-shrink: 0;
+}
+.hcm-dx-tipo--confirmado {
+  background: #dcfce7;
+  color: #15803d;
+}
+.hcm-dx-tipo--presuntivo {
+  background: #fef3c7;
+  color: #92400e;
+}
+[data-theme="dark"] .hcm-dx-tipo--confirmado { background: rgba(21,128,61,.25); color: #4ade80; }
+[data-theme="dark"] .hcm-dx-tipo--presuntivo  { background: rgba(146,64,14,.25); color: #fbbf24; }
+
+.hcm-med-item {
+  padding: 7px 0;
+  border-bottom: 1px solid var(--border);
+}
+.hcm-med-item:last-of-type { border-bottom: none; }
+.hcm-med-nombre {
+  font-size: 0.84rem;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+.hcm-med-detalle {
+  font-size: 0.75rem;
+  color: var(--text-muted);
+  margin-top: 1px;
+}
+.hcm-source-note {
+  font-size: 0.72rem;
+  color: var(--text-muted);
+  margin-top: 8px;
+  font-style: italic;
+}
+
+/* ── Cards genéricos ── */
+.hcm-card {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  padding: 18px;
+  box-shadow: var(--shadow-sm);
+}
+.hcm-card-title {
+  font-size: 0.88rem;
+  font-weight: 700;
+  color: var(--text-primary);
+  margin-bottom: 14px;
+}
+
+/* ── Tags pequeños ── */
+.hcm-dx-tag-small {
+  display: inline-block;
+  font-size: 0.75rem;
+  background: var(--primary-lighter);
+  color: var(--primary);
+  padding: 2px 8px;
+  border-radius: 10px;
+  font-weight: 500;
+}
+.hcm-examen-tag {
+  font-size: 0.75rem;
+  background: var(--bg-muted);
+  color: var(--text-secondary);
+  padding: 2px 8px;
+  border-radius: 8px;
+  border: 1px solid var(--border);
+}
+.hcm-examen-tag-more {
+  font-size: 0.72rem;
+  color: var(--text-muted);
+  padding: 2px 4px;
+}
+
+/* ── Estado órdenes ── */
+.hcm-orden-estado {
+  font-size: 0.75rem;
+  font-weight: 700;
+  padding: 2px 8px;
+  border-radius: 8px;
+}
+.hcm-orden-estado--pendiente   { background: #fef3c7; color: #92400e; }
+.hcm-orden-estado--en_proceso  { background: #dbeafe; color: #1e40af; }
+.hcm-orden-estado--completado  { background: #dcfce7; color: #15803d; }
+.hcm-orden-estado--cancelada,
+.hcm-orden-estado--vencida     { background: #fee2e2; color: #991b1b; }
+[data-theme="dark"] .hcm-orden-estado--pendiente  { background: rgba(146,64,14,.25);  color: #fbbf24; }
+[data-theme="dark"] .hcm-orden-estado--en_proceso { background: rgba(30,64,175,.25);  color: #60a5fa; }
+[data-theme="dark"] .hcm-orden-estado--completado { background: rgba(21,128,61,.25);  color: #4ade80; }
+[data-theme="dark"] .hcm-orden-estado--cancelada,
+[data-theme="dark"] .hcm-orden-estado--vencida    { background: rgba(153,27,27,.25);  color: #f87171; }
+
+/* ── Consultas accordion ── */
+.hcm-consultas-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.hcm-consulta-card {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  overflow: hidden;
+}
+.hcm-consulta-header {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 13px 16px;
+  background: none;
+  border: none;
+  cursor: pointer;
+  text-align: left;
+  transition: background 0.12s;
+}
+.hcm-consulta-header:hover { background: var(--bg-muted); }
+.hcm-consulta-header-left {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+.hcm-consulta-fecha {
+  font-size: 0.84rem;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+.hcm-consulta-body {
+  padding: 14px 16px;
+  border-top: 1px solid var(--border);
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+.hcm-soap-row {
+  display: grid;
+  grid-template-columns: 140px 1fr;
+  gap: 8px;
+  align-items: flex-start;
+}
+.hcm-soap-lbl {
+  font-size: 0.75rem;
+  font-weight: 700;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.4px;
+  padding-top: 2px;
+}
+.hcm-soap-val {
+  font-size: 0.84rem;
+  color: var(--text-primary);
+  line-height: 1.5;
+}
+.hcm-med-item-small {
+  font-size: 0.8rem;
+  color: var(--text-secondary);
+}
+
+/* ── Empty states ── */
+.hcm-empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  padding: 48px 20px;
+  color: var(--text-muted);
+  text-align: center;
+}
+.hcm-empty p {
+  font-size: 0.9rem;
+  margin: 0;
+}
+.hcm-empty-hint {
+  font-size: 0.8rem;
+  color: var(--text-muted);
+  margin: 0;
+  font-style: italic;
+}
+
+/* ── Estudios section ── */
+.hcm-estudios {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}

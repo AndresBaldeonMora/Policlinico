@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import { useSearchParams, useNavigate } from "react-router-dom";
 import { Search, UserPlus, Pencil, Users, Trash2, ClipboardList } from "lucide-react";
+import { useAuth } from "../../hooks/userAuth";
 import "../ListaCitas/ListaCitas.css";
 import "./ListaPacientes.css";
 import { PacienteApiService, type PacienteTransformado } from "../../services/paciente.service";
@@ -15,6 +16,8 @@ interface Props {
 }
 const ListaPacientes = ({ puedeEliminar = false }: Props) => {
   const navigate = useNavigate();
+  const { user } = useAuth();
+  const esMedico = user?.rol === "MEDICO";
   const [searchParams] = useSearchParams();
   const highlightId = searchParams.get("highlight");
   const highlightRef = useRef<HTMLTableRowElement>(null);
@@ -154,9 +157,11 @@ const ListaPacientes = ({ puedeEliminar = false }: Props) => {
                           <button className="btn-action" onClick={() => navigate(`/pacientes/${p._id}`)} title="Ver historial">
                             <ClipboardList size={15} />
                           </button>
-                          <button className="btn-action" onClick={() => abrirEditar(p)} title="Editar">
-                            <Pencil size={15} />
-                          </button>
+                          {!esMedico && (
+                            <button className="btn-action" onClick={() => abrirEditar(p)} title="Editar">
+                              <Pencil size={15} />
+                            </button>
+                          )}
                           {puedeEliminar && (
                             <button className="btn-action btn-action--danger" onClick={() => handleEliminar(p._id)} title="Eliminar">
                               <Trash2 size={14} />

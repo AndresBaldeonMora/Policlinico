@@ -124,6 +124,8 @@
   padding: 4px;
   border-radius: var(--radius-md);
   width: fit-content;
+  max-width: 100%;
+  overflow-x: auto;
 }
 
 .tab {
@@ -152,8 +154,9 @@
 /* ── Dashboard Layout ── */
 .dashboard-layout {
   display: grid;
-  grid-template-columns: 1fr 300px;
+  grid-template-columns: 1fr 290px;
   gap: 1rem;
+  align-items: start;
 }
 
 .columna-principal,
@@ -161,6 +164,66 @@
   display: flex;
   flex-direction: column;
   gap: 0.875rem;
+}
+
+/* ── Clinical 2-col grid ── */
+.clinical-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.875rem;
+}
+
+/* ── Card empty state ── */
+.perfil-card-empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 1.25rem 0.5rem;
+  color: var(--text-muted);
+  opacity: 0.5;
+  font-size: 0.8rem;
+  font-weight: 500;
+}
+
+/* ── Tab empty state (historial / documentos) ── */
+.perfil-tab-empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 3rem 2rem;
+  color: var(--text-muted);
+  opacity: 0.45;
+}
+
+.perfil-tab-empty p {
+  margin: 0;
+  font-size: 0.85rem;
+}
+
+/* ── Demo info grid (flat, no tabs) ── */
+.demo-info-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.75rem 1rem;
+}
+
+.demo-info-item label {
+  display: block;
+  font-size: 0.65rem;
+  font-weight: 700;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  margin-bottom: 0.15rem;
+}
+
+.demo-info-item span {
+  font-size: 0.85rem;
+  color: var(--text-primary);
+  font-weight: 500;
+  word-break: break-word;
 }
 
 /* ── Clinical Cards ── */
@@ -277,7 +340,17 @@
   font-weight: 700;
   display: flex;
   justify-content: space-between;
+  align-items: center;
   color: var(--text-primary);
+}
+
+.widget-count {
+  background: var(--primary-lighter);
+  color: var(--primary);
+  font-size: 0.68rem;
+  font-weight: 700;
+  padding: 0.1rem 0.45rem;
+  border-radius: 999px;
 }
 
 .widget-body {
@@ -286,17 +359,81 @@
   color: var(--text-secondary);
 }
 
-.lista-citas-widget { list-style: none; padding: 0; margin: 0; }
+.widget-empty {
+  text-align: center;
+  padding: 1.25rem 0.5rem;
+  color: var(--text-muted);
+  font-size: 0.8rem;
+  margin: 0;
+}
 
+/* ── Cita info stack (sidebar) ── */
+.cita-info-stack {
+  display: flex;
+  flex-direction: column;
+  gap: 0.625rem;
+}
+
+.cita-info-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.5rem;
+  color: var(--text-muted);
+}
+
+.cita-info-item > svg {
+  flex-shrink: 0;
+  margin-top: 2px;
+}
+
+.cita-info-item label {
+  display: block;
+  font-size: 0.65rem;
+  font-weight: 700;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.cita-info-item span {
+  font-size: 0.83rem;
+  color: var(--text-primary);
+  font-weight: 500;
+}
+
+/* ── Cita widget items (historial de citas) ── */
 .cita-widget-item {
-  padding: 0.375rem 0.5rem;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+  width: 100%;
+  padding: 0.5rem 0.625rem;
   border-radius: var(--radius-sm);
+  border: none;
+  background: transparent;
   cursor: pointer;
   transition: background 0.1s var(--ease);
-  font-size: 0.78rem;
+  font-family: inherit;
+  text-align: left;
 }
 
 .cita-widget-item:hover { background: var(--bg-hover); }
+
+.cita-widget-fecha {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  font-size: 0.8rem;
+  color: var(--text-primary);
+  font-weight: 500;
+}
+
+.cita-widget-hora {
+  font-size: 0.72rem;
+  color: var(--text-muted);
+  font-weight: 400;
+}
 
 /* ── Footer ── */
 .perfil-footer {
@@ -420,8 +557,22 @@
   gap: 0.3rem;
 }
 
-@media (max-width: 900px) {
+@media (max-width: 1100px) {
   .dashboard-layout { grid-template-columns: 1fr; }
+  .columna-lateral { display: grid; grid-template-columns: 1fr 1fr; gap: 0.875rem; }
+}
+
+@media (max-width: 900px) {
+  .clinical-grid { grid-template-columns: 1fr; }
+  .columna-lateral { grid-template-columns: 1fr; }
+  .perfil-header-meta { gap: 1rem; }
+}
+
+@media (max-width: 640px) {
+  .perfil-header-global { flex-direction: column; align-items: flex-start; }
+  .perfil-header-meta { align-self: stretch; justify-content: flex-start; }
+  .perfil-header-meta-item { align-items: flex-start; }
+  .demo-info-grid { grid-template-columns: 1fr; }
 }
 
 /* ── Historial de otras visitas ── */
@@ -478,7 +629,22 @@
   gap: 0.4rem;
 }
 
-/* ── Header fecha de cita ── */
+/* ── Header meta (fecha, doctor, especialidad) ── */
+.perfil-header-meta {
+  display: flex;
+  gap: 1.5rem;
+  flex-shrink: 0;
+  align-items: flex-start;
+}
+
+.perfil-header-meta-item {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 0.15rem;
+}
+
+/* ── Header fecha de cita (legacy compat) ── */
 .perfil-header-cita {
   display: flex;
   flex-direction: column;

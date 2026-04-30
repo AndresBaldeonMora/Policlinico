@@ -1,4 +1,7 @@
 import api from "./api";
+import type { Alergia, MedicamentoHabitual, ProblemaMedico } from "./paciente.service";
+
+export type { Alergia, MedicamentoHabitual, ProblemaMedico };
 
 export interface MedicamentoPrescrito {
   medicamentoId: string;
@@ -20,6 +23,9 @@ export interface CitaMedico {
     correo?: string;
     direccion?: string;
     fechaNacimiento?: string;
+    alergias?: Alergia[];
+    medicamentosHabituales?: MedicamentoHabitual[];
+    problemasMedicos?: ProblemaMedico[];
   };
   fecha: string;
   hora: string;
@@ -103,6 +109,15 @@ export class MedicoApiService {
     medicamentos: MedicamentoPrescrito[]
   ): Promise<CitaMedico> {
     const response = await api.patch(`/medico/citas/${citaId}/medicamentos`, { medicamentos });
+    return response.data.data;
+  }
+
+  static async obtenerHistorialPaciente(pacienteId: string): Promise<{
+    paciente: any;
+    citas: { data: any[]; total: number; pagina: number; totalPaginas: number };
+    ordenes: { data: any[]; total: number; pagina: number; totalPaginas: number };
+  }> {
+    const response = await api.get(`/pacientes/${pacienteId}/historial`);
     return response.data.data;
   }
 }
