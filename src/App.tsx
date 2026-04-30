@@ -20,11 +20,12 @@ import HistoriaClinicaMedico from "./pages/HistoriaClinicaMedico/HistoriaClinica
 
 // Páginas del paciente
 import PacienteDashboard from "./pages/PacienteDashboard/PacienteDashboard";
+import PacienteOrdenes from "./pages/PacienteOrdenes/PacienteOrdenes";
 
 // Páginas del administrador
-import AdminDashboard      from "./pages/AdminDash/AdminDashboard";
+import AdminDashboard from "./pages/AdminDash/AdminDashboard";
 import GestionEspecialidades from "./pages/AdminDash/GestionEspecialidades";
-import GestionDoctores       from "./pages/AdminDash/GestionDoctores";
+import GestionDoctores from "./pages/AdminDash/GestionDoctores";
 
 import { AuthProvider } from "./context/AuthProvider";
 import { ThemeProvider } from "./context/ThemeContext";
@@ -241,7 +242,14 @@ function ProtectedLayout() {
   return (
     <div className="app">
       <Sidebar />
-      <div style={{ flex: 1, display: "flex", flexDirection: "column", minWidth: 0 }}>
+      <div
+        style={{
+          flex: 1,
+          display: "flex",
+          flexDirection: "column",
+          minWidth: 0,
+        }}
+      >
         <Header />
         <main style={{ flex: 1, overflow: "auto" }}>
           <Outlet />

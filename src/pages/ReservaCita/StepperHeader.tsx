@@ -1,29 +1,39 @@
 // src/pages/ReservaCita/StepperHeader.tsx
 import { Check } from "lucide-react";
 
-const PASOS_LABELS = [
-  "Especialidad","Medico","Mes","Dia","Hora","Paciente","Confirmar",
-] as const;
-
 interface StepperHeaderProps {
   pasoActual: number;
   irAlPaso: (paso: number) => void;
+  esPaciente?: boolean;
 }
 
-const StepperHeader = ({ pasoActual, irAlPaso }: StepperHeaderProps) => {
+const StepperHeader = ({
+  pasoActual,
+  irAlPaso,
+  esPaciente,
+}: StepperHeaderProps) => {
   const getIconoPaso = (paso: number): React.ReactNode =>
     paso < pasoActual ? <Check size={14} strokeWidth={3} /> : paso;
 
+  const pasosRender = esPaciente
+    ? ["Especialidad", "Medico", "Mes", "Dia", "Hora", "Confirmar"]
+    : ["Especialidad", "Medico", "Mes", "Dia", "Hora", "Paciente", "Confirmar"];
+
   return (
     <div className="stepper-header">
-      {PASOS_LABELS.map((titulo, index) => {
-        const numeroPaso = index + 1;
-        const esActivo = numeroPaso === pasoActual;
-        const esCompletado = numeroPaso < pasoActual;
+      {pasosRender.map((titulo, index) => {
+        const numeroPasoVisual = index + 1;
+        const pasoLogico =
+          esPaciente && numeroPasoVisual === 6 ? 7 : numeroPasoVisual;
+
+        const esActivo = pasoLogico === pasoActual;
+        const esCompletado = pasoLogico < pasoActual;
 
         const inner = (
-          <div className={`stepper-item ${esActivo ? "activo" : ""} ${esCompletado ? "completado" : ""}`}>
-            <div className="stepper-circulo">{getIconoPaso(numeroPaso)}</div>
+          <div
+            className={`stepper-item ${esActivo ? "activo" : ""} ${esCompletado ? "completado" : ""}`}
+          >
+            <div className="stepper-circulo">{getIconoPaso(pasoLogico)}</div>
             <div className="stepper-titulo">{titulo}</div>
           </div>
         );
@@ -31,15 +41,15 @@ const StepperHeader = ({ pasoActual, irAlPaso }: StepperHeaderProps) => {
         if (esCompletado) {
           return (
             <div
-              key={numeroPaso}
+              key={pasoLogico}
               className="stepper-item-wrapper clickable"
               role="button"
               tabIndex={0}
-              onClick={() => irAlPaso(numeroPaso)}
+              onClick={() => irAlPaso(pasoLogico)}
               onKeyDown={(e) => {
                 if (e.key === "Enter" || e.key === " ") {
                   e.preventDefault();
-                  irAlPaso(numeroPaso);
+                  irAlPaso(pasoLogico);
                 }
               }}
             >
@@ -49,7 +59,9 @@ const StepperHeader = ({ pasoActual, irAlPaso }: StepperHeaderProps) => {
         }
 
         return (
-          <div key={numeroPaso} className="stepper-item-wrapper">{inner}</div>
+          <div key={pasoLogico} className="stepper-item-wrapper">
+            {inner}
+          </div>
         );
       })}
     </div>
