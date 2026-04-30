@@ -58,17 +58,17 @@ const Sidebar = () => {
   const menuMap: Record<string, typeof recepcionistaMenu> = {
     RECEPCIONISTA:  recepcionistaMenu,
     MEDICO:         medicoMenu,
-    ADMINISTRADOR:  administradorMenu,
-    PACIENTE:       pacienteMenu,
+    administrador:  administradorMenu,
+    paciente:       pacienteMenu,
   };
 
   const menuItems = menuMap[user?.rol ?? ""] ?? recepcionistaMenu;
 
   const subtitleMap: Record<string, string> = {
     MEDICO:         "Portal Médico",
-    ADMINISTRADOR:  "Portal Administración",
+    administrador:  "Portal Administración",
     RECEPCIONISTA:  "Portal Recepcionista",
-    PACIENTE:       "Portal Paciente",
+    paciente:       "Portal Paciente",
   };
   const subtitle = subtitleMap[user?.rol ?? ""] ?? "Sistema";
 

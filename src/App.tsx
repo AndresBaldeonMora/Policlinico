@@ -20,6 +20,7 @@ import HistoriaClinicaMedico from "./pages/HistoriaClinicaMedico/HistoriaClinica
 
 // Páginas del paciente
 import PacienteDashboard from "./pages/PacienteDashboard/PacienteDashboard";
+import HistorialCitasPaciente from "./pages/PacienteDashboard/HistorialCitasPaciente";
 import PacienteOrdenes from "./pages/PacienteOrdenes/PacienteOrdenes";
 
 // Páginas del administrador
@@ -197,6 +198,15 @@ function App() {
             />
 
             <Route
+              path="/paciente/ordenes"
+              element={
+                <ProtectedRoute roles={["paciente"]}>
+                  <PacienteOrdenes />
+                </ProtectedRoute>
+              }
+            />
+
+            <Route
               path="/admin"
               element={
                 <ProtectedRoute roles={["administrador"]}>
@@ -230,15 +240,6 @@ function App() {
               }
             />
 
-            {/* ================== PACIENTE (shared layout) ================== */}
-            <Route
-              path="/paciente"
-              element={
-                <ProtectedRoute roles={["paciente"]}>
-                  <PacienteDashboard />
-                </ProtectedRoute>
-              }
-            />
           </Route>
         </Routes>
         </BrowserRouter>
