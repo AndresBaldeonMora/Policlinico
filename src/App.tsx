@@ -198,6 +198,15 @@ function App() {
             />
 
             <Route
+              path="/paciente/citas"
+              element={
+                <ProtectedRoute roles={["paciente"]}>
+                  <ReservaCita />
+                </ProtectedRoute>
+              }
+            />
+
+            <Route
               path="/paciente/ordenes"
               element={
                 <ProtectedRoute roles={["paciente"]}>
