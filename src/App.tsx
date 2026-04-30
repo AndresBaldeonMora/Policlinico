@@ -219,6 +219,16 @@ function App() {
                 </ProtectedRoute>
               }
             />
+
+            {/* ================== PACIENTE (shared layout) ================== */}
+            <Route
+              path="/paciente"
+              element={
+                <ProtectedRoute roles={["paciente"]}>
+                  <PacienteDashboard />
+                </ProtectedRoute>
+              }
+            />
           </Route>
         </Routes>
         </BrowserRouter>

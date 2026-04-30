@@ -201,3 +201,15 @@
 .header-user-chevron--open {
   transform: rotate(180deg);
 }
+/* -- Mobile Layout -- */
+.mobile-menu-toggle { display: none; }
+@media (max-width: 767px) {
+  .mobile-menu-toggle { display: flex; align-items: center; justify-content: center; background: none; border: none; color: var(--text-primary); cursor: pointer; margin-right: 0.75rem; padding: 0.25rem; }
+  .header-left { display: flex; align-items: center; }
+  .header-search-placeholder, .header-search-kbd { display: none; }
+  .header-search { width: auto; padding: 0.5rem; justify-content: center; border-radius: 50%; }
+  .header { padding: 0.75rem 1rem; }
+  .user-role { display: none; }
+  .header-user-info { display: flex; align-items: center; }
+}
+

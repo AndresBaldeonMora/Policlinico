@@ -3,7 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { useAuth } from "../../hooks/userAuth";
 import { useTheme } from "../../context/ThemeContext";
 import { MedicoApiService } from "../../services/medico.service";
-import { Moon, Search, Sun, LogOut, ChevronDown } from "lucide-react";
+import { Moon, Search, Sun, LogOut, ChevronDown, Menu } from "lucide-react";
 import SearchPalette from "./SearchPalette";
 import "./Header.css";
 
@@ -16,7 +16,8 @@ const Header = () => {
   const [especialidad, setEspecialidad] = useState<string | null>(null);
   const dropdownRef = useRef<HTMLDivElement>(null);
 
-  const avatarLetter = user?.nombres?.charAt(0).toUpperCase() || "U";
+  const avatarLetter = user?.nombres?.trim() ? user.nombres.trim().charAt(0).toUpperCase() : "U";
+  const nombreCompleto = `${user?.nombres ?? ""} ${user?.apellidos ?? ""}`.trim();
 
   useEffect(() => {
     if (user?.rol === "MEDICO") {
@@ -62,6 +63,13 @@ const Header = () => {
       <header className="header">
         <div className="header-content">
           <div className="header-left">
+            <button 
+              className="mobile-menu-toggle" 
+              onClick={() => document.body.classList.toggle('mobile-sidebar-open')}
+              aria-label="Toggle menu"
+            >
+              <Menu size={20} strokeWidth={2} />
+            </button>
             <button
               className="header-search"
               onClick={() => setSearchOpen(true)}
@@ -102,7 +110,7 @@ const Header = () => {
               >
                 <div className="header-user-info">
                   <p className="user-name">
-                    {user ? `${user.nombres} ${user.apellidos}` : "Usuario"}
+                    {nombreCompleto ? nombreCompleto : "Usuario"}
                   </p>
                   <p className="user-role">
                     {user?.rol === "MEDICO" && especialidad
