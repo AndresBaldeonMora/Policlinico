@@ -14,6 +14,8 @@ import {
   ShieldCheck,
   BookOpen,
   LayoutDashboard,
+  Home,
+  User,
 } from "lucide-react";
 import "./Sidebar.css";
 
@@ -55,19 +57,19 @@ const Sidebar = () => {
   ];
 
   const menuMap: Record<string, typeof recepcionistaMenu> = {
-    RECEPCIONISTA: recepcionistaMenu,
-    MEDICO:        medicoMenu,
-    administrador: administradorMenu,
-    paciente:      pacienteMenu,
+    RECEPCIONISTA:  recepcionistaMenu,
+    MEDICO:         medicoMenu,
+    ADMINISTRADOR:  administradorMenu,
+    PACIENTE:       pacienteMenu,
   };
 
   const menuItems = menuMap[user?.rol ?? ""] ?? recepcionistaMenu;
 
   const subtitleMap: Record<string, string> = {
-    MEDICO:        "Portal Médico",
-    administrador: "Portal Administración",
-    RECEPCIONISTA: "Portal Recepcionista",
-    paciente:      "Portal Paciente",
+    MEDICO:         "Portal Médico",
+    ADMINISTRADOR:  "Portal Administración",
+    RECEPCIONISTA:  "Portal Recepcionista",
+    PACIENTE:       "Portal Paciente",
   };
   const subtitle = subtitleMap[user?.rol ?? ""] ?? "Sistema";
 
