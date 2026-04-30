@@ -1,11 +1,15 @@
 // src/pages/ListaPacientes/PacienteModal.tsx
 import { useReducer, useMemo } from "react";
-import { PacienteApiService, type PacienteTransformado } from "../../services/paciente.service";
+import {
+  PacienteApiService,
+  type PacienteTransformado,
+  type CredencialesPortal,
+} from "../../services/paciente.service";
 import "./PacienteModal.css";
 
 interface Props {
   paciente?: PacienteTransformado | null;
-  onGuardado: (p: PacienteTransformado) => void;
+  onGuardado: (p: PacienteTransformado, credenciales?: CredencialesPortal) => void;
   onCancelar: () => void;
 }
 
@@ -14,6 +18,7 @@ interface FormState {
   fechaNacimiento: string; sexo: string; estadoCivil: string;
   telefono: string; correo: string; direccion: string; distrito: string;
   apoderadoNombre: string; apoderadoParentesco: string; apoderadoTelefono: string;
+  crearCuentaPortal: boolean;
   loading: boolean;
   error: string;  seccionActiva: number;
 }
@@ -24,6 +29,7 @@ type Action =
   | { type: "SET_LOADING"; value: boolean }
   | { type: "SET_ERROR"; message: string }
   | { type: "CLEAR_ERROR" }
+  | { type: "TOGGLE_CUENTA"; value: boolean }
 
 function reducer(state: FormState, action: Action): FormState {
   switch (action.type) {
@@ -32,6 +38,7 @@ function reducer(state: FormState, action: Action): FormState {
     case "SET_LOADING":        return { ...state, loading: action.value };
     case "SET_ERROR":          return { ...state, error: action.message, loading: false };
     case "CLEAR_ERROR":        return { ...state, error: "" };
+    case "TOGGLE_CUENTA":      return { ...state, crearCuentaPortal: action.value };
     default:                   return state;
   }
 }
@@ -57,6 +64,7 @@ function buildInitial(p?: PacienteTransformado | null): FormState {
     direccion: p?.direccion ?? "", distrito: p?.distrito ?? "",
     apoderadoNombre: p?.apoderadoNombre ?? "", apoderadoParentesco: p?.apoderadoParentesco ?? "",
     apoderadoTelefono: p?.apoderadoTelefono ?? "",
+    crearCuentaPortal: false,
     loading: false,  error: "",  seccionActiva: 0,
   };
 }
@@ -123,6 +131,10 @@ const PacienteModal = ({ paciente, onGuardado, onCancelar }: Props) => {
     e.preventDefault();
     const err = validar();
     if (err) { dispatch({ type: "SET_ERROR", message: err }); return; }
+    if (!esEdicion && state.crearCuentaPortal && !state.correo.trim()) {
+      dispatch({ type: "SET_ERROR", message: "El correo es obligatorio para crear cuenta de portal." });
+      return;
+    }
     dispatch({ type: "SET_LOADING", value: true });
     try {
       const datos = {
@@ -134,10 +146,16 @@ const PacienteModal = ({ paciente, onGuardado, onCancelar }: Props) => {
         apoderadoParentesco: esMenor ? state.apoderadoParentesco : "",
         apoderadoTelefono: esMenor ? state.apoderadoTelefono.trim() : "",
       };
-      const resultado = esEdicion
-        ? await PacienteApiService.actualizar(paciente!._id, datos)
-        : await PacienteApiService.crear(datos);
-      onGuardado(resultado);
+      if (esEdicion) {
+        const actualizado = await PacienteApiService.actualizar(paciente!._id, datos);
+        onGuardado(actualizado);
+      } else {
+        const { paciente: creado, credenciales } = await PacienteApiService.crear({
+          ...datos,
+          crearCuentaPortal: state.crearCuentaPortal,
+        });
+        onGuardado(creado, credenciales);
+      }
     } catch (err) {
       const msg = err instanceof Error ? err.message : "";
       if (msg.toLowerCase().includes("e11000") || msg.toLowerCase().includes("duplicate")) {
@@ -264,6 +282,25 @@ const PacienteModal = ({ paciente, onGuardado, onCancelar }: Props) => {
                   <input className="pm-input" name="distrito" value={state.distrito} onChange={handleChange} placeholder="San Isidro" disabled={state.loading} />
                 </div>
               </div>
+
+              {!esEdicion && (
+                <div className="pm-cuenta-portal">
+                  <label className="pm-checkbox-row">
+                    <input
+                      type="checkbox"
+                      checked={state.crearCuentaPortal}
+                      onChange={(e) => dispatch({ type: "TOGGLE_CUENTA", value: e.target.checked })}
+                      disabled={state.loading}
+                    />
+                    <div>
+                      <strong>Crear acceso al portal del paciente</strong>
+                      <span className="pm-checkbox-help">
+                        Se generará una contraseña temporal para entregar al paciente. Requiere correo.
+                      </span>
+                    </div>
+                  </label>
+                </div>
+              )}
             </div>
           )}
 

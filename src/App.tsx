@@ -12,16 +12,20 @@ import Login from "./pages/Login/Login";
 import LaboratorioImagen from "./pages/Laboratorio/Laboratorio";
 import Historial from "./pages/HistorialPaciente/Historial";
 import ImprimirOrden from "./pages/Laboratorio/ImprimirOrden";
-import CalendarioMedico from "./pages/Calendario/CalendarioMedico";
+import MedicoDashboard from "./pages/MedicoDashboard/MedicoDashboard";
 import MedicoCitas from "./pages/MedicoCitas/MedicoCitas";
+import NotaSOAP from "./pages/NotaSOAP/NotaSOAP";
+import MedicoListaPacientes from "./pages/MedicoListaPacientes/MedicoListaPacientes";
+import HistoriaClinicaMedico from "./pages/HistoriaClinicaMedico/HistoriaClinicaMedico";
 
 // Páginas del paciente
 import PacienteDashboard from "./pages/PacienteDashboard/PacienteDashboard";
-import HistorialCitasPaciente from "./pages/PacienteDashboard/HistorialCitasPaciente";
+import PacienteOrdenes from "./pages/PacienteOrdenes/PacienteOrdenes";
+
 // Páginas del administrador
-import AdminDashboard      from "./pages/AdminDash/AdminDashboard";
+import AdminDashboard from "./pages/AdminDash/AdminDashboard";
 import GestionEspecialidades from "./pages/AdminDash/GestionEspecialidades";
-import GestionDoctores       from "./pages/AdminDash/GestionDoctores";
+import GestionDoctores from "./pages/AdminDash/GestionDoctores";
 
 import { AuthProvider } from "./context/AuthProvider";
 import { ThemeProvider } from "./context/ThemeContext";
@@ -105,8 +109,8 @@ function App() {
             <Route
               path="/pacientes/:id"
               element={
-                <ProtectedRoute roles={["RECEPCIONISTA", "administrador"]}>
-                  <Historial />
+                <ProtectedRoute roles={["RECEPCIONISTA", "MEDICO", "administrador"]}>
+                  <HistoriaClinicaMedico />
                 </ProtectedRoute>
               }
             />
@@ -133,7 +137,7 @@ function App() {
               path="/medico"
               element={
                 <ProtectedRoute roles={["MEDICO"]}>
-                  <CalendarioMedico />
+                  <MedicoDashboard />
                 </ProtectedRoute>
               }
             />
@@ -143,6 +147,33 @@ function App() {
               element={
                 <ProtectedRoute roles={["MEDICO"]}>
                   <MedicoCitas />
+                </ProtectedRoute>
+              }
+            />
+
+            <Route
+              path="/medico/citas/:citaId/consulta"
+              element={
+                <ProtectedRoute roles={["MEDICO"]}>
+                  <NotaSOAP />
+                </ProtectedRoute>
+              }
+            />
+
+            <Route
+              path="/medico/pacientes"
+              element={
+                <ProtectedRoute roles={["MEDICO"]}>
+                  <MedicoListaPacientes />
+                </ProtectedRoute>
+              }
+            />
+
+            <Route
+              path="/medico/pacientes/:pacienteId"
+              element={
+                <ProtectedRoute roles={["MEDICO"]}>
+                  <HistoriaClinicaMedico />
                 </ProtectedRoute>
               }
             />
@@ -198,6 +229,16 @@ function App() {
                 </ProtectedRoute>
               }
             />
+
+            {/* ================== PACIENTE (shared layout) ================== */}
+            <Route
+              path="/paciente"
+              element={
+                <ProtectedRoute roles={["paciente"]}>
+                  <PacienteDashboard />
+                </ProtectedRoute>
+              }
+            />
           </Route>
         </Routes>
         </BrowserRouter>
@@ -210,7 +251,14 @@ function ProtectedLayout() {
   return (
     <div className="app">
       <Sidebar />
-      <div style={{ flex: 1, display: "flex", flexDirection: "column", minWidth: 0 }}>
+      <div
+        style={{
+          flex: 1,
+          display: "flex",
+          flexDirection: "column",
+          minWidth: 0,
+        }}
+      >
         <Header />
         <main style={{ flex: 1, overflow: "auto" }}>
           <Outlet />

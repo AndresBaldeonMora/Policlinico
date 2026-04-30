@@ -1,13 +1,9 @@
 
 import { useEffect, useState, useCallback, useMemo, useReducer } from "react";
 import { useParams, useNavigate } from "react-router-dom";
-import { History, ChevronDown, ChevronUp, Check, Plus, X as XIcon, Printer } from "lucide-react";
+import { History, ChevronDown, ChevronUp, Check, Plus, Printer, FileText, AlertTriangle, Pill, User as UserIcon, Calendar, Clock, Stethoscope } from "lucide-react";
 import "./PerfilCita.css";
 import { CitaApiService } from "../../services/cita.service";
-import { MedicoApiService } from "../../services/medico.service";
-import type { MedicamentoPrescrito } from "../../services/medico.service";
-import { MedicamentoService } from "../../services/medicamento.service";
-import type { Medicamento as MedicamentoCatalogo } from "../../services/medicamento.service";
 import { perfilCitaReducer, initialState } from "./PerfilCitaReducer";
 import { useAuth } from "../../hooks/userAuth";
 import type {
@@ -27,8 +23,16 @@ import { toastExito } from "../../utils/toast";
 // TYPES (UI-only — not shared with reducer)
 // ============================================================================
 
-type TabPrincipal = "dashboard" | "historial" | "documentos" | "examenes" | "notas";
-type TabDemografico = "quien" | "contacto";
+type TabPrincipal = "dashboard" | "historial" | "documentos" | "examenes";
+
+const BADGE_ESTADO: Record<string, { cls: string; label: string }> = {
+  PENDIENTE:    { cls: "badge-info",         label: "Pendiente" },
+  REPROGRAMADA: { cls: "badge-reprogramada", label: "Reprogramada" },
+  ATENDIDA:     { cls: "badge-success",      label: "Atendida" },
+  CANCELADA:    { cls: "badge-danger",       label: "Cancelada" },
+  ASISTIO:      { cls: "badge-asistio",      label: "Asistió" },
+  VENCIDA:      { cls: "badge-vencida",      label: "Vencida" },
+};
 
 // ============================================================================
 // CONSTANTS
@@ -43,19 +47,9 @@ const TABS_RECEPCIONISTA: { id: TabPrincipal; label: string }[] = [
 
 const TABS_MEDICO: { id: TabPrincipal; label: string }[] = [
   { id: "dashboard", label: "Dashboard" },
-  { id: "notas", label: "Notas Clínicas" },
-  { id: "examenes", label: "Examenes" },
-  { id: "historial", label: "Historico de Visitas" },
+  { id: "examenes", label: "Exámenes" },
+  { id: "historial", label: "Histórico de Visitas" },
   { id: "documentos", label: "Documentos" },
-];
-
-// ============================================================================
-// TABS
-// ============================================================================
-
-const TABS_DEMOGRAFICOS: { id: TabDemografico; label: string }[] = [
-  { id: "quien", label: "Quién" },
-  { id: "contacto", label: "Contacto" },
 ];
 
 // ============================================================================
@@ -125,22 +119,6 @@ const PerfilCita = () => {
 
   // ── useState: pure UI toggles (no shared state, no side effects) ──
   const [tabActiva, setTabActiva] = useState<TabPrincipal>("dashboard");
-  const [tabDemo, setTabDemo] = useState<TabDemografico>("quien");
-
-  // ── Notas Clínicas (solo MEDICO) ──────────────────────────────
-  const [notas, setNotas] = useState({ diagnostico: "", notasClinicas: "", tratamiento: "" });
-  const [guardandoNotas, setGuardandoNotas] = useState(false);
-
-  // ── Prescripción de medicamentos ──────────────────────────────
-  const [medsPrescritos, setMedsPrescritos] = useState<MedicamentoPrescrito[]>([]);
-  const [busquedaMed, setBusquedaMed]       = useState("");
-  const [resultadosMed, setResultadosMed]   = useState<MedicamentoCatalogo[]>([]);
-  const [mostrarDropdown, setMostrarDropdown] = useState(false);
-  const [guardandoMeds, setGuardandoMeds]   = useState(false);
-  const [medForm, setMedForm] = useState<Omit<MedicamentoPrescrito, "medicamentoId" | "nombre">>({
-    dosis: "", frecuencia: "", duracion: "", observaciones: "",
-  });
-  const [medSeleccionado, setMedSeleccionado] = useState<MedicamentoCatalogo | null>(null);
 
   // ── Exámenes ──────────────────────────────────────────────
   const [ordenes, setOrdenes] = useState<OrdenExamen[]>([]);
@@ -216,6 +194,11 @@ const PerfilCita = () => {
     try {
       const data = await CitaApiService.obtenerPorId(citaId);
       dispatch({ type: "FETCH_SUCCESS", payload: data });
+      // Cargar historial clínico del paciente
+      const pac = data.pacienteId;
+      if (pac.alergias) dispatch({ type: "SET_ALERGIAS", payload: pac.alergias as any });
+      if (pac.medicamentosHabituales) dispatch({ type: "SET_MEDICAMENTOS", payload: pac.medicamentosHabituales as any });
+      if (pac.problemasMedicos) dispatch({ type: "SET_PROBLEMAS_MEDICOS", payload: pac.problemasMedicos as any });
     } catch {
       dispatch({ type: "FETCH_ERROR", payload: "No se pudo cargar la cita" });
     }
@@ -224,73 +207,6 @@ const PerfilCita = () => {
   useEffect(() => {
     cargarCita();
   }, [cargarCita]);
-
-  // Inicializar notas y medicamentos cuando cargue la cita
-  useEffect(() => {
-    if (cita) {
-      setNotas({
-        diagnostico:   (cita as any).diagnostico    ?? "",
-        notasClinicas: (cita as any).notasClinicas  ?? "",
-        tratamiento:   (cita as any).tratamiento    ?? "",
-      });
-      if ((cita as any).medicamentosPrescritos?.length) {
-        setMedsPrescritos((cita as any).medicamentosPrescritos);
-      }
-    }
-  }, [cita]);
-
-  // Búsqueda de medicamentos con debounce
-  useEffect(() => {
-    if (!busquedaMed.trim()) { setResultadosMed([]); return; }
-    // Si ya hay uno seleccionado y el texto coincide con su nombre, no buscar
-    if (medSeleccionado && busquedaMed === medSeleccionado.nombre) {
-      setResultadosMed([]);
-      setMostrarDropdown(false);
-      return;
-    }
-    const timer = setTimeout(async () => {
-      try {
-        const res = await MedicamentoService.buscar(busquedaMed);
-        setResultadosMed(res);
-        setMostrarDropdown(true);
-      } catch { setResultadosMed([]); }
-    }, 300);
-    return () => clearTimeout(timer);
-  }, [busquedaMed, medSeleccionado]);
-
-  const seleccionarMed = (med: MedicamentoCatalogo) => {
-    setMedSeleccionado(med);
-    setBusquedaMed(med.nombre);
-    setMostrarDropdown(false);
-    setResultadosMed([]);
-  };
-
-  const agregarMedicamento = () => {
-    if (!medSeleccionado || !medForm.dosis.trim() || !medForm.frecuencia.trim() || !medForm.duracion.trim()) return;
-    setMedsPrescritos((prev) => [
-      ...prev,
-      { medicamentoId: medSeleccionado._id, nombre: medSeleccionado.nombre, ...medForm },
-    ]);
-    setMedSeleccionado(null);
-    setBusquedaMed("");
-    setMedForm({ dosis: "", frecuencia: "", duracion: "", observaciones: "" });
-  };
-
-  const quitarMedicamento = (idx: number) => {
-    setMedsPrescritos((prev) => prev.filter((_, i) => i !== idx));
-  };
-
-  const guardarMedicamentos = async () => {
-    setGuardandoMeds(true);
-    try {
-      await MedicoApiService.prescribirMedicamentos(citaId!, medsPrescritos);
-      toastExito("Medicamentos guardados correctamente");
-    } catch {
-      Swal.fire("Error", "No se pudieron guardar los medicamentos", "error");
-    } finally {
-      setGuardandoMeds(false);
-    }
-  };
 
   // ── Handlers de acciones de cita ──────────────────────────────
 
@@ -321,32 +237,8 @@ const PerfilCita = () => {
     }
   };
 
-  const handleFinalizarConsulta = async () => {
-    const result = await Swal.fire({
-      title: "¿Finalizar consulta?",
-      text: "La cita pasará al estado ATENDIDA. No podrás modificarla después.",
-      icon: "question",
-      showCancelButton: true,
-      confirmButtonText: "Sí, finalizar consulta",
-      cancelButtonText: "Cancelar",
-      confirmButtonColor: "#059669"
-    });
-    
-    if (!result.isConfirmed) return;
-    
-    try {
-      // Guardar notas si existen (opcional)
-      if (notas.diagnostico.trim() || notas.notasClinicas.trim() || notas.tratamiento.trim()) {
-        await MedicoApiService.guardarNotasClinicas(citaId!, notas);
-      }
-      
-      // Cambiar estado a ATENDIDA
-      await CitaApiService.cambiarEstado(citaId!, "ATENDIDA");
-      toastExito("Consulta finalizada correctamente");
-      cargarCita();
-    } catch (error) {
-      Swal.fire("Error", "No se pudo finalizar la consulta", "error");
-    }
+  const handleAtenderPaciente = () => {
+    navigate(`/medico/citas/${citaId}/consulta`);
   };
 
   const handleCancelarCita = async () => {
@@ -389,6 +281,13 @@ const PerfilCita = () => {
     () => calcularEdad(paciente?.fechaNacimiento),
     [paciente?.fechaNacimiento],
   );
+  const doctor = useMemo(
+    () => (cita?.doctorId && typeof cita.doctorId === "object" ? cita.doctorId : null),
+    [cita?.doctorId],
+  );
+  const doctorNombre = doctor ? `${doctor.nombres} ${doctor.apellidos}` : null;
+  const especialidadNombre = doctor?.especialidadId && typeof doctor.especialidadId === "object"
+    ? doctor.especialidadId.nombre : null;
 
   // ── Loading / error guards ────────────────────────────────
 
@@ -450,40 +349,30 @@ const PerfilCita = () => {
           </div>
         </div>
 
-        <div className="perfil-header-cita">
-          <span className="perfil-header-cita-label">Fecha de cita</span>
-          <span className="perfil-header-cita-valor">{formatearFechaCorta(cita.fecha)} — {cita.hora}</span>
-        </div>
       </div>
 
-      {/* ACCIONES DE CITA */}
+      {/* ACCIONES DE CITA — solo si hay botones que mostrar */}
       {cita && (
+        (user?.rol === "RECEPCIONISTA" && (cita.estado === "PENDIENTE" || cita.estado === "REPROGRAMADA")) ||
+        (user?.rol === "MEDICO" && (cita.estado === "ASISTIO" || cita.estado === "ATENDIDA"))
+      ) && (
         <div className="perfil-acciones">
-          {/* RECEPCIONISTA: Confirma asistencia (PENDIENTE o REPROGRAMADA → ASISTIO) */}
           {user?.rol === "RECEPCIONISTA" &&
           (cita.estado === "PENDIENTE" || cita.estado === "REPROGRAMADA") && (
             <button className="btn btn-primary" onClick={handleConfirmarAsistencia}>
               <Check size={14} /> Confirmar asistencia
             </button>
           )}
-
-          {/* MÉDICO: Finaliza consulta (ASISTIO → ATENDIDA) */}
           {user?.rol === "MEDICO" && cita.estado === "ASISTIO" && (
-            <button className="btn btn-primary" onClick={handleFinalizarConsulta}>
-              Finalizar consulta
+            <button className="btn btn-primary" onClick={handleAtenderPaciente}>
+              <Stethoscope size={14} /> Atender paciente
             </button>
           )}
-          
-          {/* Cancelar cita solo para estados que NO han asistido */}
-          {(cita.estado === "PENDIENTE" || cita.estado === "REPROGRAMADA") && (
-            <button className="btn btn-danger" onClick={handleCancelarCita}>
-              Cancelar cita
+          {user?.rol === "MEDICO" && cita.estado === "ATENDIDA" && (
+            <button className="btn btn-secondary" onClick={handleAtenderPaciente}>
+              <FileText size={14} /> Ver nota SOAP
             </button>
           )}
-          
-          <span className={`badge-estado-cita badge-estado-cita--${cita.estado === "ASISTIO" ? "asistio" : cita.estado.toLowerCase()}`}>
-            {({ PENDIENTE: "Pendiente", ATENDIDA: "Atendida", CANCELADA: "Cancelada", REPROGRAMADA: "Reprogramada", ASISTIO: "Asistió", VENCIDA: "Vencida" } as Record<string, string>)[cita.estado] ?? cita.estado}
-          </span>
         </div>
       )}
 
@@ -505,356 +394,206 @@ const PerfilCita = () => {
       {tabActiva === "dashboard" && (
         <div className="dashboard-layout">
           <div className="columna-principal">
-            <div className="card-clinica">
-              <div className="card-header">
-                <h3>Alergias</h3>
-              </div>
-              <div className="card-body">
-                {alergias.length === 0 ? "Sin registros" : "—"}
-              </div>
-            </div>
-
-            <div className="card-clinica">
-              <div className="card-header">
-                <h3>Problemas Medicos</h3>
-              </div>
-              <div className="card-body">
-                {problemasMedicos.length === 0 ? "Sin registros" : "—"}
-              </div>
-            </div>
-
-            <div className="card-clinica">
-              <div className="card-header">
-                <h3>Medicamentos</h3>
-              </div>
-              <div className="card-body">
-                {medicamentos.length === 0 ? "Sin registros" : "—"}
-              </div>
-            </div>
-
-            <div className="card-clinica">
-              <div className="card-header">
-                <h3>Datos Demograficos</h3>
+            <div className="clinical-grid">
+              {/* Alergias */}
+              <div className="card-clinica">
+                <div className="card-header">
+                  <span>Alergias</span>
+                </div>
+                <div className="card-body">
+                  {alergias.length === 0 ? (
+                    <div className="perfil-card-empty">
+                      <AlertTriangle size={22} />
+                      <span>Sin alergias registradas</span>
+                    </div>
+                  ) : alergias.map(a => (
+                    <div key={a.id} className="item-clinico">
+                      <span>{a.sustancia} — {a.reaccion}</span>
+                      <span className={`badge-small ${a.severidad}`}>{a.severidad}</span>
+                    </div>
+                  ))}
+                </div>
               </div>
 
-              {/* key={t.id} is stable (string literal union) */}
-              <div className="tabs-demograficos">
-                {TABS_DEMOGRAFICOS.map((t) => (
-                  <button
-                    key={t.id}
-                    className={`tab-demo ${tabDemo === t.id ? "activa" : ""}`}
-                    onClick={() => setTabDemo(t.id)}
-                  >
-                    {t.label}
-                  </button>
-                ))}
+              {/* Problemas Médicos */}
+              <div className="card-clinica">
+                <div className="card-header">
+                  <span>Problemas Médicos</span>
+                </div>
+                <div className="card-body">
+                  {problemasMedicos.length === 0 ? (
+                    <div className="perfil-card-empty">
+                      <FileText size={22} />
+                      <span>Sin problemas registrados</span>
+                    </div>
+                  ) : problemasMedicos.map(p => (
+                    <div key={p.id} className="item-clinico">
+                      <span>{p.descripcion}</span>
+                      <span className={`badge-small ${p.estado}`}>{p.estado}</span>
+                    </div>
+                  ))}
+                </div>
               </div>
 
-              <div className="card-body">
-                {tabDemo === "quien" && (
-                  <>
-                    <strong>Nombre:</strong> {paciente.nombres}{" "}
-                    {paciente.apellidos}
-                    <br />
-                    <strong>DNI:</strong> {paciente.dni}
-                  </>
-                )}
-                {tabDemo === "contacto" && (
-                  <>
-                    <strong>Teléfono:</strong> {paciente.telefono || "—"}
-                    <br />
-                    <strong>Correo:</strong> {paciente.correo || "—"}
-                  </>
-                )}
+              {/* Medicamentos habituales */}
+              <div className="card-clinica">
+                <div className="card-header">
+                  <span>Medicamentos Habituales</span>
+                </div>
+                <div className="card-body">
+                  {medicamentos.length === 0 ? (
+                    <div className="perfil-card-empty">
+                      <Pill size={22} />
+                      <span>Sin medicamentos registrados</span>
+                    </div>
+                  ) : medicamentos.map(m => (
+                    <div key={m.id} className="item-clinico">
+                      <span>{m.nombre} — {m.dosis}</span>
+                      <span className="fecha-small">{m.frecuencia}</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              {/* Datos del Paciente */}
+              <div className="card-clinica">
+                <div className="card-header">
+                  <span>Datos del Paciente</span>
+                </div>
+                <div className="card-body">
+                  <div className="demo-info-grid">
+                    <div className="demo-info-item">
+                      <label>Nombre completo</label>
+                      <span>{paciente.nombres} {paciente.apellidos}</span>
+                    </div>
+                    <div className="demo-info-item">
+                      <label>DNI</label>
+                      <span>{paciente.dni}</span>
+                    </div>
+                    {edad !== null && (
+                      <div className="demo-info-item">
+                        <label>Edad</label>
+                        <span>{edad} años</span>
+                      </div>
+                    )}
+                    <div className="demo-info-item">
+                      <label>Fecha de nacimiento</label>
+                      <span>{formatearFechaCorta(paciente.fechaNacimiento)}</span>
+                    </div>
+                    <div className="demo-info-item">
+                      <label>Teléfono</label>
+                      <span>{paciente.telefono || "—"}</span>
+                    </div>
+                    <div className="demo-info-item">
+                      <label>Correo</label>
+                      <span>{paciente.correo || "—"}</span>
+                    </div>
+                  </div>
+                </div>
               </div>
             </div>
           </div>
 
           <div className="columna-lateral">
+            {/* Info de la cita */}
             <div className="widget">
               <div className="widget-header">
-                <h4>Citas</h4>
+                <span>Información de la Cita</span>
               </div>
               <div className="widget-body">
-                {citasPaciente.length === 0
-                  ? "Sin citas"
-                  : /* key={c._id} is a stable MongoDB ObjectId — never an index */
-                    citasPaciente.map((c) => (
+                <div className="cita-info-stack">
+                  <div className="cita-info-item">
+                    <Calendar size={13} />
+                    <div>
+                      <label>Fecha</label>
+                      <span>{formatearFechaCorta(cita.fecha)}</span>
+                    </div>
+                  </div>
+                  <div className="cita-info-item">
+                    <Clock size={13} />
+                    <div>
+                      <label>Hora</label>
+                      <span>{cita.hora}</span>
+                    </div>
+                  </div>
+                  {doctorNombre && (
+                    <div className="cita-info-item">
+                      <UserIcon size={13} />
+                      <div>
+                        <label>Médico</label>
+                        <span>Dr. {doctorNombre}</span>
+                      </div>
+                    </div>
+                  )}
+                  {especialidadNombre && (
+                    <div className="cita-info-item">
+                      <FileText size={13} />
+                      <div>
+                        <label>Especialidad</label>
+                        <span>{especialidadNombre}</span>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              </div>
+            </div>
+
+            {/* Historial de citas del paciente */}
+            <div className="widget">
+              <div className="widget-header">
+                <span>Citas del Paciente</span>
+                {citasPaciente.length > 0 && (
+                  <span className="widget-count">{citasPaciente.length}</span>
+                )}
+              </div>
+              <div className="widget-body">
+                {citasPaciente.length === 0 ? (
+                  <p className="widget-empty">Sin citas anteriores</p>
+                ) : (
+                  citasPaciente.map((c) => {
+                    const b = BADGE_ESTADO[c.estado] ?? { cls: "badge-info", label: c.estado };
+                    return (
                       <button
                         key={c._id}
                         className="cita-widget-item"
                         onClick={() => navigate(`/citas/${c._id}`)}
                       >
-                        {formatearFechaCorta(c.fecha)} - {c.hora}
+                        <div className="cita-widget-fecha">
+                          <span>{formatearFechaCorta(c.fecha)}</span>
+                          <span className="cita-widget-hora">{c.hora}</span>
+                        </div>
+                        <span className={`modern-badge ${b.cls}`}>
+                          <span className="modern-badge-dot" />
+                          {b.label}
+                        </span>
                       </button>
-                    ))}
+                    );
+                  })
+                )}
               </div>
             </div>
           </div>
         </div>
       )}
 
-      {tabActiva === "notas" && user?.rol === "MEDICO" && (() => {
-        const esConsultaFinalizada = cita.estado === "ATENDIDA";
-        return (
+      {tabActiva === "historial" && (
         <div className="card-clinica">
-          <div className="card-header"><h3>Notas Clínicas</h3></div>
-          <div className="card-body notas-clinicas-form">
-            {esConsultaFinalizada && (
-              <div className="notas-consulta-finalizada">
-                <Check size={14} /> Consulta finalizada — Los datos son de solo lectura por auditoría médica.
-              </div>
-            )}
-
-            {esConsultaFinalizada ? (
-              <>
-                <div className="notas-view-grupo">
-                  <label>Diagnóstico principal</label>
-                  <div className="notas-view-content">{notas.diagnostico || "—"}</div>
-                </div>
-                <div className="notas-view-grupo">
-                  <label>Observaciones clínicas</label>
-                  <div className="notas-view-content">{notas.notasClinicas || "—"}</div>
-                </div>
-                <div className="notas-view-grupo">
-                  <label>Plan de tratamiento</label>
-                  <div className="notas-view-content">{notas.tratamiento || "—"}</div>
-                </div>
-              </>
-            ) : (
-              <>
-                <div className="notas-form-grupo">
-                  <label>Diagnóstico principal *</label>
-                  <input
-                    className="notas-form-input"
-                    value={notas.diagnostico}
-                    onChange={(e) => setNotas((n) => ({ ...n, diagnostico: e.target.value }))}
-                    placeholder="Ej: J06.9 - Infección aguda de vías respiratorias superiores"
-                  />
-                </div>
-                <div className="notas-form-grupo">
-                  <label>Observaciones clínicas</label>
-                  <textarea
-                    className="notas-form-textarea"
-                    rows={4}
-                    value={notas.notasClinicas}
-                    onChange={(e) => setNotas((n) => ({ ...n, notasClinicas: e.target.value }))}
-                    placeholder="Hallazgos del examen físico, signos vitales, observaciones..."
-                  />
-                </div>
-                <div className="notas-form-grupo">
-                  <label>Plan de tratamiento</label>
-                  <textarea
-                    className="notas-form-textarea"
-                    rows={3}
-                    value={notas.tratamiento}
-                    onChange={(e) => setNotas((n) => ({ ...n, tratamiento: e.target.value }))}
-                    placeholder="Indicaciones, restricciones, seguimiento..."
-                  />
-                </div>
-              </>
-            )}
-
-            {/* ── Medicamentos prescritos ── */}
-            <div className="meds-seccion">
-              <p className="meds-seccion-titulo">Medicamentos Prescritos</p>
-
-              {/* Buscador y formulario para agregar solo si NO está finalizada */}
-              {!esConsultaFinalizada && (
-                <>
-                  <div className="meds-buscador">
-                    <input
-                      className="notas-form-input"
-                      placeholder="Buscar medicamento por nombre..."
-                      value={busquedaMed}
-                      onChange={(e) => { setBusquedaMed(e.target.value); setMedSeleccionado(null); }}
-                      onFocus={() => resultadosMed.length > 0 && setMostrarDropdown(true)}
-                    />
-                    {mostrarDropdown && resultadosMed.length > 0 && (
-                      <div className="meds-dropdown">
-                        {resultadosMed.map((med) => (
-                          <button
-                            key={med._id}
-                            className="meds-dropdown-item"
-                            onMouseDown={() => seleccionarMed(med)}
-                          >
-                            <strong>{med.nombre}</strong>{" "}
-                            <span className="meds-dropdown-item-presentacion">{med.presentacion}</span>
-                          </button>
-                        ))}
-                      </div>
-                    )}
-                  </div>
-
-                  {medSeleccionado && (
-                    <div className="meds-form-nueva">
-                      <p className="meds-form-nueva-titulo">
-                        {medSeleccionado.nombre} — {medSeleccionado.presentacion}
-                      </p>
-                      <div className="meds-form-grid">
-                        <div className="meds-form-campo">
-                          <label>Dosis *</label>
-                          <input
-                            className="meds-form-input-sm"
-                            placeholder="Ej: 500mg"
-                            value={medForm.dosis}
-                            onChange={(e) => setMedForm((f) => ({ ...f, dosis: e.target.value }))}
-                          />
-                        </div>
-                        <div className="meds-form-campo">
-                          <label>Frecuencia *</label>
-                          <input
-                            className="meds-form-input-sm"
-                            placeholder="Ej: Cada 8 horas"
-                            value={medForm.frecuencia}
-                            onChange={(e) => setMedForm((f) => ({ ...f, frecuencia: e.target.value }))}
-                          />
-                        </div>
-                        <div className="meds-form-campo">
-                          <label>Duración *</label>
-                          <input
-                            className="meds-form-input-sm"
-                            placeholder="Ej: 7 días"
-                            value={medForm.duracion}
-                            onChange={(e) => setMedForm((f) => ({ ...f, duracion: e.target.value }))}
-                          />
-                        </div>
-                      </div>
-                      <input
-                        className="meds-form-input-sm meds-form-obs"
-                        placeholder="Observaciones (opcional)"
-                        value={medForm.observaciones}
-                        onChange={(e) => setMedForm((f) => ({ ...f, observaciones: e.target.value }))}
-                      />
-                      <button
-                        className="btn btn-primary btn-sm"
-                        disabled={!medForm.dosis.trim() || !medForm.frecuencia.trim() || !medForm.duracion.trim()}
-                        onClick={agregarMedicamento}
-                      >
-                        <Plus size={13} /> Agregar
-                      </button>
-                    </div>
-                  )}
-                </>
-              )}
-
-              {/* Tabla de medicamentos prescritos */}
-              {medsPrescritos.length > 0 && (
-                <div className="meds-tabla-wrapper">
-                  <table className="meds-tabla">
-                    <thead>
-                      <tr>
-                        <th>Medicamento</th>
-                        <th>Dosis</th>
-                        <th>Frecuencia</th>
-                        <th>Duración</th>
-                        {!esConsultaFinalizada && <th></th>}
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {medsPrescritos.map((med, i) => (
-                        <tr key={i}>
-                          <td className="meds-tabla-nombre">{med.nombre}</td>
-                          <td>{med.dosis}</td>
-                          <td>{med.frecuencia}</td>
-                          <td>{med.duracion}</td>
-                          {!esConsultaFinalizada && (
-                            <td>
-                              <button
-                                className="meds-tabla-quitar"
-                                onClick={() => quitarMedicamento(i)}
-                                title="Quitar"
-                              >
-                                <XIcon size={14} />
-                              </button>
-                            </td>
-                          )}
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                </div>
-              )}
-
-              {!esConsultaFinalizada &&
-                (medsPrescritos.length > 0 ||
-                  (medSeleccionado &&
-                    medForm.dosis.trim() &&
-                    medForm.frecuencia.trim() &&
-                    medForm.duracion.trim())) && (
-                <button
-                  className="btn btn-secondary btn-sm"
-                  disabled={guardandoMeds}
-                  onClick={async () => {
-                    // Si hay un med en el formulario con campos obligatorios llenos,
-                    // agregarlo a la lista antes de guardar
-                    let listaFinal = medsPrescritos;
-                    if (
-                      medSeleccionado &&
-                      medForm.dosis.trim() &&
-                      medForm.frecuencia.trim() &&
-                      medForm.duracion.trim()
-                    ) {
-                      const nuevo: MedicamentoPrescrito = {
-                        medicamentoId: medSeleccionado._id,
-                        nombre: medSeleccionado.nombre,
-                        ...medForm,
-                      };
-                      listaFinal = [...medsPrescritos, nuevo];
-                      setMedsPrescritos(listaFinal);
-                      setMedSeleccionado(null);
-                      setBusquedaMed("");
-                      setMedForm({ dosis: "", frecuencia: "", duracion: "", observaciones: "" });
-                    }
-                    setGuardandoMeds(true);
-                    try {
-                      await MedicoApiService.prescribirMedicamentos(citaId!, listaFinal);
-                      toastExito("Medicamentos guardados correctamente");
-                    } catch {
-                      Swal.fire("Error", "No se pudieron guardar los medicamentos", "error");
-                    } finally {
-                      setGuardandoMeds(false);
-                    }
-                  }}
-                >
-                  {guardandoMeds ? "Guardando..." : "Guardar Medicamentos"}
-                </button>
-              )}
-            </div>
-
-            {!esConsultaFinalizada && (
-              <>
-                <hr className="notas-form-separador" />
-                <button
-                  className="btn btn-primary"
-                  disabled={guardandoNotas || !notas.diagnostico.trim()}
-                  onClick={async () => {
-                    setGuardandoNotas(true);
-                    try {
-                      await MedicoApiService.guardarNotasClinicas(citaId!, notas);
-                      toastExito("Notas guardadas correctamente");
-                    } catch {
-                      Swal.fire("Error", "No se pudieron guardar las notas", "error");
-                    } finally {
-                      setGuardandoNotas(false);
-                    }
-                  }}
-                >
-                  {guardandoNotas ? "Guardando..." : "Guardar Notas"}
-                </button>
-              </>
-            )}
+          <div className="card-header"><span>Historial de Visitas</span></div>
+          <div className="card-body perfil-tab-empty">
+            <History size={36} />
+            <p>No hay visitas anteriores registradas</p>
           </div>
         </div>
-        );
-      })()}
-
-      {tabActiva === "historial" && (
-        <div className="card-clinica">No hay visitas anteriores</div>
       )}
 
       {tabActiva === "documentos" && (
-        <div className="card-clinica">No hay documentos cargados</div>
+        <div className="card-clinica">
+          <div className="card-header"><span>Documentos</span></div>
+          <div className="card-body perfil-tab-empty">
+            <FileText size={36} />
+            <p>No hay documentos cargados</p>
+          </div>
+        </div>
       )}
 
       {tabActiva === "examenes" && (

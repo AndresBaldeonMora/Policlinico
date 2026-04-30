@@ -28,6 +28,7 @@ const Login = () => {
       MEDICO:         "/medico",
       RECEPCIONISTA:  "/",
       administrador:  "/admin",
+      paciente:       "/paciente",
       cliente:        "/",
     };
 

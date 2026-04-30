@@ -19,6 +19,9 @@ export interface PacienteDTO {
   correo?: string;
   fechaNacimiento?: string;
   edad?: number;
+  alergias?: { sustancia: string; reaccion: string; severidad: string }[];
+  medicamentosHabituales?: { nombre: string; dosis: string; frecuencia: string; activo: boolean }[];
+  problemasMedicos?: { descripcion: string; estado: string; fechaInicio?: string }[];
 }
 
 export interface DoctorDTO {
