@@ -188,6 +188,15 @@ function App() {
             />
 
             <Route
+              path="/paciente/historial"
+              element={
+                <ProtectedRoute roles={["paciente"]}>
+                  <HistorialCitasPaciente />
+                </ProtectedRoute>
+              }
+            />
+
+            <Route
               path="/admin"
               element={
                 <ProtectedRoute roles={["administrador"]}>

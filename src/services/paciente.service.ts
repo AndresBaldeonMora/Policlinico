@@ -232,4 +232,11 @@ export class PacienteApiService {
       return null;
     }
   }
+
+  static async obtenerHistorialPorCorreo(correo: string): Promise<any> {
+    const res = await api.get(
+      `/pacientes/correo/${encodeURIComponent(correo)}/historial`
+    );
+    return res.data.data;
+  }
 }

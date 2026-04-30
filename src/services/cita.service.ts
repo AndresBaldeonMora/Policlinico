@@ -65,6 +65,34 @@ export interface CitaTransformada {
   doctorId?: DoctorDTO | string;
 }
 
+// ── Tipo para el historial del paciente ──────────────────────────────────────
+export interface RecetaMedicamento {
+  nombre: string;
+  dosis: string;
+  cantidad: string;
+  duracion: string;
+  indicaciones?: string;
+}
+ 
+export interface ExamenSolicitado {
+  nombre: string;
+  tipo: string;
+  estado?: string;
+}
+ 
+export interface CitaHistorial {
+  _id: string;
+  fecha: string;
+  hora: string;
+  estado: EstadoCita;
+  medico: string;
+  especialidad: string;
+  diagnostico?: string;
+  notasMedico?: string;
+  recetas?: RecetaMedicamento[];
+  examenes?: ExamenSolicitado[];
+}
+
 export const getDoctorIdString = (doctorId?: DoctorDTO | string): string => {
   if (!doctorId) return "";
   if (typeof doctorId === "string") return doctorId;
@@ -149,4 +177,39 @@ export class CitaApiService {
     }
     return response.data.data;
   }
+
+  // ── Historial de citas del paciente ────────────────────────────────────────
+  static async obtenerHistorialPaciente(correo: string): Promise<CitaHistorial[]> {
+    const res = await api.get<{
+      success: boolean;
+      total: number;
+      data: any[];
+    }>(`/citas/historial?correo=${encodeURIComponent(correo)}`);
+
+    const rawCitas: any[] = res.data?.data ?? [];
+
+    return rawCitas.map((c) => {
+      const recetas: RecetaMedicamento[] =
+        c.medicamentosPrescritos?.map((m: any) => ({
+          nombre: m.nombre ?? "Sin nombre",
+          dosis: m.dosis ?? "—",
+          cantidad: "—",                        // el backend no devuelve cantidad
+          duracion: m.duracion ?? "—",
+          indicaciones: m.observaciones,
+        })) ?? [];
+
+      return {
+        _id: String(c._id),
+        fecha: c.fechaRaw ?? c.fecha,           // usar fechaRaw para ordenar
+        hora: c.hora ?? "—",
+        estado: c.estado,
+        medico: c.doctor ?? "Sin médico",
+        especialidad: c.especialidad ?? "Sin especialidad",
+        diagnostico: c.diagnostico || undefined,
+        notasMedico: c.notasClinicas || undefined,
+        recetas,
+        examenes: [],                           // el historial no devuelve examenes aún
+      };
+    });
+}
 }

@@ -18,7 +18,6 @@ import {
   User,
 } from "lucide-react";
 import "./Sidebar.css";
-
 const Sidebar = () => {
   const location = useLocation();
   const { user } = useAuth();
