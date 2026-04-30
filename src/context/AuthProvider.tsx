@@ -1,6 +1,5 @@
 import { useEffect, useState } from "react";
 import type { ReactNode } from "react";
-import { supabase } from "../services/supabaseClient";
 import { AuthService } from "../services/auth.service";
 import type { AuthUser, UserRole } from "../services/auth.service";
 import { AuthContext } from "./AuthContext";
@@ -9,73 +8,16 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [user, setUser] = useState<AuthUser | null>(null);
   const [loading, setLoading] = useState(true);
 
+  // Al montar, restaurar sesión desde localStorage (sin llamadas de red).
   useEffect(() => {
-    const { data: listener } = supabase.auth.onAuthStateChange(
-      (_event, session) => {
-        if (!session?.user) {
-          setUser(null);
-          setLoading(false);
-          return;
-        }
-
-        const u = session.user;
-        const meta = u.user_metadata ?? {};
-        const appMeta = u.app_metadata ?? {};
-        const rolMeta = (appMeta.role ?? meta.rol) as UserRole | undefined;
-
-        if (!rolMeta) {
-          // No tiene rol en token — buscar en profiles antes de renderizar
-          supabase
-            .from("profiles")
-            .select("role")
-            .eq("id", u.id)
-            .single()
-            .then(({ data: profile }) => {
-              setUser({
-                id: u.id,
-                correo: u.email!,
-                nombres: (meta.nombres as string) ?? "",
-                apellidos: (meta.apellidos as string) ?? "",
-                rol: ((profile?.role ?? "cliente") as UserRole),
-                medicoId: meta.medicoId as string | undefined,
-              });
-              setLoading(false);
-            });
-          return;
-        }
-        // // // Renderiza inmediatamente con el rol de user_metadata (puede ser undefined)
-        // // const rolMeta = (meta.rol as UserRole) ?? "cliente";
-        // const rolMeta = meta.rol as UserRole;
-        setUser({
-          id: u.id,
-          correo: u.email!,
-          nombres: (meta.nombres as string) ?? "",
-          apellidos: (meta.apellidos as string) ?? "",
-          // rol: rolMeta,
-           rol: rolMeta,
-          medicoId: meta.medicoId as string | undefined,
-        });
-        setLoading(false);
-        // // Solo consulta profiles si NO tiene rol en user_metadata
-        // if (!rolMeta) {
-        //   // Luego actualiza el rol desde profiles (sin bloquear el render)
-        //   supabase
-        //     .from("profiles")
-        //     .select("role")
-        //     .eq("id", u.id)
-        //     .single()
-        //     .then(({ data: profile }) => {
-        //       if (profile?.role) {
-        //         setUser((prev) =>
-        //           prev ? { ...prev, rol: profile.role as UserRole } : prev
-        //         );
-        //       }
-        //     });
-        // }
-      }
-    );
-
-    return () => listener.subscription.unsubscribe();
+    if (AuthService.isTokenValid()) {
+      setUser(AuthService.getStoredUser());
+    } else {
+      // Token vencido o ausente — limpiar todo.
+      AuthService.logout();
+      setUser(null);
+    }
+    setLoading(false);
   }, []);
 
   const login = async (correo: string, password: string) => {

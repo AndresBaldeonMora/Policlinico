@@ -358,3 +358,39 @@
 [data-theme="dark"] .pm-no-aplica { color: var(--text-muted); }
 [data-theme="dark"] .pm-btn--secondary { background: var(--bg-body); color: var(--text-secondary); border-color: var(--border); }
 [data-theme="dark"] .pm-btn--ghost { color: var(--text-muted); border-color: var(--border); }
+
+/* Checkbox de "Crear cuenta de portal" */
+.pm-cuenta-portal {
+  margin-top: 14px;
+  padding: 12px 14px;
+  background: rgba(5, 150, 105, 0.06);
+  border: 1px dashed rgba(5, 150, 105, 0.4);
+  border-radius: 8px;
+}
+.pm-checkbox-row {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  cursor: pointer;
+  font-size: 13.5px;
+  color: #0f172a;
+}
+.pm-checkbox-row input[type="checkbox"] {
+  width: 17px;
+  height: 17px;
+  margin-top: 2px;
+  accent-color: #059669;
+  cursor: pointer;
+  flex-shrink: 0;
+}
+.pm-checkbox-row strong { display: block; font-weight: 600; }
+.pm-checkbox-help {
+  display: block;
+  margin-top: 2px;
+  font-size: 12px;
+  font-weight: 400;
+  color: #64748b;
+}
+[data-theme="dark"] .pm-cuenta-portal { background: rgba(5, 150, 105, 0.1); border-color: rgba(5, 150, 105, 0.4); }
+[data-theme="dark"] .pm-checkbox-row { color: var(--text-primary); }
+[data-theme="dark"] .pm-checkbox-help { color: var(--text-muted); }
