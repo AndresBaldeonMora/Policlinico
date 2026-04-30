@@ -15,7 +15,6 @@ export interface Doctor {
   telefono: string;
   especialidadId: EspecialidadPoblada | string;
   cmp?: string;
-  supabaseId?: string;
   createdAt?: string;
   updatedAt?: string;
 }
@@ -29,7 +28,6 @@ export interface DoctorTransformado {
   especialidad: string;
   especialidadId: string;
   cmp?: string;
-  supabaseId?: string;
 }
 
 export interface HorarioDisponible {
@@ -56,7 +54,6 @@ const transformarDoctor = (doctor: Doctor): DoctorTransformado => {
     especialidad: esp?.nombre || "Sin especialidad",
     especialidadId: esp?._id || (typeof doctor.especialidadId === "string" ? doctor.especialidadId : ""),
     cmp: doctor.cmp,
-    supabaseId: doctor.supabaseId,
   };
 };
 

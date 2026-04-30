@@ -1,0 +1,183 @@
+/* ═══════════════════════════════════════════
+   RESUMEN CITA — Portal Paciente
+═══════════════════════════════════════════ */
+
+.resumen-cita {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  padding: 1.25rem;
+  transition: box-shadow 0.2s var(--ease);
+}
+
+.resumen-cita:hover {
+  box-shadow: var(--shadow-md);
+}
+
+/* ── Header row ── */
+.resumen-cita__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  margin-bottom: 1rem;
+}
+
+.resumen-cita__header-left {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  min-width: 0;
+}
+
+.resumen-cita__header-icon {
+  width: 40px;
+  height: 40px;
+  border-radius: var(--radius-md);
+  background: var(--primary-lighter);
+  color: var(--primary);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.resumen-cita__header-title {
+  font-size: 0.9rem;
+  font-weight: 700;
+  color: var(--text-primary);
+  margin: 0;
+}
+
+.resumen-cita__badges {
+  display: flex;
+  gap: 0.35rem;
+  flex-wrap: wrap;
+}
+
+/* ── Body rows ── */
+.resumen-cita__body {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.resumen-cita__row {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.84rem;
+  color: var(--text-secondary);
+}
+
+.resumen-cita__row-icon {
+  color: var(--text-muted);
+  flex-shrink: 0;
+}
+
+.resumen-cita__row-label {
+  font-weight: 500;
+  color: var(--text-primary);
+}
+
+/* ── Action ── */
+.resumen-cita__action {
+  margin-top: 1rem;
+  display: flex;
+  justify-content: flex-end;
+}
+
+/* ── Empty state ── */
+.resumen-cita__empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 1.5rem 0;
+  text-align: center;
+}
+
+.resumen-cita__empty-icon {
+  color: var(--text-muted);
+  opacity: 0.5;
+}
+
+.resumen-cita__empty-text {
+  font-size: 0.85rem;
+  color: var(--text-muted);
+  margin: 0;
+}
+
+/* ── Skeleton ── */
+.resumen-cita__skeleton-line {
+  height: 14px;
+  background: var(--bg-hover);
+  border-radius: var(--radius-sm);
+  animation: resumen-cita-pulse 1.5s ease-in-out infinite;
+  will-change: opacity;
+}
+
+.resumen-cita__skeleton-line--short {
+  width: 45%;
+}
+
+.resumen-cita__skeleton-line--medium {
+  width: 65%;
+}
+
+.resumen-cita__skeleton-line--long {
+  width: 85%;
+}
+
+.resumen-cita__skeleton-circle {
+  width: 40px;
+  height: 40px;
+  border-radius: var(--radius-md);
+  background: var(--bg-hover);
+  flex-shrink: 0;
+  animation: resumen-cita-pulse 1.5s ease-in-out infinite;
+  will-change: opacity;
+}
+
+.resumen-cita__skeleton-badge {
+  width: 70px;
+  height: 22px;
+  border-radius: 999px;
+  background: var(--bg-hover);
+  animation: resumen-cita-pulse 1.5s ease-in-out infinite;
+  will-change: opacity;
+}
+
+@keyframes resumen-cita-pulse {
+  0%, 100% { opacity: 1; }
+  50%      { opacity: 0.4; }
+}
+
+/* ── Estado badges (scoped) ── */
+.resumen-cita__badge {
+  display: inline-block;
+  padding: 0.2rem 0.6rem;
+  border-radius: 999px;
+  font-size: 0.72rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.02em;
+}
+
+.resumen-cita__badge--pendiente    { background: var(--warning-bg); color: var(--warning); }
+.resumen-cita__badge--asistio      { background: var(--success-bg); color: var(--success); }
+.resumen-cita__badge--atendida     { background: var(--bg-hover);   color: var(--text-muted); }
+.resumen-cita__badge--cancelada    { background: var(--error-bg);   color: var(--error); }
+.resumen-cita__badge--reprogramada { background: #e0e7ff; color: #4338ca; }
+.resumen-cita__badge--vencida      { background: var(--error-bg);   color: var(--error); }
+
+/* Tipo badges */
+.resumen-cita__badge--consulta     { background: var(--info-bg);    color: var(--info); }
+.resumen-cita__badge--laboratorio  { background: var(--accent-lighter); color: var(--accent); }
+.resumen-cita__badge--remota       { background: var(--secondary-lighter); color: var(--secondary); }
+.resumen-cita__badge--domicilio    { background: var(--success-bg); color: var(--primary-dark); }
+
+[data-theme="dark"] .resumen-cita__badge--reprogramada {
+  background: rgba(99, 102, 241, 0.15);
+  color: #818cf8;
+}

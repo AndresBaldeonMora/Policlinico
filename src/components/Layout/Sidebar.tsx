@@ -13,7 +13,9 @@ import {
   FlaskConical,
   ShieldCheck,
   BookOpen,
-  LayoutDashboard as DashboardIcon
+  LayoutDashboard,
+  Home,
+  User,
 } from "lucide-react";
 import "./Sidebar.css";
 
@@ -33,9 +35,9 @@ const Sidebar = () => {
   ];
 
   const medicoMenu = [
-    { path: "/medico",       label: "Calendario", icon: Calendar,      description: "Mi calendario personal" },
-    { path: "/medico/citas", label: "Mis Citas",  icon: ClipboardList, description: "Listado de mis citas" },
-    { path: "/pacientes",    label: "Pacientes",  icon: Users,          description: "Listado de pacientes" },
+    { path: "/medico",       label: "Dashboard", icon: LayoutDashboard, description: "Panel principal del médico" },
+    { path: "/medico/citas", label: "Mis Citas", icon: ClipboardList,   description: "Listado de mis citas" },
+    { path: "/pacientes",    label: "Pacientes", icon: Users,           description: "Listado de pacientes" },
   ];
 
   // Menú ADMINISTRADOR 
@@ -47,33 +49,42 @@ const Sidebar = () => {
   ];
 
   const pacienteMenu = [
-    { path: "/paciente",         label: "Dashboard",   icon: DashboardIcon, description: "Inicio del portal" },
-    { path: "/paciente/reserva", label: "Reservar Cita", icon: CalendarPlus, description: "Agendar nueva cita médica" },
-    { path: "/paciente/ordenes", label: "Mis Órdenes",   icon: FlaskConical, description: "Resultados de laboratorio e imagen" },
+    { path: "/paciente",           label: "Inicio",        icon: Home,          description: "Inicio del portal" },
+    { path: "/paciente/citas",     label: "Mis Citas",     icon: Calendar,      description: "Ver mis citas" },
+    { path: "/paciente/historial", label: "Mi Historial",  icon: ClipboardList, description: "Historial médico" },
+    { path: "/paciente/ordenes",   label: "Mis Órdenes",   icon: FlaskConical,  description: "Órdenes de exámenes" },
+    { path: "/paciente/perfil",    label: "Mi Perfil",     icon: User,          description: "Datos personales" },
   ];
 
   const menuMap: Record<string, typeof recepcionistaMenu> = {
-    RECEPCIONISTA: recepcionistaMenu,
-    MEDICO:        medicoMenu,
-    administrador: administradorMenu,
-    paciente:      pacienteMenu,
+    RECEPCIONISTA:  recepcionistaMenu,
+    MEDICO:         medicoMenu,
+    ADMINISTRADOR:  administradorMenu,
+    PACIENTE:       pacienteMenu,
   };
 
   const menuItems = menuMap[user?.rol ?? ""] ?? recepcionistaMenu;
 
   const subtitleMap: Record<string, string> = {
-    MEDICO:        "Portal Médico",
-    administrador: "Portal Administración",
-    RECEPCIONISTA: "Portal Recepcionista",
-    paciente:      "Portal Paciente",
+    MEDICO:         "Portal Médico",
+    ADMINISTRADOR:  "Portal Administración",
+    RECEPCIONISTA:  "Portal Recepcionista",
+    PACIENTE:       "Portal Paciente",
   };
   const subtitle = subtitleMap[user?.rol ?? ""] ?? "Sistema";
 
-  const avatarLetter = user?.nombres?.charAt(0).toUpperCase() || "U";
+  const avatarLetter = user?.nombres?.trim() ? user.nombres.trim().charAt(0).toUpperCase() : "U";
+  const nombreCompleto = `${user?.nombres ?? ""} ${user?.apellidos ?? ""}`.trim();
 
   return (
-    <aside className={`sidebar${collapsed ? " sidebar--collapsed" : ""}`}>
-      <div className="sidebar-header">
+    <>
+      <div 
+        className="sidebar-overlay" 
+        onClick={() => document.body.classList.remove('mobile-sidebar-open')} 
+        aria-hidden="true" 
+      />
+      <aside className={`sidebar${collapsed ? " sidebar--collapsed" : ""}`}>
+        <div className="sidebar-header">
         <div className="logo">
           <div className="logo-icon">
             <svg width="36" height="36" viewBox="0 0 36 36" fill="none">
@@ -138,7 +149,7 @@ const Sidebar = () => {
             <div className="sidebar-user-avatar">{avatarLetter}</div>
             <div className="sidebar-user-info">
               <span className="sidebar-user-name">
-                {user ? `${user.nombres} ${user.apellidos}` : "Usuario"}
+                {nombreCompleto ? nombreCompleto : "Usuario"}
               </span>
               <span className="sidebar-user-role">{user?.rol || "Sin rol"}</span>
             </div>
@@ -150,6 +161,7 @@ const Sidebar = () => {
         )}
       </div>
     </aside>
+    </>
   );
 };
 

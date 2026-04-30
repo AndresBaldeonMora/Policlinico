@@ -1,57 +1,170 @@
-/* src/pages/PacienteDashboard/PacienteDashboard.css */
+/* ═══════════════════════════════════════════
+   PACIENTE DASHBOARD — Home
+═══════════════════════════════════════════ */
 
-.paciente-dashboard-container {
-  padding: 2rem;
-  max-width: 1000px;
-  margin: 0 auto;
-}
 
-.pd-header {
-  margin-bottom: 2rem;
-}
-
-.pd-header h2 {
-  font-size: 1.8rem;
-  color: #1e293b;
-  margin-bottom: 0.5rem;
-}
-
-.pd-header p {
-  color: #64748b;
-  font-size: 1rem;
-}
-
-.pd-tabs {
-  display: flex;
-  gap: 1rem;
-  border-bottom: 1px solid #e2e8f0;
-  margin-bottom: 2rem;
-}
-
-.pd-tab-btn {
-  background: none;
-  border: none;
-  padding: 0.75rem 1.5rem;
-  font-size: 1rem;
-  font-weight: 500;
-  color: #64748b;
-  cursor: pointer;
-  border-bottom: 3px solid transparent;
-  transition: all 0.2s ease;
-}
-
-.pd-tab-btn:hover {
-  color: #0f766e;
-}
-
-.pd-tab-btn.active {
-  color: #0f766e;
-  border-bottom-color: #0f766e;
-}
-
-.pd-tab-content {
-  background-color: #ffffff;
-  border-radius: 8px;
-  box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
+/* ── Layout wrapper ── */
+.paciente-dashboard {
   padding: 1.5rem;
+}
+
+/* ── Welcome section ── */
+.paciente-dashboard__welcome {
+  margin-bottom: 1.5rem;
+}
+
+.paciente-dashboard__welcome-title {
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: var(--text-primary);
+  margin: 0 0 0.25rem;
+  letter-spacing: -0.02em;
+}
+
+.paciente-dashboard__welcome-date {
+  font-size: 0.85rem;
+  color: var(--text-muted);
+  margin: 0;
+  text-transform: capitalize;
+}
+
+/* ── Stats row (3 counters) ── */
+.paciente-dashboard__stats {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 1rem;
+  margin-bottom: 1.5rem;
+}
+
+.paciente-dashboard__stat {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  padding: 1rem 1.25rem;
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  transition: box-shadow 0.2s var(--ease);
+}
+
+.paciente-dashboard__stat:hover {
+  box-shadow: var(--shadow-md);
+}
+
+.paciente-dashboard__stat-icon {
+  width: 42px;
+  height: 42px;
+  border-radius: var(--radius-md);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.paciente-dashboard__stat-icon--citas {
+  background: var(--accent-lighter);
+  color: var(--accent);
+}
+
+.paciente-dashboard__stat-icon--proxima {
+  background: var(--primary-lighter);
+  color: var(--primary);
+}
+
+.paciente-dashboard__stat-icon--ordenes {
+  background: var(--warning-bg);
+  color: var(--warning);
+}
+
+.paciente-dashboard__stat-info {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.paciente-dashboard__stat-value {
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: var(--text-primary);
+  line-height: 1.2;
+  margin: 0;
+}
+
+.paciente-dashboard__stat-label {
+  font-size: 0.75rem;
+  color: var(--text-muted);
+  margin: 0;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* ── Section title ── */
+.paciente-dashboard__section-title {
+  font-size: 1rem;
+  font-weight: 700;
+  color: var(--text-primary);
+  margin: 0 0 1rem;
+  letter-spacing: -0.01em;
+}
+
+/* ── Modules grid (4 cards) ── */
+.paciente-dashboard__modules {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 1rem;
+  margin-bottom: 1.5rem;
+}
+
+/* ── Resumen columns ── */
+.paciente-dashboard__resumen {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1rem;
+  margin-bottom: 1.5rem;
+}
+
+/* ── Error banner ── */
+.paciente-dashboard__error {
+  background: var(--error-bg);
+  color: var(--error);
+  border: 1px solid var(--error);
+  border-radius: var(--radius-md);
+  padding: 0.75rem 1rem;
+  font-size: 0.85rem;
+  font-weight: 500;
+  margin-bottom: 1.5rem;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+/* ═══════════════════════════════════════════
+   RESPONSIVE
+═══════════════════════════════════════════ */
+
+/* Tablet */
+@media (max-width: 1024px) {
+  .paciente-dashboard__modules {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+/* Mobile */
+@media (max-width: 767px) {
+  .paciente-dashboard__stats {
+    grid-template-columns: 1fr;
+  }
+
+  .paciente-dashboard__modules {
+    grid-template-columns: 1fr;
+  }
+
+  .paciente-dashboard__resumen {
+    grid-template-columns: 1fr;
+  }
+
+  .paciente-dashboard__welcome-title {
+    font-size: 1.25rem;
+  }
 }

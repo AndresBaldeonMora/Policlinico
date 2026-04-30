@@ -1,0 +1,225 @@
+.cred-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(15, 23, 42, 0.55);
+  backdrop-filter: blur(4px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 9999;
+  padding: 16px;
+  animation: cred-fade-in 0.18s ease-out;
+}
+
+@keyframes cred-fade-in {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+
+.cred-modal {
+  background: #fff;
+  border-radius: 14px;
+  width: 100%;
+  max-width: 460px;
+  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+  overflow: hidden;
+  animation: cred-slide-up 0.22s ease-out;
+}
+
+@keyframes cred-slide-up {
+  from { transform: translateY(12px); opacity: 0; }
+  to   { transform: translateY(0); opacity: 1; }
+}
+
+.cred-header {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 18px 20px;
+  background: linear-gradient(135deg, #059669 0%, #10b981 100%);
+  color: #fff;
+}
+
+.cred-header-icon {
+  width: 38px;
+  height: 38px;
+  border-radius: 10px;
+  background: rgba(255, 255, 255, 0.2);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.cred-header-text {
+  flex: 1;
+  min-width: 0;
+}
+
+.cred-header-text h2 {
+  margin: 0;
+  font-size: 16px;
+  font-weight: 600;
+}
+
+.cred-header-text p {
+  margin: 2px 0 0;
+  font-size: 12.5px;
+  opacity: 0.9;
+}
+
+.cred-close {
+  background: transparent;
+  border: 0;
+  color: #fff;
+  padding: 6px;
+  cursor: pointer;
+  border-radius: 6px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background 0.15s;
+}
+.cred-close:hover { background: rgba(255, 255, 255, 0.2); }
+
+.cred-body {
+  padding: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.cred-paciente {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: 10px 12px;
+  background: #f8fafc;
+  border-radius: 8px;
+  border: 1px solid #e2e8f0;
+}
+
+.cred-label-mini {
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  color: #64748b;
+  font-weight: 600;
+}
+
+.cred-paciente strong {
+  font-size: 14.5px;
+  color: #0f172a;
+}
+
+.cred-field {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.cred-label {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12.5px;
+  font-weight: 600;
+  color: #334155;
+}
+
+.cred-input-wrap {
+  display: flex;
+  align-items: stretch;
+  gap: 0;
+  border: 1.5px solid #cbd5e1;
+  border-radius: 8px;
+  overflow: hidden;
+  background: #fff;
+  transition: border-color 0.15s;
+}
+
+.cred-input-wrap:focus-within {
+  border-color: #059669;
+  box-shadow: 0 0 0 3px rgba(5, 150, 105, 0.15);
+}
+
+.cred-input {
+  flex: 1;
+  border: 0;
+  padding: 10px 12px;
+  font-size: 14px;
+  background: transparent;
+  outline: none;
+  color: #0f172a;
+}
+
+.cred-input--password {
+  font-family: "Courier New", monospace;
+  font-weight: 600;
+  letter-spacing: 1px;
+  color: #059669;
+}
+
+.cred-copy-btn {
+  background: #f1f5f9;
+  border: 0;
+  border-left: 1.5px solid #cbd5e1;
+  padding: 0 14px;
+  cursor: pointer;
+  color: #475569;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background 0.15s, color 0.15s;
+}
+.cred-copy-btn:hover { background: #e2e8f0; color: #059669; }
+
+.cred-warning {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  padding: 10px 12px;
+  background: #fff7ed;
+  border: 1px solid #fed7aa;
+  border-radius: 8px;
+  color: #9a3412;
+  font-size: 12.5px;
+  line-height: 1.4;
+}
+.cred-warning svg { flex-shrink: 0; margin-top: 2px; }
+
+.cred-footer {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+  padding: 14px 20px;
+  background: #f8fafc;
+  border-top: 1px solid #e2e8f0;
+}
+
+.cred-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 9px 16px;
+  border-radius: 8px;
+  font-size: 13.5px;
+  font-weight: 600;
+  cursor: pointer;
+  border: 0;
+  transition: background 0.15s, transform 0.1s;
+}
+.cred-btn:active { transform: translateY(1px); }
+
+.cred-btn--secondary {
+  background: #fff;
+  color: #475569;
+  border: 1.5px solid #cbd5e1;
+}
+.cred-btn--secondary:hover { background: #f1f5f9; }
+
+.cred-btn--primary {
+  background: #059669;
+  color: #fff;
+}
+.cred-btn--primary:hover { background: #047857; }

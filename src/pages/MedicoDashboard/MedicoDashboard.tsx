@@ -1,180 +1,39 @@
-import { useReducer, useEffect, useCallback, useMemo } from "react";
+import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
+import {
+  Calendar, Clock, CheckCircle, XCircle,
+  User, ChevronRight, AlertTriangle, Info, AlertCircle,
+} from "lucide-react";
 import { MedicoApiService } from "../../services/medico.service";
-import { CitaApiService } from "../../services/cita.service";
-import { DoctorApiService } from "../../services/doctor.service";
 import type { CitaMedico, MedicoPerfil } from "../../services/medico.service";
-import type { CitaTransformada } from "../../services/cita.service";
-import type { DoctorTransformado } from "../../services/doctor.service";
-import type { Vista } from "../Calendario/types";
-import { useAuth } from "../../hooks/userAuth";
-import MedicoHeader from "./MedicoHeader";
-import MiniCalendario from "../Calendario/MiniCalendario";
-import CalendarioTopbar from "../Calendario/CalendarioTopBar";
-import VistaDia from "../Calendario/VistaDia";
-import VistaSemana from "../Calendario/VistaSemana";
-import VistaMes from "../Calendario/VistaMes";
 import "./MedicoDashboard.css";
-import { toISODateLocal, obtenerInicioSemana } from "../../utils/fecha.utils";
 
-const HORA_INICIO = 8;
-const HORA_FIN = 17;
-const INTERVALO_MINUTOS = 15;
-
-const HORAS_LABORALES = (() => {
-  const totalMinutos = (HORA_FIN - HORA_INICIO) * 60;
-  return Array.from({ length: Math.ceil(totalMinutos / INTERVALO_MINUTOS) }, (_, i) => {
-    const mins = HORA_INICIO * 60 + i * INTERVALO_MINUTOS;
-    return `${String(Math.floor(mins / 60)).padStart(2, "0")}:${String(mins % 60).padStart(2, "0")}`;
-  });
-})();
-
-interface DashboardState {
-  loading: boolean;
-  perfil: MedicoPerfil | null;
-  citasHoy: CitaMedico[];
-  todasLasCitas: CitaMedico[];
-  vista: Vista;
-  fecha: Date;
-  citasCalendario: CitaTransformada[];
-  doctores: DoctorTransformado[];
-  loadingCalendario: boolean;
-}
-
-type DashboardAction =
-  | { type: "CARGA_INICIO" }
-  | { type: "CARGA_EXITO"; perfil: MedicoPerfil; citasHoy: CitaMedico[]; todasLasCitas: CitaMedico[] }
-  | { type: "CARGA_ERROR" }
-  | { type: "SET_VISTA"; vista: Vista }
-  | { type: "SET_FECHA"; fecha: Date }
-  | { type: "SET_CITAS_CALENDARIO"; citas: CitaTransformada[] }
-  | { type: "SET_DOCTORES"; doctores: DoctorTransformado[] }
-  | { type: "SET_LOADING_CALENDARIO"; value: boolean };
-
-function dashboardReducer(state: DashboardState, action: DashboardAction): DashboardState {
-  switch (action.type) {
-    case "CARGA_INICIO":
-      return { ...state, loading: true };
-    case "CARGA_EXITO":
-      return { ...state, loading: false, perfil: action.perfil, citasHoy: action.citasHoy, todasLasCitas: action.todasLasCitas };
-    case "CARGA_ERROR":
-      return { ...state, loading: false };
-    case "SET_VISTA":
-      return { ...state, vista: action.vista };
-    case "SET_FECHA":
-      return { ...state, fecha: action.fecha };
-    case "SET_CITAS_CALENDARIO":
-      return { ...state, citasCalendario: action.citas };
-    case "SET_DOCTORES":
-      return { ...state, doctores: action.doctores };
-    case "SET_LOADING_CALENDARIO":
-      return { ...state, loadingCalendario: action.value };
-    default:
-      return state;
-  }
-}
-
-const initialState: DashboardState = {
-  loading: true,
-  perfil: null,
-  citasHoy: [],
-  todasLasCitas: [],
-  vista: "dia",
-  fecha: new Date(),
-  citasCalendario: [],
-  doctores: [],
-  loadingCalendario: false,
+const calcAge = (fechaNac?: string): string => {
+  if (!fechaNac) return "";
+  const diff = Date.now() - new Date(fechaNac).getTime();
+  return `${Math.floor(diff / (365.25 * 24 * 3600 * 1000))} a.`;
 };
 
-const MedicoDashboard = () => {
-  const [state, dispatch] = useReducer(dashboardReducer, initialState);
-  const { loading, perfil, citasHoy, todasLasCitas, vista, fecha, citasCalendario, doctores, loadingCalendario } = state;
+const formatHoy = () =>
+  new Date().toLocaleDateString("es-PE", {
+    weekday: "long", day: "numeric", month: "long", year: "numeric",
+  });
+
+export default function MedicoDashboard() {
   const navigate = useNavigate();
-  const { user } = useAuth();
-  const medicoId = user?.medicoId ?? "";
+  const [perfil,    setPerfil]    = useState<MedicoPerfil | null>(null);
+  const [citasHoy,  setCitasHoy]  = useState<CitaMedico[]>([]);
+  const [loading,   setLoading]   = useState(true);
 
-  const cargarDatos = useCallback(async () => {
-    dispatch({ type: "CARGA_INICIO" });
-    try {
-      const [perfilData, citasHoyData, todasCitas] = await Promise.all([
-        MedicoApiService.obtenerMiPerfil(),
-        MedicoApiService.obtenerCitasHoy(),
-        MedicoApiService.obtenerMisCitas(),
-      ]);
-      dispatch({ type: "CARGA_EXITO", perfil: perfilData, citasHoy: citasHoyData, todasLasCitas: todasCitas });
-    } catch (error) {
-      console.error("Error al cargar datos:", error);
-      dispatch({ type: "CARGA_ERROR" });
-    }
+  useEffect(() => {
+    Promise.all([
+      MedicoApiService.obtenerMiPerfil(),
+      MedicoApiService.obtenerCitasHoy(),
+    ])
+      .then(([p, c]) => { setPerfil(p); setCitasHoy(c); })
+      .catch(console.error)
+      .finally(() => setLoading(false));
   }, []);
-
-  const cargarDoctores = useCallback(async () => {
-    try {
-      dispatch({ type: "SET_DOCTORES", doctores: await DoctorApiService.listar() });
-    } catch {
-      dispatch({ type: "SET_DOCTORES", doctores: [] });
-    }
-  }, []);
-
-  const cargarCitasCalendario = useCallback(async () => {
-    if (!medicoId) return;
-    try {
-      dispatch({ type: "SET_LOADING_CALENDARIO", value: true });
-      const citas = await CitaApiService.obtenerCalendario(toISODateLocal(fecha), vista, medicoId);
-      dispatch({ type: "SET_CITAS_CALENDARIO", citas });
-    } catch {
-      dispatch({ type: "SET_CITAS_CALENDARIO", citas: [] });
-    } finally {
-      dispatch({ type: "SET_LOADING_CALENDARIO", value: false });
-    }
-  }, [fecha, vista, medicoId]);
-
-  useEffect(() => { cargarDatos(); }, [cargarDatos]);
-  useEffect(() => { cargarDoctores(); }, [cargarDoctores]);
-  useEffect(() => { cargarCitasCalendario(); }, [cargarCitasCalendario]);
-
-  const cambiarFecha = useCallback((delta: number) => {
-    const nueva = new Date(fecha);
-    if (vista === "mes") return dispatch({ type: "SET_FECHA", fecha: new Date(fecha.getFullYear(), fecha.getMonth() + delta, 1) });
-    else if (vista === "semana") nueva.setDate(nueva.getDate() + delta * 7);
-    else nueva.setDate(nueva.getDate() + delta);
-    dispatch({ type: "SET_FECHA", fecha: nueva });
-  }, [fecha, vista]);
-
-  const irADetalleCita = useCallback((e: React.MouseEvent | React.KeyboardEvent, citaId: string) => {
-    e.stopPropagation();
-    navigate(`/citas/${citaId}`);
-  }, [navigate]);
-
-  const estadisticas = {
-    citasHoy: citasHoy.length,
-    pendientes: citasHoy.filter((c) => c.estado === "PENDIENTE").length,
-    atendidas: todasLasCitas.filter((c) => c.estado === "ATENDIDA").length,
-    canceladas: todasLasCitas.filter((c) => c.estado === "CANCELADA").length,
-  };
-
-  const diasDelMes = useMemo(() => {
-    const anio = fecha.getFullYear();
-    const mes = fecha.getMonth();
-    const inicio = new Date(anio, mes, 1);
-    const fin = new Date(anio, mes + 1, 0);
-    const dias: Date[] = [];
-    const offset = (inicio.getDay() + 6) % 7;
-    for (let i = 0; i < offset; i++) dias.push(new Date(NaN));
-    for (let d = 1; d <= fin.getDate(); d++) dias.push(new Date(anio, mes, d));
-    return dias;
-  }, [fecha]);
-
-  const inicioSemana = useMemo(() => obtenerInicioSemana(fecha), [fecha]);
-
-  const tituloCalendario = (() => {
-    if (vista === "mes") return fecha.toLocaleDateString("es-PE", { month: "long", year: "numeric" });
-    if (vista === "dia") return fecha.toLocaleDateString("es-PE", { weekday: "long", day: "numeric", month: "long", year: "numeric" });
-    const inicio = obtenerInicioSemana(fecha);
-    const fin = new Date(inicio);
-    fin.setDate(inicio.getDate() + 6);
-    return `${inicio.toLocaleDateString("es-PE")} – ${fin.toLocaleDateString("es-PE")}`;
-  })();
 
   if (loading) {
     return (
@@ -187,65 +46,193 @@ const MedicoDashboard = () => {
     );
   }
 
+  const pendientes = citasHoy.filter(c => c.estado === "PENDIENTE");
+  const atendidas  = citasHoy.filter(c => c.estado === "ATENDIDA");
+  const canceladas = citasHoy.filter(c => c.estado === "CANCELADA");
+  const total      = citasHoy.length;
+
+  const stats = [
+    { label: "Citas hoy",  value: total,             color: "info",    icon: <Calendar size={18} /> },
+    { label: "Pendientes", value: pendientes.length,  color: "warning", icon: <Clock size={18} /> },
+    { label: "Atendidas",  value: atendidas.length,   color: "success", icon: <CheckCircle size={18} /> },
+    { label: "Canceladas", value: canceladas.length,  color: "danger",  icon: <XCircle size={18} /> },
+  ];
+
+  const reprogramadas = citasHoy.filter(c => c.estado === "REPROGRAMADA");
+  const proximas      = pendientes.slice(0, 6);
+  const nombreDoctor  = perfil ? `${perfil.nombres} ${perfil.apellidos}` : "Doctor";
+  const especialidad  = perfil?.especialidadId?.nombre ?? "Medicina General";
+  const hora          = new Date().getHours();
+  const saludo        = hora < 12 ? "Buenos días" : hora < 18 ? "Buenas tardes" : "Buenas noches";
+
+  type AlertaTipo = "danger" | "warning" | "info";
+  const alertas: { tipo: AlertaTipo; msg: string }[] = [
+    ...(canceladas.length > 0
+      ? [{ tipo: "danger" as AlertaTipo, msg: `${canceladas.length} cita${canceladas.length > 1 ? "s" : ""} cancelada${canceladas.length > 1 ? "s" : ""} hoy` }]
+      : []),
+    ...(reprogramadas.length > 0
+      ? [{ tipo: "warning" as AlertaTipo, msg: `${reprogramadas.length} cita${reprogramadas.length > 1 ? "s" : ""} reprogramada${reprogramadas.length > 1 ? "s" : ""}` }]
+      : []),
+    ...(pendientes.length > 0
+      ? [{ tipo: "info" as AlertaTipo, msg: `${pendientes.length} paciente${pendientes.length > 1 ? "s" : ""} pendiente${pendientes.length > 1 ? "s" : ""} de atención` }]
+      : []),
+  ];
+
   return (
-    <div className="medico-dashboard">
-      {perfil && <MedicoHeader perfil={perfil} estadisticas={estadisticas} />}
-
-      <div className="calendario-container">
-        <div className="medico-calendario-layout">
-          <div className="calendario-left">
-            <MiniCalendario fecha={fecha} onChange={(f) => dispatch({ type: "SET_FECHA", fecha: f })} />
-          </div>
-
-          <div className="calendario-main">
-            <CalendarioTopbar
-              titulo={tituloCalendario}
-              vista={vista}
-              onCambiarFecha={cambiarFecha}
-              onCambiarVista={(v) => dispatch({ type: "SET_VISTA", vista: v })}
-            />
-
-            {loadingCalendario && <div className="loading-indicator">Cargando citas...</div>}
-
-            {!loadingCalendario && (
-              <>
-                {vista === "dia" && (
-                  <VistaDia
-                    fecha={fecha}
-                    horas={HORAS_LABORALES}
-                    citas={citasCalendario}
-                    doctores={doctores}
-                    doctorId={medicoId}
-                    onVerCita={irADetalleCita}
-                  />
-                )}
-                {vista === "semana" && (
-                  <VistaSemana
-                    inicioSemana={inicioSemana}
-                    horas={HORAS_LABORALES}
-                    citas={citasCalendario}
-                    doctores={doctores}
-                    doctorId={medicoId}
-                    onVerCita={irADetalleCita}
-                  />
-                )}
-                {vista === "mes" && (
-                  <VistaMes
-                    diasDelMes={diasDelMes}
-                    citas={citasCalendario}
-                    doctores={doctores}
-                    doctorId={medicoId}
-                    onVerCita={irADetalleCita}
-                  />
-                )}
-              </>
-            )}
-          </div>
-        </div>
+    <div className="medico-dash">
+      {/* Greeting */}
+      <div className="dash-greeting">
+        <h1 className="dash-greeting-title">👋 {saludo}, {nombreDoctor}</h1>
+        <p className="dash-greeting-sub">{formatHoy()} · {especialidad}</p>
       </div>
 
+      {/* Stats */}
+      <div className="dash-stats">
+        {stats.map(s => (
+          <div key={s.label} className={`dash-stat-card dash-stat-card--${s.color}`}>
+            <div className="dash-stat-icon">{s.icon}</div>
+            <div className="dash-stat-body">
+              <div className="dash-stat-value">{s.value}</div>
+              <div className="dash-stat-label">{s.label}</div>
+            </div>
+          </div>
+        ))}
+      </div>
+
+      {/* Main grid */}
+      <div className="dash-grid">
+        {/* Citas pendientes */}
+        <div className="dash-card">
+          <div className="dash-card-header">
+            <span className="dash-card-title">Citas Pendientes Hoy</span>
+            <button className="dash-link" onClick={() => navigate("/medico/citas")}>
+              Ver todas
+            </button>
+          </div>
+
+          {proximas.length === 0 ? (
+            <div className="dash-empty">
+              <User size={28} />
+              <p>No hay citas pendientes para hoy</p>
+            </div>
+          ) : (
+            <div className="dash-citas-list">
+              {proximas.map(c => {
+                const pac      = c.pacienteId;
+                const iniciales = `${pac.nombres[0] ?? ""}${pac.apellidos[0] ?? ""}`.toUpperCase();
+                const edad     = calcAge(pac.fechaNacimiento);
+                return (
+                  <div
+                    key={c._id}
+                    className="dash-cita-row"
+                    onClick={() => navigate(`/medico/citas/${c._id}/consulta`)}
+                  >
+                    <div className="dash-cita-hora">{c.hora}</div>
+                    <div className="dash-cita-avatar">{iniciales}</div>
+                    <div className="dash-cita-info">
+                      <div className="dash-cita-nombre-row">
+                        <span className="dash-cita-nombre">
+                          {pac.nombres} {pac.apellidos}
+                        </span>
+                        {c.tipo && (
+                          <span className={`dash-tipo-badge ${c.tipo.toUpperCase() === "SEGUIMIENTO" ? "dash-tipo-seguim" : "dash-tipo-nueva"}`}>
+                            {c.tipo.toUpperCase() === "SEGUIMIENTO" ? "Seguim." : "Nueva"}
+                          </span>
+                        )}
+                      </div>
+                      <div className="dash-cita-meta">
+                        {edad && <span>{edad}</span>}
+                        {c.notas && (
+                          <span className="dash-cita-motivo">
+                            {c.notas.substring(0, 65)}{c.notas.length > 65 ? "…" : ""}
+                          </span>
+                        )}
+                      </div>
+                    </div>
+                    <ChevronRight size={15} className="dash-cita-arrow" />
+                  </div>
+                );
+              })}
+            </div>
+          )}
+
+          {proximas.length > 0 && (
+            <div className="dash-card-footer">
+              <button
+                className="dash-btn-primary"
+                onClick={() => navigate(`/medico/citas/${proximas[0]._id}/consulta`)}
+              >
+                Iniciar siguiente consulta
+              </button>
+            </div>
+          )}
+        </div>
+
+        {/* Sidebar */}
+        <div className="dash-sidebar">
+          {/* Alertas Clínicas */}
+          <div className="dash-card">
+            <div className="dash-card-header">
+              <span className="dash-card-title">Alertas Clínicas</span>
+            </div>
+            <div className="dash-alertas">
+              {alertas.length === 0 ? (
+                <p className="dash-alertas-empty">Sin alertas para hoy</p>
+              ) : (
+                alertas.map((a, i) => (
+                  <div key={i} className={`dash-alerta dash-alerta--${a.tipo}`}>
+                    {a.tipo === "danger"  && <AlertCircle  size={15} />}
+                    {a.tipo === "warning" && <AlertTriangle size={15} />}
+                    {a.tipo === "info"    && <Info          size={15} />}
+                    <span>{a.msg}</span>
+                  </div>
+                ))
+              )}
+            </div>
+          </div>
+
+          {/* Resumen del día */}
+          <div className="dash-card">
+            <div className="dash-card-header">
+              <span className="dash-card-title">Resumen del Día</span>
+            </div>
+            <div className="dash-resumen">
+              {[
+                { label: "Total citas",  value: total,             color: "var(--info)" },
+                { label: "Pendientes",   value: pendientes.length,  color: "var(--warning)" },
+                { label: "Atendidas",    value: atendidas.length,   color: "var(--success)" },
+                { label: "Canceladas",   value: canceladas.length,  color: "var(--error)" },
+              ].map(r => (
+                <div key={r.label} className="dash-resumen-row">
+                  <span className="dash-resumen-label">{r.label}</span>
+                  <span className="dash-resumen-value" style={{ color: r.color }}>{r.value}</span>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          {/* Perfil del médico */}
+          {perfil && (
+            <div className="dash-card">
+              <div className="dash-card-header">
+                <span className="dash-card-title">Mi Perfil</span>
+              </div>
+              <div className="dash-perfil">
+                <div className="dash-perfil-avatar">
+                  {perfil.nombres[0]}{perfil.apellidos[0]}
+                </div>
+                <div className="dash-perfil-info">
+                  <div className="dash-perfil-nombre">{perfil.nombres} {perfil.apellidos}</div>
+                  <div className="dash-perfil-esp">{especialidad}</div>
+                  {perfil.cmp && (
+                    <div className="dash-perfil-cmp">CMP: {perfil.cmp}</div>
+                  )}
+                </div>
+              </div>
+            </div>
+          )}
+        </div>
+      </div>
     </div>
   );
-};
-
-export default MedicoDashboard;
+}
