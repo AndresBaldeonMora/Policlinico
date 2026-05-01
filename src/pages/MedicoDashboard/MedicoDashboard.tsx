@@ -58,7 +58,6 @@ export default function MedicoDashboard() {
     { label: "Canceladas", value: canceladas.length,  color: "danger",  icon: <XCircle size={18} /> },
   ];
 
-  const reprogramadas = citasHoy.filter(c => c.estado === "REPROGRAMADA");
   const proximas      = pendientes.slice(0, 6);
   const nombreDoctor  = perfil ? `${perfil.nombres} ${perfil.apellidos}` : "Doctor";
   const especialidad  = perfil?.especialidadId?.nombre ?? "Medicina General";
@@ -70,9 +69,6 @@ export default function MedicoDashboard() {
     ...(canceladas.length > 0
       ? [{ tipo: "danger" as AlertaTipo, msg: `${canceladas.length} cita${canceladas.length > 1 ? "s" : ""} cancelada${canceladas.length > 1 ? "s" : ""} hoy` }]
       : []),
-    ...(reprogramadas.length > 0
-      ? [{ tipo: "warning" as AlertaTipo, msg: `${reprogramadas.length} cita${reprogramadas.length > 1 ? "s" : ""} reprogramada${reprogramadas.length > 1 ? "s" : ""}` }]
-      : []),
     ...(pendientes.length > 0
       ? [{ tipo: "info" as AlertaTipo, msg: `${pendientes.length} paciente${pendientes.length > 1 ? "s" : ""} pendiente${pendientes.length > 1 ? "s" : ""} de atención` }]
       : []),
@@ -80,13 +76,25 @@ export default function MedicoDashboard() {
 
   return (
     <div className="medico-dash">
-      {/* Greeting */}
-      <div className="dash-greeting">
-        <h1 className="dash-greeting-title">👋 {saludo}, {nombreDoctor}</h1>
-        <p className="dash-greeting-sub">{formatHoy()} · {especialidad}</p>
+      {/* Header Section */}
+      <div className="dash-header-section">
+        <div className="dash-greeting">
+          <h1 className="dash-greeting-title">👋 {saludo}, {nombreDoctor}</h1>
+          <p className="dash-greeting-sub">{formatHoy()} · {especialidad}</p>
+        </div>
+
+        {perfil && (
+          <div className="dash-profile-chip">
+            <div className="dash-profile-avatar-small">{perfil.nombres[0]}{perfil.apellidos[0]}</div>
+            <div className="dash-profile-chip-info">
+              <div className="dash-profile-name">{perfil.nombres} {perfil.apellidos}</div>
+              {perfil.cmp && <div className="dash-profile-cmp">CMP: {perfil.cmp}</div>}
+            </div>
+          </div>
+        )}
       </div>
 
-      {/* Stats */}
+      {/* Stats Grid */}
       <div className="dash-stats">
         {stats.map(s => (
           <div key={s.label} className={`dash-stat-card dash-stat-card--${s.color}`}>
@@ -99,21 +107,27 @@ export default function MedicoDashboard() {
         ))}
       </div>
 
-      {/* Main grid */}
-      <div className="dash-grid">
-        {/* Citas pendientes */}
+      {/* Content Grid - Centered */}
+      <div className="dash-content-grid">
+        {/* Main Card - Citas Pendientes */}
         <div className="dash-card">
           <div className="dash-card-header">
-            <span className="dash-card-title">Citas Pendientes Hoy</span>
+            <span className="dash-card-title">📋 Citas Pendientes Hoy</span>
             <button className="dash-link" onClick={() => navigate("/medico/citas")}>
-              Ver todas
+              Ver todas →
             </button>
           </div>
 
           {proximas.length === 0 ? (
             <div className="dash-empty">
-              <User size={28} />
+              <User size={32} />
               <p>No hay citas pendientes para hoy</p>
+              <button
+                className="dash-link-secondary"
+                onClick={() => navigate("/medico/citas")}
+              >
+                Ver mis citas
+              </button>
             </div>
           ) : (
             <div className="dash-citas-list">
@@ -162,18 +176,18 @@ export default function MedicoDashboard() {
                 className="dash-btn-primary"
                 onClick={() => navigate(`/medico/citas/${proximas[0]._id}/consulta`)}
               >
-                Iniciar siguiente consulta
+                ▶ Iniciar siguiente consulta
               </button>
             </div>
           )}
         </div>
 
-        {/* Sidebar */}
-        <div className="dash-sidebar">
+        {/* Alerts & Summary Cards */}
+        <div className="dash-side-cards">
           {/* Alertas Clínicas */}
-          <div className="dash-card">
+          <div className="dash-card dash-card-compact">
             <div className="dash-card-header">
-              <span className="dash-card-title">Alertas Clínicas</span>
+              <span className="dash-card-title">⚠️ Alertas</span>
             </div>
             <div className="dash-alertas">
               {alertas.length === 0 ? (
@@ -192,9 +206,9 @@ export default function MedicoDashboard() {
           </div>
 
           {/* Resumen del día */}
-          <div className="dash-card">
+          <div className="dash-card dash-card-compact">
             <div className="dash-card-header">
-              <span className="dash-card-title">Resumen del Día</span>
+              <span className="dash-card-title">📊 Resumen</span>
             </div>
             <div className="dash-resumen">
               {[
@@ -210,27 +224,6 @@ export default function MedicoDashboard() {
               ))}
             </div>
           </div>
-
-          {/* Perfil del médico */}
-          {perfil && (
-            <div className="dash-card">
-              <div className="dash-card-header">
-                <span className="dash-card-title">Mi Perfil</span>
-              </div>
-              <div className="dash-perfil">
-                <div className="dash-perfil-avatar">
-                  {perfil.nombres[0]}{perfil.apellidos[0]}
-                </div>
-                <div className="dash-perfil-info">
-                  <div className="dash-perfil-nombre">{perfil.nombres} {perfil.apellidos}</div>
-                  <div className="dash-perfil-esp">{especialidad}</div>
-                  {perfil.cmp && (
-                    <div className="dash-perfil-cmp">CMP: {perfil.cmp}</div>
-                  )}
-                </div>
-              </div>
-            </div>
-          )}
         </div>
       </div>
     </div>

@@ -101,6 +101,8 @@ export const CIE10_DB: { code: string; name: string }[] = [
   { code: 'B34.9', name: 'Infección viral, no especificada' },
 ];
 
+export type EspecialidadData = Record<string, string>;
+
 export const INITIAL_SOAP: SOAPData = {
   S: { motivoConsulta: '', tiempoEnfermedad: '', enfermedadActual: '', sintomas: {}, sinoDetalle: {}, otrosSintomas: '' },
   O: { temp: '', pa_s: '', pa_d: '', fc: '', fr: '', peso: '', talla: '', spo2: '', estadoGeneral: '', piel: '', edema: 'no', edemaLoc: '', edemaGrado: '', edemaDetalle: '', cardiovascular: '', respiratorio: '', abdomen: '', neurologico: '', musculoesqueletico: '', otrosAp: '' },

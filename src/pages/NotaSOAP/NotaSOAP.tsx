@@ -4,12 +4,13 @@ import Swal from "sweetalert2";
 import { AlertTriangle, Pill, FileText, Plus, ChevronDown, ChevronUp } from "lucide-react";
 import "./NotaSOAP.css";
 
-import type { SOAPData, ExamenOrdenado, MedicamentoSOAP } from "./types";
+import type { SOAPData, ExamenOrdenado, MedicamentoSOAP, EspecialidadData } from "./types";
 import { INITIAL_SOAP } from "./types";
 import SectionS from "./sections/SectionS";
 import SectionO from "./sections/SectionO";
 import SectionA from "./sections/SectionA";
 import SectionP from "./sections/SectionP";
+import SectionE from "./sections/SectionE";
 
 import ModalSolicitudExamen from "../../components/modals/ModalSolicitudExamen";
 import ModalReceta          from "../../components/modals/ModalReceta";
@@ -20,13 +21,14 @@ import { MedicoApiService } from "../../services/medico.service";
 import type { CitaMedico, Alergia, MedicamentoHabitual, ProblemaMedico } from "../../services/medico.service";
 import { PacienteApiService } from "../../services/paciente.service";
 
-type Section = "S" | "O" | "A" | "P";
+type Section = "S" | "O" | "A" | "P" | "E";
 
 const SECTIONS: { id: Section; label: string; sub: string }[] = [
   { id: "S", label: "S", sub: "Subjetivo" },
   { id: "O", label: "O", sub: "Objetivo" },
   { id: "A", label: "A", sub: "Análisis" },
   { id: "P", label: "P", sub: "Plan" },
+  { id: "E", label: "E", sub: "Especialidad" },
 ];
 
 function calcAge(fechaNac?: string): string {
@@ -53,6 +55,8 @@ export default function NotaSOAP() {
   const [modalAbierto, setModalAbierto] = useState<string | null>(null);
   const [lastSaved,    setLastSaved]    = useState<string | null>(null);
   const [saving,       setSaving]       = useState(false);
+  const [especData,    setEspecData]    = useState<EspecialidadData>({});
+  const [especialidadNombre, setEspecialidadNombre] = useState<string>("");
 
   // ── Historial clínico del paciente ──────────────────────────
   const [alergias,          setAlergias]          = useState<Alergia[]>([]);
@@ -65,18 +69,24 @@ export default function NotaSOAP() {
 
   useEffect(() => {
     if (!citaId) return;
-    MedicoApiService.obtenerDetalleCita(citaId)
-      .then(data => {
+    Promise.all([
+      MedicoApiService.obtenerDetalleCita(citaId),
+      MedicoApiService.obtenerMiPerfil(),
+    ])
+      .then(([data, perfil]) => {
         setCita(data);
+        if (perfil?.especialidadId?.nombre) {
+          setEspecialidadNombre(perfil.especialidadId.nombre);
+        }
         if (data.notasClinicas) {
           try {
             const parsed = JSON.parse(data.notasClinicas);
             if (parsed.soap) setSoapData(parsed.soap);
             if (parsed.examenes) setExamenes(parsed.examenes);
             if (parsed.medicamentos) setMedicamentos(parsed.medicamentos);
+            if (parsed.especialidad) setEspecData(parsed.especialidad);
           } catch { /* borrador no parseable, ignorar */ }
         }
-        // Cargar historial clínico del paciente
         const pac = data.pacienteId;
         if (pac.alergias) setAlergias(pac.alergias);
         if (pac.medicamentosHabituales) setMedicHabituales(pac.medicamentosHabituales);
@@ -149,11 +159,12 @@ export default function NotaSOAP() {
     await guardarHistorialClinico(alergias, medicHabituales, actualizados);
   };
 
-  const updateSection = <K extends Section>(sec: K, val: SOAPData[K]) =>
+  const updateSection = <K extends keyof SOAPData>(sec: K, val: SOAPData[K]) =>
     setSoapData(prev => ({ ...prev, [sec]: val }));
 
   const isDone = (sec: Section) => {
-    const d = soapData[sec];
+    if (sec === "E") return Object.keys(especData).some(k => especData[k] !== "");
+    const d = soapData[sec as Exclude<Section, "E">];
     if (sec === "S") return !!(d as SOAPData["S"]).motivoConsulta && !!(d as SOAPData["S"]).enfermedadActual;
     if (sec === "O") return !!(d as SOAPData["O"]).pa_s || !!(d as SOAPData["O"]).temp;
     if (sec === "A") return (d as SOAPData["A"]).diagnoses.length > 0;
@@ -164,7 +175,7 @@ export default function NotaSOAP() {
   const buildPayload = () => {
     const dxPrimario = soapData.A.diagnoses[0];
     return {
-      notasClinicas: JSON.stringify({ soap: soapData, examenes, medicamentos }),
+      notasClinicas: JSON.stringify({ soap: soapData, examenes, medicamentos, especialidad: especData }),
       diagnostico:   dxPrimario ? `${dxPrimario.code} — ${dxPrimario.name}` : "",
       tratamiento:   medicamentos.map(m => `${m.nombre} ${m.concentracion} ${m.frecuencia}`).join("; "),
     };
@@ -462,6 +473,14 @@ export default function NotaSOAP() {
               medicamentos={medicamentos}
               setMedicamentos={setMedicamentos}
               onOpenModal={setModalAbierto}
+            />
+          )}
+          {section === "E" && (
+            <SectionE
+              especialidadNombre={especialidadNombre}
+              data={especData}
+              setData={setEspecData}
+              onPrev={() => setSection("P")}
             />
           )}
         </div>
