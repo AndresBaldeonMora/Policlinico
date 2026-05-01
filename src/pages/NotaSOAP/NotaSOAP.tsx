@@ -18,7 +18,7 @@ import ModalReferencia      from "../../components/modals/ModalReferencia";
 import ModalInterconsulta   from "../../components/modals/ModalInterconsulta";
 
 import { MedicoApiService } from "../../services/medico.service";
-import type { CitaMedico, Alergia, MedicamentoHabitual, ProblemaMedico, CirugiaPevia, AntecedenteFamiliar } from "../../services/medico.service";
+import type { CitaMedico, CitaHistorial, Alergia, MedicamentoHabitual, ProblemaMedico, CirugiaPevia, AntecedenteFamiliar } from "../../services/medico.service";
 import { PacienteApiService } from "../../services/paciente.service";
 
 type Section = "S" | "O" | "A" | "P" | "E";
@@ -65,6 +65,9 @@ export default function NotaSOAP() {
   const [cirugiasPrevias,      setCirugiasPrevias]      = useState<CirugiaPevia[]>([]);
   const [antecedentesFam,      setAntecedentesFam]      = useState<AntecedenteFamiliar[]>([]);
   const [historialExpandido,   setHistorialExpandido]   = useState(true);
+  const [historialCitas,       setHistorialCitas]       = useState<CitaHistorial[]>([]);
+  const [historialCitasExp,    setHistorialCitasExp]    = useState(true);
+  const [citaExpandidaId,      setCitaExpandidaId]      = useState<string | null>(null);
   const [savingHistorial,      setSavingHistorial]      = useState(false);
   const [modalHistorial,       setModalHistorial]       = useState<"alergia" | "medicamento" | "problema" | "cirugia" | "antFamiliar" | null>(null);
   const [nuevoItem,         setNuevoItem]         = useState<Record<string, string>>({});
@@ -95,6 +98,11 @@ export default function NotaSOAP() {
         if (pac.problemasMedicos) setProblemasMedicos(pac.problemasMedicos);
         if (pac.cirugiasPrevias) setCirugiasPrevias(pac.cirugiasPrevias);
         if (pac.antecedentesFamiliares) setAntecedentesFam(pac.antecedentesFamiliares);
+
+        // Cargar historial de citas del paciente (todas las especialidades)
+        MedicoApiService.obtenerHistorialCitasPaciente(pac._id, citaId)
+          .then(setHistorialCitas)
+          .catch(() => {});
       })
       .catch(() => {})
       .finally(() => setLoading(false));
@@ -493,6 +501,97 @@ export default function NotaSOAP() {
                   </div>
                 ))}
               </div>
+            </div>
+          )}
+        </div>
+
+        {/* ── Historial de Citas Anteriores ── */}
+        <div style={{ borderTop: "1px solid var(--border)" }}>
+          <button
+            onClick={() => setHistorialCitasExp(v => !v)}
+            style={{
+              width: "100%", display: "flex", alignItems: "center", justifyContent: "space-between",
+              padding: "10px 14px", background: "none", border: "none", cursor: "pointer",
+              fontSize: 11, fontWeight: 700, color: "var(--text-muted)", textTransform: "uppercase", letterSpacing: 0.8,
+            }}
+          >
+            <span>Citas Anteriores {historialCitas.length > 0 && <span style={{ fontWeight: 400, textTransform: "none" }}>({historialCitas.length})</span>}</span>
+            {historialCitasExp ? <ChevronUp size={13} /> : <ChevronDown size={13} />}
+          </button>
+
+          {historialCitasExp && (
+            <div style={{ padding: "0 14px 14px" }}>
+              {historialCitas.length === 0 ? (
+                <p style={{ fontSize: 11, color: "var(--text-muted)", margin: 0 }}>Sin consultas previas registradas</p>
+              ) : historialCitas.map(c => {
+                const esExpandida = citaExpandidaId === c._id;
+                const especialidad = (c.doctorId as any)?.especialidadId?.nombre ?? "—";
+                const doctor = c.doctorId ? `${c.doctorId.nombres} ${c.doctorId.apellidos}` : "—";
+                const estadoColor = c.estado === "ATENDIDA" ? "#16a34a" : c.estado === "CANCELADA" ? "#dc2626" : "#d97706";
+                const estadoBg = c.estado === "ATENDIDA" ? "#f0fdf4" : c.estado === "CANCELADA" ? "#fee2e2" : "#fffbeb";
+
+                let motivoConsulta = "";
+                if (c.notasClinicas) {
+                  try {
+                    const parsed = JSON.parse(c.notasClinicas);
+                    motivoConsulta = parsed.soap?.S?.motivoConsulta ?? "";
+                  } catch { /* ignorar */ }
+                }
+
+                return (
+                  <div key={c._id} style={{
+                    marginBottom: 8, border: "1px solid var(--border)", borderRadius: 8, overflow: "hidden",
+                  }}>
+                    <div
+                      onClick={() => setCitaExpandidaId(esExpandida ? null : c._id)}
+                      style={{
+                        padding: "7px 10px", cursor: "pointer",
+                        background: esExpandida ? "var(--primary-lighter, #eff6ff)" : "white",
+                        display: "flex", flexDirection: "column", gap: 2,
+                      }}
+                    >
+                      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+                        <span style={{ fontSize: 11, fontWeight: 600, color: "var(--text-primary)" }}>
+                          {new Date(c.fecha).toLocaleDateString("es-PE", { day: "2-digit", month: "short", year: "numeric" })}
+                        </span>
+                        <span style={{
+                          fontSize: 10, fontWeight: 700, padding: "1px 6px", borderRadius: 4,
+                          background: estadoBg, color: estadoColor,
+                        }}>
+                          {c.estado}
+                        </span>
+                      </div>
+                      <div style={{ fontSize: 11, color: "var(--primary)", fontWeight: 500 }}>{especialidad}</div>
+                      <div style={{ fontSize: 10, color: "var(--text-muted)" }}>Dr. {doctor}</div>
+                    </div>
+
+                    {esExpandida && (
+                      <div style={{ padding: "8px 10px", background: "#f9fafb", borderTop: "1px solid var(--border)", fontSize: 11 }}>
+                        {motivoConsulta && (
+                          <div style={{ marginBottom: 4 }}>
+                            <span style={{ fontWeight: 700, color: "var(--text-muted)", fontSize: 10 }}>MOTIVO </span>
+                            <span>{motivoConsulta}</span>
+                          </div>
+                        )}
+                        {c.diagnostico ? (
+                          <div style={{ marginBottom: 4 }}>
+                            <span style={{ fontWeight: 700, color: "var(--text-muted)", fontSize: 10 }}>DX </span>
+                            <span>{c.diagnostico}</span>
+                          </div>
+                        ) : (
+                          <span style={{ color: "var(--text-muted)", fontStyle: "italic" }}>Sin diagnóstico</span>
+                        )}
+                        {c.tratamiento && (
+                          <div>
+                            <span style={{ fontWeight: 700, color: "var(--text-muted)", fontSize: 10 }}>TX </span>
+                            <span>{c.tratamiento}</span>
+                          </div>
+                        )}
+                      </div>
+                    )}
+                  </div>
+                );
+              })}
             </div>
           )}
         </div>
