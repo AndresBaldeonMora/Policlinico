@@ -23,10 +23,25 @@ export interface ProblemaMedico {
   fechaInicio?: string;
 }
 
+export interface CirugiaPevia {
+  _id?: string;
+  procedimiento: string;
+  fecha?: string;
+  hospital?: string;
+}
+
+export interface AntecedenteFamiliar {
+  _id?: string;
+  parentesco: string;
+  condicion: string;
+}
+
 export interface HistorialClinico {
   alergias: Alergia[];
   medicamentosHabituales: MedicamentoHabitual[];
   problemasMedicos: ProblemaMedico[];
+  cirugiasPrevias: CirugiaPevia[];
+  antecedentesFamiliares: AntecedenteFamiliar[];
 }
 
 export interface Paciente {
@@ -48,6 +63,8 @@ export interface Paciente {
   alergias?: Alergia[];
   medicamentosHabituales?: MedicamentoHabitual[];
   problemasMedicos?: ProblemaMedico[];
+  cirugiasPrevias?: CirugiaPevia[];
+  antecedentesFamiliares?: AntecedenteFamiliar[];
   edad?: number;
   tieneCuentaPortal?: boolean;
   createdAt?: string;

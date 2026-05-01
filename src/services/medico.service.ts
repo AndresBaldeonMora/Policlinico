@@ -1,7 +1,7 @@
 import api from "./api";
-import type { Alergia, MedicamentoHabitual, ProblemaMedico } from "./paciente.service";
+import type { Alergia, MedicamentoHabitual, ProblemaMedico, CirugiaPevia, AntecedenteFamiliar } from "./paciente.service";
 
-export type { Alergia, MedicamentoHabitual, ProblemaMedico };
+export type { Alergia, MedicamentoHabitual, ProblemaMedico, CirugiaPevia, AntecedenteFamiliar };
 
 export interface MedicamentoPrescrito {
   medicamentoId: string;
@@ -26,6 +26,8 @@ export interface CitaMedico {
     alergias?: Alergia[];
     medicamentosHabituales?: MedicamentoHabitual[];
     problemasMedicos?: ProblemaMedico[];
+    cirugiasPrevias?: CirugiaPevia[];
+    antecedentesFamiliares?: AntecedenteFamiliar[];
   };
   fecha: string;
   hora: string;
