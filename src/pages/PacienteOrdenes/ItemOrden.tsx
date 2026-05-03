@@ -1,4 +1,4 @@
-import { Eye, Download, FlaskConical, Calendar } from "lucide-react";
+import { Eye, Download, FlaskConical, Calendar, Clock } from "lucide-react";
 import type { OrdenExamen } from "../../services/examen.service";
 import "./ItemOrden.css";
 
@@ -8,17 +8,14 @@ const TIPO_LABEL: Record<string, string> = {
   MIXTA: "Mixta",
 };
 
-const ESTADO_CONFIG: Record<string, { label: string; clase: string }> = {
-  PENDIENTE:  { label: "Pendiente",  clase: "io-badge--pendiente" },
-  EN_PROCESO: { label: "En Proceso", clase: "io-badge--proceso" },
-  ASISTIDO:   { label: "Asistida",   clase: "io-badge--asistido" },
-  FINALIZADO: { label: "Completada", clase: "io-badge--finalizado" },
-  CANCELADA:  { label: "Cancelada",  clase: "io-badge--cancelado" },
-};
-
 const formatFecha = (iso: string) =>
   new Date(iso).toLocaleDateString("es-PE", {
     day: "2-digit", month: "short", year: "numeric",
+  });
+
+const formatHora = (iso: string) =>
+  new Date(iso).toLocaleTimeString("es-PE", {
+    hour: "2-digit", minute: "2-digit", hour12: true,
   });
 
 export const ItemOrden = ({
@@ -30,13 +27,12 @@ export const ItemOrden = ({
   onVerDetalle: (id: string) => void;
   isResultadoView?: boolean;
 }) => {
-  const badge = ESTADO_CONFIG[orden.estado] ?? { label: orden.estado, clase: "io-badge--pendiente" };
-  const tipo = TIPO_LABEL[orden.tipoOrden ?? ""] ?? orden.tipoOrden ?? "General";
+  const tipo   = TIPO_LABEL[orden.tipoOrden ?? ""] ?? orden.tipoOrden ?? "General";
   const codigo = orden.codigoOrden || `#${orden._id.substring(0, 6)}`;
 
-  const fechaDisplay = isResultadoView
-    ? (orden.fechaResultados ? formatFecha(orden.fechaResultados) : null)
-    : (orden.fechaCitaLab ? formatFecha(orden.fechaCitaLab) : null);
+  const fechaRef = isResultadoView
+    ? (orden.fechaResultados || orden.fecha)
+    : (orden.fechaCitaLab || orden.fecha);
 
   return (
     <div className="io-card">
@@ -44,7 +40,6 @@ export const ItemOrden = ({
 
       <div className="io-badges">
         <span className="io-badge io-badge--tipo">{tipo}</span>
-        <span className={`io-badge ${badge.clase}`}>{badge.label}</span>
       </div>
 
       <span className="io-especialidad">
@@ -52,12 +47,15 @@ export const ItemOrden = ({
         {orden.especialidadId?.nombre || "Sin especialidad"}
       </span>
 
-      {fechaDisplay && (
-        <span className="io-fecha">
-          <Calendar size={12} />
-          {fechaDisplay}
-        </span>
-      )}
+      <span className="io-fecha">
+        <Calendar size={12} />
+        {formatFecha(fechaRef)}
+      </span>
+
+      <span className="io-fecha">
+        <Clock size={12} />
+        {formatHora(orden.fecha)}
+      </span>
 
       <div className="io-actions">
         <button

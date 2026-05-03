@@ -282,7 +282,7 @@ export class ExamenService {
 
   // ─── Nuevos métodos (TAREA S10) ────────────────────────────
   static async obtenerOrdenDetalle(ordenId: string): Promise<OrdenDetalle> {
-    const res = await api.get<{ success: boolean; data: OrdenExamen }>(`/api/examenes/ordenes/${ordenId}`);
+    const res = await api.get<{ success: boolean; data: OrdenExamen }>(`/ordenes/${ordenId}`);
     const data = res.data.data;
     const historial: HistorialEstadoOrden[] = [];
     if (data.fecha) {

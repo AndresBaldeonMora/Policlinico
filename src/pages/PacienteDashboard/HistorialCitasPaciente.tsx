@@ -8,7 +8,7 @@ import "./HistorialCitas.css";
 
 type Tab = "PROXIMAS" | "PASADAS";
 
-const ESTADOS_PROXIMAS = new Set(["PENDIENTE", "REPROGRAMADA"]);
+const ESTADOS_PROXIMAS = new Set(["PENDIENTE"]);
 
 const POR_PAGINA = 5;
 
@@ -160,6 +160,7 @@ const HistorialCitasPaciente = () => {
               key={cita._id}
               cita={cita}
               onClick={() => setCitaSeleccionada(cita)}
+              hideEstado={activeTab === "PROXIMAS"}
             />
           ))}
       </div>

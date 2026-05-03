@@ -73,8 +73,9 @@ const PacienteOrdenes = () => {
   const ordenesFiltradas = useMemo(() => {
     return ordenes
       .filter((orden) => {
-        if (activeTab === "ORDENES" && orden.estado === "FINALIZADO") return false;
-        if (activeTab === "RESULTADOS" && orden.estado !== "FINALIZADO") return false;
+        const ESTADOS_PROXIMAS = new Set(["PENDIENTE", "EN_PROCESO", "ASISTIDO"]);
+        if (activeTab === "ORDENES" && !ESTADOS_PROXIMAS.has(orden.estado)) return false;
+        if (activeTab === "RESULTADOS" && ESTADOS_PROXIMAS.has(orden.estado)) return false;
         if (searchQuery) {
           const q = searchQuery.toLowerCase();
           const codigo      = orden.codigoOrden?.toLowerCase() || "";
