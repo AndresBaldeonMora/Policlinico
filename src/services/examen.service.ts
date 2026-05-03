@@ -1,6 +1,5 @@
 import api from "./api";
-
-// ── Tipos del catálogo de exámenes ─────────────────────────
+import type { OrdenDetalle, HistorialEstadoOrden } from "../types/orden.types";// ── Tipos del catálogo de exámenes ─────────────────────────
 export type TipoExamen =
   | "HEMATOLOGIA"
   | "BIOQUIMICA"
@@ -98,6 +97,8 @@ export interface OrdenExamen {
   items: ItemOrden[];
   estado: EstadoOrden;
   observacionesGenerales?: string;
+  notas?: string;
+  historialEstados?: HistorialEstadoOrden[];
   createdAt?: string;
 }
 
@@ -277,6 +278,71 @@ export class ExamenService {
       `/ordenes/pendientes${todos ? "?todos=true" : ""}`
     );
     return res.data.data ?? [];
+  }
+
+  // ─── Nuevos métodos (TAREA S10) ────────────────────────────
+  static async obtenerOrdenDetalle(ordenId: string): Promise<OrdenDetalle> {
+    const res = await api.get<{ success: boolean; data: OrdenExamen }>(`/api/examenes/ordenes/${ordenId}`);
+    const data = res.data.data;
+    const historial: HistorialEstadoOrden[] = [];
+    if (data.fecha) {
+      historial.push({ estadoAnterior: "-", estadoNuevo: "PENDIENTE", fecha: new Date(data.fecha), responsable: "Sistema / Médico" });
+    }
+    if (data.fechaAutorizacion) {
+      historial.push({ estadoAnterior: "PENDIENTE", estadoNuevo: "EN_PROCESO", fecha: new Date(data.fechaAutorizacion), responsable: "Recepción" });
+    }
+    if (data.fechaAsistencia) {
+      historial.push({ estadoAnterior: "EN_PROCESO", estadoNuevo: "ASISTIDO", fecha: new Date(data.fechaAsistencia), responsable: "Personal Médico / Recepción" });
+    }
+    if (data.fechaResultados) {
+      historial.push({ estadoAnterior: "ASISTIDO", estadoNuevo: "FINALIZADO", fecha: new Date(data.fechaResultados), responsable: "Laboratorio / Imagenología" });
+    }
+    
+    return {
+      id: data._id,
+      codigoOrden: data.codigoOrden || data._id,
+      tipoOrden: (data.tipoOrden as "LABORATORIO" | "IMAGEN" | "MIXTA") || "MIXTA",
+      estado: data.estado,
+      especialidad: data.especialidadId?.nombre || "General",
+      medicoId: data.doctorId?._id || "",
+      medicoNombre: data.doctorId ? `${data.doctorId.nombres} ${data.doctorId.apellidos}` : "No especificado",
+      fechaCreacion: new Date(data.fecha),
+      fechaResultado: data.fechaResultados ? new Date(data.fechaResultados) : undefined,
+      fechaAsistencia: data.fechaAsistencia ? new Date(data.fechaAsistencia) : undefined,
+      examenes: data.items.map(item => {
+        const examen = typeof item.examenId === 'string' ? { _id: item.examenId, nombre: 'Examen', tipo: 'OTRO' } : item.examenId;
+        return {
+          id: examen._id,
+          nombre: examen.nombre,
+          tipo: examen.tipo,
+          estado: item.estadoItem,
+          observacion: item.observaciones
+        };
+      }),
+      historialEstados: data.historialEstados && data.historialEstados.length > 0 ? data.historialEstados : historial,
+      archivoResultadoUrl: data.archivoResultadoUrl,
+      recomendaciones: data.observacionesGenerales,
+      notas: data.notas
+    };
+  }
+
+  static async obtenerResultados(ordenId: string): Promise<{
+    pdfUrl: string;
+    fecha: Date;
+  }> {
+    const res = await api.get<{ success: boolean; data: { pdfUrl: string; fecha: string } }>(`/api/examenes/ordenes/${ordenId}/resultados`);
+    return {
+      pdfUrl: res.data.data.pdfUrl || "",
+      fecha: res.data.data.fecha ? new Date(res.data.data.fecha) : new Date()
+    };
+  }
+
+  static async obtenerHistorialEstados(ordenId: string): Promise<HistorialEstadoOrden[]> {
+    const res = await api.get<{ success: boolean; data: HistorialEstadoOrden[] }>(`/api/examenes/ordenes/${ordenId}/historial`);
+    return res.data.data.map(h => ({
+      ...h,
+      fecha: new Date(h.fecha)
+    })) || [];
   }
 }
 

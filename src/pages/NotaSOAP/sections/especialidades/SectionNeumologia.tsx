@@ -90,7 +90,7 @@ export default function SectionNeumologia({ data, setData, onPrev }: Props) {
             <option>Ausente</option>
             <option>Escala MRC 1 — grandes esfuerzos</option>
             <option>Escala MRC 2 — cuesta o escaleras</option>
-            <option>Escala MRC 3 — caminar en plano (< coetáneos)</option>
+            <option>Escala MRC 3 — caminar en plano (&lt; coetáneos)</option>
             <option>Escala MRC 4 — caminar 100m debe parar</option>
             <option>Escala MRC 5 — de reposo / al vestirse</option>
           </select>
