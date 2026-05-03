@@ -5,6 +5,8 @@ import { useTheme } from "../../context/ThemeContext";
 import { MedicoApiService } from "../../services/medico.service";
 import { Moon, Search, Sun, LogOut, ChevronDown, Menu } from "lucide-react";
 import SearchPalette from "./SearchPalette";
+import { CampanillaNotificaciones } from "../Notificaciones/CampanillaNotificaciones";
+import type { Notificacion } from "../Notificaciones/types";
 import "./Header.css";
 
 const Header = () => {
@@ -15,6 +17,13 @@ const Header = () => {
   const [dropdownOpen, setDropdownOpen] = useState(false);
   const [especialidad, setEspecialidad] = useState<string | null>(null);
   const dropdownRef = useRef<HTMLDivElement>(null);
+  const [notificaciones, setNotificaciones] = useState<Notificacion[]>([]);
+
+  const handleMarcarLeida = (id: string) => {
+    setNotificaciones((prev) =>
+      prev.map((n) => (n.id === id ? { ...n, leida: true } : n))
+    );
+  };
 
   const avatarLetter = user?.nombres?.trim() ? user.nombres.trim().charAt(0).toUpperCase() : "U";
   const nombreCompleto = `${user?.nombres ?? ""} ${user?.apellidos ?? ""}`.trim();
@@ -94,6 +103,11 @@ const Header = () => {
                 <Moon size={20} strokeWidth={1.8} />
               )}
             </button>
+
+            <CampanillaNotificaciones
+              notificaciones={notificaciones}
+              onMarcarLeida={handleMarcarLeida}
+            />
 
             <div className="header-divider" />
 

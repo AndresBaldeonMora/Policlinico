@@ -1,0 +1,627 @@
+/* ═══════════════════════════════════════════
+   MI CUENTA — Module CSS
+   Prefixed: micuenta, micuenta-perfil,
+             micuenta-seg, micuenta-term
+═══════════════════════════════════════════ */
+
+/* ─────────────────────────────────────────
+   0. CONTAINER & TABS
+───────────────────────────────────────── */
+.micuenta {
+  padding: 1.5rem;
+  max-width: 800px;
+}
+
+.micuenta__tabs {
+  display: flex;
+  gap: 0.25rem;
+  background: var(--bg-muted);
+  border-radius: var(--radius-md);
+  padding: 0.25rem;
+  margin-bottom: 1.5rem;
+}
+
+.micuenta__tab {
+  flex: 1;
+  background: none;
+  border: none;
+  padding: 0.55rem 1rem;
+  border-radius: var(--radius-sm);
+  font-size: 0.84rem;
+  font-weight: 500;
+  color: var(--text-secondary);
+  cursor: pointer;
+  transition: all 0.15s var(--ease);
+  font-family: inherit;
+  text-align: center;
+}
+
+.micuenta__tab:hover {
+  background: var(--bg-hover);
+  color: var(--text-primary);
+}
+
+.micuenta__tab--active {
+  background: var(--bg-card);
+  color: var(--primary);
+  font-weight: 600;
+  box-shadow: var(--shadow-sm);
+}
+
+
+/* ─────────────────────────────────────────
+   1. PERFIL
+───────────────────────────────────────── */
+
+/* Avatar section */
+.micuenta-perfil__avatar-section {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  margin-bottom: 1.5rem;
+  flex-wrap: wrap;
+}
+
+.micuenta-perfil__avatar {
+  width: 72px;
+  height: 72px;
+  border-radius: var(--radius-lg);
+  background: var(--primary-gradient);
+  color: white;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  position: relative;
+  overflow: hidden;
+}
+
+.micuenta-perfil__avatar-text {
+  font-size: 1.5rem;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+}
+
+.micuenta-perfil__avatar-edit {
+  position: absolute;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.45);
+  color: white;
+  border: none;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  opacity: 0;
+  transition: opacity 0.15s var(--ease);
+}
+
+.micuenta-perfil__avatar:hover .micuenta-perfil__avatar-edit {
+  opacity: 1;
+}
+
+.micuenta-perfil__avatar-info {
+  flex: 1;
+  min-width: 0;
+}
+
+.micuenta-perfil__name {
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: var(--text-primary);
+  margin: 0 0 0.15rem;
+  line-height: 1.3;
+}
+
+.micuenta-perfil__dni-label {
+  font-size: 0.8rem;
+  color: var(--text-muted);
+  margin: 0;
+  font-weight: 500;
+}
+
+.micuenta-perfil__edit-btn {
+  flex-shrink: 0;
+}
+
+/* Message */
+.micuenta-perfil__msg {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.75rem 1rem;
+  border-radius: var(--radius-md);
+  font-size: 0.84rem;
+  font-weight: 500;
+  margin-bottom: 1rem;
+  animation: micuenta-fade-in 0.2s var(--ease);
+}
+
+.micuenta-perfil__msg--exito {
+  background: var(--success-bg);
+  color: var(--success);
+}
+
+.micuenta-perfil__msg--error {
+  background: var(--error-bg);
+  color: var(--error);
+}
+
+/* Form */
+.micuenta-perfil__form {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.micuenta-perfil__section-title {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.88rem;
+  font-weight: 700;
+  color: var(--text-primary);
+  margin: 1.25rem 0 0.75rem;
+  padding-bottom: 0.5rem;
+  border-bottom: 1px solid var(--border-light);
+}
+
+.micuenta-perfil__section-title:first-child {
+  margin-top: 0;
+}
+
+.micuenta-perfil__section-hint {
+  font-size: 0.72rem;
+  color: var(--text-muted);
+  font-weight: 400;
+  font-style: italic;
+}
+
+.micuenta-perfil__grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1rem;
+}
+
+/* Field */
+.micuenta-perfil__field {
+  display: flex;
+  flex-direction: column;
+  gap: 0.3rem;
+}
+
+.micuenta-perfil__field-label {
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.micuenta-perfil__field-value {
+  font-size: 0.88rem;
+  color: var(--text-primary);
+  font-weight: 500;
+  padding: 0.5rem 0;
+  min-height: 2.25rem;
+  display: flex;
+  align-items: center;
+}
+
+.micuenta-perfil__field-value--empty {
+  color: var(--text-muted);
+  font-style: italic;
+}
+
+.micuenta-perfil__input {
+  width: 100%;
+  padding: 0.55rem 0.75rem;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  font-size: 0.85rem;
+  font-family: inherit;
+  color: var(--text-primary);
+  background: var(--bg-card);
+  transition: border-color 0.15s var(--ease), box-shadow 0.15s var(--ease);
+}
+
+.micuenta-perfil__input:focus {
+  outline: none;
+  border-color: var(--primary);
+  box-shadow: 0 0 0 3px var(--primary-lighter);
+}
+
+.micuenta-perfil__input--disabled {
+  background: var(--bg-muted);
+  color: var(--text-muted);
+  cursor: not-allowed;
+}
+
+.micuenta-perfil__select {
+  width: 100%;
+  padding: 0.55rem 0.75rem;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  font-size: 0.85rem;
+  font-family: inherit;
+  color: var(--text-primary);
+  background: var(--bg-card);
+  cursor: pointer;
+  transition: border-color 0.15s var(--ease);
+}
+
+.micuenta-perfil__select:focus {
+  outline: none;
+  border-color: var(--primary);
+  box-shadow: 0 0 0 3px var(--primary-lighter);
+}
+
+/* Actions */
+.micuenta-perfil__actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 0.75rem;
+  margin-top: 1.5rem;
+  padding-top: 1rem;
+  border-top: 1px solid var(--border);
+}
+
+.micuenta-perfil__spinner {
+  animation: micuenta-spin 1s linear infinite;
+}
+
+
+/* ─────────────────────────────────────────
+   2. SEGURIDAD
+───────────────────────────────────────── */
+.micuenta-seg__title {
+  font-size: 1.15rem;
+  font-weight: 700;
+  color: var(--text-primary);
+  margin: 0 0 0.25rem;
+}
+
+.micuenta-seg__desc {
+  font-size: 0.84rem;
+  color: var(--text-secondary);
+  margin: 0 0 1.25rem;
+  line-height: 1.5;
+}
+
+/* Message */
+.micuenta-seg__msg {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.75rem 1rem;
+  border-radius: var(--radius-md);
+  font-size: 0.84rem;
+  font-weight: 500;
+  margin-bottom: 1rem;
+  animation: micuenta-fade-in 0.2s var(--ease);
+}
+
+.micuenta-seg__msg--exito {
+  background: var(--success-bg);
+  color: var(--success);
+}
+
+.micuenta-seg__msg--error {
+  background: var(--error-bg);
+  color: var(--error);
+}
+
+/* Form */
+.micuenta-seg__form {
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+  max-width: 460px;
+}
+
+.micuenta-seg__field {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+}
+
+.micuenta-seg__label {
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.micuenta-seg__input-wrap {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.micuenta-seg__input {
+  width: 100%;
+  padding: 0.6rem 2.5rem 0.6rem 0.75rem;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  font-size: 0.85rem;
+  font-family: inherit;
+  color: var(--text-primary);
+  background: var(--bg-card);
+  transition: border-color 0.15s var(--ease), box-shadow 0.15s var(--ease);
+}
+
+.micuenta-seg__input:focus {
+  outline: none;
+  border-color: var(--primary);
+  box-shadow: 0 0 0 3px var(--primary-lighter);
+}
+
+.micuenta-seg__eye {
+  position: absolute;
+  right: 0.5rem;
+  background: none;
+  border: none;
+  color: var(--text-muted);
+  cursor: pointer;
+  padding: 0.25rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: color 0.1s var(--ease);
+}
+
+.micuenta-seg__eye:hover {
+  color: var(--text-primary);
+}
+
+/* Strength bar */
+.micuenta-seg__strength {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  margin-top: 0.25rem;
+}
+
+.micuenta-seg__strength-bar {
+  flex: 1;
+  height: 4px;
+  background: var(--border);
+  border-radius: 999px;
+  overflow: hidden;
+}
+
+.micuenta-seg__strength-fill {
+  height: 100%;
+  border-radius: 999px;
+  transition: width 0.2s var(--ease), background-color 0.2s var(--ease);
+}
+
+.micuenta-seg__strength-label {
+  font-size: 0.7rem;
+  font-weight: 600;
+  white-space: nowrap;
+  transition: color 0.2s var(--ease);
+}
+
+/* Requisitos */
+.micuenta-seg__requisitos {
+  list-style: none;
+  padding: 0;
+  margin: 0.25rem 0 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+}
+
+.micuenta-seg__req {
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+  font-size: 0.73rem;
+  color: var(--text-muted);
+  transition: color 0.15s var(--ease);
+}
+
+.micuenta-seg__req--ok {
+  color: var(--success);
+}
+
+/* Error */
+.micuenta-seg__field-error {
+  font-size: 0.75rem;
+  color: var(--error);
+  margin: 0.15rem 0 0;
+}
+
+/* Submit */
+.micuenta-seg__submit {
+  align-self: flex-start;
+  margin-top: 0.5rem;
+}
+
+.micuenta-seg__spinner {
+  animation: micuenta-spin 1s linear infinite;
+}
+
+
+/* ─────────────────────────────────────────
+   3. TÉRMINOS
+───────────────────────────────────────── */
+.micuenta-term__header {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-bottom: 1rem;
+}
+
+.micuenta-term__header-icon {
+  color: var(--primary);
+}
+
+.micuenta-term__title {
+  font-size: 1.15rem;
+  font-weight: 700;
+  color: var(--text-primary);
+  margin: 0;
+}
+
+.micuenta-term__scroll {
+  max-height: 600px;
+  overflow-y: auto;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  background: var(--bg-card);
+}
+
+.micuenta-term__content {
+  padding: 1.5rem;
+}
+
+.micuenta-term__section-title {
+  font-size: 0.9rem;
+  font-weight: 700;
+  color: var(--primary);
+  margin: 1.5rem 0 0.5rem;
+  text-transform: uppercase;
+  letter-spacing: 0.02em;
+}
+
+.micuenta-term__section-title:first-child {
+  margin-top: 0;
+}
+
+.micuenta-term__paragraph {
+  font-size: 0.84rem;
+  color: var(--text-secondary);
+  line-height: 1.7;
+  margin: 0 0 0.75rem;
+  text-align: justify;
+}
+
+.micuenta-term__footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-top: 0.75rem;
+  padding-top: 0.5rem;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.micuenta-term__version,
+.micuenta-term__date {
+  font-size: 0.72rem;
+  color: var(--text-muted);
+  font-weight: 500;
+}
+
+/* Loading */
+.micuenta-term__loading {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 3rem 1rem;
+  text-align: center;
+}
+
+.micuenta-term__spinner {
+  color: var(--primary);
+  animation: micuenta-spin 1s linear infinite;
+}
+
+.micuenta-term__loading-text {
+  font-size: 0.85rem;
+  color: var(--text-muted);
+  margin: 0;
+}
+
+/* Error */
+.micuenta-term__error {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 3rem 1rem;
+  text-align: center;
+  color: var(--error);
+}
+
+.micuenta-term__error p {
+  font-size: 0.88rem;
+  margin: 0;
+}
+
+
+/* ─────────────────────────────────────────
+   4. ANIMATIONS
+───────────────────────────────────────── */
+@keyframes micuenta-fade-in {
+  from { opacity: 0; transform: translateY(-4px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes micuenta-spin {
+  from { transform: rotate(0deg); }
+  to   { transform: rotate(360deg); }
+}
+
+
+/* ─────────────────────────────────────────
+   5. RESPONSIVE
+───────────────────────────────────────── */
+
+/* Tablet */
+@media (max-width: 1024px) {
+  .micuenta {
+    padding: 1.25rem;
+  }
+
+  .micuenta-perfil__grid {
+    gap: 0.75rem;
+  }
+}
+
+/* Mobile */
+@media (max-width: 480px) {
+  .micuenta {
+    padding: 1rem;
+  }
+
+  .micuenta__tabs {
+    flex-direction: column;
+  }
+
+  .micuenta-perfil__avatar-section {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .micuenta-perfil__grid {
+    grid-template-columns: 1fr;
+  }
+
+  .micuenta-perfil__actions {
+    flex-direction: column;
+  }
+
+  .micuenta-perfil__actions .btn {
+    width: 100%;
+    justify-content: center;
+  }
+
+  .micuenta-seg__form {
+    max-width: 100%;
+  }
+
+  .micuenta-term__content {
+    padding: 1rem;
+  }
+
+  .micuenta-term__footer {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+}
