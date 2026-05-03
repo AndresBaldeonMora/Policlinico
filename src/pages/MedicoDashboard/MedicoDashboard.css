@@ -29,27 +29,79 @@
 
 /* ── Dashboard wrapper ────────────────────────────────── */
 .medico-dash {
-  padding: 1.5rem;
-  max-width: 1240px;
+  padding: 2rem 2rem;
+  max-width: 900px;
+  margin: 0 auto;
+}
+
+/* ── Header Section ───────────────────────────────────── */
+.dash-header-section {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 2rem;
+  gap: 1.5rem;
 }
 
 /* ── Greeting ─────────────────────────────────────────── */
 .dash-greeting {
-  margin-bottom: 1.5rem;
+  flex: 1;
 }
 
 .dash-greeting-title {
-  font-size: 1.45rem;
+  font-size: 1.65rem;
   font-weight: 700;
   color: var(--text-primary);
   letter-spacing: -0.02em;
+  margin: 0;
 }
 
 .dash-greeting-sub {
-  font-size: 0.85rem;
+  font-size: 0.9rem;
   color: var(--text-muted);
-  margin-top: 0.2rem;
+  margin-top: 0.4rem;
   text-transform: capitalize;
+}
+
+/* ── Profile Chip ─────────────────────────────────────── */
+.dash-profile-chip {
+  display: flex;
+  align-items: center;
+  gap: 0.875rem;
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  padding: 0.8rem 1rem;
+  box-shadow: var(--shadow-sm);
+}
+
+.dash-profile-avatar-small {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  background: var(--primary-lighter);
+  color: var(--primary-dark);
+  font-weight: 700;
+  font-size: 0.95rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.dash-profile-chip-info {
+  font-size: 0.82rem;
+}
+
+.dash-profile-name {
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.dash-profile-cmp {
+  color: var(--text-muted);
+  font-size: 0.75rem;
+  margin-top: 0.1rem;
 }
 
 /* ── Stats row ────────────────────────────────────────── */
@@ -57,23 +109,25 @@
   display: grid;
   grid-template-columns: repeat(4, 1fr);
   gap: 1rem;
-  margin-bottom: 1.5rem;
+  margin-bottom: 2rem;
 }
 
 .dash-stat-card {
   background: var(--bg-card);
   border: 1px solid var(--border);
   border-radius: var(--radius-lg);
-  padding: 1.1rem 1.25rem;
+  padding: 1.15rem 1.25rem;
   display: flex;
   align-items: center;
   gap: 0.875rem;
   box-shadow: var(--shadow-sm);
-  transition: box-shadow 0.15s;
+  transition: all 0.15s ease;
+  cursor: default;
 }
 
 .dash-stat-card:hover {
   box-shadow: var(--shadow-md);
+  transform: translateY(-2px);
 }
 
 .dash-stat-icon {
@@ -92,31 +146,33 @@
 .dash-stat-card--danger  .dash-stat-icon { background: var(--error-bg);    color: var(--error); }
 
 .dash-stat-value {
-  font-size: 1.7rem;
+  font-size: 1.8rem;
   font-weight: 800;
   color: var(--text-primary);
   line-height: 1;
 }
 
 .dash-stat-label {
-  font-size: 0.73rem;
+  font-size: 0.75rem;
   color: var(--text-muted);
   font-weight: 500;
   margin-top: 0.2rem;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
 }
 
-/* ── Main grid ────────────────────────────────────────── */
-.dash-grid {
+/* ── Content Grid - Centered ──────────────────────────── */
+.dash-content-grid {
   display: grid;
-  grid-template-columns: 1fr 300px;
-  gap: 1.25rem;
+  grid-template-columns: 1fr 280px;
+  gap: 1.5rem;
   align-items: start;
 }
 
-.dash-sidebar {
+.dash-side-cards {
   display: flex;
   flex-direction: column;
-  gap: 1.25rem;
+  gap: 1.5rem;
 }
 
 /* ── Card base ────────────────────────────────────────── */
@@ -126,10 +182,19 @@
   border-radius: var(--radius-lg);
   box-shadow: var(--shadow-sm);
   overflow: hidden;
+  transition: box-shadow 0.15s ease;
+}
+
+.dash-card:hover {
+  box-shadow: var(--shadow-md);
+}
+
+.dash-card-compact {
+  overflow: visible;
 }
 
 .dash-card-header {
-  padding: 0.9rem 1.25rem;
+  padding: 1rem 1.25rem;
   border-bottom: 1px solid var(--border);
   display: flex;
   justify-content: space-between;
@@ -137,7 +202,7 @@
 }
 
 .dash-card-title {
-  font-size: 0.9rem;
+  font-size: 0.95rem;
   font-weight: 700;
   color: var(--text-primary);
 }
@@ -146,14 +211,34 @@
   background: none;
   border: none;
   cursor: pointer;
-  font-size: 0.8rem;
+  font-size: 0.78rem;
   color: var(--primary);
   font-weight: 500;
   padding: 0;
   font-family: inherit;
+  transition: color 0.15s;
 }
 
-.dash-link:hover { text-decoration: underline; }
+.dash-link:hover {
+  color: var(--primary-dark);
+}
+
+.dash-link-secondary {
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-size: 0.82rem;
+  color: var(--primary);
+  font-weight: 500;
+  padding: 0.5rem 1rem;
+  font-family: inherit;
+  margin-top: 0.75rem;
+  transition: color 0.15s;
+}
+
+.dash-link-secondary:hover {
+  color: var(--primary-dark);
+}
 
 /* ── Citas list ───────────────────────────────────────── */
 .dash-citas-list { }
@@ -249,18 +334,22 @@
 
 /* ── Empty state ──────────────────────────────────────── */
 .dash-empty {
-  padding: 2.5rem;
+  padding: 3rem 2rem;
   text-align: center;
   color: var(--text-muted);
 }
 
 .dash-empty svg {
-  margin: 0 auto 0.75rem;
+  margin: 0 auto 1rem;
   display: block;
-  opacity: 0.4;
+  opacity: 0.3;
+  color: var(--text-muted);
 }
 
-.dash-empty p { font-size: 0.85rem; }
+.dash-empty p {
+  font-size: 0.95rem;
+  margin: 0;
+}
 
 /* ── Tipo badge on cita rows ──────────────────────────── */
 .dash-cita-nombre-row {
@@ -368,16 +457,51 @@
 }
 
 /* ── Responsive ───────────────────────────────────────── */
-@media (max-width: 1100px) {
-  .dash-stats { grid-template-columns: repeat(2, 1fr); }
+@media (max-width: 1024px) {
+  .medico-dash {
+    max-width: 800px;
+    padding: 1.5rem;
+  }
+
+  .dash-stats {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  .dash-header-section {
+    flex-direction: column;
+  }
 }
 
-@media (max-width: 860px) {
-  .dash-grid { grid-template-columns: 1fr; }
-}
+@media (max-width: 768px) {
+  .medico-dash {
+    max-width: 100%;
+    padding: 1rem;
+  }
 
-@media (max-width: 640px) {
-  .medico-dash { padding: 1rem; }
-  .dash-stats  { grid-template-columns: repeat(2, 1fr); gap: 0.75rem; }
-  .dash-greeting-title { font-size: 1.2rem; }
+  .dash-stats {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 0.75rem;
+    margin-bottom: 1.5rem;
+  }
+
+  .dash-content-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .dash-side-cards {
+    flex-direction: row;
+    gap: 1rem;
+  }
+
+  .dash-side-cards .dash-card {
+    flex: 1;
+  }
+
+  .dash-greeting-title {
+    font-size: 1.35rem;
+  }
+
+  .dash-cita-motivo {
+    max-width: 150px;
+  }
 }

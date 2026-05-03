@@ -1,7 +1,7 @@
 import api from "./api";
-import type { Alergia, MedicamentoHabitual, ProblemaMedico } from "./paciente.service";
+import type { Alergia, MedicamentoHabitual, ProblemaMedico, CirugiaPevia, AntecedenteFamiliar } from "./paciente.service";
 
-export type { Alergia, MedicamentoHabitual, ProblemaMedico };
+export type { Alergia, MedicamentoHabitual, ProblemaMedico, CirugiaPevia, AntecedenteFamiliar };
 
 export interface MedicamentoPrescrito {
   medicamentoId: string;
@@ -26,6 +26,8 @@ export interface CitaMedico {
     alergias?: Alergia[];
     medicamentosHabituales?: MedicamentoHabitual[];
     problemasMedicos?: ProblemaMedico[];
+    cirugiasPrevias?: CirugiaPevia[];
+    antecedentesFamiliares?: AntecedenteFamiliar[];
   };
   fecha: string;
   hora: string;
@@ -51,6 +53,26 @@ export interface MedicoPerfil {
   };
   cmp?: string;
   cvUrl?: string;
+}
+
+export interface CitaHistorial {
+  _id: string;
+  fecha: string;
+  hora: string;
+  tipo?: string;
+  estado: "PENDIENTE" | "ATENDIDA" | "CANCELADA" | "REPROGRAMADA";
+  diagnostico?: string;
+  tratamiento?: string;
+  notasClinicas?: string;
+  doctorId?: {
+    _id: string;
+    nombres: string;
+    apellidos: string;
+    especialidadId?: {
+      _id: string;
+      nombre: string;
+    };
+  };
 }
 
 export class MedicoApiService {
@@ -109,6 +131,15 @@ export class MedicoApiService {
     medicamentos: MedicamentoPrescrito[]
   ): Promise<CitaMedico> {
     const response = await api.patch(`/medico/citas/${citaId}/medicamentos`, { medicamentos });
+    return response.data.data;
+  }
+
+  static async obtenerHistorialCitasPaciente(
+    pacienteId: string,
+    excluirCitaId?: string
+  ): Promise<CitaHistorial[]> {
+    const params = excluirCitaId ? `?excluirCitaId=${excluirCitaId}` : "";
+    const response = await api.get(`/medico/pacientes/${pacienteId}/historial-citas${params}`);
     return response.data.data;
   }
 

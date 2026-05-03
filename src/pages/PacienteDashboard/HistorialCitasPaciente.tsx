@@ -1,23 +1,14 @@
 import { useEffect, useState, useMemo } from "react";
-import { CalendarDays, Filter, ChevronLeft, ChevronRight } from "lucide-react";
+import { CalendarDays, Search, ChevronLeft, ChevronRight } from "lucide-react";
 import { useAuth } from "../../hooks/userAuth";
 import { CitaApiService, type CitaHistorial } from "../../services/cita.service";
 import ItemCita from "./ItemCita";
 import DetalleCita from "./DetalleCita";
 import "./HistorialCitas.css";
 
-// Agregar "ASISTIO" a los tipos de filtro
-type FiltroEstado = "TODOS" | "PENDIENTE" | "ASISTIO" | "ATENDIDA" | "CANCELADA" | "REPROGRAMADA" | "VENCIDA";
+type Tab = "PROXIMAS" | "PASADAS";
 
-const FILTRO_LABELS: Record<FiltroEstado, string> = {
-  TODOS:        "Todas",
-  PENDIENTE:    "Pendientes",
-  ASISTIO:      "Asistió",
-  ATENDIDA:     "Atendidas",
-  CANCELADA:    "Canceladas",
-  REPROGRAMADA: "Reprogramadas",
-  VENCIDA:      "Vencidas",
-};
+const ESTADOS_PROXIMAS = new Set(["PENDIENTE"]);
 
 const POR_PAGINA = 5;
 
@@ -29,7 +20,7 @@ const HistorialCitasPaciente = () => {
   const [error, setError]                       = useState("");
   const [citaSeleccionada, setCitaSeleccionada] = useState<CitaHistorial | null>(null);
   const [busqueda, setBusqueda]                 = useState("");
-  const [filtroEstado, setFiltroEstado]         = useState<FiltroEstado>("TODOS");
+  const [activeTab, setActiveTab]               = useState<Tab>("PROXIMAS");
   const [pagina, setPagina]                     = useState(1);
 
   useEffect(() => {
@@ -38,20 +29,24 @@ const HistorialCitasPaciente = () => {
     setError("");
     CitaApiService.obtenerHistorialPaciente(user.correo)
       .then(setCitas)
-      .catch((e) => setError(e?.message ?? "Error al cargar historial"))
+      .catch((e) => setError(e?.message ?? "Error al cargar citas"))
       .finally(() => setLoading(false));
   }, [user?.correo]);
 
-  // Resetear página al cambiar filtros o búsqueda
-  useEffect(() => { setPagina(1); }, [filtroEstado, busqueda]);
+  useEffect(() => {
+    setPagina(1);
+    setBusqueda("");
+  }, [activeTab]);
+
+  useEffect(() => { setPagina(1); }, [busqueda]);
 
   const citasFiltradas = useMemo(() => {
-    return citas
+    const filtered = citas
       .filter((c) => {
-        if (filtroEstado === "TODOS") return true;
-        // Normalizar el estado para comparar
-        const estadoCita = c.estado?.toUpperCase()?.trim() ?? "";
-        return estadoCita === filtroEstado;
+        const estado = c.estado?.toUpperCase()?.trim() ?? "";
+        return activeTab === "PROXIMAS"
+          ? ESTADOS_PROXIMAS.has(estado)
+          : !ESTADOS_PROXIMAS.has(estado);
       })
       .filter((c) => {
         if (!busqueda.trim()) return true;
@@ -67,12 +62,32 @@ const HistorialCitasPaciente = () => {
           mesCorto.includes(q) ||
           anio.includes(q)
         );
-      })
-      .sort((a, b) => new Date(b.fecha).getTime() - new Date(a.fecha).getTime());
-  }, [citas, filtroEstado, busqueda]);
+      });
 
-  const totalPaginas  = Math.max(1, Math.ceil(citasFiltradas.length / POR_PAGINA));
-  const citasPagina   = citasFiltradas.slice((pagina - 1) * POR_PAGINA, pagina * POR_PAGINA);
+    // Próximas: ascendente (la más cercana primero); Pasadas: descendente (la más reciente primero)
+    filtered.sort((a, b) => {
+      const diff = new Date(a.fecha).getTime() - new Date(b.fecha).getTime();
+      return activeTab === "PROXIMAS" ? diff : -diff;
+    });
+
+    return filtered;
+  }, [citas, activeTab, busqueda]);
+
+  const totalPaginas = Math.max(1, Math.ceil(citasFiltradas.length / POR_PAGINA));
+  const citasPagina  = citasFiltradas.slice((pagina - 1) * POR_PAGINA, pagina * POR_PAGINA);
+
+  const tabStyle = (tab: Tab) => ({
+    padding: "0.75rem 1.5rem",
+    borderBottom: activeTab === tab ? "2px solid var(--primary)" : "2px solid transparent",
+    color: activeTab === tab ? "var(--primary)" : "var(--text-secondary)",
+    fontWeight: activeTab === tab ? "bold" : "normal" as const,
+    background: "none",
+    border: "none",
+    borderBottomWidth: "2px",
+    borderBottomStyle: "solid" as const,
+    cursor: "pointer",
+    fontSize: "1rem",
+  });
 
   return (
     <div className="hc-container">
@@ -82,31 +97,33 @@ const HistorialCitasPaciente = () => {
             <CalendarDays size={20} />
           </div>
           <div>
-            <h2 className="hc-title">Historial de Citas</h2>
+            <h2 className="hc-title">Mis Citas</h2>
           </div>
         </div>
       </div>
 
-      <div className="hc-controls">
-        <input
-          type="text"
-          className="hc-search"
-          placeholder="Buscar por médico, especialidad, mes o año..."
-          value={busqueda}
-          onChange={(e) => setBusqueda(e.target.value)}
-        />
-        <div className="hc-filtros">
-          <Filter size={14} className="hc-filtro-icon" />
-          {(Object.keys(FILTRO_LABELS) as FiltroEstado[]).map((f) => (
-            <button
-              key={f}
-              type="button"
-              className={`hc-filtro-btn${filtroEstado === f ? " active" : ""}`}
-              onClick={() => setFiltroEstado(f)}
-            >
-              {FILTRO_LABELS[f]}
-            </button>
-          ))}
+      {/* Tabs */}
+      <div style={{ display: "flex", borderBottom: "1px solid var(--border)", marginBottom: "1.5rem" }}>
+        <button onClick={() => setActiveTab("PROXIMAS")} style={tabStyle("PROXIMAS")}>
+          Próximas
+        </button>
+        <button onClick={() => setActiveTab("PASADAS")} style={tabStyle("PASADAS")}>
+          Anteriores
+        </button>
+      </div>
+
+      {/* Búsqueda */}
+      <div className="hc-controls" style={{ marginBottom: "1rem" }}>
+        <div style={{ position: "relative", flex: 1 }}>
+          <Search size={16} style={{ position: "absolute", left: "10px", top: "50%", transform: "translateY(-50%)", color: "var(--text-muted)" }} />
+          <input
+            type="text"
+            className="hc-search"
+            placeholder="Buscar por médico, especialidad, mes o año..."
+            value={busqueda}
+            onChange={(e) => setBusqueda(e.target.value)}
+            style={{ paddingLeft: "2rem" }}
+          />
         </div>
       </div>
 
@@ -114,7 +131,7 @@ const HistorialCitasPaciente = () => {
         {loading && (
           <div className="hc-state">
             <div className="spinner-small" />
-            <p>Cargando historial...</p>
+            <p>Cargando citas...</p>
           </div>
         )}
 
@@ -128,9 +145,11 @@ const HistorialCitasPaciente = () => {
           <div className="hc-state">
             <CalendarDays size={36} style={{ opacity: 0.25 }} />
             <p>
-              {busqueda || filtroEstado !== "TODOS"
-                ? "No se encontraron citas con los filtros seleccionados."
-                : "No tienes citas registradas aún."}
+              {busqueda
+                ? "No se encontraron citas con esa búsqueda."
+                : activeTab === "PROXIMAS"
+                  ? "No tienes citas próximas registradas."
+                  : "No tienes citas anteriores registradas."}
             </p>
           </div>
         )}
@@ -141,11 +160,11 @@ const HistorialCitasPaciente = () => {
               key={cita._id}
               cita={cita}
               onClick={() => setCitaSeleccionada(cita)}
+              hideEstado={activeTab === "PROXIMAS"}
             />
           ))}
       </div>
 
-      {/* Paginación */}
       {!loading && !error && totalPaginas > 1 && (
         <div className="hc-pagination">
           <button
@@ -157,11 +176,9 @@ const HistorialCitasPaciente = () => {
           >
             <ChevronLeft size={16} />
           </button>
-
           <span className="hc-page-info">
             Página {pagina} de {totalPaginas}
           </span>
-
           <button
             type="button"
             className="hc-page-btn"

@@ -4,12 +4,13 @@ import Swal from "sweetalert2";
 import { AlertTriangle, Pill, FileText, Plus, ChevronDown, ChevronUp } from "lucide-react";
 import "./NotaSOAP.css";
 
-import type { SOAPData, ExamenOrdenado, MedicamentoSOAP } from "./types";
+import type { SOAPData, ExamenOrdenado, MedicamentoSOAP, EspecialidadData } from "./types";
 import { INITIAL_SOAP } from "./types";
 import SectionS from "./sections/SectionS";
 import SectionO from "./sections/SectionO";
 import SectionA from "./sections/SectionA";
 import SectionP from "./sections/SectionP";
+import SectionE from "./sections/SectionE";
 
 import ModalSolicitudExamen from "../../components/modals/ModalSolicitudExamen";
 import ModalReceta          from "../../components/modals/ModalReceta";
@@ -17,16 +18,17 @@ import ModalReferencia      from "../../components/modals/ModalReferencia";
 import ModalInterconsulta   from "../../components/modals/ModalInterconsulta";
 
 import { MedicoApiService } from "../../services/medico.service";
-import type { CitaMedico, Alergia, MedicamentoHabitual, ProblemaMedico } from "../../services/medico.service";
+import type { CitaMedico, CitaHistorial, Alergia, MedicamentoHabitual, ProblemaMedico, CirugiaPevia, AntecedenteFamiliar } from "../../services/medico.service";
 import { PacienteApiService } from "../../services/paciente.service";
 
-type Section = "S" | "O" | "A" | "P";
+type Section = "S" | "O" | "A" | "P" | "E";
 
 const SECTIONS: { id: Section; label: string; sub: string }[] = [
   { id: "S", label: "S", sub: "Subjetivo" },
   { id: "O", label: "O", sub: "Objetivo" },
   { id: "A", label: "A", sub: "Análisis" },
   { id: "P", label: "P", sub: "Plan" },
+  { id: "E", label: "E", sub: "Especialidad" },
 ];
 
 function calcAge(fechaNac?: string): string {
@@ -53,34 +55,54 @@ export default function NotaSOAP() {
   const [modalAbierto, setModalAbierto] = useState<string | null>(null);
   const [lastSaved,    setLastSaved]    = useState<string | null>(null);
   const [saving,       setSaving]       = useState(false);
+  const [especData,    setEspecData]    = useState<EspecialidadData>({});
+  const [especialidadNombre, setEspecialidadNombre] = useState<string>("");
 
   // ── Historial clínico del paciente ──────────────────────────
   const [alergias,          setAlergias]          = useState<Alergia[]>([]);
   const [medicHabituales,   setMedicHabituales]   = useState<MedicamentoHabitual[]>([]);
   const [problemasMedicos,  setProblemasMedicos]  = useState<ProblemaMedico[]>([]);
-  const [historialExpandido, setHistorialExpandido] = useState(true);
-  const [savingHistorial,   setSavingHistorial]   = useState(false);
-  const [modalHistorial,    setModalHistorial]    = useState<"alergia" | "medicamento" | "problema" | null>(null);
+  const [cirugiasPrevias,      setCirugiasPrevias]      = useState<CirugiaPevia[]>([]);
+  const [antecedentesFam,      setAntecedentesFam]      = useState<AntecedenteFamiliar[]>([]);
+  const [historialExpandido,   setHistorialExpandido]   = useState(true);
+  const [historialCitas,       setHistorialCitas]       = useState<CitaHistorial[]>([]);
+  const [historialCitasExp,    setHistorialCitasExp]    = useState(true);
+  const [citaExpandidaId,      setCitaExpandidaId]      = useState<string | null>(null);
+  const [savingHistorial,      setSavingHistorial]      = useState(false);
+  const [modalHistorial,       setModalHistorial]       = useState<"alergia" | "medicamento" | "problema" | "cirugia" | "antFamiliar" | null>(null);
   const [nuevoItem,         setNuevoItem]         = useState<Record<string, string>>({});
 
   useEffect(() => {
     if (!citaId) return;
-    MedicoApiService.obtenerDetalleCita(citaId)
-      .then(data => {
+    Promise.all([
+      MedicoApiService.obtenerDetalleCita(citaId),
+      MedicoApiService.obtenerMiPerfil(),
+    ])
+      .then(([data, perfil]) => {
         setCita(data);
+        if (perfil?.especialidadId?.nombre) {
+          setEspecialidadNombre(perfil.especialidadId.nombre);
+        }
         if (data.notasClinicas) {
           try {
             const parsed = JSON.parse(data.notasClinicas);
             if (parsed.soap) setSoapData(parsed.soap);
             if (parsed.examenes) setExamenes(parsed.examenes);
             if (parsed.medicamentos) setMedicamentos(parsed.medicamentos);
+            if (parsed.especialidad) setEspecData(parsed.especialidad);
           } catch { /* borrador no parseable, ignorar */ }
         }
-        // Cargar historial clínico del paciente
         const pac = data.pacienteId;
         if (pac.alergias) setAlergias(pac.alergias);
         if (pac.medicamentosHabituales) setMedicHabituales(pac.medicamentosHabituales);
         if (pac.problemasMedicos) setProblemasMedicos(pac.problemasMedicos);
+        if (pac.cirugiasPrevias) setCirugiasPrevias(pac.cirugiasPrevias);
+        if (pac.antecedentesFamiliares) setAntecedentesFam(pac.antecedentesFamiliares);
+
+        // Cargar historial de citas del paciente (todas las especialidades)
+        MedicoApiService.obtenerHistorialCitasPaciente(pac._id, citaId)
+          .then(setHistorialCitas)
+          .catch(() => {});
       })
       .catch(() => {})
       .finally(() => setLoading(false));
@@ -89,7 +111,9 @@ export default function NotaSOAP() {
   const guardarHistorialClinico = async (
     nuevasAlergias: Alergia[],
     nuevosMedic: MedicamentoHabitual[],
-    nuevosProblemas: ProblemaMedico[]
+    nuevosProblemas: ProblemaMedico[],
+    nuevasCirugias: CirugiaPevia[],
+    nuevosAntFam: AntecedenteFamiliar[]
   ) => {
     if (!cita) return;
     setSavingHistorial(true);
@@ -98,6 +122,8 @@ export default function NotaSOAP() {
         alergias: nuevasAlergias,
         medicamentosHabituales: nuevosMedic,
         problemasMedicos: nuevosProblemas,
+        cirugiasPrevias: nuevasCirugias,
+        antecedentesFamiliares: nuevosAntFam,
       });
     } catch {
       Swal.fire({ icon: "error", title: "Error", text: "No se pudo guardar el historial.", confirmButtonColor: "var(--primary)" });
@@ -117,7 +143,7 @@ export default function NotaSOAP() {
     setAlergias(actualizadas);
     setModalHistorial(null);
     setNuevoItem({});
-    await guardarHistorialClinico(actualizadas, medicHabituales, problemasMedicos);
+    await guardarHistorialClinico(actualizadas, medicHabituales, problemasMedicos, cirugiasPrevias, antecedentesFam);
   };
 
   const handleAgregarMedicamento = async () => {
@@ -132,7 +158,7 @@ export default function NotaSOAP() {
     setMedicHabituales(actualizados);
     setModalHistorial(null);
     setNuevoItem({});
-    await guardarHistorialClinico(alergias, actualizados, problemasMedicos);
+    await guardarHistorialClinico(alergias, actualizados, problemasMedicos, cirugiasPrevias, antecedentesFam);
   };
 
   const handleAgregarProblema = async () => {
@@ -146,14 +172,42 @@ export default function NotaSOAP() {
     setProblemasMedicos(actualizados);
     setModalHistorial(null);
     setNuevoItem({});
-    await guardarHistorialClinico(alergias, medicHabituales, actualizados);
+    await guardarHistorialClinico(alergias, medicHabituales, actualizados, cirugiasPrevias, antecedentesFam);
   };
 
-  const updateSection = <K extends Section>(sec: K, val: SOAPData[K]) =>
+  const handleAgregarCirugia = async () => {
+    if (!nuevoItem.procedimiento?.trim()) return;
+    const nueva: CirugiaPevia = {
+      procedimiento: nuevoItem.procedimiento,
+      fecha: nuevoItem.fecha || undefined,
+      hospital: nuevoItem.hospital || "",
+    };
+    const actualizadas = [...cirugiasPrevias, nueva];
+    setCirugiasPrevias(actualizadas);
+    setModalHistorial(null);
+    setNuevoItem({});
+    await guardarHistorialClinico(alergias, medicHabituales, problemasMedicos, actualizadas, antecedentesFam);
+  };
+
+  const handleAgregarAntFamiliar = async () => {
+    if (!nuevoItem.parentesco?.trim() || !nuevoItem.condicion?.trim()) return;
+    const nuevo: AntecedenteFamiliar = {
+      parentesco: nuevoItem.parentesco,
+      condicion: nuevoItem.condicion,
+    };
+    const actualizados = [...antecedentesFam, nuevo];
+    setAntecedentesFam(actualizados);
+    setModalHistorial(null);
+    setNuevoItem({});
+    await guardarHistorialClinico(alergias, medicHabituales, problemasMedicos, cirugiasPrevias, actualizados);
+  };
+
+  const updateSection = <K extends keyof SOAPData>(sec: K, val: SOAPData[K]) =>
     setSoapData(prev => ({ ...prev, [sec]: val }));
 
   const isDone = (sec: Section) => {
-    const d = soapData[sec];
+    if (sec === "E") return Object.keys(especData).some(k => especData[k] !== "");
+    const d = soapData[sec as Exclude<Section, "E">];
     if (sec === "S") return !!(d as SOAPData["S"]).motivoConsulta && !!(d as SOAPData["S"]).enfermedadActual;
     if (sec === "O") return !!(d as SOAPData["O"]).pa_s || !!(d as SOAPData["O"]).temp;
     if (sec === "A") return (d as SOAPData["A"]).diagnoses.length > 0;
@@ -164,7 +218,7 @@ export default function NotaSOAP() {
   const buildPayload = () => {
     const dxPrimario = soapData.A.diagnoses[0];
     return {
-      notasClinicas: JSON.stringify({ soap: soapData, examenes, medicamentos }),
+      notasClinicas: JSON.stringify({ soap: soapData, examenes, medicamentos, especialidad: especData }),
       diagnostico:   dxPrimario ? `${dxPrimario.code} — ${dxPrimario.name}` : "",
       tratamiento:   medicamentos.map(m => `${m.nombre} ${m.concentracion} ${m.frecuencia}`).join("; "),
     };
@@ -382,7 +436,7 @@ export default function NotaSOAP() {
               </div>
 
               {/* Problemas médicos */}
-              <div>
+              <div style={{ marginBottom: 10 }}>
                 <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 4 }}>
                   <div style={{ display: "flex", alignItems: "center", gap: 5, fontSize: 11, fontWeight: 600 }}>
                     <FileText size={11} style={{ color: "#0ea5e9" }} />
@@ -402,6 +456,142 @@ export default function NotaSOAP() {
                   </div>
                 ))}
               </div>
+
+              {/* Cirugías previas */}
+              <div style={{ marginBottom: 10 }}>
+                <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 4 }}>
+                  <div style={{ display: "flex", alignItems: "center", gap: 5, fontSize: 11, fontWeight: 600 }}>
+                    <span style={{ fontSize: 11, color: "#8b5cf6" }}>✂</span>
+                    Cirugías Previas
+                  </div>
+                  <button onClick={() => { setNuevoItem({}); setModalHistorial("cirugia"); }}
+                    style={{ background: "none", border: "none", cursor: "pointer", color: "var(--primary)", padding: 2 }}>
+                    <Plus size={12} />
+                  </button>
+                </div>
+                {cirugiasPrevias.length === 0 ? (
+                  <p style={{ fontSize: 11, color: "var(--text-muted)", margin: 0 }}>Sin cirugías registradas</p>
+                ) : cirugiasPrevias.map((c, i) => (
+                  <div key={i} style={{ fontSize: 11, padding: "2px 0", borderBottom: "1px solid var(--border)" }}>
+                    <span style={{ fontWeight: 500 }}>{c.procedimiento}</span>
+                    {c.fecha && <span style={{ color: "var(--text-muted)", fontSize: 10 }}> ({new Date(c.fecha).getFullYear()})</span>}
+                    {c.hospital && <span style={{ color: "var(--text-muted)" }}> · {c.hospital}</span>}
+                  </div>
+                ))}
+              </div>
+
+              {/* Antecedentes familiares */}
+              <div>
+                <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 4 }}>
+                  <div style={{ display: "flex", alignItems: "center", gap: 5, fontSize: 11, fontWeight: 600 }}>
+                    <span style={{ fontSize: 11, color: "#ec4899" }}>👨‍👩‍👧</span>
+                    Antecedentes Familiares
+                  </div>
+                  <button onClick={() => { setNuevoItem({}); setModalHistorial("antFamiliar"); }}
+                    style={{ background: "none", border: "none", cursor: "pointer", color: "var(--primary)", padding: 2 }}>
+                    <Plus size={12} />
+                  </button>
+                </div>
+                {antecedentesFam.length === 0 ? (
+                  <p style={{ fontSize: 11, color: "var(--text-muted)", margin: 0 }}>Sin antecedentes registrados</p>
+                ) : antecedentesFam.map((a, i) => (
+                  <div key={i} style={{ fontSize: 11, padding: "2px 0", borderBottom: "1px solid var(--border)" }}>
+                    <span style={{ fontWeight: 500, color: "var(--text-muted)", textTransform: "capitalize" }}>{a.parentesco}:</span>
+                    <span style={{ marginLeft: 4 }}>{a.condicion}</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+        </div>
+
+        {/* ── Historial de Citas Anteriores ── */}
+        <div style={{ borderTop: "1px solid var(--border)" }}>
+          <button
+            onClick={() => setHistorialCitasExp(v => !v)}
+            style={{
+              width: "100%", display: "flex", alignItems: "center", justifyContent: "space-between",
+              padding: "10px 14px", background: "none", border: "none", cursor: "pointer",
+              fontSize: 11, fontWeight: 700, color: "var(--text-muted)", textTransform: "uppercase", letterSpacing: 0.8,
+            }}
+          >
+            <span>Citas Anteriores {historialCitas.length > 0 && <span style={{ fontWeight: 400, textTransform: "none" }}>({historialCitas.length})</span>}</span>
+            {historialCitasExp ? <ChevronUp size={13} /> : <ChevronDown size={13} />}
+          </button>
+
+          {historialCitasExp && (
+            <div style={{ padding: "0 14px 14px" }}>
+              {historialCitas.length === 0 ? (
+                <p style={{ fontSize: 11, color: "var(--text-muted)", margin: 0 }}>Sin consultas previas registradas</p>
+              ) : historialCitas.map(c => {
+                const esExpandida = citaExpandidaId === c._id;
+                const especialidad = (c.doctorId as any)?.especialidadId?.nombre ?? "—";
+                const doctor = c.doctorId ? `${c.doctorId.nombres} ${c.doctorId.apellidos}` : "—";
+                const estadoColor = c.estado === "ATENDIDA" ? "#16a34a" : c.estado === "CANCELADA" ? "#dc2626" : "#d97706";
+                const estadoBg = c.estado === "ATENDIDA" ? "#f0fdf4" : c.estado === "CANCELADA" ? "#fee2e2" : "#fffbeb";
+
+                let motivoConsulta = "";
+                if (c.notasClinicas) {
+                  try {
+                    const parsed = JSON.parse(c.notasClinicas);
+                    motivoConsulta = parsed.soap?.S?.motivoConsulta ?? "";
+                  } catch { /* ignorar */ }
+                }
+
+                return (
+                  <div key={c._id} style={{
+                    marginBottom: 8, border: "1px solid var(--border)", borderRadius: 8, overflow: "hidden",
+                  }}>
+                    <div
+                      onClick={() => setCitaExpandidaId(esExpandida ? null : c._id)}
+                      style={{
+                        padding: "7px 10px", cursor: "pointer",
+                        background: esExpandida ? "var(--primary-lighter, #eff6ff)" : "white",
+                        display: "flex", flexDirection: "column", gap: 2,
+                      }}
+                    >
+                      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+                        <span style={{ fontSize: 11, fontWeight: 600, color: "var(--text-primary)" }}>
+                          {new Date(c.fecha).toLocaleDateString("es-PE", { day: "2-digit", month: "short", year: "numeric" })}
+                        </span>
+                        <span style={{
+                          fontSize: 10, fontWeight: 700, padding: "1px 6px", borderRadius: 4,
+                          background: estadoBg, color: estadoColor,
+                        }}>
+                          {c.estado}
+                        </span>
+                      </div>
+                      <div style={{ fontSize: 11, color: "var(--primary)", fontWeight: 500 }}>{especialidad}</div>
+                      <div style={{ fontSize: 10, color: "var(--text-muted)" }}>Dr. {doctor}</div>
+                    </div>
+
+                    {esExpandida && (
+                      <div style={{ padding: "8px 10px", background: "#f9fafb", borderTop: "1px solid var(--border)", fontSize: 11 }}>
+                        {motivoConsulta && (
+                          <div style={{ marginBottom: 4 }}>
+                            <span style={{ fontWeight: 700, color: "var(--text-muted)", fontSize: 10 }}>MOTIVO </span>
+                            <span>{motivoConsulta}</span>
+                          </div>
+                        )}
+                        {c.diagnostico ? (
+                          <div style={{ marginBottom: 4 }}>
+                            <span style={{ fontWeight: 700, color: "var(--text-muted)", fontSize: 10 }}>DX </span>
+                            <span>{c.diagnostico}</span>
+                          </div>
+                        ) : (
+                          <span style={{ color: "var(--text-muted)", fontStyle: "italic" }}>Sin diagnóstico</span>
+                        )}
+                        {c.tratamiento && (
+                          <div>
+                            <span style={{ fontWeight: 700, color: "var(--text-muted)", fontSize: 10 }}>TX </span>
+                            <span>{c.tratamiento}</span>
+                          </div>
+                        )}
+                      </div>
+                    )}
+                  </div>
+                );
+              })}
             </div>
           )}
         </div>
@@ -464,6 +654,14 @@ export default function NotaSOAP() {
               onOpenModal={setModalAbierto}
             />
           )}
+          {section === "E" && (
+            <SectionE
+              especialidadNombre={especialidadNombre}
+              data={especData}
+              setData={setEspecData}
+              onPrev={() => setSection("P")}
+            />
+          )}
         </div>
 
         {/* Footer */}
@@ -522,9 +720,11 @@ export default function NotaSOAP() {
             boxShadow: "0 20px 60px rgba(0,0,0,0.25)",
           }}>
             <h3 style={{ margin: "0 0 16px", fontSize: 15, fontWeight: 700 }}>
-              {modalHistorial === "alergia" && "Agregar Alergia"}
+              {modalHistorial === "alergia"     && "Agregar Alergia"}
               {modalHistorial === "medicamento" && "Agregar Medicamento Habitual"}
-              {modalHistorial === "problema" && "Agregar Problema Médico"}
+              {modalHistorial === "problema"    && "Agregar Problema Médico"}
+              {modalHistorial === "cirugia"     && "Agregar Cirugía Previa"}
+              {modalHistorial === "antFamiliar" && "Agregar Antecedente Familiar"}
             </h3>
 
             {modalHistorial === "alergia" && (
@@ -571,6 +771,43 @@ export default function NotaSOAP() {
               </div>
             )}
 
+            {modalHistorial === "cirugia" && (
+              <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+                <input placeholder="Procedimiento quirúrgico *" value={nuevoItem.procedimiento || ""}
+                  onChange={e => setNuevoItem(p => ({ ...p, procedimiento: e.target.value }))}
+                  style={{ padding: "8px 12px", border: "1px solid var(--border)", borderRadius: 8, fontSize: 13 }} />
+                <input type="date" placeholder="Fecha"
+                  value={nuevoItem.fecha || ""}
+                  onChange={e => setNuevoItem(p => ({ ...p, fecha: e.target.value }))}
+                  style={{ padding: "8px 12px", border: "1px solid var(--border)", borderRadius: 8, fontSize: 13 }} />
+                <input placeholder="Hospital / Centro (opcional)" value={nuevoItem.hospital || ""}
+                  onChange={e => setNuevoItem(p => ({ ...p, hospital: e.target.value }))}
+                  style={{ padding: "8px 12px", border: "1px solid var(--border)", borderRadius: 8, fontSize: 13 }} />
+              </div>
+            )}
+
+            {modalHistorial === "antFamiliar" && (
+              <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+                <select value={nuevoItem.parentesco || ""}
+                  onChange={e => setNuevoItem(p => ({ ...p, parentesco: e.target.value }))}
+                  style={{ padding: "8px 12px", border: "1px solid var(--border)", borderRadius: 8, fontSize: 13 }}>
+                  <option value="">Parentesco *</option>
+                  <option value="Padre">Padre</option>
+                  <option value="Madre">Madre</option>
+                  <option value="Hermano/a">Hermano/a</option>
+                  <option value="Abuelo paterno">Abuelo paterno</option>
+                  <option value="Abuela paterna">Abuela paterna</option>
+                  <option value="Abuelo materno">Abuelo materno</option>
+                  <option value="Abuela materna">Abuela materna</option>
+                  <option value="Tío/a">Tío/a</option>
+                  <option value="Otro">Otro</option>
+                </select>
+                <input placeholder="Condición / enfermedad *" value={nuevoItem.condicion || ""}
+                  onChange={e => setNuevoItem(p => ({ ...p, condicion: e.target.value }))}
+                  style={{ padding: "8px 12px", border: "1px solid var(--border)", borderRadius: 8, fontSize: 13 }} />
+              </div>
+            )}
+
             <div style={{ display: "flex", gap: 10, marginTop: 18, justifyContent: "flex-end" }}>
               <button onClick={() => { setModalHistorial(null); setNuevoItem({}); }}
                 style={{ padding: "8px 16px", border: "1px solid var(--border)", borderRadius: 8, background: "white", cursor: "pointer", fontSize: 13 }}>
@@ -578,9 +815,11 @@ export default function NotaSOAP() {
               </button>
               <button
                 onClick={() => {
-                  if (modalHistorial === "alergia") handleAgregarAlergia();
+                  if (modalHistorial === "alergia")     handleAgregarAlergia();
                   if (modalHistorial === "medicamento") handleAgregarMedicamento();
-                  if (modalHistorial === "problema") handleAgregarProblema();
+                  if (modalHistorial === "problema")    handleAgregarProblema();
+                  if (modalHistorial === "cirugia")     handleAgregarCirugia();
+                  if (modalHistorial === "antFamiliar") handleAgregarAntFamiliar();
                 }}
                 style={{ padding: "8px 16px", border: "none", borderRadius: 8, background: "var(--primary)", color: "white", cursor: "pointer", fontSize: 13, fontWeight: 600 }}>
                 Guardar

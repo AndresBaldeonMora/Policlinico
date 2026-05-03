@@ -34,9 +34,8 @@ const Sidebar = () => {
   ];
 
   const medicoMenu = [
-    { path: "/medico", label: "Dashboard", icon: LayoutDashboard, description: "Panel principal del médico" },
-    { path: "/medico/citas", label: "Mis Citas", icon: ClipboardList, description: "Listado de mis citas" },
-    { path: "/pacientes", label: "Pacientes", icon: Users, description: "Listado de pacientes" },
+    { path: "/medico",       label: "Dashboard", icon: LayoutDashboard, description: "Panel principal del médico" },
+    { path: "/medico/citas", label: "Mis Citas", icon: ClipboardList,   description: "Listado de mis citas" },
   ];
 
   // Menú ADMINISTRADOR 
@@ -48,11 +47,11 @@ const Sidebar = () => {
   ];
 
   const pacienteMenu = [
-    { path: "/paciente", label: "Inicio", icon: Home, description: "Inicio del portal" },
-    { path: "/paciente/citas", label: "Mis Citas", icon: Calendar, description: "Ver mis citas" },
-    { path: "/paciente/historial", label: "Mi Historial", icon: ClipboardList, description: "Historial médico" },
-    { path: "/paciente/ordenes", label: "Mis Órdenes", icon: FlaskConical, description: "Órdenes de exámenes" },
-    { path: "/paciente/perfil", label: "Mi Perfil", icon: User, description: "Datos personales" },
+    { path: "/paciente",           label: "Inicio",        icon: Home,          description: "Inicio del portal" },
+    { path: "/paciente/citas",     label: "Reservar Cita", icon: Calendar,      description: "Agendar nueva cita" },
+    { path: "/paciente/historial", label: "Mis Citas",     icon: ClipboardList, description: "Ver mis citas" },
+    { path: "/paciente/ordenes",   label: "Mis Órdenes",   icon: FlaskConical,  description: "Órdenes de exámenes" },
+    { path: "/paciente/perfil",    label: "Mi Perfil",     icon: User,          description: "Datos personales" },
   ];
 
   const menuMap: Record<string, typeof recepcionistaMenu> = {

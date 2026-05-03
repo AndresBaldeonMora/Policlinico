@@ -5,6 +5,7 @@ import "./ItemCita.css";
 interface Props {
   cita: CitaHistorial;
   onClick: () => void;
+  hideEstado?: boolean;
 }
 
 const ESTADO_CONFIG: Record<string, { label: string; clase: string }> = {
@@ -21,7 +22,7 @@ const formatFecha = (iso: string) =>
     day: "2-digit", month: "short", year: "numeric", timeZone: "UTC",
   });
 
-const ItemCita = ({ cita, onClick }: Props) => {
+const ItemCita = ({ cita, onClick, hideEstado = false }: Props) => {
   // Normalizar el estado (por si viene en minúsculas o con espacios)
   const estadoKey = cita.estado?.toUpperCase()?.trim() ?? "PENDIENTE";
   const badge = ESTADO_CONFIG[estadoKey] ?? { 
@@ -35,7 +36,7 @@ const ItemCita = ({ cita, onClick }: Props) => {
         {cita.especialidad}
       </span>
 
-      <span className={`ic-badge ${badge.clase}`}>{badge.label}</span>
+      {!hideEstado && <span className={`ic-badge ${badge.clase}`}>{badge.label}</span>}
 
       <span className="ic-medico">
         <Stethoscope size={13} />

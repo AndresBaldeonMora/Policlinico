@@ -56,6 +56,76 @@ const formatFecha = (iso: string) =>
     timeZone: "UTC",
   });
 
+interface PlanSOAP {
+  otrasIndicaciones?: string;
+  medidas?: string[];
+  proximaCita?: string;
+  criteriosAlarma?: string;
+}
+
+const parseIndicaciones = (raw?: string): PlanSOAP | null => {
+  if (!raw) return null;
+  try {
+    const parsed = JSON.parse(raw);
+    return parsed?.soap?.P ?? null;
+  } catch {
+    return null;
+  }
+};
+
+const IndicacionesMedico = ({ raw }: { raw?: string }) => {
+  const plan = parseIndicaciones(raw);
+
+  const otrasIndicaciones = plan?.otrasIndicaciones?.trim();
+  const medidas = (plan?.medidas ?? []).filter(Boolean);
+  const proximaCita = plan?.proximaCita?.trim();
+  const criteriosAlarma = plan?.criteriosAlarma?.trim();
+
+  const hayContenido = otrasIndicaciones || medidas.length > 0 || proximaCita || criteriosAlarma;
+
+  return (
+    <div className="dc-section">
+      <div className="dc-section-title">
+        <StickyNote size={15} />
+        <span>Indicaciones del médico</span>
+      </div>
+      {!hayContenido ? (
+        <p className="dc-muted">Sin indicaciones registradas.</p>
+      ) : (
+        <div style={{ display: "flex", flexDirection: "column", gap: "0.75rem" }}>
+          {otrasIndicaciones && (
+            <div>
+              <p style={{ margin: 0, fontSize: "0.9rem", color: "var(--text-primary)" }}>{otrasIndicaciones}</p>
+            </div>
+          )}
+          {medidas.length > 0 && (
+            <div>
+              <p style={{ margin: "0 0 0.35rem 0", fontSize: "0.85rem", fontWeight: 600, color: "var(--text-secondary)" }}>Medidas:</p>
+              <ul style={{ margin: 0, paddingLeft: "1.2rem", fontSize: "0.9rem", color: "var(--text-primary)" }}>
+                {medidas.map((m, i) => <li key={i}>{m}</li>)}
+              </ul>
+            </div>
+          )}
+          {proximaCita && (
+            <div>
+              <p style={{ margin: 0, fontSize: "0.85rem", color: "var(--text-secondary)" }}>
+                <span style={{ fontWeight: 600 }}>Próxima cita:</span> {proximaCita}
+              </p>
+            </div>
+          )}
+          {criteriosAlarma && (
+            <div style={{ backgroundColor: "var(--bg-hover)", borderRadius: "6px", padding: "0.5rem 0.75rem", border: "1px solid var(--border)" }}>
+              <p style={{ margin: 0, fontSize: "0.85rem", color: "var(--text-secondary)" }}>
+                <span style={{ fontWeight: 600 }}>Criterios de alarma:</span> {criteriosAlarma}
+              </p>
+            </div>
+          )}
+        </div>
+      )}
+    </div>
+  );
+};
+
 const DetalleCita = ({ cita, onCerrar }: Props) => {
   const closeRef = useRef<HTMLButtonElement>(null);
 
@@ -199,16 +269,8 @@ const DetalleCita = ({ cita, onCerrar }: Props) => {
             )}
           </div>
 
-          {/* Notas del médico */}
-          {cita.notasMedico && (
-            <div className="dc-section">
-              <div className="dc-section-title">
-                <StickyNote size={15} />
-                <span>Indicaciones del médico</span>
-              </div>
-              <p className="dc-notas-text">{cita.notasMedico}</p>
-            </div>
-          )}
+          {/* Indicaciones del médico (plan SOAP) */}
+          <IndicacionesMedico raw={cita.notasMedico} />
         </div>
 
         <div className="dc-footer">

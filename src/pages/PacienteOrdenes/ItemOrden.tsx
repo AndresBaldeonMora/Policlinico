@@ -1,65 +1,80 @@
-import { Download } from "lucide-react";
+import { Eye, Download, FlaskConical, Calendar, Clock } from "lucide-react";
 import type { OrdenExamen } from "../../services/examen.service";
+import "./ItemOrden.css";
 
-export const getEstadoConfig = (estado: string) => {
-  if (estado === "FINALIZADO") return { label: "Completada", class: "badge-success" };
-  if (estado === "CANCELADA") return { label: "Cancelada", class: "badge-danger" };
-  return { label: "Pendiente", class: "badge-warning" };
+const TIPO_LABEL: Record<string, string> = {
+  LABORATORIO: "Laboratorio",
+  IMAGEN: "Imagen",
+  MIXTA: "Mixta",
 };
 
-export const ItemOrden = ({ orden }: { orden: OrdenExamen }) => {
-  const config = getEstadoConfig(orden.estado);
+const formatFecha = (iso: string) =>
+  new Date(iso).toLocaleDateString("es-PE", {
+    day: "2-digit", month: "short", year: "numeric",
+  });
+
+const formatHora = (iso: string) =>
+  new Date(iso).toLocaleTimeString("es-PE", {
+    hour: "2-digit", minute: "2-digit", hour12: true,
+  });
+
+export const ItemOrden = ({
+  orden,
+  onVerDetalle,
+  isResultadoView = false,
+}: {
+  orden: OrdenExamen;
+  onVerDetalle: (id: string) => void;
+  isResultadoView?: boolean;
+}) => {
+  const tipo   = TIPO_LABEL[orden.tipoOrden ?? ""] ?? orden.tipoOrden ?? "General";
+  const codigo = orden.codigoOrden || `#${orden._id.substring(0, 6)}`;
+
+  const fechaRef = isResultadoView
+    ? (orden.fechaResultados || orden.fecha)
+    : (orden.fechaCitaLab || orden.fecha);
 
   return (
-    <div style={{
-      border: "1px solid var(--border)",
-      borderRadius: "8px",
-      padding: "1rem",
-      display: "flex",
-      alignItems: "center",
-      justifyContent: "space-between",
-      backgroundColor: "var(--bg-card)",
-      boxShadow: "0 1px 3px 0 rgb(0 0 0 / 0.1)"
-    }}>
-      <div style={{ flex: 1 }}>
-        <h4 style={{ margin: "0 0 0.5rem 0", fontSize: "1.2rem", color: "var(--text-primary)", display: "flex", alignItems: "center", gap: "0.5rem" }}>
-          Orden #{orden.codigoOrden || orden._id.substring(0, 6)}
-          <span style={{ fontSize: "0.75rem", padding: "0.15rem 0.5rem", backgroundColor: "var(--bg-hover)", color: "var(--text-secondary)", borderRadius: "4px", fontWeight: "normal" }}>
-            {orden.tipoOrden || "General"}
-          </span>
-        </h4>
-        <div style={{ color: "var(--text-muted)", fontSize: "0.95rem", display: "flex", gap: "1.5rem", flexWrap: "wrap" }}>
-          <span><strong>Fecha:</strong> {new Date(orden.fecha).toLocaleDateString("es-PE")}</span>
-          <span><strong>Especialidad:</strong> {orden.especialidadId?.nombre || "No especificada"}</span>
-          {orden.estado !== "FINALIZADO" && orden.fechaCitaLab && (
-            <span><strong>Cita Lab:</strong> {new Date(orden.fechaCitaLab).toLocaleDateString("es-PE")}</span>
-          )}
-        </div>
+    <div className="io-card">
+      <span className="io-codigo" title={codigo}>{codigo}</span>
+
+      <div className="io-badges">
+        <span className="io-badge io-badge--tipo">{tipo}</span>
       </div>
-      
-      <div style={{ display: "flex", flexDirection: "column", alignItems: "flex-end", gap: "0.5rem" }}>
-        <span className={`badge ${config.class}`} style={{ fontSize: "0.85rem", padding: "0.35rem 0.75rem" }}>
-          {config.label}
-        </span>
-        
+
+      <span className="io-especialidad">
+        <FlaskConical size={13} />
+        {orden.especialidadId?.nombre || "Sin especialidad"}
+      </span>
+
+      <span className="io-fecha">
+        <Calendar size={12} />
+        {formatFecha(fechaRef)}
+      </span>
+
+      <span className="io-fecha">
+        <Clock size={12} />
+        {formatHora(orden.fecha)}
+      </span>
+
+      <div className="io-actions">
+        <button
+          type="button"
+          className="io-btn io-btn--detalle"
+          onClick={() => onVerDetalle(orden._id)}
+        >
+          <Eye size={14} /> Ver detalle
+        </button>
+
         {orden.estado === "FINALIZADO" && orden.archivoResultadoUrl && (
           <a
             href={orden.archivoResultadoUrl}
             target="_blank"
             rel="noreferrer"
-            className="btn btn-primary"
-            style={{ 
-              display: "flex",
-              alignItems: "center",
-              gap: "0.5rem",
-              padding: "0.5rem 1rem",
-              textDecoration: "none",
-              fontSize: "0.9rem",
-              marginTop: "0.5rem"
-            }}
-            title="Ver Resultados"
+            className="io-btn io-btn--download"
+            title="Descargar Resultados"
           >
-            <Download size={16} /> Descargar Resultados
+            <Download size={14} /> Descargar
           </a>
         )}
       </div>
