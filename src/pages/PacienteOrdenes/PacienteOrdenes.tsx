@@ -4,7 +4,6 @@ import { PacienteApiService } from "../../services/paciente.service";
 import { useAuth } from "../../hooks/userAuth";
 import {
   Search,
-  Calendar as CalendarIcon,
   ChevronLeft,
   ChevronRight,
 } from "lucide-react";
@@ -26,11 +25,7 @@ const PacienteOrdenes = () => {
   );
 
   // Filters
-  const [filtroEstado, setFiltroEstado] = useState<string>("TODAS");
   const [searchQuery, setSearchQuery] = useState("");
-  const [dateFilter, setDateFilter] = useState<string>("ALL");
-  const [customDateFrom, setCustomDateFrom] = useState("");
-  const [customDateTo, setCustomDateTo] = useState("");
 
   // Pagination
   const [currentPage, setCurrentPage] = useState(1);
@@ -74,86 +69,42 @@ const PacienteOrdenes = () => {
     initData();
   }, [user?.correo]);
 
-  // Reset page, search and filters on tab change
+  // Reset page and search on tab change
   useEffect(() => {
     setCurrentPage(1);
     setSearchQuery("");
-    setFiltroEstado("TODAS");
-    setDateFilter("ALL");
-    setCustomDateFrom("");
-    setCustomDateTo("");
   }, [activeTab]);
 
   const ordenesFiltradas = useMemo(() => {
-    return ordenes.filter((orden) => {
-      // 1. Tab Filter
-      if (activeTab === "ORDENES" && orden.estado === "FINALIZADO")
-        return false;
-      if (activeTab === "RESULTADOS" && orden.estado !== "FINALIZADO")
-        return false;
+    return ordenes
+      .filter((orden) => {
+        // Tab Filter
+        if (activeTab === "ORDENES" && orden.estado === "FINALIZADO") return false;
+        if (activeTab === "RESULTADOS" && orden.estado !== "FINALIZADO") return false;
 
-      // 2. Status Filter
-      if (
-        activeTab === "ORDENES" &&
-        filtroEstado !== "TODAS" &&
-        orden.estado !== filtroEstado
-      ) {
-        return false;
-      }
-
-      // 3. Search Filter
-      if (searchQuery) {
-        const query = searchQuery.toLowerCase();
-        const codigo = orden.codigoOrden?.toLowerCase() || "";
-        const tipo = orden.tipoOrden?.toLowerCase() || "";
-        const especialidad = orden.especialidadId?.nombre?.toLowerCase() || "";
-
-        if (
-          !codigo.includes(query) &&
-          !tipo.includes(query) &&
-          !especialidad.includes(query)
-        ) {
-          return false;
-        }
-      }
-
-      // 4. Date Filter
-      if (dateFilter !== "ALL") {
-        const ordenDate = new Date(
-          activeTab === "RESULTADOS"
-            ? orden.fechaResultados || orden.fecha
-            : orden.fecha,
-        );
-        const now = new Date();
-        const diffTime = Math.abs(now.getTime() - ordenDate.getTime());
-        const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-
-        if (dateFilter === "7DAYS" && diffDays > 7) return false;
-        if (dateFilter === "1MONTH" && diffDays > 30) return false;
-        if (dateFilter === "1YEAR" && diffDays > 365) return false;
-        if (dateFilter === "CUSTOM") {
-          if (customDateFrom) {
-            const from = new Date(customDateFrom + "T00:00:00");
-            if (ordenDate < from) return false;
-          }
-          if (customDateTo) {
-            const to = new Date(customDateTo + "T23:59:59");
-            if (ordenDate > to) return false;
+        // Search Filter
+        if (searchQuery) {
+          const query = searchQuery.toLowerCase();
+          const codigo = orden.codigoOrden?.toLowerCase() || "";
+          const tipo = orden.tipoOrden?.toLowerCase() || "";
+          const especialidad = orden.especialidadId?.nombre?.toLowerCase() || "";
+          if (!codigo.includes(query) && !tipo.includes(query) && !especialidad.includes(query)) {
+            return false;
           }
         }
-      }
 
-      return true;
-    });
-  }, [
-    ordenes,
-    activeTab,
-    filtroEstado,
-    searchQuery,
-    dateFilter,
-    customDateFrom,
-    customDateTo,
-  ]);
+        return true;
+      })
+      .sort((a, b) => {
+        const dateA = new Date(
+          activeTab === "RESULTADOS" ? (a.fechaResultados || a.fecha) : a.fecha
+        ).getTime();
+        const dateB = new Date(
+          activeTab === "RESULTADOS" ? (b.fechaResultados || b.fecha) : b.fecha
+        ).getTime();
+        return dateB - dateA;
+      });
+  }, [ordenes, activeTab, searchQuery]);
 
   // Pagination logic
   const totalPages = Math.ceil(ordenesFiltradas.length / ITEMS_PER_PAGE);
@@ -262,108 +213,6 @@ const PacienteOrdenes = () => {
         >
           Resultados
         </button>
-      </div>
-
-      {/* Filters Bar */}
-      <div
-        style={{
-          display: "flex",
-          justifyContent: "space-between",
-          alignItems: "center",
-          marginBottom: "1.5rem",
-          flexWrap: "wrap",
-          gap: "1rem",
-        }}
-      >
-        {activeTab === "ORDENES" && (
-          <div style={{ display: "flex", gap: "0.5rem" }}>
-            {[
-              { value: "TODAS", label: "Todas" },
-              { value: "PENDIENTE", label: "Pendiente" },
-              { value: "EN_PROCESO", label: "En Proceso" },
-              { value: "ASISTIDO", label: "Asistida" },
-            ].map(({ value, label }) => (
-              <button
-                key={value}
-                className={`btn ${filtroEstado === value ? "btn-primary" : "btn-secondary"}`}
-                onClick={() => {
-                  setFiltroEstado(value);
-                  setCurrentPage(1);
-                }}
-                style={{ padding: "0.4rem 1rem", fontSize: "0.9rem" }}
-              >
-                {label}
-              </button>
-            ))}
-          </div>
-        )}
-        {activeTab === "RESULTADOS" && <div />} {/* Spacer */}
-        {/* Date Filters */}
-        <div style={{ display: "flex", alignItems: "center", gap: "0.5rem" }}>
-          <CalendarIcon size={18} style={{ color: "var(--text-muted)" }} />
-          <span style={{ fontSize: "0.9rem", color: "var(--text-secondary)" }}>
-            Por fecha:
-          </span>
-          <select
-            value={dateFilter}
-            onChange={(e) => {
-              setDateFilter(e.target.value);
-              setCurrentPage(1);
-            }}
-            style={{
-              padding: "0.4rem",
-              borderRadius: "4px",
-              border: "1px solid var(--border)",
-              backgroundColor: "var(--bg-input)",
-              color: "var(--text-primary)",
-              fontSize: "0.9rem",
-            }}
-          >
-            <option value="ALL">Cualquier momento</option>
-            <option value="7DAYS">Últimos 7 días</option>
-            <option value="1MONTH">Último mes</option>
-            <option value="1YEAR">Último año</option>
-            <option value="CUSTOM">Personalizado</option>
-          </select>
-
-          {dateFilter === "CUSTOM" && (
-            <div
-              style={{ display: "flex", gap: "0.5rem", alignItems: "center" }}
-            >
-              <input
-                type="date"
-                value={customDateFrom}
-                onKeyDown={(e) => e.preventDefault()}
-                onChange={(e) => {
-                  setCustomDateFrom(e.target.value);
-                  setCurrentPage(1);
-                }}
-                style={{
-                  padding: "0.3rem",
-                  borderRadius: "4px",
-                  border: "1px solid var(--border)",
-                  fontSize: "0.85rem",
-                }}
-              />
-              <span>-</span>
-              <input
-                type="date"
-                value={customDateTo}
-                onKeyDown={(e) => e.preventDefault()}
-                onChange={(e) => {
-                  setCustomDateTo(e.target.value);
-                  setCurrentPage(1);
-                }}
-                style={{
-                  padding: "0.3rem",
-                  borderRadius: "4px",
-                  border: "1px solid var(--border)",
-                  fontSize: "0.85rem",
-                }}
-              />
-            </div>
-          )}
-        </div>
       </div>
 
       {loading ? (
