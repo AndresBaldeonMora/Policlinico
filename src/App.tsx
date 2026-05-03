@@ -22,6 +22,7 @@ import HistoriaClinicaMedico from "./pages/HistoriaClinicaMedico/HistoriaClinica
 import PacienteDashboard from "./pages/PacienteDashboard/PacienteDashboard";
 import HistorialCitasPaciente from "./pages/PacienteDashboard/HistorialCitasPaciente";
 import PacienteOrdenes from "./pages/PacienteOrdenes/PacienteOrdenes";
+import MiCuentaPerfil from "./pages/PacienteDashboard/MiCuenta/MiCuentaPerfil";
 
 // Páginas del administrador
 import AdminDashboard from "./pages/AdminDash/AdminDashboard";
@@ -211,6 +212,15 @@ function App() {
               element={
                 <ProtectedRoute roles={["paciente"]}>
                   <PacienteOrdenes />
+                </ProtectedRoute>
+              }
+            />
+
+            <Route
+              path="/paciente/perfil"
+              element={
+                <ProtectedRoute roles={["paciente"]}>
+                  <MiCuentaPerfil pacienteId="" />
                 </ProtectedRoute>
               }
             />
