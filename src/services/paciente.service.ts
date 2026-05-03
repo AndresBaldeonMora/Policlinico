@@ -1,5 +1,6 @@
 // src/services/paciente.service.ts
 import api from "./api";
+import type { PacientePerfil } from "../types/paciente.types";
 
 export interface Alergia {
   _id?: string;
@@ -255,5 +256,39 @@ export class PacienteApiService {
       `/pacientes/correo/${encodeURIComponent(correo)}/historial`
     );
     return res.data.data;
+  }
+
+  static async actualizarPerfil(datos: PacientePerfil): Promise<void> {
+    await api.put("/api/paciente/me", datos);
+  }
+
+  static async cambiarPassword(
+    passwordActual: string,
+    passwordNueva: string
+  ): Promise<void> {
+    await api.put("/api/paciente/me/password", { passwordActual, passwordNueva });
+  }
+
+  static async subirAvatar(file: File): Promise<{ avatarUrl: string }> {
+    const formData = new FormData();
+    formData.append("avatar", file);
+    const response = await api.post<{ success: boolean; data: { avatarUrl: string } }>("/api/paciente/me/avatar", formData, {
+      headers: {
+        "Content-Type": "multipart/form-data",
+      },
+    });
+    return response.data.data;
+  }
+
+  static async obtenerTerminos(): Promise<{
+    contenido: string;
+    version: string;
+    fechaActualizacion: Date;
+  }> {
+    const response = await api.get<{ success: boolean; data: { contenido: string; version: string; fechaActualizacion: string } }>("/api/paciente/terminos");
+    return {
+      ...response.data.data,
+      fechaActualizacion: new Date(response.data.data.fechaActualizacion)
+    };
   }
 }
