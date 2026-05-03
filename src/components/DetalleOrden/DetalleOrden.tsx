@@ -101,9 +101,15 @@ export const DetalleOrden: React.FC<DetalleOrdenProps> = ({ ordenId, isOpen, onC
                 <h3 style={{ margin: "0 0 1rem 0", fontSize: "1rem", color: "var(--text-primary)" }}>Información General</h3>
                 <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(200px, 1fr))", gap: "1rem", fontSize: "0.9rem" }}>
                   <div>
-                    <span style={{ color: "var(--text-muted)", display: "block", marginBottom: "0.25rem" }}>Fecha de creación:</span>
+                    <span style={{ color: "var(--text-muted)", display: "block", marginBottom: "0.25rem" }}>Cita generada:</span>
                     <strong style={{ color: "var(--text-primary)" }}>{new Date(orden.fechaCreacion).toLocaleDateString("es-PE")}</strong>
                   </div>
+                  {orden.fechaCitaLab && (
+                    <div>
+                      <span style={{ color: "var(--text-muted)", display: "block", marginBottom: "0.25rem" }}>Día de atención:</span>
+                      <strong style={{ color: "var(--text-primary)" }}>{new Date(orden.fechaCitaLab).toLocaleDateString("es-PE")}</strong>
+                    </div>
+                  )}
                   {orden.fechaAsistencia && (
                     <div>
                       <span style={{ color: "var(--text-muted)", display: "block", marginBottom: "0.25rem" }}>Fecha de asistencia:</span>

@@ -307,6 +307,7 @@ export class ExamenService {
       medicoId: data.doctorId?._id || "",
       medicoNombre: data.doctorId ? `${data.doctorId.nombres} ${data.doctorId.apellidos}` : "No especificado",
       fechaCreacion: new Date(data.fecha),
+      fechaCitaLab: data.fechaCitaLab ? new Date(data.fechaCitaLab) : undefined,
       fechaResultado: data.fechaResultados ? new Date(data.fechaResultados) : undefined,
       fechaAsistencia: data.fechaAsistencia ? new Date(data.fechaAsistencia) : undefined,
       examenes: data.items.map(item => {

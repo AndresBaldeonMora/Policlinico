@@ -1,36 +1,37 @@
 import { useState, useEffect, useMemo } from "react";
+import { ClipboardList, Search, ChevronLeft, ChevronRight } from "lucide-react";
 import { ExamenService, type OrdenExamen } from "../../services/examen.service";
 import { PacienteApiService } from "../../services/paciente.service";
 import { useAuth } from "../../hooks/userAuth";
-import {
-  Search,
-  ChevronLeft,
-  ChevronRight,
-} from "lucide-react";
-
 import { ItemOrden } from "./ItemOrden";
 import DetalleOrden from "../../components/DetalleOrden/DetalleOrden";
+import "../../pages/PacienteDashboard/HistorialCitas.css";
 
-const ITEMS_PER_PAGE = 10;
+type Tab = "ORDENES" | "RESULTADOS";
+
+const POR_PAGINA = 10;
+
+const tabStyle = (active: boolean) => ({
+  padding: "0.75rem 1.5rem",
+  borderBottom: active ? "2px solid var(--primary)" : "2px solid transparent",
+  color: active ? "var(--primary)" : "var(--text-secondary)",
+  fontWeight: active ? "bold" : ("normal" as const),
+  background: "none",
+  border: "none",
+  borderBottomWidth: "2px",
+  borderBottomStyle: "solid" as const,
+  cursor: "pointer",
+  fontSize: "1rem",
+});
 
 const PacienteOrdenes = () => {
   const { user } = useAuth();
-  const [ordenes, setOrdenes] = useState<OrdenExamen[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [errorMsg, setErrorMsg] = useState("");
-
-  // Tabs
-  const [activeTab, setActiveTab] = useState<"ORDENES" | "RESULTADOS">(
-    "ORDENES",
-  );
-
-  // Filters
-  const [searchQuery, setSearchQuery] = useState("");
-
-  // Pagination
-  const [currentPage, setCurrentPage] = useState(1);
-
-  // Modal Detalle
+  const [ordenes, setOrdenes]             = useState<OrdenExamen[]>([]);
+  const [loading, setLoading]             = useState(true);
+  const [errorMsg, setErrorMsg]           = useState("");
+  const [activeTab, setActiveTab]         = useState<Tab>("ORDENES");
+  const [searchQuery, setSearchQuery]     = useState("");
+  const [currentPage, setCurrentPage]     = useState(1);
   const [selectedOrdenId, setSelectedOrdenId] = useState<string | null>(null);
 
   useEffect(() => {
@@ -42,25 +43,18 @@ const PacienteOrdenes = () => {
           setLoading(false);
           return;
         }
-
         const pacientes = await PacienteApiService.listar();
         const pacienteMatch = pacientes.find(
           (p) => p.correo?.toLowerCase() === user.correo.toLowerCase(),
         );
-
-        if (!pacienteMatch || !pacienteMatch.id) {
-          setErrorMsg(
-            "Su cuenta no está vinculada a un registro de paciente válido o le falta un ID. Contacte a recepción.",
-          );
+        if (!pacienteMatch?.id) {
+          setErrorMsg("Su cuenta no está vinculada a un registro de paciente válido. Contacte a recepción.");
           setLoading(false);
           return;
         }
-
-        const data = await ExamenService.listarOrdenesPorPaciente(
-          pacienteMatch.id,
-        );
+        const data = await ExamenService.listarOrdenesPorPaciente(pacienteMatch.id);
         setOrdenes(data);
-      } catch (error) {
+      } catch {
         setErrorMsg("Error al conectar con la base de datos de órdenes.");
       } finally {
         setLoading(false);
@@ -69,206 +63,105 @@ const PacienteOrdenes = () => {
     initData();
   }, [user?.correo]);
 
-  // Reset page and search on tab change
   useEffect(() => {
     setCurrentPage(1);
     setSearchQuery("");
   }, [activeTab]);
 
+  useEffect(() => { setCurrentPage(1); }, [searchQuery]);
+
   const ordenesFiltradas = useMemo(() => {
     return ordenes
       .filter((orden) => {
-        // Tab Filter
         if (activeTab === "ORDENES" && orden.estado === "FINALIZADO") return false;
         if (activeTab === "RESULTADOS" && orden.estado !== "FINALIZADO") return false;
-
-        // Search Filter
         if (searchQuery) {
-          const query = searchQuery.toLowerCase();
-          const codigo = orden.codigoOrden?.toLowerCase() || "";
-          const tipo = orden.tipoOrden?.toLowerCase() || "";
+          const q = searchQuery.toLowerCase();
+          const codigo      = orden.codigoOrden?.toLowerCase() || "";
+          const tipo        = orden.tipoOrden?.toLowerCase() || "";
           const especialidad = orden.especialidadId?.nombre?.toLowerCase() || "";
-          if (!codigo.includes(query) && !tipo.includes(query) && !especialidad.includes(query)) {
-            return false;
-          }
+          if (!codigo.includes(q) && !tipo.includes(q) && !especialidad.includes(q)) return false;
         }
-
         return true;
       })
       .sort((a, b) => {
-        const dateA = new Date(
-          activeTab === "RESULTADOS" ? (a.fechaResultados || a.fecha) : a.fecha
-        ).getTime();
-        const dateB = new Date(
-          activeTab === "RESULTADOS" ? (b.fechaResultados || b.fecha) : b.fecha
-        ).getTime();
+        const dateA = new Date(activeTab === "RESULTADOS" ? (a.fechaResultados || a.fecha) : a.fecha).getTime();
+        const dateB = new Date(activeTab === "RESULTADOS" ? (b.fechaResultados || b.fecha) : b.fecha).getTime();
         return dateB - dateA;
       });
   }, [ordenes, activeTab, searchQuery]);
 
-  // Pagination logic
-  const totalPages = Math.ceil(ordenesFiltradas.length / ITEMS_PER_PAGE);
-  const paginatedOrdenes = ordenesFiltradas.slice(
-    (currentPage - 1) * ITEMS_PER_PAGE,
-    currentPage * ITEMS_PER_PAGE,
-  );
+  const totalPaginas   = Math.max(1, Math.ceil(ordenesFiltradas.length / POR_PAGINA));
+  const ordenesPagina  = ordenesFiltradas.slice((currentPage - 1) * POR_PAGINA, currentPage * POR_PAGINA);
 
   return (
-    <div style={{ padding: "2rem", maxWidth: "1200px", margin: "0 auto" }}>
-      <div
-        style={{
-          display: "flex",
-          justifyContent: "space-between",
-          alignItems: "center",
-          marginBottom: "2rem",
-        }}
-      >
-        <h1 style={{ fontSize: "1.8rem", color: "var(--text-primary)" }}>
-          📄 Mis Órdenes Clínicas
-        </h1>
-
-        {/* Search */}
-        <div style={{ position: "relative", width: "380px" }}>
-          <Search
-            size={18}
-            style={{
-              position: "absolute",
-              left: "10px",
-              top: "50%",
-              transform: "translateY(-50%)",
-              color: "var(--text-muted)",
-            }}
-          />
-          <input
-            type="text"
-            placeholder="Busca por código, examen o especialidad..."
-            value={searchQuery}
-            onChange={(e) => {
-              setSearchQuery(e.target.value);
-              setCurrentPage(1);
-            }}
-            style={{
-              width: "100%",
-              padding: "0.5rem 0.5rem 0.5rem 2.2rem",
-              borderRadius: "6px",
-              border: "1px solid var(--border)",
-              backgroundColor: "var(--bg-input)",
-              color: "var(--text-primary)",
-            }}
-          />
+    <div className="hc-container">
+      {/* Header */}
+      <div className="hc-header">
+        <div className="hc-header-left">
+          <div className="hc-header-icon">
+            <ClipboardList size={20} />
+          </div>
+          <div>
+            <h2 className="hc-title">Mis Órdenes Clínicas</h2>
+          </div>
         </div>
       </div>
 
       {/* Tabs */}
-      <div
-        style={{
-          display: "flex",
-          borderBottom: "1px solid var(--border)",
-          marginBottom: "1.5rem",
-        }}
-      >
-        <button
-          onClick={() => setActiveTab("ORDENES")}
-          style={{
-            padding: "0.75rem 1.5rem",
-            borderBottom:
-              activeTab === "ORDENES"
-                ? "2px solid var(--primary)"
-                : "2px solid transparent",
-            color:
-              activeTab === "ORDENES"
-                ? "var(--primary)"
-                : "var(--text-secondary)",
-            fontWeight: activeTab === "ORDENES" ? "bold" : "normal",
-            background: "none",
-            border: "none",
-            borderBottomWidth: "2px",
-            borderBottomStyle: "solid",
-            cursor: "pointer",
-            fontSize: "1rem",
-          }}
-        >
-          Órdenes en Proceso
+      <div style={{ display: "flex", borderBottom: "1px solid var(--border)" }}>
+        <button onClick={() => setActiveTab("ORDENES")} style={tabStyle(activeTab === "ORDENES")}>
+          Próximas
         </button>
-        <button
-          onClick={() => setActiveTab("RESULTADOS")}
-          style={{
-            padding: "0.75rem 1.5rem",
-            borderBottom:
-              activeTab === "RESULTADOS"
-                ? "2px solid var(--primary)"
-                : "2px solid transparent",
-            color:
-              activeTab === "RESULTADOS"
-                ? "var(--primary)"
-                : "var(--text-secondary)",
-            fontWeight: activeTab === "RESULTADOS" ? "bold" : "normal",
-            background: "none",
-            border: "none",
-            borderBottomWidth: "2px",
-            borderBottomStyle: "solid",
-            cursor: "pointer",
-            fontSize: "1rem",
-          }}
-        >
-          Resultados
+        <button onClick={() => setActiveTab("RESULTADOS")} style={tabStyle(activeTab === "RESULTADOS")}>
+          Anteriores
         </button>
       </div>
 
-      {loading ? (
-        <div
-          style={{
-            display: "flex",
-            flexDirection: "column",
-            alignItems: "center",
-            justifyContent: "center",
-            padding: "4rem",
-          }}
-        >
-          <div
-            className="lista-loading-spinner"
-            style={{ marginBottom: "1rem" }}
+      {/* Búsqueda */}
+      <div className="hc-controls">
+        <div style={{ position: "relative" }}>
+          <Search size={16} style={{ position: "absolute", left: "0.9rem", top: "50%", transform: "translateY(-50%)", color: "var(--text-muted)", opacity: 0.55, pointerEvents: "none" }} />
+          <input
+            type="text"
+            className="hc-search"
+            placeholder="Buscar por código, examen o especialidad..."
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
           />
-          <p style={{ color: "var(--text-muted)", fontSize: "1.1rem" }}>
-            Cargando información médica...
-          </p>
         </div>
-      ) : errorMsg ? (
-        <div className="error-message" style={{ margin: 0 }}>
-          {errorMsg}
-        </div>
-      ) : paginatedOrdenes.length === 0 ? (
-        <div
-          style={{
-            textAlign: "center",
-            padding: "3rem",
-            backgroundColor: "var(--bg-hover)",
-            borderRadius: "8px",
-            border: "1px dashed var(--border)",
-          }}
-        >
-          <p
-            style={{
-              color: "var(--text-muted)",
-              margin: 0,
-              fontSize: "1.1rem",
-            }}
-          >
-            No se encontraron{" "}
-            {activeTab === "ORDENES" ? "órdenes" : "resultados"} con los filtros
-            actuales.
-          </p>
-        </div>
-      ) : (
-        <div
-          style={{
-            display: "flex",
-            flexDirection: "column",
-            gap: "1rem",
-            minHeight: "400px",
-          }}
-        >
-          {paginatedOrdenes.map((orden) => (
+      </div>
+
+      {/* Lista */}
+      <div className="hc-list">
+        {loading && (
+          <div className="hc-state">
+            <div className="spinner-small" />
+            <p>Cargando información médica...</p>
+          </div>
+        )}
+
+        {!loading && errorMsg && (
+          <div className="hc-state hc-state--error">
+            <p>{errorMsg}</p>
+          </div>
+        )}
+
+        {!loading && !errorMsg && ordenesFiltradas.length === 0 && (
+          <div className="hc-state">
+            <ClipboardList size={36} style={{ opacity: 0.25 }} />
+            <p>
+              {searchQuery
+                ? "No se encontraron órdenes con esa búsqueda."
+                : activeTab === "ORDENES"
+                  ? "No tienes órdenes próximas registradas."
+                  : "No tienes resultados anteriores registrados."}
+            </p>
+          </div>
+        )}
+
+        {!loading && !errorMsg &&
+          ordenesPagina.map((orden) => (
             <ItemOrden
               key={orden._id}
               orden={orden}
@@ -276,45 +169,35 @@ const PacienteOrdenes = () => {
               isResultadoView={activeTab === "RESULTADOS"}
             />
           ))}
-        </div>
-      )}
+      </div>
 
-      {/* Pagination */}
-      {totalPages > 1 && (
-        <div
-          style={{
-            display: "flex",
-            justifyContent: "center",
-            alignItems: "center",
-            gap: "1rem",
-            marginTop: "2rem",
-          }}
-        >
+      {/* Paginación */}
+      {!loading && !errorMsg && totalPaginas > 1 && (
+        <div className="hc-pagination">
           <button
-            onClick={() => setCurrentPage((prev) => Math.max(prev - 1, 1))}
+            type="button"
+            className="hc-page-btn"
+            onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
             disabled={currentPage === 1}
-            className="btn btn-secondary"
-            style={{ display: "flex", alignItems: "center", padding: "0.5rem" }}
+            aria-label="Página anterior"
           >
-            <ChevronLeft size={18} /> Anterior
+            <ChevronLeft size={16} />
           </button>
-          <span style={{ color: "var(--text-secondary)", fontSize: "0.95rem" }}>
-            Página {currentPage} de {totalPages}
+          <span className="hc-page-info">
+            Página {currentPage} de {totalPaginas}
           </span>
           <button
-            onClick={() =>
-              setCurrentPage((prev) => Math.min(prev + 1, totalPages))
-            }
-            disabled={currentPage === totalPages}
-            className="btn btn-secondary"
-            style={{ display: "flex", alignItems: "center", padding: "0.5rem" }}
+            type="button"
+            className="hc-page-btn"
+            onClick={() => setCurrentPage((p) => Math.min(totalPaginas, p + 1))}
+            disabled={currentPage === totalPaginas}
+            aria-label="Página siguiente"
           >
-            Siguiente <ChevronRight size={18} />
+            <ChevronRight size={16} />
           </button>
         </div>
       )}
 
-      {/* Modal Detalles */}
       <DetalleOrden
         ordenId={selectedOrdenId || ""}
         isOpen={!!selectedOrdenId}
