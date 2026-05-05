@@ -32,30 +32,6 @@ const formatFecha = (iso: string) =>
     timeZone: "UTC",
   });
 
-const formatFechaHora = (iso: string) => {
-  const d = new Date(iso);
-  const fecha = d.toLocaleDateString("es-PE", {
-    day: "2-digit",
-    month: "short",
-    year: "numeric",
-    timeZone: "UTC",
-  });
-  const hora = d.toLocaleTimeString("es-PE", {
-    hour: "2-digit",
-    minute: "2-digit",
-    hour12: true,
-    timeZone: "UTC",
-  });
-  return (
-    <>
-      <span style={{ display: "block" }}>{fecha}</span>
-      <span style={{ display: "block", fontSize: "0.82em", color: "var(--text-muted)" }}>
-        {hora}
-      </span>
-    </>
-  );
-};
-
 // "YYYY-MM-DD" → fecha larga en español (fecha local, sin desfase)
 const formatFechaLocalLarga = (dateStr: string): string => {
   const [y, m, d] = dateStr.split("-").map(Number);
@@ -860,7 +836,7 @@ interface FilaOrdenProps {
 
 const FilaOrden = ({ orden, tabActivo, onRefresh }: FilaOrdenProps) => {
   const [abierta, setAbierta] = useState(false);
-  const [cargando, setCargando] = useState(false);
+  const [cargando] = useState(false);
   const [modalResultados, setModalResultados] = useState(false);
   const [modalGenerarOrden, setModalGenerarOrden] = useState(false);
   const [modalAsistencia, setModalAsistencia] = useState(false);

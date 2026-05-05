@@ -227,9 +227,6 @@ const OrdenExamenModal = ({
                                 />
                                 <div className="orden-item-info">
                                   <span className="orden-item-nombre">{ex.nombre}</span>
-                                  {ex.unidad && (
-                                    <span className="orden-item-unidad">{ex.unidad}</span>
-                                  )}
                                 </div>
                                 {seleccionados.has(ex._id) && (
                                   <input

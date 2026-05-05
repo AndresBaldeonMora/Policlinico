@@ -5,7 +5,7 @@ import { ExamenService, type OrdenExamen } from "../../services/examen.service";
 import { formatearFechaDMY } from "../../utils/fecha.utils";
 import "./Dashboard.css";
 
-const ESTADO_LABELS: Record<CitaProcesada["estado"], string> = {
+const ESTADO_LABELS: Record<string, string> = {
   PENDIENTE: "Pendiente",
   ATENDIDA: "Atendida",
   CANCELADA: "Cancelada",

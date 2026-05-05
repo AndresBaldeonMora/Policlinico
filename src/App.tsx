@@ -10,7 +10,6 @@ import Calendario from "./pages/Calendario/Calendario";
 import PerfilCita from "./pages/PerfilCita/PerfilCita";
 import Login from "./pages/Login/Login";
 import LaboratorioImagen from "./pages/Laboratorio/Laboratorio";
-import Historial from "./pages/HistorialPaciente/Historial";
 import ImprimirOrden from "./pages/Laboratorio/ImprimirOrden";
 import MedicoDashboard from "./pages/MedicoDashboard/MedicoDashboard";
 import MedicoCitas from "./pages/MedicoCitas/MedicoCitas";
@@ -20,6 +19,7 @@ import HistoriaClinicaMedico from "./pages/HistoriaClinicaMedico/HistoriaClinica
 // Páginas del paciente
 import PacienteDashboard from "./pages/PacienteDashboard/PacienteDashboard";
 import HistorialCitasPaciente from "./pages/PacienteDashboard/HistorialCitasPaciente";
+import DetalleCitaPaciente from "./pages/PacienteDashboard/DetalleCitaPaciente";
 import PacienteOrdenes from "./pages/PacienteOrdenes/PacienteOrdenes";
 import MiCuentaPerfil from "./pages/PacienteDashboard/MiCuenta/MiCuentaPerfil";
 
@@ -183,7 +183,16 @@ function App() {
               path="/paciente/citas"
               element={
                 <ProtectedRoute roles={["paciente"]}>
-                  <ReservaCita />
+                  <HistorialCitasPaciente />
+                </ProtectedRoute>
+              }
+            />
+
+            <Route
+              path="/paciente/citas/:citaId"
+              element={
+                <ProtectedRoute roles={["paciente"]}>
+                  <DetalleCitaPaciente />
                 </ProtectedRoute>
               }
             />

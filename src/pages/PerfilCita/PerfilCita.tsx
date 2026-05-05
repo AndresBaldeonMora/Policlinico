@@ -241,39 +241,6 @@ const PerfilCita = () => {
     navigate(`/medico/citas/${citaId}/consulta`);
   };
 
-  const handleCancelarCita = async () => {
-    const estadoActual = cita?.estado;
-    const mensaje = estadoActual === "REPROGRAMADA"
-      ? "Cancelar cita reprogramada"
-      : "Cancelar cita pendiente";
-      
-    const { value: motivo } = await Swal.fire({
-      title: mensaje,
-      input: "text",
-      inputLabel: "Motivo de cancelación",
-      inputPlaceholder: "Ej: Paciente canceló por teléfono",
-      showCancelButton: true,
-      confirmButtonColor: "#dc2626",
-      confirmButtonText: "Sí, cancelar cita",
-      cancelButtonText: "No, mantener",
-      inputValidator: (value) => {
-        if (!value) return "El motivo es obligatorio";
-        if (value.length < 5) return "El motivo debe tener al menos 5 caracteres";
-        return null;
-      }
-    });
-    
-    if (!motivo) return;
-    
-    try {
-      await CitaApiService.cancelar(citaId!, motivo);
-      toastExito("Cita cancelada");
-      cargarCita();
-    } catch (error) {
-      Swal.fire("Error", "No se pudo cancelar la cita", "error");
-    }
-  };
-
   // ============================================================================
 
   const paciente = useMemo(() => cita?.pacienteId, [cita]);
@@ -647,7 +614,7 @@ const PerfilCita = () => {
                         >
                           {orden.estado === "PENDIENTE" && "Pendiente"}
                           {orden.estado === "EN_PROCESO" && "En proceso"}
-                          {orden.estado === "COMPLETADO" && "Completado"}
+                          {orden.estado === "FINALIZADO" && "Finalizado"}
                           {orden.estado === "CANCELADA" && "Cancelada"}
                         </span>
                         <button
@@ -769,7 +736,7 @@ const PerfilCita = () => {
                             >
                               {orden.estado === "PENDIENTE" && "Pendiente"}
                               {orden.estado === "EN_PROCESO" && "En proceso"}
-                              {orden.estado === "COMPLETADO" && "Completado"}
+                              {orden.estado === "FINALIZADO" && "Finalizado"}
                               {orden.estado === "CANCELADA" && "Cancelada"}
                             </span>
                           </div>

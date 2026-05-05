@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import {
   User, Phone, Mail, MapPin, Calendar, FileText,
-  ChevronDown, ChevronUp, Clock, CheckCircle, XCircle, AlertTriangle,
+  ChevronDown, ChevronUp,
 } from "lucide-react";
 import { PacienteApiService, type PacienteTransformado } from "../../services/paciente.service";
 import { TIPO_EXAMEN_LABEL, type ExamenLaboratorioImagen, type ItemOrden } from "../../services/examen.service";

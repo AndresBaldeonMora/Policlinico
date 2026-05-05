@@ -1,4 +1,5 @@
 import { useState, useEffect, useMemo } from "react";
+import { useLocation } from "react-router-dom";
 import { ClipboardList, Search, ChevronLeft, ChevronRight } from "lucide-react";
 import { ExamenService, type OrdenExamen } from "../../services/examen.service";
 import { PacienteApiService } from "../../services/paciente.service";
@@ -26,13 +27,16 @@ const tabStyle = (active: boolean) => ({
 
 const PacienteOrdenes = () => {
   const { user } = useAuth();
+  const location = useLocation();
   const [ordenes, setOrdenes]             = useState<OrdenExamen[]>([]);
   const [loading, setLoading]             = useState(true);
   const [errorMsg, setErrorMsg]           = useState("");
   const [activeTab, setActiveTab]         = useState<Tab>("ORDENES");
   const [searchQuery, setSearchQuery]     = useState("");
   const [currentPage, setCurrentPage]     = useState(1);
-  const [selectedOrdenId, setSelectedOrdenId] = useState<string | null>(null);
+  const [selectedOrdenId, setSelectedOrdenId] = useState<string | null>(
+    (location.state as any)?.ordenId ?? null
+  );
 
   useEffect(() => {
     const initData = async () => {

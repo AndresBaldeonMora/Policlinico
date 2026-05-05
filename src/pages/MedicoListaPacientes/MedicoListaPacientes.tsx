@@ -64,7 +64,7 @@ const derivarPacientes = (citas: CitaMedico[]): PacienteDerived[] => {
       ultimaVisita: relativeFecha(ultimaFecha),
       ultimaFecha,
       diagnostico: atendidaConDx?.diagnostico ?? null,
-      estado:      tieneProxima ? "Activo" : "Sin seguimiento",
+      estado:      (tieneProxima ? "Activo" : "Sin seguimiento") as "Activo" | "Sin seguimiento",
       totalCitas:  cs.length,
     };
   }).sort((a, b) => {

@@ -53,7 +53,7 @@ const ListaMedicos = () => {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [uploadTargetId, setUploadTargetId] = useState<string | null>(null);
   const { user } = useAuth();
-  const esAdmin = user?.rol === "ADMIN";
+  const esAdmin = user?.rol === "administrador";
 
   // ── Bloqueos ──────────────────────────────────────────
   const [doctorBloqueo, setDoctorBloqueo] = useState<Doctor | null>(null);

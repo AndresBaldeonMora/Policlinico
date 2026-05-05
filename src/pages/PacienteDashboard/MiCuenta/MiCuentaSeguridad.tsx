@@ -1,5 +1,6 @@
 import { useState, useCallback, useMemo } from "react";
 import { Eye, EyeOff, Loader2, CheckCircle, AlertCircle, Check, X } from "lucide-react";
+import { PacienteApiService } from "../../../services/paciente.service";
 import "./MiCuenta.css";
 
 /* ── Requisitos de contraseña ── */
@@ -67,14 +68,13 @@ const MiCuentaSeguridad = () => {
       setMensaje(null);
 
       try {
-        // Simular llamada API
-        await new Promise((resolve) => setTimeout(resolve, 1500));
+        await PacienteApiService.cambiarPassword(actual, nueva, confirmar);
         setMensaje({ tipo: "exito", texto: "Contraseña actualizada correctamente" });
         setActual("");
         setNueva("");
         setConfirmar("");
-      } catch {
-        setMensaje({ tipo: "error", texto: "Error al cambiar la contraseña. Intenta de nuevo." });
+      } catch (err: any) {
+        setMensaje({ tipo: "error", texto: err?.message ?? "Error al cambiar la contraseña. Intenta de nuevo." });
       } finally {
         setGuardando(false);
       }

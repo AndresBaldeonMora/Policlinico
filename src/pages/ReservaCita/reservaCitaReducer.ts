@@ -187,7 +187,7 @@ export function reservaReducer(state: ReservaState, action: ReservaAction): Rese
         ...state,
         diasDelMes: state.diasDelMes.filter((d) => d !== action.dia),
         diaSeleccionado: null,
-        horarios: [],
+        horariosPorDia: [],
       };
 
     case "SET_HORARIOS":

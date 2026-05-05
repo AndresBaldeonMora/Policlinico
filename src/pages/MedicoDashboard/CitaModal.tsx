@@ -2,7 +2,7 @@ import { useEffect, useState, useCallback } from "react";
 import { MedicoApiService } from "../../services/medico.service";
 import type { CitaMedico, MedicoPerfil } from "../../services/medico.service";
 import { X, FlaskConical } from "lucide-react";
-import { ExamenService, OrdenExamen, TIPO_EXAMEN_LABEL } from "../../services/examen.service";
+import { ExamenService, type OrdenExamen, TIPO_EXAMEN_LABEL } from "../../services/examen.service";
 import OrdenExamenModal from "./OrdenExamenModal";
 import { formatearFechaLarga, formatearFechaDMY } from "../../utils/fecha.utils";
 import "./CitaModal.css";
@@ -71,7 +71,8 @@ const CitaModal = ({ citaId, perfil, onCerrar, onCitaActualizada }: Props) => {
     if (!cita) return;
     setGuardandoNotas(true);
     try {
-      await MedicoApiService.guardarNotas(cita._id, notas, cita.estado);
+      const estadoParaNotas = (cita.estado === "PENDIENTE" || cita.estado === "ATENDIDA" || cita.estado === "CANCELADA") ? cita.estado : "PENDIENTE";
+      await MedicoApiService.guardarNotas(cita._id, notas, estadoParaNotas);
       onCitaActualizada();
     } catch (error) {
       console.error("Error al guardar notas:", error);
@@ -215,7 +216,7 @@ const CitaModal = ({ citaId, perfil, onCerrar, onCitaActualizada }: Props) => {
                         <span className={`cita-modal-badge cita-modal-orden-estado--${orden.estado.toLowerCase()}`}>
                           {orden.estado === "PENDIENTE" && "Pendiente"}
                           {orden.estado === "EN_PROCESO" && "En proceso"}
-                          {orden.estado === "COMPLETADO" && "Completado"}
+                          {orden.estado === "FINALIZADO" && "Finalizado"}
                           {orden.estado === "CANCELADA" && "Cancelada"}
                         </span>
                       </div>

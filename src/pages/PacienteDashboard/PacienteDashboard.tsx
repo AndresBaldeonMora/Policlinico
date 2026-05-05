@@ -79,7 +79,7 @@ const PacienteDashboard = () => {
 
   const handleVerOrden = useCallback(
     (id: string) => {
-      navigate(`/paciente/ordenes/${id}`);
+      navigate("/paciente/ordenes", { state: { ordenId: id } });
     },
     [navigate],
   );

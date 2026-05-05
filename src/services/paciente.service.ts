@@ -258,26 +258,48 @@ export class PacienteApiService {
     return res.data.data;
   }
 
-  static async actualizarPerfil(datos: PacientePerfil): Promise<void> {
-    await api.put("/api/paciente/me", datos);
+  static async obtenerMiPerfil(): Promise<PacienteTransformado> {
+    const response = await api.get<{ success: boolean; data: Paciente }>("/paciente/me");
+    return transformarPaciente(response.data.data);
+  }
+
+  static async actualizarPerfil(datos: PacientePerfil): Promise<PacienteTransformado> {
+    const response = await api.put<{ success: boolean; data: Paciente }>("/paciente/me", datos);
+    return transformarPaciente(response.data.data);
   }
 
   static async cambiarPassword(
     passwordActual: string,
-    passwordNueva: string
+    passwordNueva: string,
+    passwordConfirm: string
   ): Promise<void> {
-    await api.put("/api/paciente/me/password", { passwordActual, passwordNueva });
+    await api.put("/paciente/me/password", { passwordActual, passwordNueva, passwordConfirm });
   }
 
   static async subirAvatar(file: File): Promise<{ avatarUrl: string }> {
     const formData = new FormData();
     formData.append("avatar", file);
-    const response = await api.post<{ success: boolean; data: { avatarUrl: string } }>("/api/paciente/me/avatar", formData, {
-      headers: {
-        "Content-Type": "multipart/form-data",
-      },
+    const response = await api.post<{ success: boolean; data: { avatarUrl: string } }>("/paciente/me/avatar", formData, {
+      headers: { "Content-Type": "multipart/form-data" },
     });
     return response.data.data;
+  }
+
+  static async obtenerMisCitas(params?: { estado?: string; pagina?: number }): Promise<any> {
+    const query = new URLSearchParams();
+    if (params?.estado) query.set("estado", params.estado);
+    if (params?.pagina) query.set("pagina", String(params.pagina));
+    const response = await api.get(`/paciente/citas${query.toString() ? `?${query}` : ""}`);
+    return response.data;
+  }
+
+  static async obtenerMisOrdenes(params?: { estado?: string; tipoOrden?: string; pagina?: number }): Promise<any> {
+    const query = new URLSearchParams();
+    if (params?.estado)    query.set("estado",    params.estado);
+    if (params?.tipoOrden) query.set("tipoOrden", params.tipoOrden);
+    if (params?.pagina)    query.set("pagina",    String(params.pagina));
+    const response = await api.get(`/paciente/ordenes${query.toString() ? `?${query}` : ""}`);
+    return response.data;
   }
 
   static async obtenerTerminos(): Promise<{
@@ -285,7 +307,7 @@ export class PacienteApiService {
     version: string;
     fechaActualizacion: Date;
   }> {
-    const response = await api.get<{ success: boolean; data: { contenido: string; version: string; fechaActualizacion: string } }>("/api/paciente/terminos");
+    const response = await api.get<{ success: boolean; data: { contenido: string; version: string; fechaActualizacion: string } }>("/paciente/terminos");
     return {
       ...response.data.data,
       fechaActualizacion: new Date(response.data.data.fechaActualizacion)

@@ -1,10 +1,11 @@
-import { useState, useCallback, useMemo } from "react";
+import { useState, useCallback, useMemo, useEffect } from "react";
 import {
   User, Edit3, Save, X, Loader2, CheckCircle, AlertCircle, Camera,
   Phone, Mail, MapPin, Calendar, Users,
 } from "lucide-react";
 import { MiCuentaSeguridad } from "./MiCuentaSeguridad";
 import { MiCuentaTerminos } from "./MiCuentaTerminos";
+import { PacienteApiService } from "../../../services/paciente.service";
 import "./MiCuenta.css";
 
 /* ── Types ── */
@@ -58,12 +59,37 @@ const MiCuentaPerfil = ({ pacienteId, initialData, onGuardar }: MiCuentaPerfilPr
   const [tab, setTab] = useState<TabId>("perfil");
   const [editando, setEditando] = useState(false);
   const [guardando, setGuardando] = useState(false);
+  const [cargando, setCargando] = useState(true);
   const [mensaje, setMensaje] = useState<{ tipo: "exito" | "error"; texto: string } | null>(null);
   const [datos, setDatos] = useState<PacientePerfil>(initialData ?? PERFIL_VACIO);
   const [datosOriginal, setDatosOriginal] = useState<PacientePerfil>(initialData ?? PERFIL_VACIO);
 
-  /* Supress unused var warning */
   void pacienteId;
+
+  useEffect(() => {
+    setCargando(true);
+    PacienteApiService.obtenerMiPerfil()
+      .then((pac) => {
+        const perfil: PacientePerfil = {
+          nombres:             pac.nombres,
+          apellidos:           pac.apellidos,
+          dni:                 pac.dni,
+          telefono:            pac.telefono,
+          correo:              pac.correo,
+          fechaNacimiento:     pac.fechaNacimiento ? pac.fechaNacimiento.split("T")[0] : "",
+          sexo:                pac.sexo ?? "",
+          direccion:           pac.direccion,
+          distrito:            pac.distrito ?? "",
+          apoderadoNombre:     pac.apoderadoNombre ?? "",
+          apoderadoParentesco: pac.apoderadoParentesco ?? "",
+          apoderadoTelefono:   pac.apoderadoTelefono ?? "",
+        };
+        setDatos(perfil);
+        setDatosOriginal(perfil);
+      })
+      .catch(() => {})
+      .finally(() => setCargando(false));
+  }, []);
 
   const iniciales = useMemo(() => {
     const n = datos.nombres?.trim().charAt(0) ?? "";
@@ -92,14 +118,26 @@ const MiCuentaPerfil = ({ pacienteId, initialData, onGuardar }: MiCuentaPerfilPr
     setMensaje(null);
 
     try {
-      // Simular PUT /api/paciente/me
-      await new Promise((resolve) => setTimeout(resolve, 1500));
+      await PacienteApiService.actualizarPerfil({
+        nombres:             datos.nombres,
+        apellidos:           datos.apellidos,
+        dni:                 datos.dni,
+        telefono:            datos.telefono,
+        correo:              datos.correo,
+        fechaNacimiento:     new Date(datos.fechaNacimiento) as any,
+        sexo:                datos.sexo as "M" | "F",
+        direccion:           datos.direccion,
+        distrito:            datos.distrito,
+        apoderadoNombre:     datos.apoderadoNombre,
+        apoderadoParentesco: datos.apoderadoParentesco,
+        apoderadoTelefono:   datos.apoderadoTelefono,
+      });
       setDatosOriginal(datos);
       setEditando(false);
       setMensaje({ tipo: "exito", texto: "Perfil actualizado correctamente" });
       onGuardar?.(datos);
-    } catch {
-      setMensaje({ tipo: "error", texto: "Error al guardar los cambios. Intenta de nuevo." });
+    } catch (err: any) {
+      setMensaje({ tipo: "error", texto: err?.message ?? "Error al guardar los cambios. Intenta de nuevo." });
     } finally {
       setGuardando(false);
     }
@@ -171,6 +209,14 @@ const MiCuentaPerfil = ({ pacienteId, initialData, onGuardar }: MiCuentaPerfilPr
     },
     [datos, editando, handleChange],
   );
+
+  if (cargando) {
+    return (
+      <div className="micuenta" style={{ display: "flex", justifyContent: "center", padding: "3rem" }}>
+        <Loader2 size={32} style={{ animation: "spin 1s linear infinite" }} />
+      </div>
+    );
+  }
 
   return (
     <div className="micuenta">

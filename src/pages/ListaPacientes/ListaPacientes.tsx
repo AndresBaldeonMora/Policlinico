@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { useSearchParams, useNavigate } from "react-router-dom";
-import { Search, UserPlus, Pencil, Users, Trash2, ClipboardList } from "lucide-react";
+import { Search, UserPlus, Pencil, Users, Trash2, ClipboardList, ShieldCheck, ShieldOff, KeyRound } from "lucide-react";
 import { useAuth } from "../../hooks/userAuth";
 import "../ListaCitas/ListaCitas.css";
 import "./ListaPacientes.css";

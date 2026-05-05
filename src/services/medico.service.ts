@@ -32,7 +32,7 @@ export interface CitaMedico {
   fecha: string;
   hora: string;
   tipo?: string;
-  estado: "PENDIENTE" | "ATENDIDA" | "CANCELADA" | "REPROGRAMADA";
+  estado: "PENDIENTE" | "ASISTIO" | "ATENDIDA" | "CANCELADA" | "REPROGRAMADA";
   notas?: string;
   notasClinicas?: string;
   diagnostico?: string;
