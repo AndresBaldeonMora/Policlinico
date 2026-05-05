@@ -48,7 +48,7 @@ const Sidebar = () => {
 
   const pacienteMenu = [
     { path: "/paciente",           label: "Inicio",        icon: Home,          description: "Inicio del portal" },
-    { path: "/paciente/citas",     label: "Reservar Cita", icon: Calendar,      description: "Agendar nueva cita" },
+    { path: "/paciente/reservar",   label: "Reservar Cita", icon: CalendarPlus,  description: "Agendar nueva cita" },
     { path: "/paciente/historial", label: "Mis Citas",     icon: ClipboardList, description: "Ver mis citas" },
     { path: "/paciente/ordenes",   label: "Mis Órdenes",   icon: FlaskConical,  description: "Órdenes de exámenes" },
     { path: "/paciente/perfil",    label: "Mi Perfil",     icon: User,          description: "Datos personales" },
