@@ -111,40 +111,41 @@ export const DetalleOrden: React.FC<DetalleOrdenProps> = ({ ordenId, isOpen, onC
                 )}
               </div>
 
-              {/* Notas */}
-              {orden.notas && (
-                <div style={{ backgroundColor: "var(--bg-hover)", borderRadius: "8px", padding: "0.75rem 1rem", border: "1px solid var(--border)" }}>
-                  <p style={{ margin: 0, fontSize: "0.88rem", color: "var(--text-secondary)" }}>
-                    <span style={{ fontWeight: 600, color: "var(--text-primary)" }}>Notas: </span>{orden.notas}
-                  </p>
-                </div>
-              )}
-
-              {/* Exámenes */}
-              {(orden.examenes?.length ?? 0) > 0 && (
-                <div>
-                  <h3 style={{ margin: "0 0 0.75rem 0", fontSize: "0.95rem", fontWeight: 600, color: "var(--text-primary)" }}>
-                    Exámenes solicitados ({orden.examenes.length})
-                  </h3>
-                  <div style={{ display: "flex", flexDirection: "column", gap: "0.5rem" }}>
+              {/* Exámenes solicitados */}
+              <div>
+                <h3 style={{ margin: "0 0 0.75rem 0", fontSize: "0.95rem", fontWeight: 600, color: "var(--text-primary)" }}>
+                  Exámenes solicitados
+                </h3>
+                {(orden.examenes?.length ?? 0) > 0 ? (
+                  <div style={{ display: "flex", flexDirection: "column", gap: "0.4rem" }}>
                     {orden.examenes.map((ex, i) => (
-                      <div key={i} style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "0.6rem 0.9rem", backgroundColor: "var(--bg-hover)", borderRadius: "8px", border: "1px solid var(--border)", gap: "1rem" }}>
-                        <span style={{ fontSize: "0.9rem", color: "var(--text-primary)", fontWeight: 500 }}>{ex.nombre}</span>
-                        <span style={{ fontSize: "0.78rem", color: "var(--text-muted)", flexShrink: 0 }}>{ex.tipo}</span>
+                      <div key={i} style={{ display: "flex", alignItems: "center", gap: "0.65rem", padding: "0.55rem 0.9rem", backgroundColor: "var(--bg-hover)", borderRadius: "8px", border: "1px solid var(--border)" }}>
+                        <span style={{ width: "6px", height: "6px", borderRadius: "50%", background: "var(--primary, #059669)", flexShrink: 0 }} />
+                        <span style={{ fontSize: "0.9rem", color: "var(--text-primary)", fontWeight: 500, flex: 1 }}>{ex.nombre}</span>
+                        {ex.observacion && (
+                          <span style={{ fontSize: "0.75rem", color: "var(--text-muted)", fontStyle: "italic" }}>{ex.observacion}</span>
+                        )}
                       </div>
                     ))}
                   </div>
-                </div>
-              )}
+                ) : (
+                  <p style={{ margin: 0, fontSize: "0.88rem", color: "var(--text-muted)" }}>Sin exámenes registrados.</p>
+                )}
+              </div>
 
-              {/* Observaciones generales */}
-              {orden.recomendaciones && (
-                <div style={{ backgroundColor: "var(--bg-hover)", borderRadius: "8px", padding: "0.75rem 1rem", border: "1px dashed var(--border)" }}>
-                  <p style={{ margin: 0, fontSize: "0.88rem", color: "var(--text-secondary)" }}>
-                    <span style={{ fontWeight: 600, color: "var(--text-primary)" }}>Observaciones: </span>{orden.recomendaciones}
-                  </p>
-                </div>
-              )}
+              {/* Recomendaciones */}
+              <div>
+                <h3 style={{ margin: "0 0 0.6rem 0", fontSize: "0.95rem", fontWeight: 600, color: "var(--text-primary)" }}>
+                  Recomendaciones
+                </h3>
+                {orden.notas ? (
+                  <div style={{ backgroundColor: "var(--bg-hover)", borderRadius: "8px", padding: "0.75rem 1rem", border: "1px dashed var(--border)" }}>
+                    <p style={{ margin: 0, fontSize: "0.88rem", color: "var(--text-secondary)", lineHeight: 1.6 }}>{orden.notas}</p>
+                  </div>
+                ) : (
+                  <p style={{ margin: 0, fontSize: "0.88rem", color: "var(--text-muted)" }}>Sin recomendaciones.</p>
+                )}
+              </div>
 
               {/* Resultado PDF */}
               {orden.estado === "FINALIZADO" && orden.archivoResultadoUrl && (
