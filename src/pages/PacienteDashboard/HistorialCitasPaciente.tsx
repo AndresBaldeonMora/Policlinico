@@ -56,8 +56,8 @@ const HistorialCitasPaciente = () => {
         const mesCorto = fecha.toLocaleDateString("es-PE", { month: "short", timeZone: "UTC" }).toLowerCase();
         const anio     = fecha.getUTCFullYear().toString();
         return (
-          c.medico.toLowerCase().includes(q) ||
-          c.especialidad.toLowerCase().includes(q) ||
+          (c.medico ?? "").toLowerCase().includes(q) ||
+          (c.especialidad ?? "").toLowerCase().includes(q) ||
           mes.includes(q) ||
           mesCorto.includes(q) ||
           anio.includes(q)
@@ -195,6 +195,7 @@ const HistorialCitasPaciente = () => {
         <DetalleCita
           cita={citaSeleccionada}
           onCerrar={() => setCitaSeleccionada(null)}
+          hideEstado={activeTab === "PROXIMAS"}
         />
       )}
     </div>

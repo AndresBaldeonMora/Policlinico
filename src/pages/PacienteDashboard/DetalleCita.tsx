@@ -35,11 +35,12 @@ export interface DetalleCitaData {
 interface Props {
   cita: DetalleCitaData;
   onCerrar: () => void;
+  hideEstado?: boolean;
 }
 
 // Actualizar configuración de estados incluyendo ASISTIO
 const ESTADO_CONFIG: Record<string, { label: string; clase: string }> = {
-  PENDIENTE:    { label: "Pendiente",    clase: "dc-badge--pending" },
+  PENDIENTE:    { label: "Programada",   clase: "dc-badge--pending" },
   ASISTIO:      { label: "Asistió",      clase: "dc-badge--warning" },
   ATENDIDA:     { label: "Atendida",     clase: "dc-badge--done" },
   CANCELADA:    { label: "Cancelada",    clase: "dc-badge--cancel" },
@@ -126,7 +127,7 @@ const IndicacionesMedico = ({ raw }: { raw?: string }) => {
   );
 };
 
-const DetalleCita = ({ cita, onCerrar }: Props) => {
+const DetalleCita = ({ cita, onCerrar, hideEstado = false }: Props) => {
   const closeRef = useRef<HTMLButtonElement>(null);
 
   useEffect(() => {
@@ -190,87 +191,100 @@ const DetalleCita = ({ cita, onCerrar }: Props) => {
                 <User size={14} />
                 <span>{cita.medico}</span>
               </div>
-              <span className={`dc-badge ${badge.clase}`}>
-                {badge.label}
-              </span>
+              {!hideEstado && (
+                <span className={`dc-badge ${badge.clase}`}>
+                  {badge.label}
+                </span>
+              )}
             </div>
           </div>
 
-          {/* Diagnóstico */}
-          <div className={`dc-section${!cita.diagnostico ? " dc-section--muted" : ""}`}>
-            <div className="dc-section-title">
-              <FileText size={15} />
-              <span>Diagnóstico</span>
+          {/* Contenido clínico: solo si la cita ya fue atendida */}
+          {estadoNormalizado === "PENDIENTE" || estadoNormalizado === "REPROGRAMADA" ? (
+            <div className="dc-section">
+              <p className="dc-muted" style={{ textAlign: "center", padding: "0.5rem 0" }}>
+                Esta cita aún no ha sido atendida. Los detalles clínicos estarán disponibles después de la consulta.
+              </p>
             </div>
-            {cita.diagnostico ? (
-              <p className="dc-diagnostico-text">{cita.diagnostico}</p>
-            ) : (
-              <p className="dc-muted">Sin diagnóstico registrado.</p>
-            )}
-          </div>
-
-          {/* Recetas médicas */}
-          <div className="dc-section">
-            <div className="dc-section-title">
-              <Pill size={15} />
-              <span>Recetas médicas</span>
-              {tieneRecetas && <span className="dc-count">{cita.recetas!.length}</span>}
-            </div>
-            {tieneRecetas ? (
-              <div className="dc-recetas">
-                {cita.recetas!.map((receta, i) => (
-                  <div key={i} className="dc-receta-item">
-                    <div className="dc-receta-nombre">{receta.nombre}</div>
-                    <div className="dc-receta-meta">
-                      <span><b>Dosis:</b> {receta.dosis}</span>
-                      <span><b>Cantidad:</b> {receta.cantidad}</span>
-                      <span><b>Duración:</b> {receta.duracion}</span>
-                    </div>
-                    {receta.indicaciones && (
-                      <p className="dc-receta-indicaciones">
-                        💡 {receta.indicaciones}
-                      </p>
-                    )}
-                  </div>
-                ))}
+          ) : (
+            <>
+              {/* Diagnóstico */}
+              <div className={`dc-section${!cita.diagnostico ? " dc-section--muted" : ""}`}>
+                <div className="dc-section-title">
+                  <FileText size={15} />
+                  <span>Diagnóstico</span>
+                </div>
+                {cita.diagnostico ? (
+                  <p className="dc-diagnostico-text">{cita.diagnostico}</p>
+                ) : (
+                  <p className="dc-muted">Sin diagnóstico registrado.</p>
+                )}
               </div>
-            ) : (
-              <p className="dc-muted">No se emitieron recetas en esta cita.</p>
-            )}
-          </div>
 
-          {/* Exámenes solicitados */}
-          <div className="dc-section">
-            <div className="dc-section-title">
-              <FlaskConical size={15} />
-              <span>Exámenes solicitados</span>
-              {tieneExamenes && <span className="dc-count">{cita.examenes!.length}</span>}
-            </div>
-            {tieneExamenes ? (
-              <div className="dc-examenes">
-                {cita.examenes!.map((examen, i) => (
-                  <div key={i} className="dc-examen-item">
-                    <span className="dc-examen-nombre">{examen.nombre}</span>
-                    <span className="dc-examen-tipo">{examen.tipo}</span>
-                    {examen.estado && (
-                      <span className={`dc-badge dc-badge--sm ${
-                        examen.estado === "COMPLETADO" 
-                          ? "dc-badge--done" 
-                          : "dc-badge--pending"
-                      }`}>
-                        {examen.estado === "COMPLETADO" ? "Completado" : "Pendiente"}
-                      </span>
-                    )}
+              {/* Recetas médicas */}
+              <div className="dc-section">
+                <div className="dc-section-title">
+                  <Pill size={15} />
+                  <span>Recetas médicas</span>
+                  {tieneRecetas && <span className="dc-count">{cita.recetas!.length}</span>}
+                </div>
+                {tieneRecetas ? (
+                  <div className="dc-recetas">
+                    {cita.recetas!.map((receta, i) => (
+                      <div key={i} className="dc-receta-item">
+                        <div className="dc-receta-nombre">{receta.nombre}</div>
+                        <div className="dc-receta-meta">
+                          <span><b>Dosis:</b> {receta.dosis}</span>
+                          <span><b>Cantidad:</b> {receta.cantidad}</span>
+                          <span><b>Duración:</b> {receta.duracion}</span>
+                        </div>
+                        {receta.indicaciones && (
+                          <p className="dc-receta-indicaciones">
+                            {receta.indicaciones}
+                          </p>
+                        )}
+                      </div>
+                    ))}
                   </div>
-                ))}
+                ) : (
+                  <p className="dc-muted">No se emitieron recetas en esta cita.</p>
+                )}
               </div>
-            ) : (
-              <p className="dc-muted">No se solicitaron exámenes.</p>
-            )}
-          </div>
 
-          {/* Indicaciones del médico (plan SOAP) */}
-          <IndicacionesMedico raw={cita.notasMedico} />
+              {/* Exámenes solicitados */}
+              <div className="dc-section">
+                <div className="dc-section-title">
+                  <FlaskConical size={15} />
+                  <span>Exámenes solicitados</span>
+                  {tieneExamenes && <span className="dc-count">{cita.examenes!.length}</span>}
+                </div>
+                {tieneExamenes ? (
+                  <div className="dc-examenes">
+                    {cita.examenes!.map((examen, i) => (
+                      <div key={i} className="dc-examen-item">
+                        <span className="dc-examen-nombre">{examen.nombre}</span>
+                        <span className="dc-examen-tipo">{examen.tipo}</span>
+                        {examen.estado && (
+                          <span className={`dc-badge dc-badge--sm ${
+                            examen.estado === "COMPLETADO"
+                              ? "dc-badge--done"
+                              : "dc-badge--pending"
+                          }`}>
+                            {examen.estado === "COMPLETADO" ? "Completado" : "Pendiente"}
+                          </span>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <p className="dc-muted">No se solicitaron exámenes.</p>
+                )}
+              </div>
+
+              {/* Indicaciones del médico (plan SOAP) */}
+              <IndicacionesMedico raw={cita.notasMedico} />
+            </>
+          )}
         </div>
 
         <div className="dc-footer">

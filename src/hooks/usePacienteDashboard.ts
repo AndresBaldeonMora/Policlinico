@@ -29,10 +29,10 @@ const INITIAL_STATE: DashboardData = {
 const ORDENES_VACIO: OrdenExamen[] = [];
 
 const mapCitaRawToResumen = (cita: any): CitaResumen => {
-  const doctor = cita.doctorId ?? {};
+  const doctor = (cita.doctorId && typeof cita.doctorId === "object") ? cita.doctorId : {};
   const esp    = doctor.especialidadId;
   return {
-    _id:    cita._id,
+    _id:    String(cita._id ?? cita.id ?? ""),
     fecha:  cita.fecha,
     hora:   cita.hora ?? "—",
     tipo:   cita.tipo ?? "CONSULTA",
