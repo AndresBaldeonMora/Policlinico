@@ -15,7 +15,8 @@ const TIPO_LABEL: Record<string, string> = {
   MIXTA: "Mixta",
 };
 
-const fmt = (d: Date) => d.toLocaleDateString("es-PE", { day: "2-digit", month: "short", year: "numeric" });
+const fmt = (d: Date) => d.toLocaleDateString("es-PE", { day: "2-digit", month: "short", year: "numeric", timeZone: "UTC" });
+const fmtHora = (d: Date) => d.toLocaleTimeString("es-PE", { hour: "2-digit", minute: "2-digit", hour12: true, timeZone: "UTC" });
 
 const pill = (text: string, color: string, bg: string) => (
   <span style={{ display: "inline-flex", alignItems: "center", padding: "0.2rem 0.65rem", borderRadius: "999px", fontSize: "0.75rem", fontWeight: 700, color, background: bg }}>
@@ -83,10 +84,31 @@ export const DetalleOrden: React.FC<DetalleOrdenProps> = ({ ordenId, isOpen, onC
             <>
               {/* Info rápida */}
               <div style={{ display: "flex", flexWrap: "wrap", gap: "1.25rem" }}>
-                <InfoItem label="Especialidad"    value={orden.especialidad} />
-                <InfoItem label="Médico"          value={orden.medicoNombre} />
-                {orden.fechaCitaLab  && <InfoItem label="Día de atención" value={fmt(new Date(orden.fechaCitaLab))} />}
-                {orden.fechaResultado && <InfoItem label="Resultado el"   value={fmt(new Date(orden.fechaResultado))} />}
+                <InfoItem label="Especialidad" value={orden.especialidad} />
+                <InfoItem label="Médico"       value={orden.medicoNombre} />
+
+                {/* Laboratorio: día + horario fijo de atención */}
+                {orden.tipoOrden !== "IMAGEN" && orden.fechaCitaLab && (
+                  <>
+                    <InfoItem label="Día de atención" value={fmt(new Date(orden.fechaCitaLab))} />
+                    <InfoItem label="Horario"          value="7:00 a.m. – 11:00 a.m." />
+                  </>
+                )}
+
+                {/* Imagen: fecha y hora exacta de la cita */}
+                {orden.tipoOrden === "IMAGEN" && orden.citaImagenFecha && (
+                  <>
+                    <InfoItem label="Día de cita" value={fmt(new Date(orden.citaImagenFecha))} />
+                    <InfoItem label="Hora"         value={fmtHora(new Date(orden.citaImagenFecha))} />
+                  </>
+                )}
+                {orden.tipoOrden === "IMAGEN" && !orden.citaImagenFecha && orden.fechaCitaLab && (
+                  <InfoItem label="Día de cita" value={fmt(new Date(orden.fechaCitaLab))} />
+                )}
+
+                {orden.fechaResultado && (
+                  <InfoItem label="Resultado el" value={fmt(new Date(orden.fechaResultado))} />
+                )}
               </div>
 
               {/* Notas */}
@@ -115,11 +137,11 @@ export const DetalleOrden: React.FC<DetalleOrdenProps> = ({ ordenId, isOpen, onC
                 </div>
               )}
 
-              {/* Recomendaciones */}
+              {/* Observaciones generales */}
               {orden.recomendaciones && (
                 <div style={{ backgroundColor: "var(--bg-hover)", borderRadius: "8px", padding: "0.75rem 1rem", border: "1px dashed var(--border)" }}>
                   <p style={{ margin: 0, fontSize: "0.88rem", color: "var(--text-secondary)" }}>
-                    <span style={{ fontWeight: 600, color: "var(--text-primary)" }}>Recomendaciones: </span>{orden.recomendaciones}
+                    <span style={{ fontWeight: 600, color: "var(--text-primary)" }}>Observaciones: </span>{orden.recomendaciones}
                   </p>
                 </div>
               )}

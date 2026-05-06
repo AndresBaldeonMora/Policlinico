@@ -23,6 +23,7 @@ export interface OrdenDetalle {
   medicoNombre: string;
   fechaCreacion: Date;
   fechaCitaLab?: Date;
+  citaImagenFecha?: Date;
   fechaResultado?: Date;
   fechaAsistencia?: Date;
   examenes: ExamenOrdenDetalle[];

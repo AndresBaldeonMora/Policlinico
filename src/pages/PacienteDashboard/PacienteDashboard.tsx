@@ -17,8 +17,14 @@ import { ResumenCita } from "../../components/ResumenCita/ResumenCita";
 import { ResumenOrden } from "../../components/ResumenOrden/ResumenOrden";
 import "./PacienteDashboard.css";
 
-/* ── Fecha de hoy para el subtítulo (estable por render) ── */
-const fechaHoy = formatearFechaLarga(new Date().toISOString());
+/* ── Fecha de hoy en zona horaria de Perú (estable por render) ── */
+const fechaHoy = new Date().toLocaleDateString("es-PE", {
+  weekday: "long",
+  day: "2-digit",
+  month: "long",
+  year: "numeric",
+  timeZone: "America/Lima",
+});
 
 const PacienteDashboard = () => {
   const { user } = useAuth();

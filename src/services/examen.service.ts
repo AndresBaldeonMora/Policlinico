@@ -86,7 +86,8 @@ export interface OrdenExamen {
   // Ciclo de vida
   fecha: string;
   fechaAutorizacion?: string;
-  fechaCitaLab?: string;       // Día agendado para la toma de muestra
+  fechaCitaLab?: string;
+  citaImagenFecha?: string;    // Fecha + hora exacta para citas de imagen
   fechaVencimiento?: string;
   fechaAsistencia?: string;
   fechaResultados?: string;
@@ -308,18 +309,24 @@ export class ExamenService {
       medicoNombre: data.doctorId ? `${data.doctorId.nombres} ${data.doctorId.apellidos}` : "No especificado",
       fechaCreacion: new Date(data.fecha),
       fechaCitaLab: data.fechaCitaLab ? new Date(data.fechaCitaLab) : undefined,
+      citaImagenFecha: data.citaImagenFecha ? new Date(data.citaImagenFecha) : undefined,
       fechaResultado: data.fechaResultados ? new Date(data.fechaResultados) : undefined,
       fechaAsistencia: data.fechaAsistencia ? new Date(data.fechaAsistencia) : undefined,
-      examenes: data.items.map(item => {
-        const examen = typeof item.examenId === 'string' ? { _id: item.examenId, nombre: 'Examen', tipo: 'OTRO' } : item.examenId;
-        return {
-          id: examen._id,
-          nombre: examen.nombre,
-          tipo: examen.tipo,
-          estado: item.estadoItem,
-          observacion: item.observaciones
-        };
-      }),
+      examenes: data.items
+        .map(item => {
+          const examen = typeof item.examenId === 'string'
+            ? { _id: item.examenId, nombre: 'Examen', tipo: 'OTRO' }
+            : (item.examenId as any) ?? null;
+          if (!examen) return null;
+          return {
+            id: examen._id ?? "",
+            nombre: examen.nombre ?? "Examen",
+            tipo: examen.tipo ?? "—",
+            estado: item.estadoItem,
+            observacion: item.observaciones,
+          };
+        })
+        .filter((ex): ex is NonNullable<typeof ex> => ex !== null),
       historialEstados: data.historialEstados && data.historialEstados.length > 0 ? data.historialEstados : historial,
       archivoResultadoUrl: data.archivoResultadoUrl,
       recomendaciones: data.observacionesGenerales,

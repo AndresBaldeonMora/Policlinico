@@ -52,10 +52,24 @@ export const ItemOrden = ({
         {formatFecha(fechaRef)}
       </span>
 
-      <span className="io-fecha">
-        <Clock size={12} />
-        {formatHora(orden.fecha)}
-      </span>
+      {isResultadoView ? (
+        <span className="io-fecha">
+          <Clock size={12} />
+          {formatHora(orden.fecha)}
+        </span>
+      ) : orden.tipoOrden === "IMAGEN" ? (
+        orden.citaImagenFecha ? (
+          <span className="io-fecha">
+            <Clock size={12} />
+            {formatHora(orden.citaImagenFecha)}
+          </span>
+        ) : null
+      ) : (
+        <span className="io-fecha">
+          <Clock size={12} />
+          7:00 – 11:00 a.m.
+        </span>
+      )}
 
       <div className="io-actions">
         <button

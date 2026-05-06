@@ -141,23 +141,6 @@ const Sidebar = () => {
           </div>
         </nav>
 
-        <div className="sidebar-footer">
-          {!collapsed ? (
-            <div className="sidebar-user-card">
-              <div className="sidebar-user-avatar">{avatarLetter}</div>
-              <div className="sidebar-user-info">
-                <span className="sidebar-user-name">
-                  {nombreCompleto ? nombreCompleto : "Usuario"}
-                </span>
-                <span className="sidebar-user-role">{user?.rol || "Sin rol"}</span>
-              </div>
-            </div>
-          ) : (
-            <div className="sidebar-user-card sidebar-user-card--collapsed">
-              <div className="sidebar-user-avatar">{avatarLetter}</div>
-            </div>
-          )}
-        </div>
       </aside>
     </>
   );

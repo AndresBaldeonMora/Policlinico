@@ -35,6 +35,8 @@
   align-items: center;
   gap: 0.4rem;
   flex-shrink: 0;
+  width: 7rem;
+  min-width: 7rem;
 }
 
 .io-badge {
