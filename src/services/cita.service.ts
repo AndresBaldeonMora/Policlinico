@@ -87,6 +87,7 @@ export interface CitaHistorial {
   estado: EstadoCita;
   medico: string;
   especialidad: string;
+  doctorId?: string;
   diagnostico?: string;
   notasMedico?: string;
   recetas?: RecetaMedicamento[];
@@ -167,6 +168,15 @@ export class CitaApiService {
     return response.data.data;
   }
 
+  static async eliminar(citaId: string): Promise<void> {
+    const response = await api.delete<{ success: boolean; message?: string }>(
+      `/citas/${citaId}`
+    );
+    if (!response.data.success) {
+      throw new Error(response.data.message || "Error al eliminar la cita");
+    }
+  }
+
   static async cancelar(citaId: string, motivoCancelacion: string): Promise<CitaTransformada> {
     const response = await api.put<{ success: boolean; data: CitaTransformada; message?: string }>(
       `/citas/${citaId}/cancelar`,
@@ -205,6 +215,7 @@ export class CitaApiService {
         estado: c.estado,
         medico: c.doctor ?? "Sin médico",
         especialidad: c.especialidad ?? "Sin especialidad",
+        doctorId: c.doctorId ? String(c.doctorId) : undefined,
         diagnostico: c.diagnostico || undefined,
         notasMedico: c.notasClinicas || undefined,
         recetas,

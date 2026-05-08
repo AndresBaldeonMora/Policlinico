@@ -1,4 +1,4 @@
-import { useEffect, useReducer, useCallback } from "react";
+import { useEffect, useReducer, useCallback, useState } from "react";
 import { useAuth } from "../../hooks/userAuth";
 import { useSearchParams } from "react-router-dom";
 
@@ -20,6 +20,7 @@ import PasoHora from "./PasoHora";
 import PasoPaciente from "./PasoPaciente";
 import PasoResumen from "./PasoResumen";
 import AgregarPacienteSimple from "./AgregarPacienteSimple";
+import PagoModal from "./PagoModal";
 import "./ReservaCita.css";
 
 // ─── Constantes ───────────────────────────────────────────
@@ -119,6 +120,7 @@ const ReservaCita = () => {
   const esPaciente = user?.rol === "paciente";
 
   const [state, dispatch] = useReducer(reservaReducer, initialState);
+  const [mostrarPago, setMostrarPago] = useState(false);
   const [searchParams] = useSearchParams();
   const fechaParam = searchParams.get("fecha") || "";
   const doctorIdParam = searchParams.get("doctorId") || "";
@@ -397,10 +399,10 @@ const ReservaCita = () => {
               <button
                 type="button"
                 className="btn btn-primary"
-                onClick={handleConfirmarCita}
+                onClick={() => setMostrarPago(true)}
                 disabled={state.loading}
               >
-                Confirmar Cita
+                Pagar
               </button>
             )}
           </div>
@@ -412,6 +414,17 @@ const ReservaCita = () => {
           dniInicial={state.searchDNI}
           onPacienteCreado={handlePacienteCreado}
           onCancelar={() => dispatch({ type: "TOGGLE_NUEVO_PACIENTE", visible: false })}
+        />
+      )}
+
+      {mostrarPago && (
+        <PagoModal
+          loading={state.loading}
+          onClose={() => setMostrarPago(false)}
+          onConfirmar={async () => {
+            setMostrarPago(false);
+            await handleConfirmarCita();
+          }}
         />
       )}
     </div>

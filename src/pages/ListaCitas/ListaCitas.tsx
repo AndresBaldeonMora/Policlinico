@@ -3,7 +3,7 @@ import { useSearchParams, useNavigate } from "react-router-dom";
 import "./ListaCitas.css";
 import { CitaApiService } from "../../services/cita.service";
 import type { CitaProcesada } from "../../services/cita.service";
-import { CalendarClock, XCircle, Search, Calendar, Clock, User, Stethoscope } from "lucide-react";
+import { CalendarClock, XCircle, Search, Calendar, Clock, User, Stethoscope, Trash2 } from "lucide-react";
 import { DoctorApiService } from "../../services/doctor.service";
 import {
   listaCitasReducer,
@@ -77,6 +77,7 @@ const ListaCitas = () => {
   const [state, dispatch] = useReducer(listaCitasReducer, initialState);
   const [citaSeleccionadaId, setCitaSeleccionadaId] = useState<string | null>(null);
   const [citaParaCancelar, setCitaParaCancelar] = useState<CitaProcesada | null>(null);
+  const [citaParaEliminar, setCitaParaEliminar] = useState<CitaProcesada | null>(null);
   const { notification, editando, pasoModal, mesesDisponibles, mesSeleccionado, diasDelMes, diaSeleccionado, horariosPorDia, cargandoHorarios } = state;
 
   const [citasData, setCitasData] = useState<CitaProcesada[]>([]);
@@ -138,6 +139,19 @@ const ListaCitas = () => {
       showNotification("Error al cargar horarios", "error");
     } finally {
       dispatch({ type: "SET_CARGANDO_HORARIOS", payload: false });
+    }
+  };
+
+  const confirmarEliminacion = async () => {
+    if (!citaParaEliminar) return;
+    try {
+      await CitaApiService.eliminar(citaParaEliminar._id);
+      showNotification("Cita eliminada correctamente.", "success");
+      setCitaParaEliminar(null);
+      cargarCitas();
+    } catch (err) {
+      showNotification(err instanceof Error ? err.message : "Error al eliminar la cita.", "error");
+      setCitaParaEliminar(null);
     }
   };
 
@@ -385,6 +399,15 @@ const ListaCitas = () => {
                             >
                               <XCircle size={16} />
                             </button>
+                            {cita.doctor === "Sin asignar" && (
+                              <button
+                                className="btn-action btn-action--danger"
+                                title="Eliminar cita sin asignar"
+                                onClick={() => setCitaParaEliminar(cita)}
+                              >
+                                <Trash2 size={16} />
+                              </button>
+                            )}
                           </div>
                         </td>
                       </tr>
@@ -414,6 +437,19 @@ const ListaCitas = () => {
           onSiguiente={irASegundoPaso} onVolver={() => dispatch({ type: "SET_PASO_MODAL", payload: 1 })}
           onCerrar={cerrarModal} onConfirmar={confirmarReprogramar}
         />
+      )}
+
+      {citaParaEliminar && (
+        <div className="confirm-overlay" onClick={() => setCitaParaEliminar(null)}>
+          <div className="confirm-modal" onClick={(e) => e.stopPropagation()}>
+            <h3>Eliminar cita</h3>
+            <p>¿Estás seguro de que deseas eliminar permanentemente la cita de <strong>{citaParaEliminar.paciente}</strong>? Esta acción no se puede deshacer.</p>
+            <div className="confirm-actions">
+              <button className="btn btn-secondary" onClick={() => setCitaParaEliminar(null)}>Volver</button>
+              <button className="btn btn-danger" onClick={confirmarEliminacion}>Sí, eliminar</button>
+            </div>
+          </div>
+        </div>
       )}
 
       {citaParaCancelar && (

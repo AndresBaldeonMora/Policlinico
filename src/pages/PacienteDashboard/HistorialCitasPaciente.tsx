@@ -1,16 +1,50 @@
-import { useEffect, useState, useMemo } from "react";
+import { useEffect, useState, useMemo, useReducer } from "react";
 import { CalendarDays, Search, ChevronLeft, ChevronRight } from "lucide-react";
 import { useAuth } from "../../hooks/userAuth";
 import { CitaApiService, type CitaHistorial } from "../../services/cita.service";
+import { DoctorApiService } from "../../services/doctor.service";
 import ItemCita from "./ItemCita";
 import DetalleCita from "./DetalleCita";
+import ReprogramarModal from "../ListaCitas/ReprogramarModal";
+import {
+  listaCitasReducer,
+  initialState,
+} from "../ListaCitas/ListaCitasReducer";
+import type { MesOption, HorarioPorDia } from "../ListaCitas/ListaCitasReducer";
 import "./HistorialCitas.css";
 
 type Tab = "PROXIMAS" | "PASADAS";
 
-const ESTADOS_PROXIMAS = new Set(["PENDIENTE"]);
+const ESTADOS_PROXIMAS = new Set(["PENDIENTE", "REPROGRAMADA"]);
 
 const POR_PAGINA = 5;
+
+const generarMeses = (): MesOption[] => {
+  const nombres = ["Enero","Febrero","Marzo","Abril","Mayo","Junio","Julio","Agosto","Septiembre","Octubre","Noviembre","Diciembre"];
+  const hoy = new Date();
+  return Array.from({ length: 3 }, (_, i) => {
+    const d = new Date(hoy.getFullYear(), hoy.getMonth() + i, 1);
+    return { numero: d.getMonth(), nombre: nombres[d.getMonth()], anio: d.getFullYear() };
+  });
+};
+
+const generarDiasDelMes = (mes: MesOption): number[] => {
+  const hoy = new Date(); hoy.setHours(0, 0, 0, 0);
+  const ultimoDia = new Date(mes.anio, mes.numero + 1, 0).getDate();
+  const dias: number[] = [];
+  for (let dia = 1; dia <= ultimoDia; dia++) {
+    if (new Date(mes.anio, mes.numero, dia) >= hoy) dias.push(dia);
+  }
+  return dias;
+};
+
+const formatearFechaCompleta = (fecha: Date): string =>
+  new Intl.DateTimeFormat("es-PE", { day: "2-digit", month: "2-digit", year: "numeric" }).format(fecha);
+
+const obtenerNombreDia = (fecha: Date): string => {
+  const nombre = new Intl.DateTimeFormat("es-PE", { weekday: "long" }).format(fecha);
+  return nombre.charAt(0).toUpperCase() + nombre.slice(1);
+};
 
 const HistorialCitasPaciente = () => {
   const { user } = useAuth();
@@ -22,6 +56,15 @@ const HistorialCitasPaciente = () => {
   const [busqueda, setBusqueda]                 = useState("");
   const [activeTab, setActiveTab]               = useState<Tab>("PROXIMAS");
   const [pagina, setPagina]                     = useState(1);
+  const [notif, setNotif]                       = useState<{ msg: string; tipo: "success" | "error" } | null>(null);
+
+  const [state, dispatch] = useReducer(listaCitasReducer, initialState);
+  const { editando, pasoModal, mesesDisponibles, mesSeleccionado, diasDelMes, diaSeleccionado, horariosPorDia, cargandoHorarios } = state;
+
+  const showNotif = (msg: string, tipo: "success" | "error") => {
+    setNotif({ msg, tipo });
+    setTimeout(() => setNotif(null), 3500);
+  };
 
   useEffect(() => {
     if (!user?.correo) return;
@@ -32,6 +75,10 @@ const HistorialCitasPaciente = () => {
       .catch((e) => setError(e?.message ?? "Error al cargar citas"))
       .finally(() => setLoading(false));
   }, [user?.correo]);
+
+  useEffect(() => {
+    dispatch({ type: "SET_MESES_DISPONIBLES", payload: generarMeses() });
+  }, []);
 
   useEffect(() => {
     setPagina(1);
@@ -64,7 +111,6 @@ const HistorialCitasPaciente = () => {
         );
       });
 
-    // Próximas: ascendente (la más cercana primero); Pasadas: descendente (la más reciente primero)
     filtered.sort((a, b) => {
       const diff = new Date(a.fecha).getTime() - new Date(b.fecha).getTime();
       return activeTab === "PROXIMAS" ? diff : -diff;
@@ -89,8 +135,84 @@ const HistorialCitasPaciente = () => {
     fontSize: "1rem",
   });
 
+  // ── Reprogramar handlers ──────────────────────────────────────
+  const handleReprogramar = (cita: CitaHistorial) => {
+    dispatch({
+      type: "OPEN_MODAL",
+      payload: {
+        id: cita._id,
+        dni: "",
+        paciente: `${user?.nombres ?? ""} ${user?.apellidos ?? ""}`.trim() || "Paciente",
+        especialidad: cita.especialidad,
+        doctor: cita.medico,
+        doctorId: cita.doctorId ?? "",
+        fecha: "",
+        hora: "",
+        fechaOriginal: new Date(cita.fecha).toLocaleDateString("es-PE", { day: "2-digit", month: "2-digit", year: "numeric", timeZone: "UTC" }),
+        horaOriginal: cita.hora !== "—" ? cita.hora : "",
+      },
+    });
+  };
+
+  const handleSelectMes = (mes: MesOption) => {
+    dispatch({ type: "SELECT_MES", payload: { mes, dias: generarDiasDelMes(mes) } });
+  };
+
+  const handleSelectDia = async (dia: number) => {
+    if (!mesSeleccionado || !editando) return;
+    const fecha = new Date(mesSeleccionado.anio, mesSeleccionado.numero, dia);
+    const fechaISO = fecha.toISOString().split("T")[0];
+    dispatch({ type: "SELECT_DIA", payload: { dia, fechaISO } });
+
+    dispatch({ type: "SET_CARGANDO_HORARIOS", payload: true });
+    try {
+      const horarios = await DoctorApiService.obtenerHorariosDisponibles(editando.doctorId, fechaISO);
+      const info: HorarioPorDia = {
+        fecha: formatearFechaCompleta(fecha),
+        fechaISO,
+        diaNombre: obtenerNombreDia(fecha),
+        diaNumero: dia,
+        horarios,
+      };
+      dispatch({ type: "SET_HORARIOS_POR_DIA", payload: [info] });
+    } catch {
+      showNotif("Error al cargar horarios disponibles.", "error");
+    } finally {
+      dispatch({ type: "SET_CARGANDO_HORARIOS", payload: false });
+    }
+  };
+
+  const handleSiguiente = () => {
+    if (!editando?.fecha || !editando?.hora) {
+      showNotif("Selecciona una nueva fecha y hora antes de continuar.", "error");
+      return;
+    }
+    dispatch({ type: "SET_PASO_MODAL", payload: 2 });
+  };
+
+  const handleConfirmarReprogramar = async () => {
+    if (!editando?.fecha || !editando?.hora) return;
+    try {
+      await CitaApiService.reprogramar(editando.id, editando.fecha, editando.hora);
+      showNotif("Cita reprogramada correctamente.", "success");
+      dispatch({ type: "CLOSE_MODAL" });
+      // Recargar citas
+      if (user?.correo) {
+        CitaApiService.obtenerHistorialPaciente(user.correo).then(setCitas).catch(() => {});
+      }
+    } catch (err) {
+      showNotif(err instanceof Error ? err.message : "Error al reprogramar.", "error");
+    }
+  };
+
   return (
     <div className="hc-container">
+      {notif && (
+        <div className={`notification ${notif.tipo}`} style={{ marginBottom: "0.75rem" }}>
+          {notif.msg}
+        </div>
+      )}
+
       <div className="hc-header">
         <div className="hc-header-left">
           <div className="hc-header-icon">
@@ -161,6 +283,7 @@ const HistorialCitasPaciente = () => {
               cita={cita}
               onClick={() => setCitaSeleccionada(cita)}
               hideEstado={activeTab === "PROXIMAS"}
+              onReprogramar={activeTab === "PROXIMAS" ? handleReprogramar : undefined}
             />
           ))}
       </div>
@@ -196,6 +319,26 @@ const HistorialCitasPaciente = () => {
           cita={citaSeleccionada}
           onCerrar={() => setCitaSeleccionada(null)}
           hideEstado={activeTab === "PROXIMAS"}
+        />
+      )}
+
+      {editando && (
+        <ReprogramarModal
+          editando={editando}
+          pasoModal={pasoModal}
+          mesesDisponibles={mesesDisponibles}
+          mesSeleccionado={mesSeleccionado}
+          diasDelMes={diasDelMes}
+          diaSeleccionado={diaSeleccionado}
+          horariosPorDia={horariosPorDia}
+          cargandoHorarios={cargandoHorarios}
+          onSelectMes={handleSelectMes}
+          onSelectDia={handleSelectDia}
+          onSelectHora={(hora) => dispatch({ type: "SET_HORA", payload: hora })}
+          onSiguiente={handleSiguiente}
+          onVolver={() => dispatch({ type: "SET_PASO_MODAL", payload: 1 })}
+          onCerrar={() => dispatch({ type: "CLOSE_MODAL" })}
+          onConfirmar={handleConfirmarReprogramar}
         />
       )}
     </div>

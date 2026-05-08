@@ -124,15 +124,16 @@ const PacienteOrdenes = () => {
       </div>
 
       {/* Búsqueda */}
-      <div className="hc-controls">
-        <div style={{ position: "relative" }}>
-          <Search size={16} style={{ position: "absolute", left: "0.9rem", top: "50%", transform: "translateY(-50%)", color: "var(--text-muted)", opacity: 0.55, pointerEvents: "none" }} />
+      <div className="hc-controls" style={{ marginBottom: "1rem" }}>
+        <div style={{ position: "relative", flex: 1 }}>
+          <Search size={16} style={{ position: "absolute", left: "10px", top: "50%", transform: "translateY(-50%)", color: "var(--text-muted)" }} />
           <input
             type="text"
             className="hc-search"
             placeholder="Buscar por código, examen o especialidad..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
+            style={{ paddingLeft: "2rem" }}
           />
         </div>
       </div>

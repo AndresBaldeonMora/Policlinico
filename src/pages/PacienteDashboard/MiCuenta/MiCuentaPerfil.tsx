@@ -154,21 +154,24 @@ const MiCuentaPerfil = ({ pacienteId, initialData, onGuardar }: MiCuentaPerfilPr
       icon?: React.ReactNode;
       type?: string;
       disabled?: boolean;
+      readOnly?: boolean;
       placeholder?: string;
+      formatDisplay?: (val: string) => string;
       options?: { value: string; label: string }[];
     }) => {
       const valor = datos[campo];
       const isDisabled = opts?.disabled || !editando;
+      const valorMostrado = opts?.formatDisplay && valor ? opts.formatDisplay(valor) : valor;
 
-      if (!editando) {
+      if (!editando || opts?.readOnly) {
         return (
           <div className="micuenta-perfil__field">
             <span className="micuenta-perfil__field-label">
               {opts?.icon}
               {label}
             </span>
-            <span className={`micuenta-perfil__field-value ${!valor ? "micuenta-perfil__field-value--empty" : ""}`}>
-              {valor || "No registrado"}
+            <span className={`micuenta-perfil__field-value ${!valorMostrado ? "micuenta-perfil__field-value--empty" : ""}`}>
+              {valorMostrado || "No registrado"}
             </span>
           </div>
         );
@@ -284,18 +287,17 @@ const MiCuentaPerfil = ({ pacienteId, initialData, onGuardar }: MiCuentaPerfilPr
               Información personal
             </h3>
             <div className="micuenta-perfil__grid">
-              {renderField("Nombres", "nombres", { placeholder: "Ej: Juan Carlos" })}
-              {renderField("Apellidos", "apellidos", { placeholder: "Ej: Pérez García" })}
-              {renderField("DNI", "dni", { disabled: true })}
-              {renderField("Sexo", "sexo", {
-                options: [
-                  { value: "M", label: "Masculino" },
-                  { value: "F", label: "Femenino" },
-                ],
-              })}
+              {renderField("Nombres", "nombres", { readOnly: true })}
+              {renderField("Apellidos", "apellidos", { readOnly: true })}
+              {renderField("DNI", "dni", { readOnly: true })}
+              {renderField("Sexo", "sexo", { readOnly: true })}
               {renderField("Fecha de nacimiento", "fechaNacimiento", {
                 icon: <Calendar size={14} />,
-                type: "date",
+                readOnly: true,
+                formatDisplay: (v) => {
+                  const [y, m, d] = v.split("-");
+                  return `${d}-${m}-${y}`;
+                },
               })}
             </div>
 

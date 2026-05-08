@@ -84,9 +84,15 @@
 
 .ic-meta-item svg { flex-shrink: 0; }
 
-.ic-btn-detalle {
+.ic-actions {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
   flex-shrink: 0;
   margin-left: auto;
+}
+
+.ic-btn-detalle {
   padding: 0.4rem 1rem;
   background: var(--primary-lighter, #d1fae5);
   color: var(--primary, #059669);
@@ -110,13 +116,39 @@
   outline-offset: 2px;
 }
 
+.ic-btn-reprogramar {
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+  padding: 0.4rem 0.875rem;
+  background: transparent;
+  color: var(--primary, #059669);
+  border: 1px solid var(--primary-light, #6ee7b7);
+  border-radius: 8px;
+  font-family: inherit;
+  font-size: 0.8rem;
+  font-weight: 600;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: background 0.15s, color 0.15s;
+}
+
+.ic-btn-reprogramar:hover:not(:disabled) {
+  background: var(--primary-lighter, #d1fae5);
+}
+
+.ic-btn-reprogramar:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
 /* ── Responsive ── */
 @media (max-width: 768px) {
   .ic-card { gap: 1rem; padding: 1rem 1.2rem; }
   .ic-especialidad { font-size: 0.9rem; width: 15ch; min-width: 15ch; }
   .ic-medico    { font-size: 0.84rem; }
   .ic-meta-item { font-size: 0.78rem; }
-  .ic-btn-detalle { font-size: 0.77rem; padding: 0.35rem 0.8rem; }
+  .ic-btn-detalle, .ic-btn-reprogramar { font-size: 0.77rem; padding: 0.35rem 0.8rem; }
 }
 
 @media (max-width: 600px) {
@@ -124,10 +156,12 @@
   .ic-especialidad { width: auto; min-width: 0; flex: 1 1 auto; font-size: 0.88rem; }
   .ic-medico { flex: 1 1 100%; order: 3; font-size: 0.82rem; }
   .ic-datetime { flex: 1 1 auto; order: 4; }
-  .ic-btn-detalle { order: 4; margin-left: auto; }
+  .ic-actions { order: 5; margin-left: auto; }
 }
 
 @media (max-width: 380px) {
   .ic-datetime { flex: 1 1 100%; }
-  .ic-btn-detalle { width: 100%; order: 5; text-align: center; padding: 0.5rem; }
+  .ic-actions { width: 100%; order: 5; }
+  .ic-btn-detalle { flex: 1; text-align: center; padding: 0.5rem; }
+  .ic-btn-reprogramar { flex: 1; justify-content: center; padding: 0.5rem; }
 }

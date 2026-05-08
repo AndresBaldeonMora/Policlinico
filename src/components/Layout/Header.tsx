@@ -38,7 +38,7 @@ const Header = () => {
 
   useEffect(() => {
     const handleKey = (e: KeyboardEvent) => {
-      if ((e.ctrlKey || e.metaKey) && e.key === "k") {
+      if ((e.ctrlKey || e.metaKey) && e.key === "k" && user?.rol !== "paciente") {
         e.preventDefault();
         setSearchOpen((prev) => !prev);
       }
@@ -72,23 +72,25 @@ const Header = () => {
       <header className="header">
         <div className="header-content">
           <div className="header-left">
-            <button 
-              className="mobile-menu-toggle" 
+            <button
+              className="mobile-menu-toggle"
               onClick={() => document.body.classList.toggle('mobile-sidebar-open')}
               aria-label="Toggle menu"
             >
               <Menu size={20} strokeWidth={2} />
             </button>
-            <button
-              className="header-search"
-              onClick={() => setSearchOpen(true)}
-            >
-              <Search size={18} className="header-search-icon" />
-              <span className="header-search-placeholder">
-                Buscar pacientes, citas, doctores...
-              </span>
-              <kbd className="header-search-kbd">Ctrl+K</kbd>
-            </button>
+            {user?.rol !== "paciente" && (
+              <button
+                className="header-search"
+                onClick={() => setSearchOpen(true)}
+              >
+                <Search size={18} className="header-search-icon" />
+                <span className="header-search-placeholder">
+                  Buscar pacientes, citas, doctores...
+                </span>
+                <kbd className="header-search-kbd">Ctrl+K</kbd>
+              </button>
+            )}
           </div>
 
           <div className="header-right">

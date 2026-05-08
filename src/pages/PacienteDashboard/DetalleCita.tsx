@@ -1,7 +1,7 @@
 import { useEffect, useRef } from "react";
 import {
   X, Calendar, Clock, Stethoscope, FileText,
-  Pill, FlaskConical, StickyNote, User,
+  Pill, FlaskConical, StickyNote, User, Info, AlertTriangle,
 } from "lucide-react";
 import "./DetalleCita.css";
 
@@ -127,6 +127,16 @@ const IndicacionesMedico = ({ raw }: { raw?: string }) => {
   );
 };
 
+const calcularHorasRestantes = (fecha: string, hora: string): number => {
+  try {
+    const fechaStr = fecha.split("T")[0];
+    const [y, m, d] = fechaStr.split("-").map(Number);
+    const [h, min] = (hora && hora !== "—" ? hora : "00:00").split(":").map(Number);
+    const citaDate = new Date(y, m - 1, d, h, min);
+    return (citaDate.getTime() - Date.now()) / (1000 * 60 * 60);
+  } catch { return 0; }
+};
+
 const DetalleCita = ({ cita, onCerrar, hideEstado = false }: Props) => {
   const closeRef = useRef<HTMLButtonElement>(null);
 
@@ -144,6 +154,10 @@ const DetalleCita = ({ cita, onCerrar, hideEstado = false }: Props) => {
   const badge = ESTADO_CONFIG[estadoNormalizado] ?? ESTADO_CONFIG.PENDIENTE;
   const tieneRecetas = (cita.recetas?.length ?? 0) > 0;
   const tieneExamenes = (cita.examenes?.length ?? 0) > 0;
+
+  const esCitaProxima = hideEstado && (estadoNormalizado === "PENDIENTE" || estadoNormalizado === "REPROGRAMADA");
+  const horasRestantes = esCitaProxima ? calcularHorasRestantes(cita.fecha, cita.hora) : 0;
+  const puedeReprogramar = horasRestantes > 24;
 
   return (
     <div className="dc-overlay" onClick={onCerrar} role="presentation">
@@ -198,6 +212,19 @@ const DetalleCita = ({ cita, onCerrar, hideEstado = false }: Props) => {
               )}
             </div>
           </div>
+
+          {/* Banner de reprogramación */}
+          {esCitaProxima && (
+            <div className={`dc-reprog-notice ${puedeReprogramar ? "dc-reprog-notice--ok" : "dc-reprog-notice--warn"}`}>
+              {puedeReprogramar ? <Info size={15} /> : <AlertTriangle size={15} />}
+              <p>
+                {puedeReprogramar
+                  ? <>Puedes reprogramar esta cita. Recuerda que <strong>solo se permite hacerlo con más de 24 horas de anticipación</strong> a la hora programada.</>
+                  : <>Ya no es posible reprogramar esta cita. El plazo de <strong>24 horas de anticipación</strong> ya venció ({cita.hora && cita.hora !== "—" ? `cita a las ${cita.hora}` : "hora no especificada"}).</>
+                }
+              </p>
+            </div>
+          )}
 
           {/* Contenido clínico: solo si la cita ya fue atendida */}
           {estadoNormalizado === "PENDIENTE" || estadoNormalizado === "REPROGRAMADA" ? (

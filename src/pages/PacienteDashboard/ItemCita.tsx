@@ -1,4 +1,4 @@
-import { Calendar, Clock, Stethoscope } from "lucide-react";
+import { Calendar, Clock, Stethoscope, CalendarClock } from "lucide-react";
 import type { CitaHistorial } from "../../services/cita.service";
 import "./ItemCita.css";
 
@@ -6,7 +6,18 @@ interface Props {
   cita: CitaHistorial;
   onClick: () => void;
   hideEstado?: boolean;
+  onReprogramar?: (cita: CitaHistorial) => void;
 }
+
+const puedeReprogramar = (cita: CitaHistorial): boolean => {
+  try {
+    const fechaStr = cita.fecha.split("T")[0];
+    const [y, m, d] = fechaStr.split("-").map(Number);
+    const [h, min] = (cita.hora && cita.hora !== "—" ? cita.hora : "00:00").split(":").map(Number);
+    const citaDate = new Date(y, m - 1, d, h, min);
+    return citaDate.getTime() - Date.now() > 24 * 60 * 60 * 1000;
+  } catch { return false; }
+};
 
 const ESTADO_CONFIG: Record<string, { label: string; clase: string }> = {
   PENDIENTE:    { label: "Pendiente",    clase: "ic-badge--pending" },
@@ -22,13 +33,15 @@ const formatFecha = (iso: string) =>
     day: "2-digit", month: "short", year: "numeric", timeZone: "UTC",
   });
 
-const ItemCita = ({ cita, onClick, hideEstado = false }: Props) => {
-  // Normalizar el estado (por si viene en minúsculas o con espacios)
+const ItemCita = ({ cita, onClick, hideEstado = false, onReprogramar }: Props) => {
   const estadoKey = cita.estado?.toUpperCase()?.trim() ?? "PENDIENTE";
-  const badge = ESTADO_CONFIG[estadoKey] ?? { 
-    label: cita.estado || "Desconocido", 
-    clase: "ic-badge--pending" 
+  const badge = ESTADO_CONFIG[estadoKey] ?? {
+    label: cita.estado || "Desconocido",
+    clase: "ic-badge--pending"
   };
+
+  const mostrarReprogramar = hideEstado && onReprogramar && estadoKey === "PENDIENTE";
+  const puedeRep = mostrarReprogramar && puedeReprogramar(cita);
 
   return (
     <div className="ic-card">
@@ -56,9 +69,23 @@ const ItemCita = ({ cita, onClick, hideEstado = false }: Props) => {
         )}
       </span>
 
-      <button className="ic-btn-detalle" onClick={onClick} type="button">
-        Ver detalle
-      </button>
+      <div className="ic-actions">
+        {mostrarReprogramar && (
+          <button
+            className="ic-btn-reprogramar"
+            type="button"
+            title={puedeRep ? "Reprogramar cita" : "Solo puedes reprogramar con más de 24 horas de anticipación"}
+            disabled={!puedeRep}
+            onClick={(e) => { e.stopPropagation(); if (puedeRep) onReprogramar!(cita); }}
+          >
+            <CalendarClock size={14} />
+            Reprogramar
+          </button>
+        )}
+        <button className="ic-btn-detalle" onClick={onClick} type="button">
+          Ver detalle
+        </button>
+      </div>
     </div>
   );
 };
