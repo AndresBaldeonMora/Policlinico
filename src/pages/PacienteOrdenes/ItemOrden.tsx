@@ -10,12 +10,12 @@ const TIPO_LABEL: Record<string, string> = {
 
 const formatFecha = (iso: string) =>
   new Date(iso).toLocaleDateString("es-PE", {
-    day: "2-digit", month: "short", year: "numeric",
+    day: "2-digit", month: "short", year: "numeric", timeZone: "UTC",
   });
 
 const formatHora = (iso: string) =>
   new Date(iso).toLocaleTimeString("es-PE", {
-    hour: "2-digit", minute: "2-digit", hour12: true,
+    hour: "2-digit", minute: "2-digit", hour12: true, timeZone: "UTC",
   });
 
 export const ItemOrden = ({

@@ -1,4 +1,5 @@
 import React from "react";
+import { FileText, Download, ExternalLink } from "lucide-react";
 import { ExamenService } from "../../services/examen.service";
 import type { OrdenDetalle } from "../../types/orden.types";
 
@@ -148,14 +149,34 @@ export const DetalleOrden: React.FC<DetalleOrdenProps> = ({ ordenId, isOpen, onC
               </div>
 
               {/* Resultado PDF */}
-              {orden.estado === "FINALIZADO" && orden.archivoResultadoUrl && (
-                <div style={{ display: "flex", gap: "0.75rem" }}>
-                  <button onClick={() => setShowPdf(true)} className="btn btn-primary" style={{ fontSize: "0.9rem" }}>
-                    Ver resultado en PDF
-                  </button>
-                  <a href={orden.archivoResultadoUrl} download target="_blank" rel="noopener noreferrer" className="btn btn-secondary" style={{ textDecoration: "none", fontSize: "0.9rem" }}>
-                    Descargar PDF
-                  </a>
+              {orden.estado === "FINALIZADO" && (
+                <div style={{ borderTop: "1px solid var(--border)", paddingTop: "1rem" }}>
+                  <h3 style={{ margin: "0 0 0.75rem 0", fontSize: "0.95rem", fontWeight: 600, color: "var(--text-primary)", display: "flex", alignItems: "center", gap: "0.4rem" }}>
+                    <FileText size={15} /> Documento de resultados
+                  </h3>
+                  {orden.archivoResultadoUrl ? (
+                    <div style={{ display: "flex", gap: "0.75rem", flexWrap: "wrap" }}>
+                      <button
+                        onClick={() => setShowPdf(true)}
+                        style={{ display: "inline-flex", alignItems: "center", gap: "0.4rem", padding: "0.55rem 1.1rem", background: "var(--primary, #059669)", color: "#fff", border: "none", borderRadius: "8px", fontFamily: "inherit", fontSize: "0.88rem", fontWeight: 600, cursor: "pointer" }}
+                      >
+                        <ExternalLink size={14} /> Ver resultados
+                      </button>
+                      <a
+                        href={orden.archivoResultadoUrl}
+                        download
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        style={{ display: "inline-flex", alignItems: "center", gap: "0.4rem", padding: "0.55rem 1.1rem", background: "transparent", color: "var(--primary, #059669)", border: "1px solid var(--primary-light, #6ee7b7)", borderRadius: "8px", fontFamily: "inherit", fontSize: "0.88rem", fontWeight: 600, textDecoration: "none" }}
+                      >
+                        <Download size={14} /> Descargar PDF
+                      </a>
+                    </div>
+                  ) : (
+                    <p style={{ margin: 0, fontSize: "0.85rem", color: "var(--text-muted)", fontStyle: "italic" }}>
+                      El documento de resultados aún no ha sido cargado por el laboratorio.
+                    </p>
+                  )}
                 </div>
               )}
             </>

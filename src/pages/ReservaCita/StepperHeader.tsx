@@ -12,8 +12,8 @@ const StepperHeader = ({
   irAlPaso,
   esPaciente,
 }: StepperHeaderProps) => {
-  const getIconoPaso = (paso: number): React.ReactNode =>
-    paso < pasoActual ? <Check size={14} strokeWidth={3} /> : paso;
+  const getIconoPaso = (pasoLogico: number, pasoVisual: number): React.ReactNode =>
+    pasoLogico < pasoActual ? <Check size={14} strokeWidth={3} /> : pasoVisual;
 
   const pasosRender = esPaciente
     ? ["Especialidad", "Medico", "Mes", "Dia", "Hora", "Confirmar"]
@@ -33,7 +33,7 @@ const StepperHeader = ({
           <div
             className={`stepper-item ${esActivo ? "activo" : ""} ${esCompletado ? "completado" : ""}`}
           >
-            <div className="stepper-circulo">{getIconoPaso(pasoLogico)}</div>
+            <div className="stepper-circulo">{getIconoPaso(pasoLogico, numeroPasoVisual)}</div>
             <div className="stepper-titulo">{titulo}</div>
           </div>
         );

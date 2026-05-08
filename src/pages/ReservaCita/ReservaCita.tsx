@@ -44,9 +44,10 @@ interface PasoActualProps {
   state: ReturnType<typeof reservaReducer>;
   dispatch: React.Dispatch<ReservaAction>;
   handleBuscarPaciente: (dni: string) => void;
+  esPaciente: boolean;
 }
 
-const PasoActual = ({ state, dispatch, handleBuscarPaciente }: PasoActualProps) => {
+const PasoActual = ({ state, dispatch, handleBuscarPaciente, esPaciente }: PasoActualProps) => {
   switch (state.pasoActual) {
     case 1: return (
       <PasoEspecialidad
@@ -108,6 +109,7 @@ const PasoActual = ({ state, dispatch, handleBuscarPaciente }: PasoActualProps) 
         especialidadSeleccionada={state.especialidadSeleccionada}
         fechaSeleccionada={state.fechaSeleccionada}
         horaSeleccionada={state.horaSeleccionada}
+        esPaciente={esPaciente}
       />
     );
     default: return null;
@@ -363,10 +365,11 @@ const ReservaCita = () => {
 
         <div className="cita-form">
           <div className="paso-content">
-            <PasoActual   // ✅ componente real, no función inline
+            <PasoActual
               state={state}
               dispatch={dispatch}
               handleBuscarPaciente={handleBuscarPaciente}
+              esPaciente={esPaciente}
             />
           </div>
 
