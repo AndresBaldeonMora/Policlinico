@@ -52,7 +52,7 @@ export default function SectionMedicinaFamiliar({ data, setData, onPrev }: Props
         <label className="soap-section-label">Dinámica y comunicación familiar</label>
         <select className="soap-input" value={val('dinamicaFamiliar')} onChange={e => up('dinamicaFamiliar', e.target.value)}>
           <option value="">Seleccionar</option>
-          <option>Funcional — buena comunicación y apoyo</option>
+          <option>Funcional - buena comunicación y apoyo</option>
           <option>Disfuncional leve</option>
           <option>Disfuncional moderada</option>
           <option>Crisis familiar activa</option>
@@ -63,9 +63,9 @@ export default function SectionMedicinaFamiliar({ data, setData, onPrev }: Props
         <select className="soap-input" value={val('violenciaFamiliar')} onChange={e => up('violenciaFamiliar', e.target.value)}>
           <option value="">Seleccionar</option>
           <option>No refiere</option>
-          <option>Sospecha — requiere evaluación</option>
-          <option>Confirmada — violencia física</option>
-          <option>Confirmada — violencia psicológica</option>
+          <option>Sospecha - requiere evaluación</option>
+          <option>Confirmada - violencia física</option>
+          <option>Confirmada - violencia psicológica</option>
         </select>
       </div>
 
@@ -118,10 +118,10 @@ export default function SectionMedicinaFamiliar({ data, setData, onPrev }: Props
           <label className="soap-section-label">Nivel socioeconómico</label>
           <select className="soap-input" value={val('nivelSocioeconomico')} onChange={e => up('nivelSocioeconomico', e.target.value)}>
             <option value="">Seleccionar</option>
-            <option>A/B — medio-alto</option>
-            <option>C — medio</option>
-            <option>D — bajo</option>
-            <option>E — extrema pobreza</option>
+            <option>A/B - medio-alto</option>
+            <option>C - medio</option>
+            <option>D - bajo</option>
+            <option>E - extrema pobreza</option>
           </select>
         </div>
         <div>

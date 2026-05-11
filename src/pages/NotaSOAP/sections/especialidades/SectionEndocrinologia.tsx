@@ -148,8 +148,8 @@ export default function SectionEndocrinologia({ data, setData, onPrev }: Props) 
             <option value="">Seleccionar</option>
             <option>No evaluada</option>
             <option>Ausente</option>
-            <option>Presente — hormigueo/dolor pies</option>
-            <option>Presente — pérdida de sensibilidad</option>
+            <option>Presente - hormigueo/dolor pies</option>
+            <option>Presente - pérdida de sensibilidad</option>
           </select>
         </div>
         <div>
@@ -158,7 +158,7 @@ export default function SectionEndocrinologia({ data, setData, onPrev }: Props) 
             <option value="">Seleccionar</option>
             <option>Sin lesiones</option>
             <option>Riesgo alto (deformidades/callosidades)</option>
-            <option>Úlcera presente — grado Wagner __</option>
+            <option>Úlcera presente - grado Wagner __</option>
             <option>Infección activa</option>
           </select>
         </div>

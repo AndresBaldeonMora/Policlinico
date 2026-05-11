@@ -30,7 +30,7 @@ const PasoEspecialidad = ({
     return () => document.removeEventListener("mousedown", handler);
   }, [onToggleSuggestions]);
 
-  // Filtrar — si no hay texto muestra todas
+  // Filtrar - si no hay texto muestra todas
   const sugerencias = searchEspecialidad
     ? especialidades.filter((e) =>
         e.nombre.toLowerCase().includes(searchEspecialidad.toLowerCase())

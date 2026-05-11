@@ -27,7 +27,9 @@ interface Props {
   onVerCita: (e: React.MouseEvent | React.KeyboardEvent, citaId: string) => void;
 }
 
-const VistaMes = ({ diasDelMes, citas, doctores, doctorId, bloqueos = [], onVerCita}: Props) => {
+const EMPTY_BLOQUEOS: Bloqueo[] = [];
+
+const VistaMes = ({ diasDelMes, citas, doctores, doctorId, bloqueos = EMPTY_BLOQUEOS, onVerCita}: Props) => {
   const doctoresMostrados = doctorId === "ALL"
     ? doctores
     : doctores.filter((d) => d.id === doctorId);

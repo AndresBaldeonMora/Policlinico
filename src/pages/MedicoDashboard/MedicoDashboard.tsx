@@ -40,7 +40,7 @@ export default function MedicoDashboard() {
       <div className="loading-container">
         <div className="loading-content">
           <div className="spinner" />
-          <p className="loading-text">Cargando datos...</p>
+          <p className="loading-text">Cargando datos…</p>
         </div>
       </div>
     );
@@ -193,8 +193,8 @@ export default function MedicoDashboard() {
               {alertas.length === 0 ? (
                 <p className="dash-alertas-empty">Sin alertas para hoy</p>
               ) : (
-                alertas.map((a, i) => (
-                  <div key={`${a.tipo}-${a.msg.slice(0, 20)}-${i}`} className={`dash-alerta dash-alerta--${a.tipo}`}>
+                alertas.map((a) => (
+                  <div key={`${a.tipo}-${a.msg}`} className={`dash-alerta dash-alerta--${a.tipo}`}>
                     {a.tipo === "danger"  && <AlertCircle  size={15} />}
                     {a.tipo === "warning" && <AlertTriangle size={15} />}
                     {a.tipo === "info"    && <Info          size={15} />}

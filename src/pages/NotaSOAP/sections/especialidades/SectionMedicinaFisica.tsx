@@ -73,7 +73,7 @@ export default function SectionMedicinaFisica({ data, setData, onPrev }: Props) 
 
       {/* FUERZA MUSCULAR */}
       <p style={{ fontWeight: 700, fontSize: 13, color: "var(--text-primary)", marginBottom: 10 }}>
-        Fuerza Muscular — Escala de Lovett (0–5)
+        Fuerza Muscular - Escala de Lovett (0–5)
       </p>
       <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr 1fr", gap: 12, marginBottom: 14 }}>
         <div>

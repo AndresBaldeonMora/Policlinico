@@ -86,7 +86,7 @@ const Header = () => {
               >
                 <Search size={18} className="header-search-icon" />
                 <span className="header-search-placeholder">
-                  Buscar pacientes, citas, doctores...
+                  Buscar pacientes, citas, doctores…
                 </span>
                 <kbd className="header-search-kbd">Ctrl+K</kbd>
               </button>

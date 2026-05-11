@@ -164,7 +164,7 @@ export class ExamenService {
 
   // ─── Flujo clínico: Autorizar orden (recepción) ────────────
   // PENDIENTE → EN_PROCESO (vigencia 7 días)
-  // fechaCitaLab: "YYYY-MM-DD" — día agendado para la toma de muestra
+  // fechaCitaLab: "YYYY-MM-DD" - día agendado para la toma de muestra
   static async autorizarOrden(ordenId: string, fechaCitaLab?: string): Promise<OrdenExamen> {
     const res = await api.patch<{ success: boolean; data: OrdenExamen }>(
       `/ordenes/${ordenId}/autorizar`,

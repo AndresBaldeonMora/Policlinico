@@ -67,12 +67,16 @@ const PacienteOrdenes = () => {
     initData();
   }, [user?.correo]);
 
-  useEffect(() => {
+  const cambiarTab = (tab: Tab) => {
+    setActiveTab(tab);
     setCurrentPage(1);
     setSearchQuery("");
-  }, [activeTab]);
+  };
 
-  useEffect(() => { setCurrentPage(1); }, [searchQuery]);
+  const cambiarBusqueda = (valor: string) => {
+    setSearchQuery(valor);
+    setCurrentPage(1);
+  };
 
   const ordenesFiltradas = useMemo(() => {
     return ordenes
@@ -115,10 +119,10 @@ const PacienteOrdenes = () => {
 
       {/* Tabs */}
       <div style={{ display: "flex", borderBottom: "1px solid var(--border)" }}>
-        <button onClick={() => setActiveTab("ORDENES")} style={tabStyle(activeTab === "ORDENES")}>
+        <button onClick={() => cambiarTab("ORDENES")} style={tabStyle(activeTab === "ORDENES")}>
           Próximas
         </button>
-        <button onClick={() => setActiveTab("RESULTADOS")} style={tabStyle(activeTab === "RESULTADOS")}>
+        <button onClick={() => cambiarTab("RESULTADOS")} style={tabStyle(activeTab === "RESULTADOS")}>
           Anteriores
         </button>
       </div>
@@ -132,7 +136,7 @@ const PacienteOrdenes = () => {
             className="hc-search"
             placeholder="Buscar por código, examen o especialidad..."
             value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
+            onChange={(e) => cambiarBusqueda(e.target.value)}
             style={{ paddingLeft: "2rem" }}
           />
         </div>
@@ -143,7 +147,7 @@ const PacienteOrdenes = () => {
         {loading && (
           <div className="hc-state">
             <div className="spinner-small" />
-            <p>Cargando información médica...</p>
+            <p>Cargando información médica…</p>
           </div>
         )}
 

@@ -69,7 +69,7 @@ export default function SectionO({ data, setData, onPrev, onNext }: Props) {
       <div className="soap-vital-grid">
         <VitalBox label="Temperatura" unit="°C" placeholder="36.5" value={data.temp} onChange={v => up("temp", v)} />
 
-        {/* PA — doble campo */}
+        {/* PA - doble campo */}
         <div className={`soap-vital-box ${paHigh && (data.pa_s || data.pa_d) ? "alert-error" : ""}`}>
           <div className="soap-vital-box-label">Presión Arterial</div>
           <div style={{ display: "flex", alignItems: "center", gap: 4 }}>
@@ -144,7 +144,7 @@ export default function SectionO({ data, setData, onPrev, onNext }: Props) {
                 <label className="soap-section-label" style={{ fontSize: 11 }}>Localización</label>
                 <select className="soap-select" style={{ padding: "6px 8px" }}
                   value={data.edemaLoc} onChange={e => up("edemaLoc", e.target.value)}>
-                  <option value="">—</option>
+                  <option value="">-</option>
                   {["Miembros inferiores", "Cara", "Generalizado", "Otros"].map(o => <option key={o}>{o}</option>)}
                 </select>
               </div>
@@ -152,7 +152,7 @@ export default function SectionO({ data, setData, onPrev, onNext }: Props) {
                 <label className="soap-section-label" style={{ fontSize: 11 }}>Grado</label>
                 <select className="soap-select" style={{ padding: "6px 8px" }}
                   value={data.edemaGrado} onChange={e => up("edemaGrado", e.target.value)}>
-                  <option value="">—</option>
+                  <option value="">-</option>
                   {["+", "++", "+++", "++++"].map(o => <option key={o}>{o}</option>)}
                 </select>
               </div>

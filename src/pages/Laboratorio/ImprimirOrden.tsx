@@ -25,7 +25,7 @@ const ImprimirOrden = () => {
       .finally(() => setLoading(false));
   }, [id]);
 
-  if (loading) return <div className="imprimir-loading">Cargando orden...</div>;
+  if (loading) return <div className="imprimir-loading">Cargando orden…</div>;
   if (!orden) return <div className="imprimir-loading">Orden no encontrada</div>;
 
   const paciente = orden.pacienteId;

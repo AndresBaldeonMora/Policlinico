@@ -314,7 +314,7 @@ const PacienteModal = ({ paciente, onGuardado, onCancelar }: Props) => {
                 </div>
               ) : (
                 <>
-                  <div className="pm-menor-aviso">👶 Paciente menor de edad — se requiere datos del apoderado</div>
+                  <div className="pm-menor-aviso">👶 Paciente menor de edad - se requiere datos del apoderado</div>
                   <div className="pm-row">
                     <div className="pm-field">
                       <label className="pm-label">Nombre del Apoderado <span className="pm-req">*</span></label>
@@ -355,7 +355,7 @@ const PacienteModal = ({ paciente, onGuardado, onCancelar }: Props) => {
             <div className="pm-footer-actions">
               <button type="button" className="pm-btn pm-btn--ghost" onClick={onCancelar} disabled={state.loading}>Cancelar</button>
               <button type="submit" className="pm-btn pm-btn--primary" disabled={state.loading || !!errorFecha}>
-                {state.loading ? <><span className="pm-spinner-sm" /> Guardando...</> : esEdicion ? "✓ Guardar cambios" : "✓ Registrar paciente"}
+                {state.loading ? <><span className="pm-spinner-sm" /> Guardando…</> : esEdicion ? "✓ Guardar cambios" : "✓ Registrar paciente"}
               </button>
             </div>
           </div>

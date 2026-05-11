@@ -66,7 +66,7 @@ export default function SectionOtorrino({ data, setData, onPrev }: Props) {
         <div>
           <label className="soap-section-label">Plenitud ótica</label>
           <select className="soap-input" value={val('plenitudOtica')} onChange={e => up('plenitudOtica', e.target.value)}>
-            <option value="">Seleccionar</option><option>No</option><option>Sí — derecho</option><option>Sí — izquierdo</option><option>Sí — bilateral</option>
+            <option value="">Seleccionar</option><option>No</option><option>Sí - derecho</option><option>Sí - izquierdo</option><option>Sí - bilateral</option>
           </select>
         </div>
       </div>
@@ -97,8 +97,8 @@ export default function SectionOtorrino({ data, setData, onPrev }: Props) {
           <select className="soap-input" value={val('epistaxis')} onChange={e => up('epistaxis', e.target.value)}>
             <option value="">Seleccionar</option>
             <option>No</option>
-            <option>Esporádica — leve</option>
-            <option>Frecuente — moderada</option>
+            <option>Esporádica - leve</option>
+            <option>Frecuente - moderada</option>
             <option>Severa / hospitalización previa</option>
           </select>
         </div>

@@ -26,8 +26,8 @@ export default function SectionGastroenterologia({ data, setData, onPrev }: Prop
           <label className="soap-section-label">H. pylori (estado)</label>
           <select className="soap-input" value={val('hPylori')} onChange={e => up('hPylori', e.target.value)}>
             <option value="">Seleccionar</option>
-            <option>Positivo — en tratamiento</option>
-            <option>Positivo — sin tratamiento</option>
+            <option>Positivo - en tratamiento</option>
+            <option>Positivo - sin tratamiento</option>
             <option>Negativo (erradicado)</option>
             <option>No estudiado</option>
           </select>
@@ -95,8 +95,8 @@ export default function SectionGastroenterologia({ data, setData, onPrev }: Prop
           <select className="soap-input" value={val('hematoquecia')} onChange={e => up('hematoquecia', e.target.value)}>
             <option value="">Seleccionar</option>
             <option>No</option>
-            <option>Sí — esporádica</option>
-            <option>Sí — frecuente</option>
+            <option>Sí - esporádica</option>
+            <option>Sí - frecuente</option>
           </select>
         </div>
         <div>

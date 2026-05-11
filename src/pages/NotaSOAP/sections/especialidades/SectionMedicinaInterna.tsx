@@ -28,8 +28,8 @@ export default function SectionMedicinaInterna({ data, setData, onPrev }: Props)
           <select className="soap-input" value={val('transfusiones')} onChange={e => up('transfusiones', e.target.value)}>
             <option value="">Seleccionar</option>
             <option>No</option>
-            <option>Sí — sin reacción</option>
-            <option>Sí — con reacción</option>
+            <option>Sí - sin reacción</option>
+            <option>Sí - con reacción</option>
           </select>
         </div>
         <div>

@@ -126,9 +126,9 @@ export default function SectionOdontologia({ data, setData, onPrev }: Props) {
           <select className="soap-input" value={val('movilidadDental')} onChange={e => up('movilidadDental', e.target.value)}>
             <option value="">Seleccionar</option>
             <option>Sin movilidad</option>
-            <option>Grado I — leve (&lt;1 mm horizontal)</option>
-            <option>Grado II — moderada (1–2 mm horizontal)</option>
-            <option>Grado III — severa (&gt;2 mm o vertical)</option>
+            <option>Grado I - leve (&lt;1 mm horizontal)</option>
+            <option>Grado II - moderada (1–2 mm horizontal)</option>
+            <option>Grado III - severa (&gt;2 mm o vertical)</option>
           </select>
         </div>
         <div>

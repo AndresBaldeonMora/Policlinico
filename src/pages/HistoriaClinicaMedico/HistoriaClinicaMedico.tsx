@@ -185,8 +185,8 @@ export default function HistoriaClinicaMedico() {
               </div>
               {datosActuales?.medicamentos?.length ? (
                 <>
-                  {datosActuales.medicamentos.map((m, i) => (
-                    <div key={`${m.nombre}-${m.concentracion}-${i}`} className="hcm-med-item">
+                  {datosActuales.medicamentos.map((m) => (
+                    <div key={`${m.nombre}-${m.concentracion}-${m.frecuencia}`} className="hcm-med-item">
                       <div className="hcm-med-nombre">{m.nombre} {m.concentracion}</div>
                       <div className="hcm-med-detalle">
                         {m.forma} · {m.via} · {m.frecuencia} · {m.duracion}
@@ -279,7 +279,7 @@ export default function HistoriaClinicaMedico() {
                     <div className="hcm-consulta-header-left">
                       <Calendar size={13} color="var(--primary)" />
                       <span className="hcm-consulta-fecha">
-                        {formatFecha(c.fecha)} — {c.hora}
+                        {formatFecha(c.fecha)} - {c.hora}
                       </span>
                       {c.diagnostico && (
                         <span className="hcm-dx-tag-small">
@@ -308,7 +308,7 @@ export default function HistoriaClinicaMedico() {
                               <div style={{ display: "flex", flexWrap: "wrap", gap: 6 }}>
                                 {soap.diagnoses.map((d) => (
                                   <span key={d.code} className="hcm-dx-tag-small">
-                                    {d.code} — {d.name}
+                                    {d.code} - {d.name}
                                   </span>
                                 ))}
                               </div>
@@ -324,9 +324,9 @@ export default function HistoriaClinicaMedico() {
                             <div className="hcm-soap-row">
                               <span className="hcm-soap-lbl">Medicamentos prescritos</span>
                               <div style={{ display: "flex", flexDirection: "column", gap: 4 }}>
-                                {soap.medicamentos.map((m, i) => (
-                                  <span key={`${m.nombre}-${i}`} className="hcm-med-item-small">
-                                    {m.nombre} {m.concentracion} — {m.frecuencia} · {m.duracion}
+                                {soap.medicamentos.map((m) => (
+                                  <span key={`${m.nombre}-${m.concentracion}-${m.frecuencia}`} className="hcm-med-item-small">
+                                    {m.nombre} {m.concentracion} - {m.frecuencia} · {m.duracion}
                                   </span>
                                 ))}
                               </div>

@@ -128,7 +128,7 @@ const transformarPaciente = (p: Paciente): PacienteTransformado => ({
 });
 
 export class PacienteApiService {
-  // Crea paciente — opcionalmente crea también cuenta de portal con `crearCuentaPortal: true`.
+  // Crea paciente - opcionalmente crea también cuenta de portal con `crearCuentaPortal: true`.
   // Si se solicita la cuenta, la respuesta incluirá `credenciales` para entregar al paciente.
   static async crear(
     datos: Omit<Paciente, "_id" | "id" | "edad" | "tieneCuentaPortal"> & {

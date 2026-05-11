@@ -98,7 +98,7 @@ export default function MedicoCitas() {
       {cargando ? (
         <div className="lista-loading">
           <div className="lista-loading-spinner" />
-          <p>Cargando citas...</p>
+          <p>Cargando citas…</p>
         </div>
       ) : (
         <div className="lista-table-card">
@@ -162,7 +162,7 @@ export default function MedicoCitas() {
                           {c.tipo ? (() => {
                             const t = TIPO_CONFIG[c.tipo.toUpperCase()] ?? { label: c.tipo, cls: "mc-tipo-nueva" };
                             return <span className={`mc-tipo-badge ${t.cls}`}>{t.label}</span>;
-                          })() : <span style={{ color: "var(--text-muted)", fontSize: "0.8rem" }}>—</span>}
+                          })() : <span style={{ color: "var(--text-muted)", fontSize: "0.8rem" }}>-</span>}
                         </td>
 
                         {/* Estado */}

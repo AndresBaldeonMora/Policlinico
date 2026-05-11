@@ -20,7 +20,7 @@ import Swal from "sweetalert2";
 import { toastExito } from "../../utils/toast";
 
 // ============================================================================
-// TYPES (UI-only — not shared with reducer)
+// TYPES (UI-only - not shared with reducer)
 // ============================================================================
 
 type TabPrincipal = "dashboard" | "historial" | "documentos" | "examenes";
@@ -56,11 +56,13 @@ const TABS_MEDICO: { id: TabPrincipal; label: string }[] = [
 // UTILS
 // ============================================================================
 
+const FECHA_CORTA_FMT = new Intl.DateTimeFormat("es-PE");
+
 const formatearFechaCorta = (fechaISO?: string) => {
-  if (!fechaISO) return "—";
+  if (!fechaISO) return "-";
   const fecha = new Date(fechaISO);
-  if (isNaN(fecha.getTime())) return "—";
-  return new Intl.DateTimeFormat("es-PE").format(fecha);
+  if (isNaN(fecha.getTime())) return "-";
+  return FECHA_CORTA_FMT.format(fecha);
 };
 
 const formatearFechaHora = (iso: string) => {
@@ -262,7 +264,7 @@ const PerfilCita = () => {
     return (
       <div className="perfil-loading">
         <div className="spinner" />
-        <p>Cargando información del paciente...</p>
+        <p>Cargando información del paciente…</p>
       </div>
     );
   }
@@ -318,7 +320,7 @@ const PerfilCita = () => {
 
       </div>
 
-      {/* ACCIONES DE CITA — solo si hay botones que mostrar */}
+      {/* ACCIONES DE CITA - solo si hay botones que mostrar */}
       {cita && (
         (user?.rol === "RECEPCIONISTA" && (cita.estado === "PENDIENTE" || cita.estado === "REPROGRAMADA")) ||
         (user?.rol === "MEDICO" && (cita.estado === "ASISTIO" || cita.estado === "ATENDIDA"))
@@ -344,7 +346,7 @@ const PerfilCita = () => {
       )}
 
 
-      {/* TABS — diferenciadas por rol */}
+      {/* TABS - diferenciadas por rol */}
       <div className="tabs-principales">
         {(user?.rol === "MEDICO" ? TABS_MEDICO : TABS_RECEPCIONISTA).map((t) => (
           <button
@@ -375,7 +377,7 @@ const PerfilCita = () => {
                     </div>
                   ) : alergias.map(a => (
                     <div key={a.id} className="item-clinico">
-                      <span>{a.sustancia} — {a.reaccion}</span>
+                      <span>{a.sustancia} - {a.reaccion}</span>
                       <span className={`badge-small ${a.severidad}`}>{a.severidad}</span>
                     </div>
                   ))}
@@ -415,7 +417,7 @@ const PerfilCita = () => {
                     </div>
                   ) : medicamentos.map(m => (
                     <div key={m.id} className="item-clinico">
-                      <span>{m.nombre} — {m.dosis}</span>
+                      <span>{m.nombre} - {m.dosis}</span>
                       <span className="fecha-small">{m.frecuencia}</span>
                     </div>
                   ))}
@@ -679,7 +681,7 @@ const PerfilCita = () => {
                               <td>
                                 {item.observaciones || (
                                   <span style={{ color: "var(--text-muted)" }}>
-                                    —
+                                    -
                                   </span>
                                 )}
                               </td>
@@ -773,7 +775,7 @@ const PerfilCita = () => {
                                         <span
                                           style={{ color: "var(--text-muted)" }}
                                         >
-                                          —
+                                          -
                                         </span>
                                       )}
                                     </td>
@@ -787,7 +789,7 @@ const PerfilCita = () => {
                                         <span
                                           style={{ color: "var(--text-muted)" }}
                                         >
-                                          —
+                                          -
                                         </span>
                                       )}
                                     </td>

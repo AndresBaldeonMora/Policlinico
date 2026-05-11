@@ -29,7 +29,7 @@ export default function ModalReferencia({ cita, onClose }: Props) {
         <div className="modal-header">
           <div>
             <div className="modal-title">Documento de Referencia</div>
-            <div className="modal-subtitle">NTS N°018-MINSA — Derivación a otro establecimiento de salud</div>
+            <div className="modal-subtitle">NTS N°018-MINSA - Derivación a otro establecimiento de salud</div>
           </div>
           <button className="modal-close" onClick={onClose}><X size={18} /></button>
         </div>
@@ -52,7 +52,7 @@ export default function ModalReferencia({ cita, onClose }: Props) {
               <div>
                 <label className="soap-section-label">Servicio / Especialidad <span className="soap-required">*</span></label>
                 <select className="soap-select" value={form.especialidad} onChange={e => upF("especialidad", e.target.value)}>
-                  <option value="">— Seleccionar —</option>
+                  <option value="">- Seleccionar -</option>
                   {ESPECIALIDADES.map(e => <option key={e}>{e}</option>)}
                 </select>
               </div>

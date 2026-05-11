@@ -56,7 +56,7 @@ const PagoModal = ({ onClose, onConfirmar, loading }: Props) => {
         {/* Dev mode toggle */}
         <label className={`pago-devmode ${devMode ? "pago-devmode--active" : ""}`}>
           <FlaskConical size={15} />
-          <span>Modo desarrollo — omitir pago</span>
+          <span>Modo desarrollo - omitir pago</span>
           <div className="pago-devmode__toggle">
             <input
               type="checkbox"

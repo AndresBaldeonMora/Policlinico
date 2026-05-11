@@ -17,11 +17,14 @@ import { hoyISO, isoADMY } from "../../utils/fecha.utils";
 const normalizeString = (str: string): string =>
   str.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
 
+const FECHA_COMPLETA_FMT = new Intl.DateTimeFormat("es-PE", { day: "2-digit", month: "2-digit", year: "numeric" });
+const DIA_FMT = new Intl.DateTimeFormat("es-PE", { weekday: "long" });
+
 const formatearFechaCompleta = (fecha: Date): string =>
-  new Intl.DateTimeFormat("es-PE", { day: "2-digit", month: "2-digit", year: "numeric" }).format(fecha);
+  FECHA_COMPLETA_FMT.format(fecha);
 
 const obtenerNombreDia = (fecha: Date): string => {
-  const nombre = new Intl.DateTimeFormat("es-PE", { weekday: "long" }).format(fecha);
+  const nombre = DIA_FMT.format(fecha);
   return nombre.charAt(0).toUpperCase() + nombre.slice(1);
 };
 
@@ -237,7 +240,7 @@ const ListaCitas = () => {
     const base = filtroEstado === "TODOS"
       ? citasPorFechaEspecialidad.filter((c) => ESTADOS_VIGENTES.includes(c.estado))
       : citasPorFechaEspecialidad.filter((c) => c.estado === filtroEstado);
-    return [...base].sort((a, b) => (a.hora ?? "").localeCompare(b.hora ?? ""));
+    return base.toSorted((a, b) => (a.hora ?? "").localeCompare(b.hora ?? ""));
   }, [citasPorFechaEspecialidad, filtroEstado]);
 
   return (
@@ -322,7 +325,7 @@ const ListaCitas = () => {
       {cargandoLista ? (
         <div className="lista-loading">
           <div className="lista-loading-spinner" />
-          <p>Cargando citas...</p>
+          <p>Cargando citas…</p>
         </div>
       ) : (
         <div className="lista-table-card">

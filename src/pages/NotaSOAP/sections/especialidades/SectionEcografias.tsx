@@ -59,7 +59,7 @@ export default function SectionEcografias({ data, setData, onPrev }: Props) {
             <option value="">Seleccionar</option>
             <option>Adecuada</option>
             <option>Limitada (obesidad / gas)</option>
-            <option>Mala — estudio limitado</option>
+            <option>Mala - estudio limitado</option>
           </select>
         </div>
       </div>
@@ -121,28 +121,28 @@ export default function SectionEcografias({ data, setData, onPrev }: Props) {
           <label className="soap-section-label">BI-RADS (mama derecha)</label>
           <select className="soap-input" value={val('biradsD')} onChange={e => up('biradsD', e.target.value)}>
             <option value="">Seleccionar</option>
-            <option>1 — Negativo</option>
-            <option>2 — Benigno</option>
-            <option>3 — Probablemente benigno</option>
-            <option>4A — Baja sospecha</option>
-            <option>4B — Sospecha moderada</option>
-            <option>4C — Alta sospecha</option>
-            <option>5 — Altamente maligno</option>
-            <option>6 — Maligno confirmado</option>
+            <option>1 - Negativo</option>
+            <option>2 - Benigno</option>
+            <option>3 - Probablemente benigno</option>
+            <option>4A - Baja sospecha</option>
+            <option>4B - Sospecha moderada</option>
+            <option>4C - Alta sospecha</option>
+            <option>5 - Altamente maligno</option>
+            <option>6 - Maligno confirmado</option>
           </select>
         </div>
         <div>
           <label className="soap-section-label">BI-RADS (mama izquierda)</label>
           <select className="soap-input" value={val('biradsI')} onChange={e => up('biradsI', e.target.value)}>
             <option value="">Seleccionar</option>
-            <option>1 — Negativo</option>
-            <option>2 — Benigno</option>
-            <option>3 — Probablemente benigno</option>
-            <option>4A — Baja sospecha</option>
-            <option>4B — Sospecha moderada</option>
-            <option>4C — Alta sospecha</option>
-            <option>5 — Altamente maligno</option>
-            <option>6 — Maligno confirmado</option>
+            <option>1 - Negativo</option>
+            <option>2 - Benigno</option>
+            <option>3 - Probablemente benigno</option>
+            <option>4A - Baja sospecha</option>
+            <option>4B - Sospecha moderada</option>
+            <option>4C - Alta sospecha</option>
+            <option>5 - Altamente maligno</option>
+            <option>6 - Maligno confirmado</option>
           </select>
         </div>
       </div>

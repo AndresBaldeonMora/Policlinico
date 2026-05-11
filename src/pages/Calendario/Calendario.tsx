@@ -192,7 +192,7 @@ const Calendario = () => {
             onCambiarVista={(v) => dispatch({ type: "SET_VISTA", vista: v })}
           />
 
-          {loading && <div className="loading-indicator">Cargando citas...</div>}
+          {loading && <div className="loading-indicator">Cargando citas…</div>}
 
           {!loading && (
             <>

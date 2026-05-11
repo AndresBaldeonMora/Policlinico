@@ -141,8 +141,8 @@ const ModalGenerarOrden = ({ orden, onCerrar, onGuardado }: ModalGenerarOrdenPro
     return d;
   }, []);
 
-  const [calAño, setCalAño]   = useState(hoy.getFullYear());
-  const [calMes, setCalMes]   = useState(hoy.getMonth());
+  const [calAño, setCalAño]   = useState(() => hoy.getFullYear());
+  const [calMes, setCalMes]   = useState(() => hoy.getMonth());
   const [fechaSel, setFechaSel] = useState<string | null>(null);
   const [disponibilidad, setDisponibilidad] = useState<Record<string, number>>({});
   const [capacidad, setCapacidad] = useState(15);
@@ -262,7 +262,7 @@ const ModalGenerarOrden = ({ orden, onCerrar, onGuardado }: ModalGenerarOrdenPro
         <div className="lab-modal-header">
           <h3>Agendar Cita de Laboratorio</h3>
           <p className="lab-modal-paciente">
-            Orden <strong>{orden.codigoOrden}</strong> — {nombrePaciente}
+            Orden <strong>{orden.codigoOrden}</strong> - {nombrePaciente}
           </p>
         </div>
 
@@ -481,7 +481,7 @@ const ModalCargarResultados = ({ orden, onCerrar, onGuardado }: ModalResultadosP
         <div className="lab-modal-header">
           <h3>Cargar Resultados de Análisis</h3>
           <p className="lab-modal-paciente">
-            Orden <strong>{orden.codigoOrden}</strong> — {nombrePaciente}
+            Orden <strong>{orden.codigoOrden}</strong> - {nombrePaciente}
           </p>
         </div>
 
@@ -540,7 +540,7 @@ const ModalCargarResultados = ({ orden, onCerrar, onGuardado }: ModalResultadosP
               textAlign: "center",
               cursor: "pointer",
               background: archivo ? "var(--primary-lighter)" : "var(--bg-body)",
-              transition: "all 0.15s",
+              transition: "background-color 0.15s, border-color 0.15s",
             }}
           >
             <Upload
@@ -556,7 +556,7 @@ const ModalCargarResultados = ({ orden, onCerrar, onGuardado }: ModalResultadosP
                   {archivo.name}
                 </p>
                 <p style={{ margin: "0.25rem 0 0", fontSize: "0.8rem", color: "var(--text-muted)" }}>
-                  {(archivo.size / 1024).toFixed(1)} KB — Haga clic para cambiar
+                  {(archivo.size / 1024).toFixed(1)} KB - Haga clic para cambiar
                 </p>
               </>
             ) : (
@@ -661,8 +661,8 @@ const ModalAsistencia = ({ orden, onCerrar, onGuardado }: ModalAsistenciaProps) 
     const err = validar();
     if (err) { setError(err); return; }
 
-    const respuestasPayload = itemsConPreguntas
-      .map(({ ex, idx }) => {
+    const respuestasPayload: { itemIndex: number; respuestas: { preguntaId: string; preguntaTexto: string; respuesta: string }[] }[] = itemsConPreguntas
+      .flatMap(({ ex, idx }) => {
         const preguntasRespondidas = (ex?.preguntasProtocolares ?? [])
           .filter((p) => respuestas[idx]?.[p.id] !== undefined)
           .map((p) => ({
@@ -671,10 +671,9 @@ const ModalAsistencia = ({ orden, onCerrar, onGuardado }: ModalAsistenciaProps) 
             respuesta: respuestas[idx][p.id],
           }));
         return preguntasRespondidas.length > 0
-          ? { itemIndex: idx, respuestas: preguntasRespondidas }
-          : null;
-      })
-      .filter(Boolean) as { itemIndex: number; respuestas: { preguntaId: string; preguntaTexto: string; respuesta: string }[] }[];
+          ? [{ itemIndex: idx, respuestas: preguntasRespondidas }]
+          : [];
+      });
 
     setEnviando(true);
     try {
@@ -706,9 +705,9 @@ const ModalAsistencia = ({ orden, onCerrar, onGuardado }: ModalAsistenciaProps) 
       >
         {/* Header */}
         <div className="lab-modal-header">
-          <h3>Preguntas Protocolares — Registro de Asistencia</h3>
+          <h3>Preguntas Protocolares - Registro de Asistencia</h3>
           <p className="lab-modal-paciente">
-            Orden <strong>{orden.codigoOrden}</strong> — {nombrePaciente} · DNI {paciente.dni}
+            Orden <strong>{orden.codigoOrden}</strong> - {nombrePaciente} · DNI {paciente.dni}
           </p>
         </div>
 
@@ -779,7 +778,7 @@ const ModalAsistencia = ({ orden, onCerrar, onGuardado }: ModalAsistenciaProps) 
                             value={respuestas[idx]?.[p.id] ?? ""}
                             onChange={(e) => setRespuesta(idx, p.id, e.target.value)}
                           >
-                            <option value="">Seleccione...</option>
+                            <option value="">Seleccione…</option>
                             {p.opciones.map((op) => (
                               <option key={op} value={op}>{op}</option>
                             ))}

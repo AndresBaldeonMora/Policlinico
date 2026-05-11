@@ -245,7 +245,7 @@ const GestionarEspecialidades = () => {
       {cargando ? (
         <div className="lista-loading">
           <div className="lista-loading-spinner" />
-          <p>Cargando especialidades...</p>
+          <p>Cargando especialidades…</p>
         </div>
       ) : (
         <div className="lista-table-card">
@@ -282,7 +282,7 @@ const GestionarEspecialidades = () => {
                             {e.examenes?.length ?? 0} examen{(e.examenes?.length ?? 0) !== 1 ? "es" : ""}
                           </span>
                         ) : (
-                          <span className="ge-text-muted">—</span>
+                          <span className="ge-text-muted">-</span>
                         )}
                       </td>
                       <td className="td-center">
@@ -365,7 +365,6 @@ const GestionarEspecialidades = () => {
                     onChange={(e) => dispatch({ type: "SET_NOMBRE", value: e.target.value })}
                     placeholder="Ej: Cardiología"
                     disabled={modal.loading}
-                    autoFocus
                   />
                 </div>
 
@@ -400,7 +399,7 @@ const GestionarEspecialidades = () => {
 
                     {modal.cargandoExamenes ? (
                       <div className="ge-examenes-loading">
-                        <span className="pm-spinner-sm" /> Cargando exámenes...
+                        <span className="pm-spinner-sm" /> Cargando exámenes…
                       </div>
                     ) : modal.todosExamenes.length === 0 ? (
                       <p className="ge-examenes-empty">No hay exámenes en el catálogo aún.</p>
@@ -447,7 +446,7 @@ const GestionarEspecialidades = () => {
                     disabled={modal.loading || !modal.nombre.trim()}
                   >
                     {modal.loading ? (
-                      <><span className="pm-spinner-sm" /> Guardando...</>
+                      <><span className="pm-spinner-sm" /> Guardando…</>
                     ) : modal.especialidad ? (
                       "✓ Guardar cambios"
                     ) : (

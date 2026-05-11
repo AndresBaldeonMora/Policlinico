@@ -96,9 +96,9 @@ export default function SectionTraumatologia({ data, setData, onPrev }: Props) {
           <select className="soap-input" value={val('deformidad')} onChange={e => up('deformidad', e.target.value)}>
             <option value="">Seleccionar</option>
             <option>No</option>
-            <option>Sí — angulación</option>
-            <option>Sí — rotación</option>
-            <option>Sí — acortamiento</option>
+            <option>Sí - angulación</option>
+            <option>Sí - rotación</option>
+            <option>Sí - acortamiento</option>
           </select>
         </div>
       </div>
@@ -106,13 +106,13 @@ export default function SectionTraumatologia({ data, setData, onPrev }: Props) {
         <div>
           <label className="soap-section-label">Equimosis</label>
           <select className="soap-input" value={val('equimosis')} onChange={e => up('equimosis', e.target.value)}>
-            <option value="">Seleccionar</option><option>No</option><option>Sí — localizada</option><option>Sí — extensa</option>
+            <option value="">Seleccionar</option><option>No</option><option>Sí - localizada</option><option>Sí - extensa</option>
           </select>
         </div>
         <div>
           <label className="soap-section-label">Heridas / Lesión abierta</label>
           <select className="soap-input" value={val('heridas')} onChange={e => up('heridas', e.target.value)}>
-            <option value="">Seleccionar</option><option>No (fractura cerrada)</option><option>Sí — fractura abierta</option><option>Sí — laceración</option>
+            <option value="">Seleccionar</option><option>No (fractura cerrada)</option><option>Sí - fractura abierta</option><option>Sí - laceración</option>
           </select>
         </div>
         <div>

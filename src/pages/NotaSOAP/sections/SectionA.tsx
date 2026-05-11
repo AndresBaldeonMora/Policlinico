@@ -97,7 +97,7 @@ export default function SectionA({ data, setData, onPrev, onNext }: Props) {
           </div>
         ) : (
           <div className="soap-plan-empty">
-            Sin diagnósticos — busque y seleccione un diagnóstico arriba
+            Sin diagnósticos - busque y seleccione un diagnóstico arriba
           </div>
         )}
       </div>

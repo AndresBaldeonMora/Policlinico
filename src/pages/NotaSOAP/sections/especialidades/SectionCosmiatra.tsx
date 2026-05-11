@@ -56,12 +56,12 @@ export default function SectionCosmiatra({ data, setData, onPrev }: Props) {
           <label className="soap-section-label">Fototipo de Fitzpatrick</label>
           <select className="soap-input" value={val('fototipo')} onChange={e => up('fototipo', e.target.value)}>
             <option value="">Seleccionar</option>
-            <option>I — Muy claro, siempre se quema</option>
-            <option>II — Claro, casi siempre se quema</option>
-            <option>III — Intermedio, a veces se quema</option>
-            <option>IV — Moreno claro, raramente se quema</option>
-            <option>V — Moreno oscuro, nunca se quema</option>
-            <option>VI — Negro, nunca se quema</option>
+            <option>I - Muy claro, siempre se quema</option>
+            <option>II - Claro, casi siempre se quema</option>
+            <option>III - Intermedio, a veces se quema</option>
+            <option>IV - Moreno claro, raramente se quema</option>
+            <option>V - Moreno oscuro, nunca se quema</option>
+            <option>VI - Negro, nunca se quema</option>
           </select>
         </div>
       </div>
@@ -99,7 +99,7 @@ export default function SectionCosmiatra({ data, setData, onPrev }: Props) {
             <option value="">Seleccionar</option>
             <option>Adecuada</option>
             <option>Disminuida</option>
-            <option>Muy disminuida — descamación</option>
+            <option>Muy disminuida - descamación</option>
           </select>
         </div>
         <div>
@@ -119,9 +119,9 @@ export default function SectionCosmiatra({ data, setData, onPrev }: Props) {
           <select className="soap-input" value={val('arrugas')} onChange={e => up('arrugas', e.target.value)}>
             <option value="">Seleccionar</option>
             <option>Ausentes</option>
-            <option>Finas — expresión dinámica</option>
-            <option>Moderadas — estáticas leves</option>
-            <option>Profundas — estáticas marcadas</option>
+            <option>Finas - expresión dinámica</option>
+            <option>Moderadas - estáticas leves</option>
+            <option>Profundas - estáticas marcadas</option>
           </select>
         </div>
         <div>
@@ -129,9 +129,9 @@ export default function SectionCosmiatra({ data, setData, onPrev }: Props) {
           <select className="soap-input" value={val('flacidez')} onChange={e => up('flacidez', e.target.value)}>
             <option value="">Seleccionar</option>
             <option>Ausente</option>
-            <option>Grado I — leve</option>
-            <option>Grado II — moderada</option>
-            <option>Grado III — severa</option>
+            <option>Grado I - leve</option>
+            <option>Grado II - moderada</option>
+            <option>Grado III - severa</option>
           </select>
         </div>
         <div>
@@ -139,10 +139,10 @@ export default function SectionCosmiatra({ data, setData, onPrev }: Props) {
           <select className="soap-input" value={val('acneActivo')} onChange={e => up('acneActivo', e.target.value)}>
             <option value="">Seleccionar</option>
             <option>No</option>
-            <option>Comedones — grado I</option>
-            <option>Pápulas/pústulas — grado II</option>
-            <option>Nódulos — grado III</option>
-            <option>Quístico — grado IV</option>
+            <option>Comedones - grado I</option>
+            <option>Pápulas/pústulas - grado II</option>
+            <option>Nódulos - grado III</option>
+            <option>Quístico - grado IV</option>
           </select>
         </div>
       </div>

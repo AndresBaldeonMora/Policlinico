@@ -42,12 +42,15 @@ export const DetalleOrden: React.FC<DetalleOrdenProps> = ({ ordenId, isOpen, onC
       .finally(() => setLoading(false));
   }, [isOpen, ordenId]);
 
+  const onCloseRef = React.useRef(onClose);
+  React.useEffect(() => { onCloseRef.current = onClose; }, [onClose]);
+
   React.useEffect(() => {
     if (!isOpen) return;
-    const onKey = (e: KeyboardEvent) => { if (e.key === "Escape") onClose(); };
+    const onKey = (e: KeyboardEvent) => { if (e.key === "Escape") onCloseRef.current(); };
     document.addEventListener("keydown", onKey);
     return () => document.removeEventListener("keydown", onKey);
-  }, [isOpen, onClose]);
+  }, [isOpen]);
 
   if (!isOpen) return null;
 
@@ -55,7 +58,7 @@ export const DetalleOrden: React.FC<DetalleOrdenProps> = ({ ordenId, isOpen, onC
   return (
     <div
       onClick={onClose}
-      style={{ position: "fixed", inset: 0, backgroundColor: "rgba(0,0,0,0.55)", display: "flex", alignItems: "center", justifyContent: "center", zIndex: 9999, padding: "1rem" }}
+      style={{ position: "fixed", inset: 0, backgroundColor: "rgba(0,0,0,0.55)", display: "flex", alignItems: "center", justifyContent: "center", zIndex: 50, padding: "1rem" }}
     >
       <div
         onClick={(e) => e.stopPropagation()}
@@ -64,7 +67,7 @@ export const DetalleOrden: React.FC<DetalleOrdenProps> = ({ ordenId, isOpen, onC
         {/* Header */}
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "1.1rem 1.5rem", borderBottom: "1px solid var(--border)" }}>
           <div style={{ display: "flex", alignItems: "center", gap: "0.6rem", flexWrap: "wrap" }}>
-            <h2 style={{ margin: 0, fontSize: "1.1rem", fontWeight: 700, color: "var(--text-primary)" }}>
+            <h2 style={{ margin: 0, fontSize: "1.1rem", fontWeight: 600, color: "var(--text-primary)" }}>
               {loading ? "Cargando..." : orden ? `Orden #${orden.codigoOrden || orden.id.substring(0, 6)}` : "Detalle de Orden"}
             </h2>
             {orden && pill(TIPO_LABEL[orden.tipoOrden] ?? orden.tipoOrden, "#1e40af", "#dbeafe")}
@@ -78,7 +81,7 @@ export const DetalleOrden: React.FC<DetalleOrdenProps> = ({ ordenId, isOpen, onC
 
         {/* Body */}
         <div style={{ padding: "1.25rem 1.5rem", overflowY: "auto", flex: 1, display: "flex", flexDirection: "column", gap: "1.25rem" }}>
-          {loading && <p style={{ textAlign: "center", color: "var(--text-muted)", padding: "2rem 0" }}>Cargando detalles...</p>}
+          {loading && <p style={{ textAlign: "center", color: "var(--text-muted)", padding: "2rem 0" }}>Cargando detalles…</p>}
           {error   && <p style={{ color: "var(--error, #dc2626)", textAlign: "center" }}>{error}</p>}
 
           {!loading && !error && orden && (
@@ -119,8 +122,8 @@ export const DetalleOrden: React.FC<DetalleOrdenProps> = ({ ordenId, isOpen, onC
                 </h3>
                 {(orden.examenes?.length ?? 0) > 0 ? (
                   <div style={{ display: "flex", flexDirection: "column", gap: "0.4rem" }}>
-                    {orden.examenes.map((ex, i) => (
-                      <div key={`${ex.nombre}-${i}`} style={{ display: "flex", alignItems: "center", gap: "0.65rem", padding: "0.55rem 0.9rem", backgroundColor: "var(--bg-hover)", borderRadius: "8px", border: "1px solid var(--border)" }}>
+                    {orden.examenes.map((ex) => (
+                      <div key={`${ex.nombre}-${ex.observacion ?? ""}`} style={{ display: "flex", alignItems: "center", gap: "0.65rem", padding: "0.55rem 0.9rem", backgroundColor: "var(--bg-hover)", borderRadius: "8px", border: "1px solid var(--border)" }}>
                         <span style={{ width: "6px", height: "6px", borderRadius: "50%", background: "var(--primary, #059669)", flexShrink: 0 }} />
                         <span style={{ fontSize: "0.9rem", color: "var(--text-primary)", fontWeight: 500, flex: 1 }}>{ex.nombre}</span>
                         {ex.observacion && (
@@ -191,7 +194,7 @@ export const DetalleOrden: React.FC<DetalleOrdenProps> = ({ ordenId, isOpen, onC
 
       {/* Visor PDF */}
       {showPdf && orden?.archivoResultadoUrl && (
-        <div onClick={() => setShowPdf(false)} style={{ position: "fixed", inset: 0, backgroundColor: "rgba(0,0,0,0.8)", display: "flex", alignItems: "center", justifyContent: "center", zIndex: 10000, padding: "1rem" }}>
+        <div onClick={() => setShowPdf(false)} style={{ position: "fixed", inset: 0, backgroundColor: "rgba(0,0,0,0.8)", display: "flex", alignItems: "center", justifyContent: "center", zIndex: 60, padding: "1rem" }}>
           <div onClick={(e) => e.stopPropagation()} style={{ backgroundColor: "var(--bg-card)", width: "100%", maxWidth: "900px", height: "80vh", display: "flex", flexDirection: "column", borderRadius: "8px", overflow: "hidden" }}>
             <div style={{ padding: "0.9rem 1.25rem", borderBottom: "1px solid var(--border)", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
               <h3 style={{ margin: 0, fontSize: "1rem", color: "var(--text-primary)" }}>Resultado PDF</h3>

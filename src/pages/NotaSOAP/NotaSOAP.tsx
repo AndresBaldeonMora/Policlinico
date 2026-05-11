@@ -253,8 +253,10 @@ export default function NotaSOAP() {
 
     setSaving(true);
     try {
-      await MedicoApiService.guardarNotasClinicas(citaId, buildPayload());
-      await MedicoApiService.actualizarEstadoCita(citaId, "ATENDIDA");
+      await Promise.all([
+        MedicoApiService.guardarNotasClinicas(citaId, buildPayload()),
+        MedicoApiService.actualizarEstadoCita(citaId, "ATENDIDA"),
+      ]);
       await Swal.fire({ icon: "success", title: "Consulta finalizada", text: "La nota SOAP fue guardada correctamente.", confirmButtonColor: "var(--primary)" });
       navigate("/medico/citas");
     } catch {
@@ -301,7 +303,7 @@ export default function NotaSOAP() {
         <div className="soap-panel-cita">
           <div style={{ fontWeight: 600, color: "var(--primary)", fontSize: 12 }}>Consulta #{cita._id.slice(-6).toUpperCase()}</div>
           <div style={{ fontSize: 12, color: "var(--text-muted)", marginTop: 3 }}>
-            {new Date(cita.fecha).toLocaleDateString("es-PE")} — {cita.hora}
+            {new Date(cita.fecha).toLocaleDateString("es-PE")} - {cita.hora}
           </div>
           {cita.notas && (
             <div style={{ fontSize: 11, color: "var(--text-muted)", marginTop: 4, fontStyle: "italic" }}>
@@ -400,7 +402,7 @@ export default function NotaSOAP() {
                 ) : alergias.map((a) => (
                   <div key={a._id ?? a.sustancia} style={{ fontSize: 11, padding: "2px 0", color: "var(--text-primary)", borderBottom: "1px solid var(--border)" }}>
                     <span style={{ fontWeight: 500 }}>{a.sustancia}</span>
-                    {a.reaccion && <span style={{ color: "var(--text-muted)" }}> — {a.reaccion}</span>}
+                    {a.reaccion && <span style={{ color: "var(--text-muted)" }}> - {a.reaccion}</span>}
                     <span style={{
                       float: "right", fontSize: 10, fontWeight: 600, padding: "1px 5px", borderRadius: 4,
                       background: a.severidad === "severa" ? "#fee2e2" : a.severidad === "moderada" ? "#fef3c7" : "#f0fdf4",
@@ -430,7 +432,7 @@ export default function NotaSOAP() {
                   <div key={m._id ?? m.nombre} style={{ fontSize: 11, padding: "2px 0", borderBottom: "1px solid var(--border)" }}>
                     <span style={{ fontWeight: 500 }}>{m.nombre}</span>
                     {m.dosis && <span style={{ color: "var(--text-muted)" }}> {m.dosis}</span>}
-                    {m.frecuencia && <span style={{ color: "var(--text-muted)" }}> — {m.frecuencia}</span>}
+                    {m.frecuencia && <span style={{ color: "var(--text-muted)" }}> - {m.frecuencia}</span>}
                   </div>
                 ))}
               </div>
@@ -692,14 +694,14 @@ export default function NotaSOAP() {
         <ModalSolicitudExamen
           cita={cita}
           onClose={() => setModalAbierto(null)}
-          onAdd={e => { setExamenes(prev => [...prev, e]); setModalAbierto(null); }}
+          onAdd={e => { setExamenes(prev => [...prev, { ...e, _uid: crypto.randomUUID() }]); setModalAbierto(null); }}
         />
       )}
       {modalAbierto === "receta" && (
         <ModalReceta
           cita={cita}
           onClose={() => setModalAbierto(null)}
-          onAdd={m => { setMedicamentos(prev => [...prev, m]); setModalAbierto(null); }}
+          onAdd={m => { setMedicamentos(prev => [...prev, { ...m, _uid: crypto.randomUUID() }]); setModalAbierto(null); }}
         />
       )}
       {modalAbierto === "referencia" && (
@@ -719,7 +721,7 @@ export default function NotaSOAP() {
             background: "white", borderRadius: 12, padding: 24, width: 360, maxWidth: "90vw",
             boxShadow: "0 20px 60px rgba(0,0,0,0.25)",
           }}>
-            <h3 style={{ margin: "0 0 16px", fontSize: 15, fontWeight: 700 }}>
+            <h3 style={{ margin: "0 0 16px", fontSize: 15, fontWeight: 600 }}>
               {modalHistorial === "alergia"     && "Agregar Alergia"}
               {modalHistorial === "medicamento" && "Agregar Medicamento Habitual"}
               {modalHistorial === "problema"    && "Agregar Problema Médico"}

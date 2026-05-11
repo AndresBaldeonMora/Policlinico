@@ -2,11 +2,13 @@ import type { HorarioPorDia, MesOption, EditandoState } from "./ListaCitasReduce
 
 // ── Helpers ──────────────────────────────────────────────────
 
+const DIA_FMT = new Intl.DateTimeFormat("es-PE", { weekday: "long" });
+
 const formatearFechaResumen = (fechaISO: string): string => {
   if (!fechaISO) return "";
   const [anio, mes, dia] = fechaISO.split("-");
   const fecha = new Date(Number(anio), Number(mes) - 1, Number(dia));
-  const nombreDia = new Intl.DateTimeFormat("es-PE", { weekday: "long" }).format(fecha);
+  const nombreDia = DIA_FMT.format(fecha);
   return `${nombreDia.charAt(0).toUpperCase() + nombreDia.slice(1)} ${dia}/${mes}/${anio}`;
 };
 
@@ -104,7 +106,7 @@ const HorariosSelector = ({
     return (
       <div className="horarios-loading">
         <div className="spinner-small" />
-        <p>Cargando horarios...</p>
+        <p>Cargando horarios…</p>
       </div>
     );
   }

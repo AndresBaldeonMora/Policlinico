@@ -115,7 +115,7 @@ const CitaQuickModal = ({ citaId, onCerrar, onCitaActualizada, onIrADetalle }: P
           ) : (
             <div className="cita-modal-loading">
               <div className="spinner-small" />
-              <p>Cargando detalle...</p>
+              <p>Cargando detalle…</p>
             </div>
           )}
         </div>

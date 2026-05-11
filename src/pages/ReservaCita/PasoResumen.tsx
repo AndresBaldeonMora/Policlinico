@@ -52,7 +52,7 @@ const PasoResumen = ({ pacienteSeleccionado, doctorSeleccionado, especialidadSel
         </div>
       </div>
 
-      {/* Aviso de reprogramación — solo visible para pacientes */}
+      {/* Aviso de reprogramación - solo visible para pacientes */}
       {esPaciente && horasRestantes !== null && (
         <div className={`resumen-reprog-notice ${aptaParaReprogramar ? "resumen-reprog-notice--ok" : "resumen-reprog-notice--no"}`}>
           <div className="resumen-reprog-notice__icon">
@@ -73,7 +73,7 @@ const PasoResumen = ({ pacienteSeleccionado, doctorSeleccionado, especialidadSel
         </div>
       )}
 
-      {/* Recordatorio de política — para recepcionistas */}
+      {/* Recordatorio de política - para recepcionistas */}
       {!esPaciente && (
         <div className="resumen-reprog-notice resumen-reprog-notice--info">
           <div className="resumen-reprog-notice__icon"><Info size={18} /></div>

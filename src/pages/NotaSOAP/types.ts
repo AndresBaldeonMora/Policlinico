@@ -59,12 +59,14 @@ export interface SOAPData {
 }
 
 export interface ExamenOrdenado {
+  _uid?: string;
   nombre: string;
   tipo: 'Laboratorio' | 'Radiología' | 'Especializado';
   urgente: boolean;
 }
 
 export interface MedicamentoSOAP {
+  _uid?: string;
   nombre: string;
   concentracion: string;
   forma: string;

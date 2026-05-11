@@ -13,7 +13,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     if (AuthService.isTokenValid()) {
       setUser(AuthService.getStoredUser());
     } else {
-      // Token vencido o ausente — limpiar todo.
+      // Token vencido o ausente - limpiar todo.
       AuthService.logout();
       setUser(null);
     }

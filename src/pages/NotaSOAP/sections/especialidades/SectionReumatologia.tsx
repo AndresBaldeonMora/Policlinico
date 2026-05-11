@@ -68,8 +68,8 @@ export default function SectionReumatologia({ data, setData, onPrev }: Props) {
           <select className="soap-input" value={val('raynaud')} onChange={e => up('raynaud', e.target.value)}>
             <option value="">Seleccionar</option>
             <option>Ausente</option>
-            <option>Presente — desencadenado por frío</option>
-            <option>Presente — espontáneo</option>
+            <option>Presente - desencadenado por frío</option>
+            <option>Presente - espontáneo</option>
           </select>
         </div>
         <div>
@@ -77,9 +77,9 @@ export default function SectionReumatologia({ data, setData, onPrev }: Props) {
           <select className="soap-input" value={val('sjögren')} onChange={e => up('sjögren', e.target.value)}>
             <option value="">Seleccionar</option>
             <option>No</option>
-            <option>Sí — ojos secos</option>
-            <option>Sí — boca seca</option>
-            <option>Sí — ambos</option>
+            <option>Sí - ojos secos</option>
+            <option>Sí - boca seca</option>
+            <option>Sí - ambos</option>
           </select>
         </div>
         <div>
@@ -87,8 +87,8 @@ export default function SectionReumatologia({ data, setData, onPrev }: Props) {
           <select className="soap-input" value={val('ulcerasOrales')} onChange={e => up('ulcerasOrales', e.target.value)}>
             <option value="">Seleccionar</option>
             <option>No</option>
-            <option>Sí — ocasionales</option>
-            <option>Sí — recurrentes</option>
+            <option>Sí - ocasionales</option>
+            <option>Sí - recurrentes</option>
           </select>
         </div>
         <div>

@@ -233,7 +233,7 @@ const ListaMedicos = () => {
       {cargando ? (
         <div className="lista-loading">
           <div className="lista-loading-spinner" />
-          <p>Cargando medicos...</p>
+          <p>Cargando medicos…</p>
         </div>
       ) : (
         <div className="lista-table-card">
@@ -359,7 +359,7 @@ const ListaMedicos = () => {
             <div className="modal-cv-header">
               <div style={{ display: "flex", alignItems: "center", gap: "0.5rem" }}>
                 <Lock size={20} />
-                <h3>Bloqueos — Dr. {doctorBloqueo.nombres} {doctorBloqueo.apellidos}</h3>
+                <h3>Bloqueos - Dr. {doctorBloqueo.nombres} {doctorBloqueo.apellidos}</h3>
               </div>
               <button type="button" className="modal-cv-close" onClick={() => setDoctorBloqueo(null)}>
                 <X size={16} />

@@ -3,7 +3,7 @@
 //
 // Manages the fetch + clinical data state for PerfilCita.
 // UI-only state (tabActiva, tabDemo) stays as useState in the
-// component — they are fully independent and don't benefit
+// component - they are fully independent and don't benefit
 // from being in a shared reducer.
 // ============================================================
 

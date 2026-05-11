@@ -108,7 +108,7 @@ export const usePacienteDashboard = (): DashboardData => {
 
       // ── Órdenes: combinar PENDIENTE + EN_PROCESO ──
       const todasOrdenes = [...ordenesPend, ...ordenesEnProceso];
-      const ordenesSorted = [...todasOrdenes].sort((a, b) => {
+      const ordenesSorted = todasOrdenes.toSorted((a, b) => {
         const dateA = new Date(a.createdAt ?? a.fecha).getTime();
         const dateB = new Date(b.createdAt ?? b.fecha).getTime();
         return dateB - dateA;

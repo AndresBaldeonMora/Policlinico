@@ -15,7 +15,7 @@ export default function SectionGeriatria({ data, setData, onPrev }: Props) {
     <div className="soap-content-inner">
 
       <p style={{ fontWeight: 700, fontSize: 13, color: "var(--text-primary)", marginBottom: 10 }}>
-        Valoración Funcional — VACAM
+        Valoración Funcional - VACAM
       </p>
       <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12, marginBottom: 14 }}>
         <div>
@@ -58,8 +58,8 @@ export default function SectionGeriatria({ data, setData, onPrev }: Props) {
         <select className="soap-input" value={val('quejasMemoria')} onChange={e => up('quejasMemoria', e.target.value)}>
           <option value="">Seleccionar</option>
           <option>No</option>
-          <option>Sí — referida solo por el paciente</option>
-          <option>Sí — confirmada por familiar</option>
+          <option>Sí - referida solo por el paciente</option>
+          <option>Sí - confirmada por familiar</option>
           <option>Impacta en actividades diarias</option>
         </select>
       </div>
@@ -71,12 +71,12 @@ export default function SectionGeriatria({ data, setData, onPrev }: Props) {
       </p>
       <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12, marginBottom: 14 }}>
         <div>
-          <label className="soap-section-label">GDS — Escala de Depresión Geriátrica</label>
+          <label className="soap-section-label">GDS - Escala de Depresión Geriátrica</label>
           <select className="soap-input" value={val('gds')} onChange={e => up('gds', e.target.value)}>
             <option value="">Seleccionar</option>
-            <option>GDS 0–5 — Normal</option>
-            <option>GDS 6–10 — Depresión leve probable</option>
-            <option>GDS 11–15 — Depresión establecida</option>
+            <option>GDS 0–5 - Normal</option>
+            <option>GDS 6–10 - Depresión leve probable</option>
+            <option>GDS 11–15 - Depresión establecida</option>
           </select>
         </div>
         <div>
@@ -167,7 +167,7 @@ export default function SectionGeriatria({ data, setData, onPrev }: Props) {
         <select className="soap-input" value={val('maltratoAbandono')} onChange={e => up('maltratoAbandono', e.target.value)}>
           <option value="">Seleccionar</option>
           <option>No evidentes</option>
-          <option>Sospecha — requiere evaluación social</option>
+          <option>Sospecha - requiere evaluación social</option>
           <option>Confirmado</option>
         </select>
       </div>

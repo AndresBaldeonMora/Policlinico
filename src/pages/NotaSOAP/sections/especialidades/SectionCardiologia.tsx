@@ -92,10 +92,10 @@ export default function SectionCardiologia({ data, setData, onPrev }: Props) {
           <label className="soap-section-label">Clasificación NYHA</label>
           <select className="soap-input" value={val('nyha')} onChange={e => up('nyha', e.target.value)}>
             <option value="">Seleccionar</option>
-            <option>Clase I — Sin limitación</option>
-            <option>Clase II — Ligera limitación</option>
-            <option>Clase III — Marcada limitación</option>
-            <option>Clase IV — Síntomas en reposo</option>
+            <option>Clase I - Sin limitación</option>
+            <option>Clase II - Ligera limitación</option>
+            <option>Clase III - Marcada limitación</option>
+            <option>Clase IV - Síntomas en reposo</option>
           </select>
         </div>
       </div>

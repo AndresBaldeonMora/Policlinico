@@ -207,7 +207,7 @@ const SearchPalette = ({ open, onClose }: { open: boolean; onClose: () => void }
         </div>
 
         <div className="search-palette-body">
-          {loading && <p className="search-palette-empty">Cargando datos...</p>}
+          {loading && <p className="search-palette-empty">Cargando datos…</p>}
 
           {!loading && results.length === 0 && (
             <p className="search-palette-empty">No se encontraron resultados para "{query}"</p>

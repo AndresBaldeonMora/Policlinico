@@ -108,8 +108,9 @@ const OrdenExamenModal = ({
     }
 
     // Validar preguntas protocolares obligatorias
+    const examenesPorId = new Map(examenes.map((e) => [e._id, e]));
     for (const examenId of seleccionados) {
-      const examen = examenes.find((e) => e._id === examenId);
+      const examen = examenesPorId.get(examenId);
       if (!examen?.preguntasProtocolares?.length) continue;
       for (const preg of examen.preguntasProtocolares) {
         if (!preg.obligatoria) continue;
@@ -125,7 +126,7 @@ const OrdenExamenModal = ({
 
     const obsGeneralesTrimmed = observacionesGenerales.trim();
     const itemsPayload = [...seleccionados].map((examenId) => {
-      const examen = examenes.find((e) => e._id === examenId);
+      const examen = examenesPorId.get(examenId);
       const respuestas: RespuestaProtocolar[] =
         examen?.preguntasProtocolares
           ?.filter((p) => {
@@ -188,7 +189,7 @@ const OrdenExamenModal = ({
           {loading ? (
             <div className="orden-modal-loading">
               <div className="spinner-small" />
-              <p>Cargando catálogo...</p>
+              <p>Cargando catálogo…</p>
             </div>
           ) : (
             <>

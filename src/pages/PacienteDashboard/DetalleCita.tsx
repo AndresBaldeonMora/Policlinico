@@ -103,7 +103,7 @@ const IndicacionesMedico = ({ raw }: { raw?: string }) => {
             <div>
               <p style={{ margin: "0 0 0.35rem 0", fontSize: "0.85rem", fontWeight: 600, color: "var(--text-secondary)" }}>Medidas:</p>
               <ul style={{ margin: 0, paddingLeft: "1.2rem", fontSize: "0.9rem", color: "var(--text-primary)" }}>
-                {medidas.map((m, i) => <li key={`medida-${i}-${m.slice(0, 15)}`}>{m}</li>)}
+                {medidas.map((m) => <li key={m}>{m}</li>)}
               </ul>
             </div>
           )}
@@ -257,8 +257,8 @@ const DetalleCita = ({ cita, onCerrar, hideEstado = false }: Props) => {
                 </div>
                 {tieneRecetas ? (
                   <div className="dc-recetas">
-                    {cita.recetas!.map((receta, i) => (
-                      <div key={`${receta.nombre}-${i}`} className="dc-receta-item">
+                    {cita.recetas!.map((receta) => (
+                      <div key={`${receta.nombre}-${receta.dosis}-${receta.duracion}`} className="dc-receta-item">
                         <div className="dc-receta-nombre">{receta.nombre}</div>
                         <div className="dc-receta-meta">
                           <span><b>Dosis:</b> {receta.dosis}</span>
@@ -287,8 +287,8 @@ const DetalleCita = ({ cita, onCerrar, hideEstado = false }: Props) => {
                 </div>
                 {tieneExamenes ? (
                   <div className="dc-examenes">
-                    {cita.examenes!.map((examen, i) => (
-                      <div key={`${examen.nombre}-${i}`} className="dc-examen-item">
+                    {cita.examenes!.map((examen) => (
+                      <div key={`${examen.nombre}-${examen.tipo}`} className="dc-examen-item">
                         <span className="dc-examen-nombre">{examen.nombre}</span>
                         <span className="dc-examen-tipo">{examen.tipo}</span>
                         {examen.estado && (

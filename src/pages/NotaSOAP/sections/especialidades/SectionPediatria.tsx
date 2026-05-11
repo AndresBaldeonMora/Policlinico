@@ -159,9 +159,9 @@ export default function SectionPediatria({ data, setData, onPrev }: Props) {
           <select className="soap-input" value={val('fontanelaAnterior')} onChange={e => up('fontanelaAnterior', e.target.value)}>
             <option value="">Seleccionar</option>
             <option>Cerrada</option>
-            <option>Abierta — normotensa</option>
-            <option>Abierta — abombada</option>
-            <option>Abierta — deprimida</option>
+            <option>Abierta - normotensa</option>
+            <option>Abierta - abombada</option>
+            <option>Abierta - deprimida</option>
           </select>
         </div>
       </div>

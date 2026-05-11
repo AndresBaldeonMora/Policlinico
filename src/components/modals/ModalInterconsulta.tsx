@@ -40,7 +40,7 @@ export default function ModalInterconsulta({ cita, onClose }: Props) {
             <div>
               <label className="soap-section-label">Especialidad solicitada <span className="soap-required">*</span></label>
               <select className="soap-select" value={form.especialidad} onChange={e => upF("especialidad", e.target.value)}>
-                <option value="">— Seleccionar —</option>
+                <option value="">- Seleccionar -</option>
                 {ESPECIALIDADES_INT.map(e => <option key={e}>{e}</option>)}
               </select>
             </div>

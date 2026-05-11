@@ -94,10 +94,10 @@ export default function SectionUrologia({ data, setData, onPrev }: Props) {
           <select className="soap-input" value={val('hematuria')} onChange={e => up('hematuria', e.target.value)}>
             <option value="">Seleccionar</option>
             <option>Ausente</option>
-            <option>Micro — hallazgo laboratorio</option>
-            <option>Macro — 1er chorro (uretral)</option>
-            <option>Macro — 3er chorro (vesical/prostática)</option>
-            <option>Macro — total (renal)</option>
+            <option>Micro - hallazgo laboratorio</option>
+            <option>Macro - 1er chorro (uretral)</option>
+            <option>Macro - 3er chorro (vesical/prostática)</option>
+            <option>Macro - total (renal)</option>
           </select>
         </div>
         <div>
@@ -105,8 +105,8 @@ export default function SectionUrologia({ data, setData, onPrev }: Props) {
           <select className="soap-input" value={val('fiebreAsociada')} onChange={e => up('fiebreAsociada', e.target.value)}>
             <option value="">Seleccionar</option>
             <option>No</option>
-            <option>Sí — sin foco claro</option>
-            <option>Sí — sospecha infección urinaria alta</option>
+            <option>Sí - sin foco claro</option>
+            <option>Sí - sospecha infección urinaria alta</option>
           </select>
         </div>
         <div>
@@ -114,9 +114,9 @@ export default function SectionUrologia({ data, setData, onPrev }: Props) {
           <select className="soap-input" value={val('litiasis')} onChange={e => up('litiasis', e.target.value)}>
             <option value="">Seleccionar</option>
             <option>No</option>
-            <option>Sí — sin tratamiento previo</option>
-            <option>Sí — LEOC previa</option>
-            <option>Sí — cirugía previa</option>
+            <option>Sí - sin tratamiento previo</option>
+            <option>Sí - LEOC previa</option>
+            <option>Sí - cirugía previa</option>
           </select>
         </div>
       </div>

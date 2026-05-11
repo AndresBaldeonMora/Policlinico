@@ -38,7 +38,7 @@ const PacienteDashboard = () => {
     error,
   } = usePacienteDashboard();
 
-  /* ── Modulos (memoized — depends on badge counts) ── */
+  /* ── Modulos (memoized - depends on badge counts) ── */
   const modulos = useMemo(
     () => [
       {

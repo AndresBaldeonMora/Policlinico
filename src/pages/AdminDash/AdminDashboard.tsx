@@ -39,7 +39,7 @@ const AdminDashboard = () => {
   const [stats, setStats] = useState<StatsState>({ doctores: 0, especialidades: 0, pacientes: 0 });
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  // Reportes — período
+  // Reportes - período
   const hoy    = new Date().toISOString().split("T")[0];
   const hace30 = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString().split("T")[0];
   const [fechaInicio,     setFechaInicio]     = useState(hace30);
@@ -48,7 +48,7 @@ const AdminDashboard = () => {
   const [cargandoOrdenes, setCargandoOrdenes] = useState(false);
   const [errorOrdenes,    setErrorOrdenes]    = useState<string | null>(null);
  
-  // Reportes — exámenes
+  // Reportes - exámenes
   const [examenes,         setExamenes]         = useState<ReporteExamenSolicitado[]>([]);
   const [cargandoExamenes, setCargandoExamenes] = useState(true);
   const [errorExamenes,    setErrorExamenes]    = useState<string | null>(null);
@@ -194,7 +194,7 @@ const AdminDashboard = () => {
             </div>
             <button className="btn-page-action" onClick={buscarOrdenes} disabled={cargandoOrdenes}>
               {cargandoOrdenes
-                ? <><span className="ar-spinner" /> Buscando...</>
+                ? <><span className="ar-spinner" /> Buscando…</>
                 : <><Search size={15} /> Buscar</>
               }
             </button>
@@ -204,7 +204,7 @@ const AdminDashboard = () => {
         {errorOrdenes && <div className="ar-error">{errorOrdenes}</div>}
  
         {cargandoOrdenes ? (
-          <div className="lista-loading"><div className="lista-loading-spinner" /><p>Cargando reporte...</p></div>
+          <div className="lista-loading"><div className="lista-loading-spinner" /><p>Cargando reporte…</p></div>
         ) : ordenes.length === 0 ? (
           <div className="ar-empty"><ClipboardList size={32} /><p>No hay órdenes en este período.</p></div>
         ) : (
@@ -241,7 +241,7 @@ const AdminDashboard = () => {
         {errorExamenes && <div className="ar-error">{errorExamenes}</div>}
  
         {cargandoExamenes ? (
-          <div className="lista-loading"><div className="lista-loading-spinner" /><p>Cargando exámenes...</p></div>
+          <div className="lista-loading"><div className="lista-loading-spinner" /><p>Cargando exámenes…</p></div>
         ) : examenes.length === 0 ? (
           <div className="ar-empty"><FlaskConical size={32} /><p>No hay datos de exámenes aún.</p></div>
         ) : (

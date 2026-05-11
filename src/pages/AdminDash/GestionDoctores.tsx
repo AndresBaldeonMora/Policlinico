@@ -209,7 +209,7 @@ const GestionarDoctores = () => {
       {cargando ? (
         <div className="lista-loading">
           <div className="lista-loading-spinner" />
-          <p>Cargando doctores...</p>
+          <p>Cargando doctores…</p>
         </div>
       ) : (
         <div className="lista-table-card">
@@ -356,7 +356,7 @@ const GestionarDoctores = () => {
                   </button>
                   <button type="submit" className="pm-btn pm-btn--primary" disabled={modal.loading}>
                     {modal.loading
-                      ? <><span className="pm-spinner-sm" /> Guardando...</>
+                      ? <><span className="pm-spinner-sm" /> Guardando…</>
                       : modal.doctor ? "✓ Guardar cambios" : "✓ Registrar doctor"
                     }
                   </button>

@@ -16,8 +16,9 @@ const FREQ    = ["Cada 6h", "Cada 8h", "Cada 12h", "Cada 24h", "2 veces/día", "
 const DURAC   = ["3 días", "5 días", "7 días", "14 días", "30 días", "Indefinido"];
 
 const EMPTY: MedicamentoSOAP = { nombre: "", concentracion: "", forma: "Tableta", via: "Oral", dosis: "", frecuencia: "Cada 24h", duracion: "7 días", instrucciones: "" };
+const EMPTY_ALERGIAS: string[] = [];
 
-export default function ModalReceta({ cita, alergias = [], onClose, onAdd }: Props) {
+export default function ModalReceta({ cita, alergias = EMPTY_ALERGIAS, onClose, onAdd }: Props) {
   const [meds, setMeds]       = useState<MedicamentoSOAP[]>([]);
   const [form, setForm]       = useState<MedicamentoSOAP>({ ...EMPTY });
   const [alertaMed, setAlerta] = useState<string | null>(null);
@@ -37,7 +38,7 @@ export default function ModalReceta({ cita, alergias = [], onClose, onAdd }: Pro
 
   const handleAgregar = () => {
     if (!form.nombre.trim()) return;
-    setMeds(prev => [...prev, { ...form }]);
+    setMeds(prev => [...prev, { ...form, _uid: crypto.randomUUID() }]);
     setForm({ ...EMPTY });
     setAlerta(null);
   };
@@ -145,7 +146,7 @@ export default function ModalReceta({ cita, alergias = [], onClose, onAdd }: Pro
             <div>
               <div style={{ fontSize: 13, fontWeight: 700, color: "var(--text-primary)", marginBottom: 8 }}>Medicamentos agregados ({meds.length})</div>
               {meds.map((m, i) => (
-                <div key={`${m.nombre}-${m.concentracion}-${i}`} style={{ background: "var(--bg-muted)", borderRadius: 8, padding: "10px 14px", display: "flex", alignItems: "center", gap: 10, border: "1px solid var(--border)", marginBottom: 6 }}>
+                <div key={m._uid ?? `${m.nombre}-${m.concentracion}-${i}`} style={{ background: "var(--bg-muted)", borderRadius: 8, padding: "10px 14px", display: "flex", alignItems: "center", gap: 10, border: "1px solid var(--border)", marginBottom: 6 }}>
                   <div style={{ flex: 1 }}>
                     <div style={{ fontWeight: 700, fontSize: 13, color: "var(--text-primary)" }}>{m.nombre} {m.concentracion}</div>
                     <div style={{ fontSize: 12, color: "var(--text-muted)" }}>{m.forma} · {m.via} · {m.frecuencia} · {m.duracion}</div>

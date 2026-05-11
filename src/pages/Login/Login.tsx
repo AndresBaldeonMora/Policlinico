@@ -175,7 +175,7 @@ const Login = () => {
 
             <button type="submit" className="login-button" disabled={cargando}>
               {cargando ? (
-                <><span className="login-spinner" />Verificando...</>
+                <><span className="login-spinner" />Verificando…</>
               ) : (
                 <>Ingresar <ArrowRight size={16} /></>
               )}

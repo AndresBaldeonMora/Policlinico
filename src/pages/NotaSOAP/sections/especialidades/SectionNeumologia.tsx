@@ -89,11 +89,11 @@ export default function SectionNeumologia({ data, setData, onPrev }: Props) {
           <select className="soap-input" value={val('disnea')} onChange={e => up('disnea', e.target.value)}>
             <option value="">Seleccionar</option>
             <option>Ausente</option>
-            <option>Escala MRC 1 — grandes esfuerzos</option>
-            <option>Escala MRC 2 — cuesta o escaleras</option>
-            <option>Escala MRC 3 — caminar en plano (&lt; coetáneos)</option>
-            <option>Escala MRC 4 — caminar 100m debe parar</option>
-            <option>Escala MRC 5 — de reposo / al vestirse</option>
+            <option>Escala MRC 1 - grandes esfuerzos</option>
+            <option>Escala MRC 2 - cuesta o escaleras</option>
+            <option>Escala MRC 3 - caminar en plano (&lt; coetáneos)</option>
+            <option>Escala MRC 4 - caminar 100m debe parar</option>
+            <option>Escala MRC 5 - de reposo / al vestirse</option>
           </select>
         </div>
         <div>
@@ -136,8 +136,8 @@ export default function SectionNeumologia({ data, setData, onPrev }: Props) {
           <select className="soap-input" value={val('simetriaExpansion')} onChange={e => up('simetriaExpansion', e.target.value)}>
             <option value="">Seleccionar</option>
             <option>Simétrica</option>
-            <option>Asimétrica — derecha disminuida</option>
-            <option>Asimétrica — izquierda disminuida</option>
+            <option>Asimétrica - derecha disminuida</option>
+            <option>Asimétrica - izquierda disminuida</option>
           </select>
         </div>
       </div>
@@ -189,10 +189,10 @@ export default function SectionNeumologia({ data, setData, onPrev }: Props) {
           <select className="soap-input" value={val('goldEpoc')} onChange={e => up('goldEpoc', e.target.value)}>
             <option value="">Seleccionar</option>
             <option>No aplica</option>
-            <option>GOLD 1 — Leve (FEV1 ≥80%)</option>
-            <option>GOLD 2 — Moderado (FEV1 50–79%)</option>
-            <option>GOLD 3 — Grave (FEV1 30–49%)</option>
-            <option>GOLD 4 — Muy grave (FEV1 &lt;30%)</option>
+            <option>GOLD 1 - Leve (FEV1 ≥80%)</option>
+            <option>GOLD 2 - Moderado (FEV1 50–79%)</option>
+            <option>GOLD 3 - Grave (FEV1 30–49%)</option>
+            <option>GOLD 4 - Muy grave (FEV1 &lt;30%)</option>
           </select>
         </div>
       </div>

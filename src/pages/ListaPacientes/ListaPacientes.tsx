@@ -149,7 +149,7 @@ const ListaPacientes = ({ puedeEliminar = false }: Props) => {
       </div>
 
       {cargando ? (
-        <div className="lista-loading"><div className="lista-loading-spinner" /><p>Cargando pacientes...</p></div>
+        <div className="lista-loading"><div className="lista-loading-spinner" /><p>Cargando pacientes…</p></div>
       ) : (
         <div className="lista-table-card">
           <div className="table-container">

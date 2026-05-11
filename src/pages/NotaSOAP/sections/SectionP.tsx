@@ -50,10 +50,10 @@ export default function SectionP({
 
   return (
     <div className="soap-content-inner">
-      {/* P.1 — Exámenes */}
+      {/* P.1 - Exámenes */}
       <div className="soap-plan-section">
         <div className="soap-plan-section-header">
-          <span className="soap-plan-section-title">P.1 — Exámenes Solicitados</span>
+          <span className="soap-plan-section-title">P.1 - Exámenes Solicitados</span>
           <button
             style={{ display: "flex", alignItems: "center", gap: 6, padding: "6px 14px", borderRadius: "var(--radius-md)", background: "var(--primary)", color: "white", border: "none", cursor: "pointer", fontSize: 12, fontWeight: 600 }}
             onClick={() => onOpenModal("examen")}
@@ -63,7 +63,7 @@ export default function SectionP({
         </div>
         {examenes.length > 0 ? (
           examenes.map((e, i) => (
-            <div key={`${e.tipo}-${e.nombre}-${i}`} className="soap-plan-item">
+            <div key={e._uid ?? `${e.tipo}-${e.nombre}`} className="soap-plan-item">
               {tipoIcon(e.tipo)}
               <div className="soap-plan-item-info">
                 <div className="soap-plan-item-name">{e.nombre}</div>
@@ -75,15 +75,15 @@ export default function SectionP({
           ))
         ) : (
           <div className="soap-plan-empty">
-            Sin exámenes — presione "Solicitar Examen" para agregar
+            Sin exámenes - presione "Solicitar Examen" para agregar
           </div>
         )}
       </div>
 
-      {/* P.2 — Medicamentos */}
+      {/* P.2 - Medicamentos */}
       <div className="soap-plan-section">
         <div className="soap-plan-section-header">
-          <span className="soap-plan-section-title">P.2 — Medicamentos Prescritos</span>
+          <span className="soap-plan-section-title">P.2 - Medicamentos Prescritos</span>
           <button
             style={{ display: "flex", alignItems: "center", gap: 6, padding: "6px 14px", borderRadius: "var(--radius-md)", background: "var(--primary)", color: "white", border: "none", cursor: "pointer", fontSize: 12, fontWeight: 600 }}
             onClick={() => onOpenModal("receta")}
@@ -93,7 +93,7 @@ export default function SectionP({
         </div>
         {medicamentos.length > 0 ? (
           medicamentos.map((m, i) => (
-            <div key={`${m.nombre}-${m.concentracion}-${i}`} className="soap-plan-item">
+            <div key={m._uid ?? `${m.nombre}-${m.concentracion}`} className="soap-plan-item">
               <Pill size={14} color="var(--primary)" />
               <div className="soap-plan-item-info">
                 <div className="soap-plan-item-name">{m.nombre} {m.concentracion}</div>
@@ -108,10 +108,10 @@ export default function SectionP({
         )}
       </div>
 
-      {/* P.3 — Medidas No Farmacológicas */}
+      {/* P.3 - Medidas No Farmacológicas */}
       <div className="soap-plan-section">
         <div className="soap-plan-section-title" style={{ marginBottom: 12 }}>
-          P.3 — Medidas No Farmacológicas
+          P.3 - Medidas No Farmacológicas
         </div>
         <div className="soap-check-grid" style={{ marginBottom: 10 }}>
           {MEDIDAS.map(m => (
@@ -138,10 +138,10 @@ export default function SectionP({
         </div>
       </div>
 
-      {/* P.4 — Seguimiento */}
+      {/* P.4 - Seguimiento */}
       <div className="soap-plan-section">
         <div className="soap-plan-section-title" style={{ marginBottom: 12 }}>
-          P.4 — Plan de Seguimiento
+          P.4 - Plan de Seguimiento
         </div>
         <div className="soap-followup-grid">
           <div>
@@ -156,7 +156,7 @@ export default function SectionP({
           <div>
             <label className="soap-section-label">Tiempo de seguimiento</label>
             <select className="soap-select" value={data.tiempoSeguimiento} onChange={e => up("tiempoSeguimiento", e.target.value)}>
-              <option value="">— Seleccionar —</option>
+              <option value="">- Seleccionar -</option>
               {TIEMPOS_SEGUIMIENTO.map(t => <option key={t}>{t}</option>)}
             </select>
           </div>
@@ -173,11 +173,11 @@ export default function SectionP({
         </div>
       </div>
 
-      {/* P.5 — Referencia */}
+      {/* P.5 - Referencia */}
       <div style={{ background: "var(--bg-muted)", borderRadius: "var(--radius-lg)", padding: 16, border: "1px solid var(--border)", marginBottom: 20 }}>
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 6 }}>
           <span style={{ fontWeight: 700, fontSize: 14, color: "var(--text-primary)" }}>
-            P.5 — Referencia / Interconsulta
+            P.5 - Referencia / Interconsulta
           </span>
           <div style={{ display: "flex", gap: 8 }}>
             <button

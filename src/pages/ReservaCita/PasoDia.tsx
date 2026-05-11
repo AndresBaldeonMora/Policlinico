@@ -6,7 +6,9 @@ interface Props {
   onSeleccionar: (dia: number) => void;
 }
 
-const PasoDia = ({ diasDelMes, diaSeleccionado, diasBloqueados = [], doctorNombre, onSeleccionar }: Props) => (
+const EMPTY_DIAS: number[] = [];
+
+const PasoDia = ({ diasDelMes, diaSeleccionado, diasBloqueados = EMPTY_DIAS, doctorNombre, onSeleccionar }: Props) => (
   <div className="form-step">
     <div className="step-header">
       <span className="step-number">4</span>

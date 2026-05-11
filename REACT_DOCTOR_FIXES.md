@@ -2,11 +2,15 @@
 
 **Fecha:** 2026-05-11
 **Puntuación inicial:** 69/100 · 1159 issues · 121/134 archivos
+**Después de ronda 1:** 1043 issues · 91/118 archivos
+**Después de ronda 2:** issues adicionales corregidos (ver detalle)
 **Herramienta:** [React Doctor](https://www.react.doctor)
 
 ---
 
 ## Resumen ejecutivo
+
+### Ronda 1 — issues críticos
 
 | Categoría | Severidad | Issues | Estado |
 |---|---|---|---|
@@ -16,6 +20,28 @@
 | `setState` sin forma funcional | Warning | 26 | ✅ Corregido |
 | Array index como `key` | Warning | 38 | ✅ Corregido |
 | Archivos no usados (knip) | Warning | 22 | ✅ Eliminados |
+
+### Ronda 2 — limpieza adicional
+
+| Categoría | Severidad | Issues | Estado |
+|---|---|---|---|
+| Em-dash (`—`) en JSX text | Warning | 143 | ✅ Reemplazados por `-` |
+| Three-period ellipsis (`...`) | Warning | 27 | ✅ Reemplazados por `…` |
+| `z-index: 9999` | Warning | 3 | ✅ Reducidos a escala 50-70 |
+| `transition: all` | Warning | 1 | ✅ Propiedades específicas |
+| `autoFocus` (a11y) | Warning | 1 | ✅ Eliminado |
+| `[...arr].sort()` no inmutable | Warning | 3 | ✅ `toSorted()` |
+| `useState(fn())` sin lazy | Warning | 2 | ✅ `useState(() => fn())` |
+| `Promise.all` secuencial | Warning | 1 | ✅ Paralelizado |
+| `.map().filter(Boolean)` | Warning | 1 | ✅ `flatMap` |
+| `useEffectEvent` pattern | Warning | 1 | ✅ Ref pattern |
+| Default `[]` en prop (memo) | Warning | 3 | ✅ Constante a module scope |
+| Array index keys restantes | Warning | 10 | ✅ `_uid` + claves estables |
+| Derived-state-effect | Warning | 4 | ✅ Eventos en handler |
+| No-effect-chain | Warning | 2 | ✅ Resueltos con handlers |
+| `new Intl.DateTimeFormat()` | Warning | 6 | ✅ Hoisteados a module scope |
+| `array.find()` en loop | Warning | 1 | ✅ `Map` lookup |
+| `<h>` con `fontWeight: 700` | Warning | 2 | ✅ `600` |
 
 ---
 
@@ -267,17 +293,162 @@ Todos los cambios pasan la verificación de tipos de TypeScript sin errores ni w
 
 ---
 
-## Issues pendientes (no abordados en esta sesión)
+---
 
-Los siguientes issues del reporte React Doctor se omitieron intencionalmente por ser cambios arquitecturales mayores que requieren revisión caso a caso:
+## 7. Ronda 2 — Detalle de correcciones
 
-| Regla | Count | Descripción |
+### 7.1 Em-dashes (`—` → `-`) — 143 ocurrencias
+
+**Regla:** `react-doctor/design-no-em-dash-in-jsx-text`
+**Razón:** El em-dash lee como output de modelo de IA. Se prefiere puntuación estándar (coma, dos puntos, paréntesis, guion).
+**Fix aplicado:** Script PowerShell que reemplaza `—` por `-` en todo `.tsx`/`.ts` excepto dentro de strings (preservando interpolaciones). 38 archivos modificados.
+
+### 7.2 Ellipsis (`...` → `…`) — 27 ocurrencias
+
+**Regla:** `react-doctor/design-no-three-period-ellipsis`
+**Fix:** Reemplazo regex con PowerShell de `...` en JSX text por carácter unicode `…`. 22 archivos modificados.
+
+### 7.3 z-index extremos
+
+| Archivo | Antes | Después |
 |---|---|---|
-| `no-giant-component` | 12 | Componentes >500 líneas (NotaSOAP, Laboratorio, PerfilCita, etc.) |
-| `no-cascading-set-state` | 19 | Múltiples `setState` en un solo `useEffect` → candidatos a `useReducer` |
-| `no-derived-state-effect` | 4 | Estado derivado gestionado con `useEffect` → calcular inline |
-| `no-render-in-render` | 12 | Funciones `render*()` inline en `MiCuentaPerfil` → extraer a componentes |
-| `prefer-useReducer` | — | Componentes con >3 estados relacionados |
-| `jsx-a11y/*` | varios | Accesibilidad: labels, keyboard events, autofocus |
-| `no-z-index-9999` | — | z-index extremos en estilos inline |
-| `design-*` | varios | Tipografía y diseño (em dash, bold headings, etc.) |
+| `DetalleOrden.tsx:58` | 9999 | 50 |
+| `DetalleOrden.tsx:194` | 10000 | 60 |
+| `CredencialesModal.css` | 9999 | 70 |
+
+### 7.4 `transition: "all"` → propiedades específicas
+
+`Laboratorio.tsx:543`: `transition: "all 0.15s"` → `transition: "background-color 0.15s, border-color 0.15s"`
+
+### 7.5 Lazy state initialization
+
+```tsx
+// Antes
+const [calAño, setCalAño] = useState(hoy.getFullYear());
+// Después
+const [calAño, setCalAño] = useState(() => hoy.getFullYear());
+```
+
+### 7.6 Promise.all paralelizado en NotaSOAP
+
+```tsx
+// Antes (3 awaits secuenciales)
+await MedicoApiService.guardarNotasClinicas(citaId, payload);
+await MedicoApiService.actualizarEstadoCita(citaId, "ATENDIDA");
+await Swal.fire(...)
+
+// Después
+await Promise.all([
+  MedicoApiService.guardarNotasClinicas(citaId, payload),
+  MedicoApiService.actualizarEstadoCita(citaId, "ATENDIDA"),
+]);
+await Swal.fire(...)
+```
+
+### 7.7 useEffectEvent pattern (ref alternative)
+
+`DetalleOrden.tsx`: el handler `onClose` se mantiene en un ref para evitar re-suscripción del listener de teclado en cada render del padre.
+
+### 7.8 Default array prop a module scope
+
+```tsx
+// Antes
+const PasoDia = ({ diasBloqueados = [], ... }: Props) => ...
+
+// Después
+const EMPTY_DIAS: number[] = [];
+const PasoDia = ({ diasBloqueados = EMPTY_DIAS, ... }: Props) => ...
+```
+
+Aplicado a: `PasoDia.tsx`, `ModalReceta.tsx` (alergias), `VistaMes.tsx` (bloqueos).
+
+### 7.9 Array keys con `_uid` estables
+
+Se agregó campo opcional `_uid?: string` a `ExamenOrdenado` y `MedicamentoSOAP`. Cuando un item es agregado por el usuario, se le asigna `crypto.randomUUID()`. Esto garantiza identidad estable incluso si el usuario añade duplicados.
+
+```tsx
+onAdd={e => { setExamenes(prev => [...prev, { ...e, _uid: crypto.randomUUID() }]); }}
+```
+
+### 7.10 Derived-state-effect y no-effect-chain
+
+Resueltos creando handlers explícitos en lugar de cadenas de `useEffect`:
+
+```tsx
+// Antes (chain)
+useEffect(() => { setPagina(1); setBusqueda(""); }, [activeTab]);
+useEffect(() => { setPagina(1); }, [busqueda]);
+
+// Después (handlers)
+const cambiarTab = (tab: Tab) => {
+  setActiveTab(tab);
+  setPagina(1);
+  setBusqueda("");
+};
+const cambiarBusqueda = (valor: string) => {
+  setBusqueda(valor);
+  setPagina(1);
+};
+```
+
+Aplicado a `HistorialCitasPaciente.tsx` y `PacienteOrdenes.tsx`.
+
+### 7.11 `Intl.DateTimeFormat` hoisting
+
+```tsx
+// Antes (re-asignación en cada llamada)
+const formatear = (f: Date) => new Intl.DateTimeFormat("es-PE", {...}).format(f);
+
+// Después
+const FECHA_FMT = new Intl.DateTimeFormat("es-PE", {...});
+const formatear = (f: Date) => FECHA_FMT.format(f);
+```
+
+Aplicado a: `HistorialCitasPaciente.tsx`, `ListaCitas.tsx`, `ReprogramarModal.tsx`, `PerfilCita.tsx`.
+
+### 7.12 `array.find()` en loop → `Map` lookup
+
+`OrdenExamenModal.tsx`: dos loops anidados usaban `examenes.find()` por cada item. Se construye un `Map` una sola vez y se hacen lookups O(1).
+
+```tsx
+const examenesPorId = new Map(examenes.map((e) => [e._id, e]));
+// ...
+const examen = examenesPorId.get(examenId);
+```
+
+### 7.13 `fontWeight: 700` en headings
+
+- `DetalleOrden.tsx:67` → `<h2>` con `fontWeight: 700` reducido a `600`
+- `NotaSOAP.tsx:724` → `<h3>` reducido a `600`
+
+---
+
+## Validación final
+
+```bash
+npx tsc --noEmit
+# exit: 0  (sin errores de tipos en ambas rondas)
+```
+
+---
+
+## Issues pendientes (no abordados intencionalmente)
+
+Los siguientes issues quedan pendientes porque requieren cambios arquitecturales mayores o decisiones de diseño caso a caso:
+
+| Regla | Count | Razón |
+|---|---|---|
+| `jsx-a11y/label-has-associated-control` | 496 | Requiere agregar `htmlFor`/`id` o reestructurar JSX para cada `<label>` + revisión de CSS por componente. Cambio masivo de markup. |
+| `no-tiny-text` (fontSize < 12px) | 49 | Decisión de diseño: la nota SOAP usa texto compacto (`fontSize: 11`) intencionalmente. Cambiar afectaría densidad de información clínica. |
+| `rendering-hydration-mismatch-time` | 44 | Falso positivo: el proyecto es SPA puro (Vite + React Router), sin SSR/hidratación. `new Date()` no causa mismatch. |
+| `no-generic-handler-names` | 23 | Cosmético. Renombrar `handleChange` → `handlePatientFieldChange` requiere coordinar con convenciones de equipo. |
+| `prefer-useReducer` | 22 | Refactor arquitectural: convertir componentes con muchos `useState` relacionados a `useReducer`. Algunos ya están con reducer (`PerfilCita`). |
+| `no-inline-exhaustive-style` | 17 | Extraer estilos inline grandes a CSS modules / clases. Requiere decisión de equipo sobre styling convention. |
+| `no-cascading-set-state` | 16 | Múltiples `setState` en un `useEffect` → migrar a `useReducer`. Refactor por componente. |
+| `no-render-in-render` | 12 | `MiCuentaPerfil.tsx`: 12 funciones `render*()` inline → extraer a componentes nombrados. |
+| `no-giant-component` | 11 | Componentes >500 líneas (NotaSOAP=789, Laboratorio=1100+). Refactor mayor. |
+| `state-only-in-handlers` | 10 | Falsos positivos: `loading` SÍ se lee en el JSX (`if (loading) return <Spinner/>`). El detector no lo reconoce. |
+| `js-combine-iterations` | 8 | Performance marginal: `.filter().map()` → un solo pase. Sacrifica legibilidad. |
+| `no-react19-deprecated-apis` | 2 | Migrar `useContext` → `use()` requiere verificar versión de React. |
+| `async-defer-await` | 1 | Falso positivo: el guard `if (cancelled) return` después del await sí es relevante por race conditions de unmount. |
+

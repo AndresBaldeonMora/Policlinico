@@ -38,11 +38,14 @@ const generarDiasDelMes = (mes: MesOption): number[] => {
   return dias;
 };
 
+const FECHA_COMPLETA_FMT = new Intl.DateTimeFormat("es-PE", { day: "2-digit", month: "2-digit", year: "numeric" });
+const DIA_FMT = new Intl.DateTimeFormat("es-PE", { weekday: "long" });
+
 const formatearFechaCompleta = (fecha: Date): string =>
-  new Intl.DateTimeFormat("es-PE", { day: "2-digit", month: "2-digit", year: "numeric" }).format(fecha);
+  FECHA_COMPLETA_FMT.format(fecha);
 
 const obtenerNombreDia = (fecha: Date): string => {
-  const nombre = new Intl.DateTimeFormat("es-PE", { weekday: "long" }).format(fecha);
+  const nombre = DIA_FMT.format(fecha);
   return nombre.charAt(0).toUpperCase() + nombre.slice(1);
 };
 
@@ -80,12 +83,16 @@ const HistorialCitasPaciente = () => {
     dispatch({ type: "SET_MESES_DISPONIBLES", payload: generarMeses() });
   }, []);
 
-  useEffect(() => {
+  const cambiarTab = (tab: Tab) => {
+    setActiveTab(tab);
     setPagina(1);
     setBusqueda("");
-  }, [activeTab]);
+  };
 
-  useEffect(() => { setPagina(1); }, [busqueda]);
+  const cambiarBusqueda = (valor: string) => {
+    setBusqueda(valor);
+    setPagina(1);
+  };
 
   const citasFiltradas = useMemo(() => {
     const filtered = citas
@@ -226,10 +233,10 @@ const HistorialCitasPaciente = () => {
 
       {/* Tabs */}
       <div style={{ display: "flex", borderBottom: "1px solid var(--border)", marginBottom: "1.5rem" }}>
-        <button onClick={() => setActiveTab("PROXIMAS")} style={tabStyle("PROXIMAS")}>
+        <button onClick={() => cambiarTab("PROXIMAS")} style={tabStyle("PROXIMAS")}>
           Próximas
         </button>
-        <button onClick={() => setActiveTab("PASADAS")} style={tabStyle("PASADAS")}>
+        <button onClick={() => cambiarTab("PASADAS")} style={tabStyle("PASADAS")}>
           Anteriores
         </button>
       </div>
@@ -243,7 +250,7 @@ const HistorialCitasPaciente = () => {
             className="hc-search"
             placeholder="Buscar por médico, especialidad, mes o año..."
             value={busqueda}
-            onChange={(e) => setBusqueda(e.target.value)}
+            onChange={(e) => cambiarBusqueda(e.target.value)}
             style={{ paddingLeft: "2rem" }}
           />
         </div>
@@ -253,7 +260,7 @@ const HistorialCitasPaciente = () => {
         {loading && (
           <div className="hc-state">
             <div className="spinner-small" />
-            <p>Cargando citas...</p>
+            <p>Cargando citas…</p>
           </div>
         )}
 
