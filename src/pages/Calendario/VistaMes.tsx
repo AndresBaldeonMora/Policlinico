@@ -64,7 +64,7 @@ const VistaMes = ({ diasDelMes, citas, doctores, doctorId, bloqueos = [], onVerC
 
             {diasDelMes.map((dia, idx) => {
               if (!esFechaValida(dia)) {
-                return <div key={`empty-${idx}`} className="calendario-celda calendario-celda--vacia" />;
+                return <div key={`vacio-${idx}`} className="calendario-celda calendario-celda--vacia" aria-hidden="true" />;
               }
 
               const fechaISO = toISODateLocal(dia);

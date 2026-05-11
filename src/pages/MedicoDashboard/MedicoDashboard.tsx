@@ -194,7 +194,7 @@ export default function MedicoDashboard() {
                 <p className="dash-alertas-empty">Sin alertas para hoy</p>
               ) : (
                 alertas.map((a, i) => (
-                  <div key={i} className={`dash-alerta dash-alerta--${a.tipo}`}>
+                  <div key={`${a.tipo}-${a.msg.slice(0, 20)}-${i}`} className={`dash-alerta dash-alerta--${a.tipo}`}>
                     {a.tipo === "danger"  && <AlertCircle  size={15} />}
                     {a.tipo === "warning" && <AlertTriangle size={15} />}
                     {a.tipo === "info"    && <Info          size={15} />}

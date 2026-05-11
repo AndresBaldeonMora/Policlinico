@@ -313,7 +313,7 @@ const ModalGenerarOrden = ({ orden, onCerrar, onGuardado }: ModalGenerarOrdenPro
                 <div key={d} className="lab-cal-dow">{d}</div>
               ))}
               {diasDelMes.map((dia, idx) => {
-                if (dia === null) return <div key={`v-${idx}`} />;
+                if (dia === null) return <div key={`vacio-${idx}`} aria-hidden="true" />;
                 const estado = getEstadoDia(dia);
                 const clave  = getFechaKey(dia);
                 const sel    = fechaSel === clave;
@@ -504,8 +504,9 @@ const ModalCargarResultados = ({ orden, onCerrar, onGuardado }: ModalResultadosP
               {orden.items.map((item, idx) => {
                 const ex =
                   typeof item.examenId === "object" ? item.examenId : null;
+                const itemKey = (item as { _id?: string })._id ?? ex?._id ?? `cita-ex-${idx}`;
                 return (
-                  <div key={idx} className="lab-citalab-examenes">
+                  <div key={itemKey} className="lab-citalab-examenes">
                     <span className="lab-citalab-examenes-label">
                       {ex?.nombre ?? "—"}
                     </span>
@@ -724,7 +725,7 @@ const ModalAsistencia = ({ orden, onCerrar, onGuardado }: ModalAsistenciaProps) 
           ) : (
             <div style={{ display: "flex", flexDirection: "column", gap: "1.5rem" }}>
               {itemsConPreguntas.map(({ ex, idx }) => (
-                <div key={idx} className="lab-protocolar-seccion">
+                <div key={ex?._id ?? `protocolar-${idx}`} className="lab-protocolar-seccion">
                   <div className="lab-protocolar-examen-header">
                     <FlaskConical size={14} />
                     <strong>{ex!.nombre}</strong>
@@ -1059,8 +1060,9 @@ const FilaOrden = ({ orden, tabActivo, onRefresh }: FilaOrdenProps) => {
                 {orden.items.map((item, idx) => {
                   const ex =
                     typeof item.examenId === "object" ? item.examenId : null;
+                  const trKey = (item as { _id?: string })._id ?? ex?._id ?? `lab-row-${idx}`;
                   return (
-                    <tr key={idx}>
+                    <tr key={trKey}>
                       <td style={{ fontWeight: 500 }}>
                         {ex?.nombre ?? "—"}
                       </td>

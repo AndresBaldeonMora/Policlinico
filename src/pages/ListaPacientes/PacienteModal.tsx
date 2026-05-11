@@ -204,7 +204,7 @@ const PacienteModal = ({ paciente, onGuardado, onCancelar }: Props) => {
               <div className="pm-field pm-field--full">
                 <label className="pm-label">DNI <span className="pm-req">*</span></label>
                 {esEdicion ? (
-                  <input className="pm-input pm-input--disabled" value={state.dni} disabled />
+                  <input className="pm-input pm-input--disabled" value={state.dni} disabled readOnly />
                 ) : (
                   <>
                     <input className="pm-input" name="dni" value={state.dni} onChange={handleChange}

@@ -56,7 +56,7 @@ const SearchPalette = ({ open, onClose }: { open: boolean; onClose: () => void }
     setQuery("");
     setResults(SECCIONES);
     setSelectedIdx(0);
-    setTimeout(() => inputRef.current?.focus(), 50);
+    const focusTimer = setTimeout(() => inputRef.current?.focus(), 50);
 
     if (!cache) {
       setLoading(true);
@@ -69,6 +69,8 @@ const SearchPalette = ({ open, onClose }: { open: boolean; onClose: () => void }
         setLoading(false);
       });
     }
+
+    return () => clearTimeout(focusTimer);
   }, [open]);
 
   const search = useCallback(

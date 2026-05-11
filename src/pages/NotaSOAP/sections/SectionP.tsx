@@ -1,9 +1,10 @@
 import { Plus, FlaskConical, FileText, Pill } from "lucide-react";
+import type { Dispatch, SetStateAction } from "react";
 import type { SectionPData, ExamenOrdenado, MedicamentoSOAP } from "../types";
 
 interface Props {
   data: SectionPData;
-  setData: (d: SectionPData) => void;
+  setData: Dispatch<SetStateAction<SectionPData>>;
   onPrev: () => void;
   onFinalize: () => void;
   examenes: ExamenOrdenado[];
@@ -33,10 +34,10 @@ export default function SectionP({
   examenes, setExamenes, medicamentos, setMedicamentos, onOpenModal,
 }: Props) {
   const up = <K extends keyof SectionPData>(key: K, val: SectionPData[K]) =>
-    setData({ ...data, [key]: val });
+    setData(prev => ({ ...prev, [key]: val }));
 
   const toggleMedida = (m: string) =>
-    up("medidas", data.medidas.includes(m) ? data.medidas.filter(x => x !== m) : [...data.medidas, m]);
+    setData(prev => ({ ...prev, medidas: prev.medidas.includes(m) ? prev.medidas.filter(x => x !== m) : [...prev.medidas, m] }));
 
   const removeExamen = (i: number) => setExamenes(prev => prev.filter((_, idx) => idx !== i));
   const removeMed    = (i: number) => setMedicamentos(prev => prev.filter((_, idx) => idx !== i));
@@ -62,7 +63,7 @@ export default function SectionP({
         </div>
         {examenes.length > 0 ? (
           examenes.map((e, i) => (
-            <div key={i} className="soap-plan-item">
+            <div key={`${e.tipo}-${e.nombre}-${i}`} className="soap-plan-item">
               {tipoIcon(e.tipo)}
               <div className="soap-plan-item-info">
                 <div className="soap-plan-item-name">{e.nombre}</div>
@@ -92,7 +93,7 @@ export default function SectionP({
         </div>
         {medicamentos.length > 0 ? (
           medicamentos.map((m, i) => (
-            <div key={i} className="soap-plan-item">
+            <div key={`${m.nombre}-${m.concentracion}-${i}`} className="soap-plan-item">
               <Pill size={14} color="var(--primary)" />
               <div className="soap-plan-item-info">
                 <div className="soap-plan-item-name">{m.nombre} {m.concentracion}</div>

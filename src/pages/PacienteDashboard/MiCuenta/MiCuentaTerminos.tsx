@@ -13,6 +13,7 @@ const MiCuentaTerminos = () => {
   /* Simular carga de términos */
   useEffect(() => {
     let cancelled = false;
+    let timeoutId: ReturnType<typeof setTimeout> | null = null;
 
     const cargarTerminos = async () => {
       setLoading(true);
@@ -20,7 +21,9 @@ const MiCuentaTerminos = () => {
 
       try {
         // Simular GET /api/paciente/terminos
-        await new Promise((resolve) => setTimeout(resolve, 1200));
+        await new Promise<void>((resolve) => {
+          timeoutId = setTimeout(() => resolve(), 1200);
+        });
 
         if (cancelled) return;
 
@@ -79,7 +82,10 @@ Estos términos se rigen por las leyes de la República del Perú. Cualquier con
     };
 
     cargarTerminos();
-    return () => { cancelled = true; };
+    return () => {
+      cancelled = true;
+      if (timeoutId) clearTimeout(timeoutId);
+    };
   }, []);
 
   /* ── Loading ── */
@@ -119,10 +125,11 @@ Estos términos se rigen por las leyes de la República del Perú. Cualquier con
           {contenido?.split("\n\n").map((parrafo, i) => {
             // Detectar títulos de sección (ej: "1. ACEPTACIÓN...")
             const esTitulo = /^\d+\.\s+[A-ZÁÉÍÓÚÑ\s]+$/.test(parrafo.trim());
+            const parrafoKey = `parrafo-${i}-${parrafo.slice(0, 20)}`;
             return esTitulo ? (
-              <h3 key={i} className="micuenta-term__section-title">{parrafo}</h3>
+              <h3 key={parrafoKey} className="micuenta-term__section-title">{parrafo}</h3>
             ) : (
-              <p key={i} className="micuenta-term__paragraph">{parrafo}</p>
+              <p key={parrafoKey} className="micuenta-term__paragraph">{parrafo}</p>
             );
           })}
         </div>

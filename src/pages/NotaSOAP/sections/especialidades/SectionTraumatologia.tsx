@@ -1,13 +1,14 @@
+import * as React from "react";
 import type { EspecialidadData } from "../../types";
 
 interface Props {
   data: EspecialidadData;
-  setData: (d: EspecialidadData) => void;
+  setData: React.Dispatch<React.SetStateAction<EspecialidadData>>;
   onPrev: () => void;
 }
 
 export default function SectionTraumatologia({ data, setData, onPrev }: Props) {
-  const up = (k: string, v: string) => setData({ ...data, [k]: v });
+  const up = (k: string, v: string) => setData(prev => ({ ...prev, [k]: v }));
   const val = (k: string) => data[k] ?? '';
 
   return (

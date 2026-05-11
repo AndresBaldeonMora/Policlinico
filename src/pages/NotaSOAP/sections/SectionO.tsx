@@ -1,10 +1,11 @@
 import { useState } from "react";
+import type { Dispatch, SetStateAction } from "react";
 import { ChevronRight, ChevronDown } from "lucide-react";
 import type { SectionOData } from "../types";
 
 interface Props {
   data: SectionOData;
-  setData: (d: SectionOData) => void;
+  setData: Dispatch<SetStateAction<SectionOData>>;
   onPrev: () => void;
   onNext: () => void;
 }
@@ -46,7 +47,7 @@ export default function SectionO({ data, setData, onPrev, onNext }: Props) {
   const [openAp, setOpenAp] = useState<AparatoKey | null>(null);
 
   const up = <K extends keyof SectionOData>(key: K, val: SectionOData[K]) =>
-    setData({ ...data, [key]: val });
+    setData(prev => ({ ...prev, [key]: val }));
 
   const imc =
     data.peso && data.talla

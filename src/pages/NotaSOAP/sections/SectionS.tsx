@@ -1,8 +1,9 @@
+import type { Dispatch, SetStateAction } from "react";
 import type { SectionSData } from "../types";
 
 interface Props {
   data: SectionSData;
-  setData: (d: SectionSData) => void;
+  setData: Dispatch<SetStateAction<SectionSData>>;
   onNext: () => void;
 }
 
@@ -21,13 +22,13 @@ const SINTOMAS = [
 
 export default function SectionS({ data, setData, onNext }: Props) {
   const up = <K extends keyof SectionSData>(key: K, val: SectionSData[K]) =>
-    setData({ ...data, [key]: val });
+    setData(prev => ({ ...prev, [key]: val }));
 
   const upSintoma = (id: string, val: "si" | "no") =>
-    setData({ ...data, sintomas: { ...data.sintomas, [id]: val } });
+    setData(prev => ({ ...prev, sintomas: { ...prev.sintomas, [id]: val } }));
 
   const upDetalle = (id: string, val: string) =>
-    setData({ ...data, sinoDetalle: { ...data.sinoDetalle, [id]: val } });
+    setData(prev => ({ ...prev, sinoDetalle: { ...prev.sinoDetalle, [id]: val } }));
 
   return (
     <div className="soap-content-inner">

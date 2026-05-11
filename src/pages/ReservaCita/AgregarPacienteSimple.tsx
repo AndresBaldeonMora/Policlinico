@@ -95,7 +95,7 @@ const AgregarPacienteSimple = ({ dniInicial, onPacienteCreado, onCancelar }: Pro
           {/* DNI (solo lectura) */}
           <div className="form-group-simple">
             <label>DNI</label>
-            <input type="text" value={dniInicial} disabled className="input-disabled-modal" />
+            <input type="text" value={dniInicial} disabled readOnly className="input-disabled-modal" />
           </div>
 
 

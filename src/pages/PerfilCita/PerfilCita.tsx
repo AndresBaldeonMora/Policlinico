@@ -671,8 +671,9 @@ const PerfilCita = () => {
                             typeof item.examenId === "object"
                               ? (item.examenId as ExamenLaboratorioImagen)
                               : null;
+                          const rowKey = (item as { _id?: string })._id ?? ex?._id ?? `perfil-item-${i}`;
                           return (
-                            <tr key={i}>
+                            <tr key={rowKey}>
                               <td>{ex?.nombre ?? "—"}</td>
                               <td>{ex ? TIPO_EXAMEN_LABEL[ex.tipo] : "—"}</td>
                               <td>
@@ -760,8 +761,9 @@ const PerfilCita = () => {
                                   typeof item.examenId === "object"
                                     ? (item.examenId as ExamenLaboratorioImagen)
                                     : null;
+                                const hRowKey = (item as { _id?: string })._id ?? ex?._id ?? `perfil-hist-${i}`;
                                 return (
-                                  <tr key={i}>
+                                  <tr key={hRowKey}>
                                     <td>{ex?.nombre ?? "—"}</td>
                                     <td>
                                       {ex ? TIPO_EXAMEN_LABEL[ex.tipo] : "—"}

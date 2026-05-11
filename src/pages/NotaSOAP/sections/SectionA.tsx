@@ -1,11 +1,12 @@
 import { useState, useRef } from "react";
+import type { Dispatch, SetStateAction } from "react";
 import { X } from "lucide-react";
 import type { SectionAData, Diagnostico } from "../types";
 import { CIE10_DB } from "../types";
 
 interface Props {
   data: SectionAData;
-  setData: (d: SectionAData) => void;
+  setData: Dispatch<SetStateAction<SectionAData>>;
   onPrev: () => void;
   onNext: () => void;
 }
@@ -16,7 +17,7 @@ export default function SectionA({ data, setData, onPrev, onNext }: Props) {
   const wrapperRef = useRef<HTMLDivElement>(null);
 
   const up = <K extends keyof SectionAData>(key: K, val: SectionAData[K]) =>
-    setData({ ...data, [key]: val });
+    setData(prev => ({ ...prev, [key]: val }));
 
   const filtered = search.length > 1
     ? CIE10_DB.filter(c =>

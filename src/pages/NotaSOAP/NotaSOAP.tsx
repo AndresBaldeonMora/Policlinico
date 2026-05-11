@@ -397,8 +397,8 @@ export default function NotaSOAP() {
                 </div>
                 {alergias.length === 0 ? (
                   <p style={{ fontSize: 11, color: "var(--text-muted)", margin: 0 }}>Sin alergias registradas</p>
-                ) : alergias.map((a, i) => (
-                  <div key={i} style={{ fontSize: 11, padding: "2px 0", color: "var(--text-primary)", borderBottom: "1px solid var(--border)" }}>
+                ) : alergias.map((a) => (
+                  <div key={a._id ?? a.sustancia} style={{ fontSize: 11, padding: "2px 0", color: "var(--text-primary)", borderBottom: "1px solid var(--border)" }}>
                     <span style={{ fontWeight: 500 }}>{a.sustancia}</span>
                     {a.reaccion && <span style={{ color: "var(--text-muted)" }}> — {a.reaccion}</span>}
                     <span style={{
@@ -426,8 +426,8 @@ export default function NotaSOAP() {
                 </div>
                 {medicHabituales.filter(m => m.activo).length === 0 ? (
                   <p style={{ fontSize: 11, color: "var(--text-muted)", margin: 0 }}>Sin medicamentos registrados</p>
-                ) : medicHabituales.filter(m => m.activo).map((m, i) => (
-                  <div key={i} style={{ fontSize: 11, padding: "2px 0", borderBottom: "1px solid var(--border)" }}>
+                ) : medicHabituales.filter(m => m.activo).map((m) => (
+                  <div key={m._id ?? m.nombre} style={{ fontSize: 11, padding: "2px 0", borderBottom: "1px solid var(--border)" }}>
                     <span style={{ fontWeight: 500 }}>{m.nombre}</span>
                     {m.dosis && <span style={{ color: "var(--text-muted)" }}> {m.dosis}</span>}
                     {m.frecuencia && <span style={{ color: "var(--text-muted)" }}> — {m.frecuencia}</span>}
@@ -449,8 +449,8 @@ export default function NotaSOAP() {
                 </div>
                 {problemasMedicos.filter(p => p.estado === "activo").length === 0 ? (
                   <p style={{ fontSize: 11, color: "var(--text-muted)", margin: 0 }}>Sin problemas registrados</p>
-                ) : problemasMedicos.filter(p => p.estado === "activo").map((p, i) => (
-                  <div key={i} style={{ fontSize: 11, padding: "2px 0", borderBottom: "1px solid var(--border)" }}>
+                ) : problemasMedicos.filter(p => p.estado === "activo").map((p) => (
+                  <div key={p._id ?? p.descripcion} style={{ fontSize: 11, padding: "2px 0", borderBottom: "1px solid var(--border)" }}>
                     <span style={{ fontWeight: 500 }}>{p.descripcion}</span>
                     {p.fechaInicio && <span style={{ color: "var(--text-muted)", fontSize: 10 }}> ({new Date(p.fechaInicio).getFullYear()})</span>}
                   </div>
@@ -471,8 +471,8 @@ export default function NotaSOAP() {
                 </div>
                 {cirugiasPrevias.length === 0 ? (
                   <p style={{ fontSize: 11, color: "var(--text-muted)", margin: 0 }}>Sin cirugías registradas</p>
-                ) : cirugiasPrevias.map((c, i) => (
-                  <div key={i} style={{ fontSize: 11, padding: "2px 0", borderBottom: "1px solid var(--border)" }}>
+                ) : cirugiasPrevias.map((c) => (
+                  <div key={c._id ?? c.procedimiento} style={{ fontSize: 11, padding: "2px 0", borderBottom: "1px solid var(--border)" }}>
                     <span style={{ fontWeight: 500 }}>{c.procedimiento}</span>
                     {c.fecha && <span style={{ color: "var(--text-muted)", fontSize: 10 }}> ({new Date(c.fecha).getFullYear()})</span>}
                     {c.hospital && <span style={{ color: "var(--text-muted)" }}> · {c.hospital}</span>}
@@ -494,8 +494,8 @@ export default function NotaSOAP() {
                 </div>
                 {antecedentesFam.length === 0 ? (
                   <p style={{ fontSize: 11, color: "var(--text-muted)", margin: 0 }}>Sin antecedentes registrados</p>
-                ) : antecedentesFam.map((a, i) => (
-                  <div key={i} style={{ fontSize: 11, padding: "2px 0", borderBottom: "1px solid var(--border)" }}>
+                ) : antecedentesFam.map((a) => (
+                  <div key={a._id ?? `${a.parentesco}-${a.condicion}`} style={{ fontSize: 11, padding: "2px 0", borderBottom: "1px solid var(--border)" }}>
                     <span style={{ fontWeight: 500, color: "var(--text-muted)", textTransform: "capitalize" }}>{a.parentesco}:</span>
                     <span style={{ marginLeft: 4 }}>{a.condicion}</span>
                   </div>

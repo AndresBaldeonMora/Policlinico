@@ -94,8 +94,9 @@ const ImprimirOrden = () => {
             <tbody>
               {orden.items.map((item, i) => {
                 const ex = typeof item.examenId === "object" ? (item.examenId as ExamenLaboratorioImagen) : null;
+                const itemKey = (item as { _id?: string })._id ?? ex?._id ?? `imp-${i}`;
                 return (
-                  <tr key={i}>
+                  <tr key={itemKey}>
                     <td>{i + 1}</td>
                     <td>{ex?.nombre ?? "—"}</td>
                     <td>{ex ? TIPO_EXAMEN_LABEL[ex.tipo] : "—"}</td>

@@ -1,9 +1,9 @@
-import type { ComponentType } from "react";
+import type { ComponentType, Dispatch, SetStateAction } from "react";
 import type { EspecialidadData } from "../../types";
 
 interface SectionProps {
   data: EspecialidadData;
-  setData: (d: EspecialidadData) => void;
+  setData: Dispatch<SetStateAction<EspecialidadData>>;
   onPrev: () => void;
 }
 

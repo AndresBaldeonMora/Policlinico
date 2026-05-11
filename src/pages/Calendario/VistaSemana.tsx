@@ -68,7 +68,7 @@ const VistaSemana = ({ inicioSemana, horas, citas, doctores, doctorId, onVerCita
                 dia.getMonth()    === hoy.getMonth()    &&
                 dia.getDate()     === hoy.getDate();
               return (
-                <div key={i} className={`agenda-dia-header ${esHoy ? "agenda-dia-header--hoy" : ""}`}>
+                <div key={dia.toISOString()} className={`agenda-dia-header ${esHoy ? "agenda-dia-header--hoy" : ""}`}>
                   {DIAS_SEMANA[i]} {dia.getDate()}
                 </div>
               );
@@ -78,11 +78,11 @@ const VistaSemana = ({ inicioSemana, horas, citas, doctores, doctorId, onVerCita
             {horas.map((hora) => (
               <>
                 <div key={`hora-${hora}`} className="multi-hora-label">{hora}</div>
-                {diasSemana.map((dia, i) => {
+                {diasSemana.map((dia) => {
                   const cita = getCita(doc.id, dia, hora);
                   return (
                     <div
-                      key={`${doc.id}-${i}-${hora}`}
+                      key={`${doc.id}-${dia.toISOString()}-${hora}`}
                       className="multi-celda"
                     >
                       {cita?.pacienteId && (

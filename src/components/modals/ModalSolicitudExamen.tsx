@@ -141,8 +141,8 @@ export default function ModalSolicitudExamen({ cita, onClose, onAdd }: Props) {
                 EXÁMENES SELECCIONADOS ({selected.length})
               </div>
               <div style={{ display: "flex", flexWrap: "wrap", gap: 6 }}>
-                {selected.map((e, i) => (
-                  <span key={i} style={{ fontSize: 12, background: "var(--primary-lighter)", color: "var(--primary)", padding: "3px 10px", borderRadius: 12, fontWeight: 500 }}>
+                {selected.map((e) => (
+                  <span key={e._id ?? e.nombre} style={{ fontSize: 12, background: "var(--primary-lighter)", color: "var(--primary)", padding: "3px 10px", borderRadius: 12, fontWeight: 500 }}>
                     {e.nombre}
                   </span>
                 ))}

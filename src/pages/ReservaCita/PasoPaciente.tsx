@@ -72,6 +72,7 @@ const PasoPaciente = ({
         type="text"
         id="paciente-seleccionado"
         disabled
+        readOnly
         placeholder="Busque un DNI arriba..."
         value={pacienteSeleccionado ? `${pacienteSeleccionado.nombres} ${pacienteSeleccionado.apellidos}` : ""}
         className="input-disabled"

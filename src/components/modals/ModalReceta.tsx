@@ -65,8 +65,8 @@ export default function ModalReceta({ cita, alergias = [], onClose, onAdd }: Pro
             <span className="modal-pac-meta">DNI: {pac.dni}</span>
             {alergias.length > 0 && (
               <div style={{ display: "flex", gap: 5, flexWrap: "wrap" }}>
-                {alergias.map((a, i) => (
-                  <span key={i} style={{ fontSize: 11, fontWeight: 700, background: "var(--error-bg)", color: "var(--error)", padding: "2px 8px", borderRadius: 10 }}>⛔ {a}</span>
+                {alergias.map((a) => (
+                  <span key={a} style={{ fontSize: 11, fontWeight: 700, background: "var(--error-bg)", color: "var(--error)", padding: "2px 8px", borderRadius: 10 }}>⛔ {a}</span>
                 ))}
               </div>
             )}
@@ -145,7 +145,7 @@ export default function ModalReceta({ cita, alergias = [], onClose, onAdd }: Pro
             <div>
               <div style={{ fontSize: 13, fontWeight: 700, color: "var(--text-primary)", marginBottom: 8 }}>Medicamentos agregados ({meds.length})</div>
               {meds.map((m, i) => (
-                <div key={i} style={{ background: "var(--bg-muted)", borderRadius: 8, padding: "10px 14px", display: "flex", alignItems: "center", gap: 10, border: "1px solid var(--border)", marginBottom: 6 }}>
+                <div key={`${m.nombre}-${m.concentracion}-${i}`} style={{ background: "var(--bg-muted)", borderRadius: 8, padding: "10px 14px", display: "flex", alignItems: "center", gap: 10, border: "1px solid var(--border)", marginBottom: 6 }}>
                   <div style={{ flex: 1 }}>
                     <div style={{ fontWeight: 700, fontSize: 13, color: "var(--text-primary)" }}>{m.nombre} {m.concentracion}</div>
                     <div style={{ fontSize: 12, color: "var(--text-muted)" }}>{m.forma} · {m.via} · {m.frecuencia} · {m.duracion}</div>

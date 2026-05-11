@@ -1,11 +1,12 @@
 import { lazy, Suspense } from "react";
+import type { Dispatch, SetStateAction } from "react";
 import type { EspecialidadData } from "../types";
 import { getEspecialidadLoader } from "./especialidades";
 
 interface Props {
   especialidadNombre: string;
   data: EspecialidadData;
-  setData: (d: EspecialidadData) => void;
+  setData: Dispatch<SetStateAction<EspecialidadData>>;
   onPrev: () => void;
 }
 

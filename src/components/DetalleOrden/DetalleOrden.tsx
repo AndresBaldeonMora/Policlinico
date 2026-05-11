@@ -120,7 +120,7 @@ export const DetalleOrden: React.FC<DetalleOrdenProps> = ({ ordenId, isOpen, onC
                 {(orden.examenes?.length ?? 0) > 0 ? (
                   <div style={{ display: "flex", flexDirection: "column", gap: "0.4rem" }}>
                     {orden.examenes.map((ex, i) => (
-                      <div key={i} style={{ display: "flex", alignItems: "center", gap: "0.65rem", padding: "0.55rem 0.9rem", backgroundColor: "var(--bg-hover)", borderRadius: "8px", border: "1px solid var(--border)" }}>
+                      <div key={`${ex.nombre}-${i}`} style={{ display: "flex", alignItems: "center", gap: "0.65rem", padding: "0.55rem 0.9rem", backgroundColor: "var(--bg-hover)", borderRadius: "8px", border: "1px solid var(--border)" }}>
                         <span style={{ width: "6px", height: "6px", borderRadius: "50%", background: "var(--primary, #059669)", flexShrink: 0 }} />
                         <span style={{ fontSize: "0.9rem", color: "var(--text-primary)", fontWeight: 500, flex: 1 }}>{ex.nombre}</span>
                         {ex.observacion && (
