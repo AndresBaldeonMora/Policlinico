@@ -154,8 +154,8 @@ export default function SectionP({
             />
           </div>
           <div>
-            <label className="soap-section-label">Tiempo de seguimiento</label>
-            <select className="soap-select" value={data.tiempoSeguimiento} onChange={e => up("tiempoSeguimiento", e.target.value)}>
+            <label htmlFor="p-tiempoSeguimiento" className="soap-section-label">Tiempo de seguimiento</label>
+            <select id="p-tiempoSeguimiento" className="soap-select" value={data.tiempoSeguimiento} onChange={e => up("tiempoSeguimiento", e.target.value)}>
               <option value="">- Seleccionar -</option>
               {TIEMPOS_SEGUIMIENTO.map(t => <option key={t}>{t}</option>)}
             </select>

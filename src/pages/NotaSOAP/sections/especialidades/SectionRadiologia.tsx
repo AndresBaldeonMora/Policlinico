@@ -19,16 +19,16 @@ export default function SectionRadiologia({ data, setData, onPrev }: Props) {
         Indicación del Estudio
       </p>
       <div style={{ marginBottom: 14 }}>
-        <label className="soap-section-label">Órgano / región a evaluar</label>
-        <input className="soap-input" value={val('organoEvaluar')} onChange={e => up('organoEvaluar', e.target.value)} placeholder="Ej: Tórax, abdomen, columna lumbar, cadera izquierda…" />
+        <label htmlFor="radiologia-organoEvaluar" className="soap-section-label">Órgano / región a evaluar</label>
+        <input id="radiologia-organoEvaluar" className="soap-input" value={val('organoEvaluar')} onChange={e => up('organoEvaluar', e.target.value)} placeholder="Ej: Tórax, abdomen, columna lumbar, cadera izquierda…" />
       </div>
       <div style={{ marginBottom: 14 }}>
-        <label className="soap-section-label">Diagnóstico clínico sospechado / indicación</label>
-        <input className="soap-input" value={val('indicacion')} onChange={e => up('indicacion', e.target.value)} placeholder="Ej: Descartar neumonía, control de fractura, estudio de masa abdominal…" />
+        <label htmlFor="radiologia-indicacion" className="soap-section-label">Diagnóstico clínico sospechado / indicación</label>
+        <input id="radiologia-indicacion" className="soap-input" value={val('indicacion')} onChange={e => up('indicacion', e.target.value)} placeholder="Ej: Descartar neumonía, control de fractura, estudio de masa abdominal…" />
       </div>
       <div style={{ marginBottom: 14 }}>
-        <label className="soap-section-label">Antecedentes relevantes de la región</label>
-        <input className="soap-input" value={val('antecedentesRegion')} onChange={e => up('antecedentesRegion', e.target.value)} placeholder="Cirugía previa, trauma, patología conocida…" />
+        <label htmlFor="radiologia-antecedentesRegion" className="soap-section-label">Antecedentes relevantes de la región</label>
+        <input id="radiologia-antecedentesRegion" className="soap-input" value={val('antecedentesRegion')} onChange={e => up('antecedentesRegion', e.target.value)} placeholder="Cirugía previa, trauma, patología conocida…" />
       </div>
 
       <div className="soap-section-divider" />
@@ -39,8 +39,8 @@ export default function SectionRadiologia({ data, setData, onPrev }: Props) {
       </p>
       <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12, marginBottom: 14 }}>
         <div>
-          <label className="soap-section-label">Tipo de estudio</label>
-          <select className="soap-input" value={val('tipoEstudio')} onChange={e => up('tipoEstudio', e.target.value)}>
+          <label htmlFor="radiologia-tipoEstudio" className="soap-section-label">Tipo de estudio</label>
+          <select id="radiologia-tipoEstudio" className="soap-input" value={val('tipoEstudio')} onChange={e => up('tipoEstudio', e.target.value)}>
             <option value="">Seleccionar</option>
             <option>Radiografía simple</option>
             <option>Tomografía (TC)</option>
@@ -53,12 +53,12 @@ export default function SectionRadiologia({ data, setData, onPrev }: Props) {
           </select>
         </div>
         <div>
-          <label className="soap-section-label">Proyecciones (si Rx)</label>
-          <input className="soap-input" value={val('proyecciones')} onChange={e => up('proyecciones', e.target.value)} placeholder="Ej: PA y lateral / AP y perfil" />
+          <label htmlFor="radiologia-proyecciones" className="soap-section-label">Proyecciones (si Rx)</label>
+          <input id="radiologia-proyecciones" className="soap-input" value={val('proyecciones')} onChange={e => up('proyecciones', e.target.value)} placeholder="Ej: PA y lateral / AP y perfil" />
         </div>
         <div>
-          <label className="soap-section-label">Uso de contraste</label>
-          <select className="soap-input" value={val('contraste')} onChange={e => up('contraste', e.target.value)}>
+          <label htmlFor="radiologia-contraste" className="soap-section-label">Uso de contraste</label>
+          <select id="radiologia-contraste" className="soap-input" value={val('contraste')} onChange={e => up('contraste', e.target.value)}>
             <option value="">Seleccionar</option>
             <option>Sin contraste</option>
             <option>Con contraste IV</option>
@@ -67,8 +67,8 @@ export default function SectionRadiologia({ data, setData, onPrev }: Props) {
           </select>
         </div>
         <div>
-          <label className="soap-section-label">Comparación con estudios previos</label>
-          <select className="soap-input" value={val('comparacionPrevios')} onChange={e => up('comparacionPrevios', e.target.value)}>
+          <label htmlFor="radiologia-comparacionPrevios" className="soap-section-label">Comparación con estudios previos</label>
+          <select id="radiologia-comparacionPrevios" className="soap-input" value={val('comparacionPrevios')} onChange={e => up('comparacionPrevios', e.target.value)}>
             <option value="">Seleccionar</option>
             <option>Sin estudios previos disponibles</option>
             <option>Sin cambios significativos respecto a previo</option>
@@ -85,12 +85,12 @@ export default function SectionRadiologia({ data, setData, onPrev }: Props) {
         Hallazgos por Región / Órgano
       </p>
       <div style={{ marginBottom: 14 }}>
-        <label className="soap-section-label">Hallazgos principales</label>
-        <textarea className="soap-input soap-textarea" style={{ minHeight: 100 }} value={val('hallazgosPrincipales')} onChange={e => up('hallazgosPrincipales', e.target.value)} placeholder="Describir hallazgos por estructura: localización, tamaño, densidad/intensidad, características, relación con estructuras adyacentes…" />
+        <label htmlFor="radiologia-hallazgosPrincipales" className="soap-section-label">Hallazgos principales</label>
+        <textarea id="radiologia-hallazgosPrincipales" className="soap-input soap-textarea" style={{ minHeight: 100 }} value={val('hallazgosPrincipales')} onChange={e => up('hallazgosPrincipales', e.target.value)} placeholder="Describir hallazgos por estructura: localización, tamaño, densidad/intensidad, características, relación con estructuras adyacentes…" />
       </div>
       <div style={{ marginBottom: 14 }}>
-        <label className="soap-section-label">Hallazgos incidentales</label>
-        <input className="soap-input" value={val('hallazgosIncidentales')} onChange={e => up('hallazgosIncidentales', e.target.value)} placeholder="Hallazgos no relacionados con indicación principal…" />
+        <label htmlFor="radiologia-hallazgosIncidentales" className="soap-section-label">Hallazgos incidentales</label>
+        <input id="radiologia-hallazgosIncidentales" className="soap-input" value={val('hallazgosIncidentales')} onChange={e => up('hallazgosIncidentales', e.target.value)} placeholder="Hallazgos no relacionados con indicación principal…" />
       </div>
 
       <div className="soap-section-divider" />
@@ -100,19 +100,19 @@ export default function SectionRadiologia({ data, setData, onPrev }: Props) {
         Impresión Diagnóstica Radiológica
       </p>
       <div style={{ marginBottom: 14 }}>
-        <label className="soap-section-label">Diagnóstico(s) radiológico(s)</label>
-        <textarea className="soap-input soap-textarea" style={{ minHeight: 60 }} value={val('impresionRadiologica')} onChange={e => up('impresionRadiologica', e.target.value)} placeholder="1. Condensación pulmonar basal derecha compatible con neumonía…" />
+        <label htmlFor="radiologia-impresionRadiologica" className="soap-section-label">Diagnóstico(s) radiológico(s)</label>
+        <textarea id="radiologia-impresionRadiologica" className="soap-input soap-textarea" style={{ minHeight: 60 }} value={val('impresionRadiologica')} onChange={e => up('impresionRadiologica', e.target.value)} placeholder="1. Condensación pulmonar basal derecha compatible con neumonía…" />
       </div>
       <div style={{ marginBottom: 14 }}>
-        <label className="soap-section-label">Recomendaciones / estudios complementarios</label>
-        <input className="soap-input" value={val('recomendaciones')} onChange={e => up('recomendaciones', e.target.value)} placeholder="Correlacionar con clínica, TC de control en 3 meses, biopsia…" />
+        <label htmlFor="radiologia-recomendaciones" className="soap-section-label">Recomendaciones / estudios complementarios</label>
+        <input id="radiologia-recomendaciones" className="soap-input" value={val('recomendaciones')} onChange={e => up('recomendaciones', e.target.value)} placeholder="Correlacionar con clínica, TC de control en 3 meses, biopsia…" />
       </div>
 
       <div className="soap-section-divider" />
 
       <div style={{ marginBottom: 14 }}>
-        <label className="soap-section-label">Notas adicionales de Radiología</label>
-        <textarea className="soap-input soap-textarea" style={{ minHeight: 60 }} value={val('notasAdicionales')} onChange={e => up('notasAdicionales', e.target.value)} placeholder="Limitaciones técnicas, calidad del estudio, artefactos…" />
+        <label htmlFor="radiologia-notasAdicionales" className="soap-section-label">Notas adicionales de Radiología</label>
+        <textarea id="radiologia-notasAdicionales" className="soap-input soap-textarea" style={{ minHeight: 60 }} value={val('notasAdicionales')} onChange={e => up('notasAdicionales', e.target.value)} placeholder="Limitaciones técnicas, calidad del estudio, artefactos…" />
       </div>
 
       <div className="soap-nav-row" style={{ justifyContent: "flex-start", marginTop: 8 }}>
