@@ -158,6 +158,41 @@ export default function SectionA({ data, setData, onPrev, onNext }: Props) {
         </div>
       </div>
 
+      {/* Otros diagnósticos — NTS-022, Formato de Consulta Externa */}
+      <div style={{ marginBottom: 18 }}>
+        <label className="soap-section-label">
+          Otros Diagnósticos{" "}
+          <span style={{ fontSize: 11, color: "var(--text-muted)", fontWeight: 400 }}>
+            (NTS-022 — registrar solo los que apliquen)
+          </span>
+        </label>
+        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12, marginTop: 4 }}>
+          {([
+            ["riesgo", "Diagnóstico de riesgo"],
+            ["nutricional", "Diagnóstico nutricional"],
+            ["saludMental", "Diagnóstico de salud mental"],
+            ["causaExterna", "Causa externa de morbilidad"],
+          ] as const).map(([key, label]) => (
+            <div key={key}>
+              <label className="soap-section-label">{label}</label>
+              <input
+                className="soap-input"
+                value={data.otrosDiagnosticos[key]}
+                onChange={e => up("otrosDiagnosticos", { ...data.otrosDiagnosticos, [key]: e.target.value })}
+              />
+            </div>
+          ))}
+        </div>
+        <div style={{ marginTop: 12 }}>
+          <label className="soap-section-label">Discapacidad / estado funcional</label>
+          <input
+            className="soap-input"
+            value={data.otrosDiagnosticos.estadoFuncional}
+            onChange={e => up("otrosDiagnosticos", { ...data.otrosDiagnosticos, estadoFuncional: e.target.value })}
+          />
+        </div>
+      </div>
+
       {/* Evaluación */}
       <div style={{ marginBottom: 20 }}>
         <label className="soap-section-label">Evaluación y Razonamiento Clínico</label>

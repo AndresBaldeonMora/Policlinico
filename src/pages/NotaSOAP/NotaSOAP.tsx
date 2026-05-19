@@ -86,7 +86,14 @@ export default function NotaSOAP() {
         if (data.notasClinicas) {
           try {
             const parsed = JSON.parse(data.notasClinicas);
-            if (parsed.soap) setSoapData(parsed.soap);
+            if (parsed.soap) {
+              // Merge con defaults: borradores antiguos pueden no tener campos nuevos
+              setSoapData({
+                ...INITIAL_SOAP,
+                ...parsed.soap,
+                A: { ...INITIAL_SOAP.A, ...parsed.soap.A },
+              });
+            }
             if (parsed.examenes) setExamenes(parsed.examenes);
             if (parsed.medicamentos) setMedicamentos(parsed.medicamentos);
             // Compat: borradores antiguos que aún tienen la especialidad en el JSON
@@ -233,6 +240,8 @@ export default function NotaSOAP() {
       })),
       // Sección de especialidad — en su campo propio, fuera del blob JSON
       especialidad:  { nombre: especialidadNombre, campos: especData },
+      // Otros diagnósticos (NTS-022) — campo estructurado consultable
+      otrosDiagnosticos: soapData.A.otrosDiagnosticos,
     };
   };
 

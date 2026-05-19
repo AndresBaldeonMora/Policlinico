@@ -36,11 +36,22 @@ export interface Diagnostico {
   tipo: 'presuntivo' | 'confirmado';
 }
 
+// Grupo "Otros diagnósticos" exigido por la NTS-022 (Formato de Consulta Externa).
+// Todos opcionales: se registran solo cuando el caso lo amerita.
+export interface OtrosDiagnosticos {
+  riesgo: string;          // Diagnóstico de riesgo
+  nutricional: string;     // Diagnóstico nutricional
+  saludMental: string;     // Diagnóstico de salud mental
+  causaExterna: string;    // Diagnóstico de causa externa de morbilidad
+  estadoFuncional: string; // Diagnóstico de discapacidad / estado funcional
+}
+
 export interface SectionAData {
   diagnoses: Diagnostico[];
   diferenciales: string;
   severidad: 'Leve' | 'Moderada' | 'Severa' | '';
   evaluacion: string;
+  otrosDiagnosticos: OtrosDiagnosticos;
 }
 
 export interface SectionPData {
@@ -85,6 +96,6 @@ export type EspecialidadData = Record<string, string>;
 export const INITIAL_SOAP: SOAPData = {
   S: { motivoConsulta: '', tiempoEnfermedad: '', enfermedadActual: '', sintomas: {}, sinoDetalle: {}, otrosSintomas: '' },
   O: { temp: '', pa_s: '', pa_d: '', fc: '', fr: '', peso: '', talla: '', spo2: '', estadoGeneral: '', piel: '', edema: 'no', edemaLoc: '', edemaGrado: '', edemaDetalle: '', cardiovascular: '', respiratorio: '', abdomen: '', neurologico: '', musculoesqueletico: '', otrosAp: '' },
-  A: { diagnoses: [], diferenciales: '', severidad: '', evaluacion: '' },
+  A: { diagnoses: [], diferenciales: '', severidad: '', evaluacion: '', otrosDiagnosticos: { riesgo: '', nutricional: '', saludMental: '', causaExterna: '', estadoFuncional: '' } },
   P: { medidas: [], otrasIndicaciones: '', proximaCita: '', tiempoSeguimiento: '', criteriosAlarma: '' },
 };
