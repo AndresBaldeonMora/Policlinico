@@ -28,16 +28,6 @@ const generarMeses = (): MesOption[] => {
   });
 };
 
-const generarDiasDelMes = (mes: MesOption): number[] => {
-  const hoy = new Date(); hoy.setHours(0, 0, 0, 0);
-  const ultimoDia = new Date(mes.anio, mes.numero + 1, 0).getDate();
-  const dias: number[] = [];
-  for (let dia = 1; dia <= ultimoDia; dia++) {
-    if (new Date(mes.anio, mes.numero, dia) >= hoy) dias.push(dia);
-  }
-  return dias;
-};
-
 const FECHA_COMPLETA_FMT = new Intl.DateTimeFormat("es-PE", { day: "2-digit", month: "2-digit", year: "numeric" });
 const DIA_FMT = new Intl.DateTimeFormat("es-PE", { weekday: "long" });
 
@@ -62,7 +52,7 @@ const HistorialCitasPaciente = () => {
   const [notif, setNotif]                       = useState<{ msg: string; tipo: "success" | "error" } | null>(null);
 
   const [state, dispatch] = useReducer(listaCitasReducer, initialState);
-  const { editando, pasoModal, mesesDisponibles, mesSeleccionado, diasDelMes, diaSeleccionado, horariosPorDia, cargandoHorarios } = state;
+  const { editando, pasoModal, mesesDisponibles, horariosPorDia, cargandoHorarios } = state;
 
   const showNotif = (msg: string, tipo: "success" | "error") => {
     setNotif({ msg, tipo });
@@ -161,15 +151,11 @@ const HistorialCitasPaciente = () => {
     });
   };
 
-  const handleSelectMes = (mes: MesOption) => {
-    dispatch({ type: "SELECT_MES", payload: { mes, dias: generarDiasDelMes(mes) } });
-  };
-
-  const handleSelectDia = async (dia: number) => {
-    if (!mesSeleccionado || !editando) return;
-    const fecha = new Date(mesSeleccionado.anio, mesSeleccionado.numero, dia);
-    const fechaISO = fecha.toISOString().split("T")[0];
-    dispatch({ type: "SELECT_DIA", payload: { dia, fechaISO } });
+  const handleSelectFecha = async (fechaISO: string) => {
+    if (!editando) return;
+    dispatch({ type: "SELECT_FECHA", payload: { fechaISO } });
+    const [y, m, d] = fechaISO.split("-").map(Number);
+    const fecha = new Date(y, m - 1, d);
 
     dispatch({ type: "SET_CARGANDO_HORARIOS", payload: true });
     try {
@@ -178,7 +164,7 @@ const HistorialCitasPaciente = () => {
         fecha: formatearFechaCompleta(fecha),
         fechaISO,
         diaNombre: obtenerNombreDia(fecha),
-        diaNumero: dia,
+        diaNumero: d,
         horarios,
       };
       dispatch({ type: "SET_HORARIOS_POR_DIA", payload: [info] });
@@ -334,13 +320,9 @@ const HistorialCitasPaciente = () => {
           editando={editando}
           pasoModal={pasoModal}
           mesesDisponibles={mesesDisponibles}
-          mesSeleccionado={mesSeleccionado}
-          diasDelMes={diasDelMes}
-          diaSeleccionado={diaSeleccionado}
           horariosPorDia={horariosPorDia}
           cargandoHorarios={cargandoHorarios}
-          onSelectMes={handleSelectMes}
-          onSelectDia={handleSelectDia}
+          onSelectFecha={handleSelectFecha}
           onSelectHora={(hora) => dispatch({ type: "SET_HORA", payload: hora })}
           onSiguiente={handleSiguiente}
           onVolver={() => dispatch({ type: "SET_PASO_MODAL", payload: 1 })}

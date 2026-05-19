@@ -1,208 +1,264 @@
+import { useState } from "react";
+import { ChevronLeft, ChevronRight, CalendarDays, Clock, X } from "lucide-react";
 import type { HorarioPorDia, MesOption, EditandoState } from "./ListaCitasReducer";
+import "./ReprogramarModal.css";
 
-// ── Helpers ──────────────────────────────────────────────────
+// ── Constantes ──────────────────────────────────────────────
 
-const DIA_FMT = new Intl.DateTimeFormat("es-PE", { weekday: "long" });
+const NOMBRES_MES = [
+  "Enero", "Febrero", "Marzo", "Abril", "Mayo", "Junio",
+  "Julio", "Agosto", "Septiembre", "Octubre", "Noviembre", "Diciembre",
+];
+const DIAS_SEMANA = ["Lu", "Ma", "Mi", "Ju", "Vi", "Sa", "Do"];
+
+const pad2 = (n: number) => String(n).padStart(2, "0");
+const toISO = (anio: number, mes: number, dia: number) =>
+  `${anio}-${pad2(mes + 1)}-${pad2(dia)}`;
 
 const formatearFechaResumen = (fechaISO: string): string => {
   if (!fechaISO) return "";
-  const [anio, mes, dia] = fechaISO.split("-");
-  const fecha = new Date(Number(anio), Number(mes) - 1, Number(dia));
-  const nombreDia = DIA_FMT.format(fecha);
-  return `${nombreDia.charAt(0).toUpperCase() + nombreDia.slice(1)} ${dia}/${mes}/${anio}`;
+  const [anio, mes, dia] = fechaISO.split("-").map(Number);
+  const fecha = new Date(anio, mes - 1, dia);
+  const nombreDia = new Intl.DateTimeFormat("es-PE", { weekday: "long" }).format(fecha);
+  return `${nombreDia.charAt(0).toUpperCase() + nombreDia.slice(1)} ${pad2(dia)}/${pad2(mes)}/${anio}`;
 };
 
-// ── Sub-component: Step indicator ───────────────────────────
+// ── Stepper ─────────────────────────────────────────────────
 
-interface StepperProps {
-  pasoModal: 1 | 2;
-}
-
-const ModalStepper = ({ pasoModal }: StepperProps) => (
-  <div className="modal-stepper">
-    <div className={`modal-step ${pasoModal === 1 ? "activo" : ""} ${pasoModal > 1 ? "completado" : ""}`}>
-      <span className="step-circle">1</span>
-      <span className="step-label">Nueva fecha y hora</span>
+const Stepper = ({ pasoModal }: { pasoModal: 1 | 2 }) => (
+  <div className="rep-stepper">
+    <div className={`rep-step ${pasoModal === 1 ? "rep-step--activo" : "rep-step--completado"}`}>
+      <span className="rep-step__circle">1</span>
+      <span className="rep-step__label">Fecha y hora</span>
     </div>
-    <div className={`modal-step ${pasoModal === 2 ? "activo" : ""}`}>
-      <span className="step-circle">2</span>
-      <span className="step-label">Confirmar cambios</span>
+    <span className="rep-step__separator" />
+    <div className={`rep-step ${pasoModal === 2 ? "rep-step--activo" : ""}`}>
+      <span className="rep-step__circle">2</span>
+      <span className="rep-step__label">Confirmar</span>
     </div>
   </div>
 );
 
-// ── Sub-component: Month selector ───────────────────────────
+// ── Calendario ──────────────────────────────────────────────
 
-interface MesSelectorProps {
+interface CalendarioProps {
   mesesDisponibles: MesOption[];
-  mesSeleccionado: MesOption | null;
-  onSelectMes: (mes: MesOption) => void;
+  fechaSeleccionada: string;
+  onSelectFecha: (fechaISO: string) => void;
 }
 
-const MesSelector = ({ mesesDisponibles, mesSeleccionado, onSelectMes }: MesSelectorProps) => (
-  <div className="selector-mes">
-    <span className="selector-label">Seleccionar Mes:</span>
-    <div className="meses-lista">
-      {mesesDisponibles.map((mes) => (
+const CalendarioMes = ({ mesesDisponibles, fechaSeleccionada, onSelectFecha }: CalendarioProps) => {
+  const hoy = new Date();
+  hoy.setHours(0, 0, 0, 0);
+
+  const primerMes = mesesDisponibles[0];
+  const ultimoMes = mesesDisponibles[mesesDisponibles.length - 1];
+
+  const inicialVisible = (() => {
+    if (fechaSeleccionada) {
+      const [y, m] = fechaSeleccionada.split("-").map(Number);
+      return { anio: y, mes: m - 1 };
+    }
+    if (primerMes) return { anio: primerMes.anio, mes: primerMes.numero };
+    return { anio: hoy.getFullYear(), mes: hoy.getMonth() };
+  })();
+
+  const [visible, setVisible] = useState(inicialVisible);
+
+  const idx = (anio: number, mes: number) => anio * 12 + mes;
+  const minIdx = primerMes ? idx(primerMes.anio, primerMes.numero) : -Infinity;
+  const maxIdx = ultimoMes ? idx(ultimoMes.anio, ultimoMes.numero) : Infinity;
+  const visibleIdx = idx(visible.anio, visible.mes);
+
+  const puedeRetroceder = visibleIdx > minIdx;
+  const puedeAvanzar = visibleIdx < maxIdx;
+
+  const cambiarMes = (delta: number) => {
+    const d = new Date(visible.anio, visible.mes + delta, 1);
+    setVisible({ anio: d.getFullYear(), mes: d.getMonth() });
+  };
+
+  // Lunes-first: getDay() devuelve 0=Dom..6=Sab. Conversión a 0=Lu..6=Do
+  const primerDiaSemana = (new Date(visible.anio, visible.mes, 1).getDay() + 6) % 7;
+  const diasEnMes = new Date(visible.anio, visible.mes + 1, 0).getDate();
+
+  const celdas: Array<{ tipo: "vacia" } | { tipo: "dia"; dia: number }> = [
+    ...Array.from({ length: primerDiaSemana }, () => ({ tipo: "vacia" as const })),
+    ...Array.from({ length: diasEnMes }, (_, i) => ({ tipo: "dia" as const, dia: i + 1 })),
+  ];
+
+  return (
+    <div className="rep-cal">
+      <div className="rep-cal__nav">
         <button
-          key={`${mes.anio}-${mes.numero}`}
           type="button"
-          className={`mes-btn ${
-            mesSeleccionado?.numero === mes.numero && mesSeleccionado?.anio === mes.anio
-              ? "activo"
-              : ""
-          }`}
-          onClick={() => onSelectMes(mes)}
+          className="rep-cal__nav-btn"
+          onClick={() => cambiarMes(-1)}
+          disabled={!puedeRetroceder}
+          aria-label="Mes anterior"
         >
-          {mes.nombre} {mes.anio}
+          <ChevronLeft size={18} />
         </button>
-      ))}
-    </div>
-  </div>
-);
-
-// ── Sub-component: Day selector ─────────────────────────────
-
-interface DiaSelectorProps {
-  diasDelMes: number[];
-  diaSeleccionado: number | null;
-  onSelectDia: (dia: number) => void;
-}
-
-const DiaSelector = ({ diasDelMes, diaSeleccionado, onSelectDia }: DiaSelectorProps) => (
-  <div className="selector-dia">
-    <span className="selector-label">Seleccionar Día:</span>
-    <div className="dias-lista-selector">
-      {diasDelMes.map((dia) => (
+        <span className="rep-cal__titulo">
+          {NOMBRES_MES[visible.mes]} {visible.anio}
+        </span>
         <button
-          key={dia}
           type="button"
-          className={`dia-btn ${diaSeleccionado === dia ? "activo" : ""}`}
-          onClick={() => onSelectDia(dia)}
+          className="rep-cal__nav-btn"
+          onClick={() => cambiarMes(1)}
+          disabled={!puedeAvanzar}
+          aria-label="Mes siguiente"
         >
-          {dia}
+          <ChevronRight size={18} />
         </button>
-      ))}
+      </div>
+
+      <div className="rep-cal__semana">
+        {DIAS_SEMANA.map((d) => (
+          <span key={d} className="rep-cal__semana-dia">{d}</span>
+        ))}
+      </div>
+
+      <div className="rep-cal__grid">
+        {celdas.map((c, i) => {
+          if (c.tipo === "vacia") {
+            return <span key={`e${i}`} className="rep-cal__celda rep-cal__celda--vacia" />;
+          }
+          const fecha = new Date(visible.anio, visible.mes, c.dia);
+          const iso = toISO(visible.anio, visible.mes, c.dia);
+          const deshabilitado = fecha < hoy;
+          const seleccionado = iso === fechaSeleccionada;
+          const esHoy = fecha.getTime() === hoy.getTime();
+
+          const classes = [
+            "rep-cal__celda",
+            seleccionado ? "rep-cal__celda--sel" : "",
+            esHoy && !seleccionado ? "rep-cal__celda--hoy" : "",
+            deshabilitado ? "rep-cal__celda--off" : "",
+          ].filter(Boolean).join(" ");
+
+          return (
+            <button
+              key={iso}
+              type="button"
+              className={classes}
+              disabled={deshabilitado}
+              onClick={() => onSelectFecha(iso)}
+            >
+              {c.dia}
+            </button>
+          );
+        })}
+      </div>
     </div>
-  </div>
-);
+  );
+};
 
-// ── Sub-component: Time-slot grid ────────────────────────────
+// ── Horarios disponibles ────────────────────────────────────
 
-interface HorariosSelectorProps {
+interface HorariosProps {
   horariosPorDia: HorarioPorDia[];
-  cargandoHorarios: boolean;
+  cargando: boolean;
+  fechaSeleccionada: string;
   horaSeleccionada: string;
   onSelectHora: (hora: string) => void;
 }
 
-const HorariosSelector = ({
+const HorariosPanel = ({
   horariosPorDia,
-  cargandoHorarios,
+  cargando,
+  fechaSeleccionada,
   horaSeleccionada,
   onSelectHora,
-}: HorariosSelectorProps) => {
-  if (cargandoHorarios) {
+}: HorariosProps) => {
+  if (!fechaSeleccionada) {
     return (
-      <div className="horarios-loading">
+      <div className="rep-slots rep-slots--placeholder">
+        <CalendarDays size={28} />
+        <p>Selecciona un día en el calendario para ver los horarios disponibles.</p>
+      </div>
+    );
+  }
+
+  if (cargando) {
+    return (
+      <div className="rep-slots rep-slots--placeholder">
         <div className="spinner-small" />
         <p>Cargando horarios…</p>
       </div>
     );
   }
 
-  const hayDisponibles =
-    horariosPorDia.length > 0 &&
-    horariosPorDia[0].horarios.some((h) => h.disponible);
-
-  if (!hayDisponibles) {
-    return (
-      <div className="no-horarios">
-        <p>No hay horarios disponibles para este dia.</p>
-      </div>
-    );
-  }
+  const dia = horariosPorDia[0];
+  const disponibles = dia ? dia.horarios.filter((h) => h.disponible) : [];
 
   return (
-    <div className="horarios-contenedor-modal">
-      <div className="dias-lista-modal">
-        {horariosPorDia.map((dia) => (
-          <div key={dia.fechaISO} className="dia-grupo-modal">
-            <div className="dia-header-modal">
-              <span className="dia-nombre">{dia.diaNombre}</span>
-              <span className="dia-fecha">{dia.fecha}</span>
-            </div>
-
-            <div className="horarios-horizontal-modal">
-              {dia.horarios
-                .filter((h) => h.disponible)
-                .map((horario) => (
-                  <button
-                    key={horario.hora}
-                    type="button"
-                    className={`dia-btn ${horaSeleccionada === horario.hora ? "activo" : ""}`}
-                    onClick={() => onSelectHora(horario.hora)}
-                    style={{ width: "auto", padding: "0.5rem 0.875rem" }}
-                  >
-                    {horario.hora}
-                  </button>
-                ))}
-            </div>
-          </div>
-        ))}
+    <div className="rep-slots">
+      <div className="rep-slots__header">
+        <Clock size={14} />
+        <span>
+          Horarios — <strong>{dia?.diaNombre} {dia?.fecha}</strong>
+        </span>
       </div>
+      {disponibles.length === 0 ? (
+        <p className="rep-slots__vacio">No hay horarios disponibles para este día.</p>
+      ) : (
+        <div className="rep-slots__grid">
+          {disponibles.map((h) => (
+            <button
+              key={h.hora}
+              type="button"
+              className={`rep-slot${horaSeleccionada === h.hora ? " rep-slot--sel" : ""}`}
+              onClick={() => onSelectHora(h.hora)}
+            >
+              {h.hora}
+            </button>
+          ))}
+        </div>
+      )}
     </div>
   );
 };
 
-// ── Sub-component: Confirmation summary ─────────────────────
+// ── Confirmación ────────────────────────────────────────────
 
-interface ResumenProps {
-  editando: EditandoState;
-}
-
-const ConfirmacionResumen = ({ editando }: ResumenProps) => (
-  <div className="modal-resumen-reprogramar">
-    <h4>Confirmar nueva programación</h4>
-    <div className="modal-resumen-grid">
-      <div className="modal-resumen-item">
-        <span>Paciente</span>
+const ConfirmacionResumen = ({ editando }: { editando: EditandoState }) => (
+  <div className="rep-confirm">
+    <h4 className="rep-confirm__titulo">Revisa los cambios antes de confirmar</h4>
+    <div className="rep-confirm__grid">
+      <div className="rep-confirm__item">
+        <span className="rep-confirm__label">Paciente</span>
         <strong>{editando.paciente}</strong>
-        <span>DNI: {editando.dni}</span>
+        {editando.dni && <span className="rep-confirm__sub">DNI: {editando.dni}</span>}
       </div>
-      <div className="modal-resumen-item">
-        <span>Médico</span>
+      <div className="rep-confirm__item">
+        <span className="rep-confirm__label">Médico</span>
         <strong>{editando.doctor}</strong>
-        <span>{editando.especialidad}</span>
+        <span className="rep-confirm__sub">{editando.especialidad}</span>
       </div>
-      <div className="modal-resumen-item">
-        <span>Fecha y hora original</span>
+      <div className="rep-confirm__item rep-confirm__item--antes">
+        <span className="rep-confirm__label">Fecha y hora original</span>
         <strong>{editando.fechaOriginal}</strong>
-        <span>{editando.horaOriginal} hs</span>
+        <span className="rep-confirm__sub">{editando.horaOriginal} hs</span>
       </div>
-      <div className="modal-resumen-item destacado">
-        <span>Nueva fecha y hora</span>
+      <div className="rep-confirm__item rep-confirm__item--despues">
+        <span className="rep-confirm__label">Nueva fecha y hora</span>
         <strong>{formatearFechaResumen(editando.fecha)}</strong>
-        <span>{editando.hora} hs</span>
+        <span className="rep-confirm__sub">{editando.hora} hs</span>
       </div>
     </div>
   </div>
 );
 
-// ── Main export ──────────────────────────────────────────────
+// ── Modal principal ─────────────────────────────────────────
 
 export interface ReprogramarModalProps {
   editando: EditandoState;
   pasoModal: 1 | 2;
   mesesDisponibles: MesOption[];
-  mesSeleccionado: MesOption | null;
-  diasDelMes: number[];
-  diaSeleccionado: number | null;
   horariosPorDia: HorarioPorDia[];
   cargandoHorarios: boolean;
-
-  onSelectMes: (mes: MesOption) => void;
-  onSelectDia: (dia: number) => void;
+  onSelectFecha: (fechaISO: string) => void;
   onSelectHora: (hora: string) => void;
   onSiguiente: () => void;
   onVolver: () => void;
@@ -214,13 +270,9 @@ const ReprogramarModal = ({
   editando,
   pasoModal,
   mesesDisponibles,
-  mesSeleccionado,
-  diasDelMes,
-  diaSeleccionado,
   horariosPorDia,
   cargandoHorarios,
-  onSelectMes,
-  onSelectDia,
+  onSelectFecha,
   onSelectHora,
   onSiguiente,
   onVolver,
@@ -228,56 +280,65 @@ const ReprogramarModal = ({
   onConfirmar,
 }: ReprogramarModalProps) => {
   return (
-    <div className="modal-overlay">
-      <div className="modal-card-reprogramar">
-        {/* Header */}
-        <div className="modal-header-reprogramar">
-          <h3>Reprogramar Cita</h3>
-          <ModalStepper pasoModal={pasoModal} />
-        </div>
+    <div className="rep-overlay" role="presentation" onClick={onCerrar}>
+      <div
+        className="rep-card"
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="rep-titulo"
+        onClick={(e) => e.stopPropagation()}
+      >
+        <header className="rep-header">
+          <div className="rep-header__top">
+            <div>
+              <h3 id="rep-titulo" className="rep-header__titulo">Reprogramar cita</h3>
+              <p className="rep-header__sub">
+                {editando.doctor} · {editando.especialidad}
+              </p>
+            </div>
+            <button
+              type="button"
+              className="rep-header__close"
+              onClick={onCerrar}
+              aria-label="Cerrar"
+            >
+              <X size={18} />
+            </button>
+          </div>
+          <Stepper pasoModal={pasoModal} />
+        </header>
 
-        {/* Body */}
-        <div className="modal-body">
-          {pasoModal === 1 && (
-            <>
-              <MesSelector
+        <div className="rep-body">
+          {pasoModal === 1 ? (
+            <div className="rep-paso1">
+              <CalendarioMes
                 mesesDisponibles={mesesDisponibles}
-                mesSeleccionado={mesSeleccionado}
-                onSelectMes={onSelectMes}
+                fechaSeleccionada={editando.fecha}
+                onSelectFecha={onSelectFecha}
               />
-
-              {mesSeleccionado && diasDelMes.length > 0 && (
-                <DiaSelector
-                  diasDelMes={diasDelMes}
-                  diaSeleccionado={diaSeleccionado}
-                  onSelectDia={onSelectDia}
-                />
-              )}
-
-              {diaSeleccionado && (
-                <HorariosSelector
-                  horariosPorDia={horariosPorDia}
-                  cargandoHorarios={cargandoHorarios}
-                  horaSeleccionada={editando.hora}
-                  onSelectHora={onSelectHora}
-                />
-              )}
-            </>
+              <HorariosPanel
+                horariosPorDia={horariosPorDia}
+                cargando={cargandoHorarios}
+                fechaSeleccionada={editando.fecha}
+                horaSeleccionada={editando.hora}
+                onSelectHora={onSelectHora}
+              />
+            </div>
+          ) : (
+            <ConfirmacionResumen editando={editando} />
           )}
-
-          {pasoModal === 2 && <ConfirmacionResumen editando={editando} />}
         </div>
 
-        {/* Footer actions */}
-        <div className="modal-actions">
+        <footer className="rep-footer">
           {pasoModal === 1 ? (
             <>
-              <button onClick={onCerrar} className="btn btn-secondary">
+              <button type="button" className="rep-btn rep-btn--secondary" onClick={onCerrar}>
                 Cancelar
               </button>
               <button
+                type="button"
+                className="rep-btn rep-btn--primary"
                 onClick={onSiguiente}
-                className="btn btn-primary btn-next"
                 disabled={!editando.fecha || !editando.hora}
               >
                 Siguiente
@@ -285,18 +346,15 @@ const ReprogramarModal = ({
             </>
           ) : (
             <>
-              <button onClick={onVolver} className="btn btn-secondary btn-back">
+              <button type="button" className="rep-btn rep-btn--secondary" onClick={onVolver}>
                 Volver
               </button>
-              <button
-                onClick={onConfirmar}
-                className="btn btn-primary btn-confirmar"
-              >
-                Confirmar Reprogramación
+              <button type="button" className="rep-btn rep-btn--primary" onClick={onConfirmar}>
+                Confirmar reprogramación
               </button>
             </>
           )}
-        </div>
+        </footer>
       </div>
     </div>
   );

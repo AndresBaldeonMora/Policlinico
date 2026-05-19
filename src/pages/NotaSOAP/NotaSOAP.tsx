@@ -551,7 +551,7 @@ export default function NotaSOAP() {
                 const especialidad = (c.doctorId as any)?.especialidadId?.nombre ?? "—";
                 const doctor = c.doctorId ? `${c.doctorId.nombres} ${c.doctorId.apellidos}` : "—";
                 const estadoColor = c.estado === "ATENDIDA" ? "#16a34a" : c.estado === "CANCELADA" ? "#dc2626" : "#d97706";
-                const estadoBg = c.estado === "ATENDIDA" ? "#f0fdf4" : c.estado === "CANCELADA" ? "#fee2e2" : "#fffbeb";
+                const estadoBg = c.estado === "ATENDIDA" ? "rgba(22,163,74,0.12)" : c.estado === "CANCELADA" ? "rgba(220,38,38,0.12)" : "rgba(217,119,6,0.12)";
 
                 let motivoConsulta = "";
                 if (c.notasClinicas) {
@@ -569,7 +569,7 @@ export default function NotaSOAP() {
                       onClick={() => setCitaExpandidaId(esExpandida ? null : c._id)}
                       style={{
                         padding: "7px 10px", cursor: "pointer",
-                        background: esExpandida ? "var(--primary-lighter, #eff6ff)" : "white",
+                        background: esExpandida ? "var(--bg-body)" : "var(--bg-card)",
                         display: "flex", flexDirection: "column", gap: 2,
                       }}
                     >
@@ -589,7 +589,7 @@ export default function NotaSOAP() {
                     </div>
 
                     {esExpandida && (
-                      <div style={{ padding: "8px 10px", background: "#f9fafb", borderTop: "1px solid var(--border)", fontSize: 11 }}>
+                      <div style={{ padding: "8px 10px", background: "var(--bg-body)", borderTop: "1px solid var(--border)", fontSize: 11 }}>
                         {motivoConsulta && (
                           <div style={{ marginBottom: 4 }}>
                             <span style={{ fontWeight: 700, color: "var(--text-muted)", fontSize: 10 }}>MOTIVO </span>

@@ -23,6 +23,15 @@ const DIA_FMT = new Intl.DateTimeFormat("es-PE", { weekday: "long" });
 const formatearFechaCompleta = (fecha: Date): string =>
   FECHA_COMPLETA_FMT.format(fecha);
 
+// Regla de negocio: solo se puede reprogramar hasta 24h antes de la cita.
+// `fecha` es medianoche UTC del día; `hora` es hora local de Perú (UTC-5).
+const horasHastaCita = (fecha: string, hora: string): number => {
+  const [h, m] = (hora ?? "23:59").split(":").map(Number);
+  const momento = new Date(fecha);
+  momento.setUTCHours(h + 5, m, 0, 0);
+  return (momento.getTime() - Date.now()) / (1000 * 60 * 60);
+};
+
 const obtenerNombreDia = (fecha: Date): string => {
   const nombre = DIA_FMT.format(fecha);
   return nombre.charAt(0).toUpperCase() + nombre.slice(1);
@@ -35,16 +44,6 @@ const generarMeses = (): MesOption[] => {
     const d = new Date(hoy.getFullYear(), hoy.getMonth() + i, 1);
     return { numero: d.getMonth(), nombre: nombresMeses[d.getMonth()], anio: d.getFullYear() };
   });
-};
-
-const generarDiasDelMes = (mes: MesOption): number[] => {
-  const hoy = new Date(); hoy.setHours(0, 0, 0, 0);
-  const ultimoDia = new Date(mes.anio, mes.numero + 1, 0).getDate();
-  const dias: number[] = [];
-  for (let dia = 1; dia <= ultimoDia; dia++) {
-    if (new Date(mes.anio, mes.numero, dia) >= hoy) dias.push(dia);
-  }
-  return dias;
 };
 
 interface NotificationProps { message: string; type: "success" | "error"; visible: boolean; }
@@ -81,7 +80,7 @@ const ListaCitas = () => {
   const [citaSeleccionadaId, setCitaSeleccionadaId] = useState<string | null>(null);
   const [citaParaCancelar, setCitaParaCancelar] = useState<CitaProcesada | null>(null);
   const [citaParaEliminar, setCitaParaEliminar] = useState<CitaProcesada | null>(null);
-  const { notification, editando, pasoModal, mesesDisponibles, mesSeleccionado, diasDelMes, diaSeleccionado, horariosPorDia, cargandoHorarios } = state;
+  const { notification, editando, pasoModal, mesesDisponibles, horariosPorDia, cargandoHorarios } = state;
 
   const [citasData, setCitasData] = useState<CitaProcesada[]>([]);
   const [busqueda, setBusqueda] = useState("");
@@ -117,16 +116,12 @@ const ListaCitas = () => {
     }
   };
 
-  const handleSelectMes = (mes: MesOption) => {
-    dispatch({ type: "SELECT_MES", payload: { mes, dias: generarDiasDelMes(mes) } });
-  };
-
-  const handleSelectDia = async (dia: number) => {
-    if (!mesSeleccionado || !editando) return;
-    const fecha = new Date(mesSeleccionado.anio, mesSeleccionado.numero, dia);
-    const fechaISO = fecha.toISOString().split("T")[0];
-    dispatch({ type: "SELECT_DIA", payload: { dia, fechaISO } });
-    await cargarHorariosPorDia(dia, editando.doctorId, fechaISO, fecha);
+  const handleSelectFecha = async (fechaISO: string) => {
+    if (!editando) return;
+    dispatch({ type: "SELECT_FECHA", payload: { fechaISO } });
+    const [y, m, d] = fechaISO.split("-").map(Number);
+    const fecha = new Date(y, m - 1, d);
+    await cargarHorariosPorDia(d, editando.doctorId, fechaISO, fecha);
   };
 
   const cargarHorariosPorDia = async (dia: number, doctorId: string, fechaISO: string, fechaDate: Date) => {
@@ -386,14 +381,23 @@ const ListaCitas = () => {
                         </td>
                         <td onClick={(e) => e.stopPropagation()}>
                           <div style={{ display: "flex", gap: "0.25rem" }}>
-                            <button
-                              className="btn-action"
-                              title="Reprogramar cita"
-                              disabled={cita.estado !== "PENDIENTE"}
-                              onClick={() => onReprogramar(cita)}
-                            >
-                              <CalendarClock size={16} />
-                            </button>
+                            {(() => {
+                              const fueraDePlazo = horasHastaCita(cita.fecha, cita.hora) < 24;
+                              return (
+                                <button
+                                  className="btn-action"
+                                  title={
+                                    fueraDePlazo
+                                      ? "No se puede reprogramar dentro de las 24h previas a la cita"
+                                      : "Reprogramar cita"
+                                  }
+                                  disabled={cita.estado !== "PENDIENTE" || fueraDePlazo}
+                                  onClick={() => onReprogramar(cita)}
+                                >
+                                  <CalendarClock size={16} />
+                                </button>
+                              );
+                            })()}
                             <button
                               className="btn-action btn-action--danger"
                               title="Cancelar cita"
@@ -433,9 +437,8 @@ const ListaCitas = () => {
       {editando && (
         <ReprogramarModal
           editando={editando} pasoModal={pasoModal} mesesDisponibles={mesesDisponibles}
-          mesSeleccionado={mesSeleccionado} diasDelMes={diasDelMes} diaSeleccionado={diaSeleccionado}
           horariosPorDia={horariosPorDia} cargandoHorarios={cargandoHorarios}
-          onSelectMes={handleSelectMes} onSelectDia={handleSelectDia}
+          onSelectFecha={handleSelectFecha}
           onSelectHora={(hora) => dispatch({ type: "SET_HORA", payload: hora })}
           onSiguiente={irASegundoPaso} onVolver={() => dispatch({ type: "SET_PASO_MODAL", payload: 1 })}
           onCerrar={cerrarModal} onConfirmar={confirmarReprogramar}

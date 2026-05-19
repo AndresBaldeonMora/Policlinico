@@ -2,6 +2,7 @@ import { useEffect, useState, useCallback, useRef } from "react";
 import { CitaApiService } from "../../services/cita.service";
 import type { CitaTransformada, EstadoCita } from "../../services/cita.service";
 import { X, ExternalLink } from "lucide-react";
+import Swal from "sweetalert2";
 import { formatearFechaLarga } from "../../utils/fecha.utils";
 import "../../pages/MedicoDashboard/CitaModal.css";
 
@@ -95,6 +96,22 @@ const CitaQuickModal = ({ citaId, onCerrar, onCitaActualizada, onIrADetalle }: P
       submittingRef.current = false;
     }
   }, [cita, citaId, onCitaActualizada]);
+
+
+  const handleCancelarCita = useCallback(async () => {
+    const result = await Swal.fire({
+      title: "¿Cancelar esta cita?",
+      text: "Esta acción no se puede deshacer.",
+      icon: "warning",
+      showCancelButton: true,
+      confirmButtonColor: "#dc2626",
+      cancelButtonColor: "#64748b",
+      confirmButtonText: "Sí, cancelar cita",
+      cancelButtonText: "No, mantener",
+    });
+    if (!result.isConfirmed) return;
+    cambiarEstado("CANCELADA");
+  }, [cambiarEstado]);
 
 
   const isSubmitting = estadoPendiente !== null;
@@ -238,7 +255,7 @@ const CitaQuickModal = ({ citaId, onCerrar, onCitaActualizada, onIrADetalle }: P
           {puedeCancelar && (
             <button
               className="cita-modal-btn cita-modal-btn--danger"
-              onClick={() => cambiarEstado("CANCELADA")}
+              onClick={handleCancelarCita}
               disabled={isSubmitting}
             >
               {estadoPendiente === "CANCELADA" ? "Cancelando..." : "Cancelar Cita"}

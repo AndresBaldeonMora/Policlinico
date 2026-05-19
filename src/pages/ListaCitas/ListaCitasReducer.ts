@@ -43,18 +43,10 @@ export interface NotificationState {
 // ── Root State ───────────────────────────────────────────────
 
 export interface ListaCitasState {
-  // notification banner
   notification: NotificationState;
-
-  // modal / rescheduling
   editando: EditandoState | null;
   pasoModal: 1 | 2;
-
-  // month / day / time-slot selectors
   mesesDisponibles: MesOption[];
-  mesSeleccionado: MesOption | null;
-  diasDelMes: number[];
-  diaSeleccionado: number | null;
   horariosPorDia: HorarioPorDia[];
   cargandoHorarios: boolean;
 }
@@ -64,9 +56,6 @@ export const initialState: ListaCitasState = {
   editando: null,
   pasoModal: 1,
   mesesDisponibles: [],
-  mesSeleccionado: null,
-  diasDelMes: [],
-  diaSeleccionado: null,
   horariosPorDia: [],
   cargandoHorarios: false,
 };
@@ -80,12 +69,10 @@ export type ListaCitasAction =
   | { type: "OPEN_MODAL"; payload: EditandoState }
   | { type: "CLOSE_MODAL" }
   | { type: "SET_PASO_MODAL"; payload: 1 | 2 }
-  | { type: "SELECT_MES"; payload: { mes: MesOption; dias: number[] } }
-  | { type: "SELECT_DIA"; payload: { dia: number; fechaISO: string } }
+  | { type: "SELECT_FECHA"; payload: { fechaISO: string } }
   | { type: "SET_HORA"; payload: string }
   | { type: "SET_CARGANDO_HORARIOS"; payload: boolean }
-  | { type: "SET_HORARIOS_POR_DIA"; payload: HorarioPorDia[] }
-  | { type: "REMOVE_DIA"; payload: number };
+  | { type: "SET_HORARIOS_POR_DIA"; payload: HorarioPorDia[] };
 
 // ── Reducer ──────────────────────────────────────────────────
 
@@ -94,32 +81,20 @@ export function listaCitasReducer(
   action: ListaCitasAction
 ): ListaCitasState {
   switch (action.type) {
-    // ── Notifications ────────────────────────────────────────
     case "SHOW_NOTIFICATION":
-      return {
-        ...state,
-        notification: { ...action.payload, visible: true },
-      };
+      return { ...state, notification: { ...action.payload, visible: true } };
 
     case "HIDE_NOTIFICATION":
-      return {
-        ...state,
-        notification: { ...state.notification, visible: false },
-      };
+      return { ...state, notification: { ...state.notification, visible: false } };
 
-    // ── Month initialisation ─────────────────────────────────
     case "SET_MESES_DISPONIBLES":
       return { ...state, mesesDisponibles: action.payload };
 
-    // ── Modal lifecycle ──────────────────────────────────────
     case "OPEN_MODAL":
       return {
         ...state,
         editando: action.payload,
         pasoModal: 1,
-        mesSeleccionado: null,
-        diaSeleccionado: null,
-        diasDelMes: [],
         horariosPorDia: [],
       };
 
@@ -128,40 +103,21 @@ export function listaCitasReducer(
         ...state,
         editando: null,
         pasoModal: 1,
-        mesSeleccionado: null,
-        diaSeleccionado: null,
-        diasDelMes: [],
         horariosPorDia: [],
       };
 
     case "SET_PASO_MODAL":
       return { ...state, pasoModal: action.payload };
 
-    // ── Month / day selectors ─────────────────────────────────
-    case "SELECT_MES":
+    case "SELECT_FECHA":
       return {
         ...state,
-        mesSeleccionado: action.payload.mes,
-        diasDelMes: action.payload.dias,
-        diaSeleccionado: null,
-        horariosPorDia: [],
-        // Reset fecha/hora in the editing record
-        editando: state.editando
-          ? { ...state.editando, fecha: "", hora: "" }
-          : null,
-      };
-
-    case "SELECT_DIA":
-      return {
-        ...state,
-        diaSeleccionado: action.payload.dia,
         horariosPorDia: [],
         editando: state.editando
           ? { ...state.editando, fecha: action.payload.fechaISO, hora: "" }
           : null,
       };
 
-    // ── Time-slot selection ───────────────────────────────────
     case "SET_HORA":
       return {
         ...state,
@@ -170,21 +126,11 @@ export function listaCitasReducer(
           : null,
       };
 
-    // ── Async horarios ────────────────────────────────────────
     case "SET_CARGANDO_HORARIOS":
       return { ...state, cargandoHorarios: action.payload };
 
     case "SET_HORARIOS_POR_DIA":
       return { ...state, horariosPorDia: action.payload };
-
-    case "REMOVE_DIA":
-      return {
-        ...state,
-        diasDelMes: state.diasDelMes.filter((d) => d !== action.payload),
-        diaSeleccionado: null,
-        horariosPorDia: [],
-        editando: state.editando ? { ...state.editando, fecha: "", hora: "" } : null,
-      };
 
     default:
       return state;
