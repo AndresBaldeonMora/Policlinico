@@ -1,8 +1,9 @@
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect } from "react";
 import type { Dispatch, SetStateAction } from "react";
 import { X } from "lucide-react";
 import type { SectionAData, Diagnostico } from "../types";
-import { CIE10_DB } from "../types";
+import { CIE10ApiService } from "../../../services/cie10.service";
+import type { CIE10Item } from "../../../services/cie10.service";
 
 interface Props {
   data: SectionAData;
@@ -14,21 +15,34 @@ interface Props {
 export default function SectionA({ data, setData, onPrev, onNext }: Props) {
   const [search, setSearch]   = useState("");
   const [showDrop, setShowDrop] = useState(false);
+  const [resultados, setResultados] = useState<CIE10Item[]>([]);
+  const [buscando, setBuscando] = useState(false);
   const wrapperRef = useRef<HTMLDivElement>(null);
 
   const up = <K extends keyof SectionAData>(key: K, val: SectionAData[K]) =>
     setData(prev => ({ ...prev, [key]: val }));
 
-  const filtered = search.length > 1
-    ? CIE10_DB.filter(c =>
-        c.name.toLowerCase().includes(search.toLowerCase()) ||
-        c.code.toLowerCase().includes(search.toLowerCase())
-      ).slice(0, 8)
-    : [];
+  // Búsqueda contra el catálogo CIE-10 oficial (backend), con debounce
+  useEffect(() => {
+    if (search.trim().length < 2) {
+      setResultados([]);
+      setBuscando(false);
+      return;
+    }
+    setBuscando(true);
+    const t = setTimeout(async () => {
+      setResultados(await CIE10ApiService.buscar(search));
+      setBuscando(false);
+    }, 250);
+    return () => clearTimeout(t);
+  }, [search]);
 
-  const addDx = (item: { code: string; name: string }) => {
-    if (data.diagnoses.find(d => d.code === item.code)) return;
-    up("diagnoses", [...data.diagnoses, { ...item, tipo: "presuntivo" }]);
+  const addDx = (item: CIE10Item) => {
+    if (data.diagnoses.find(d => d.code === item.codigo)) return;
+    up("diagnoses", [
+      ...data.diagnoses,
+      { code: item.codigo, name: item.descripcion, tipo: "presuntivo" },
+    ]);
     setSearch("");
     setShowDrop(false);
   };
@@ -57,15 +71,25 @@ export default function SectionA({ data, setData, onPrev, onNext }: Props) {
             onChange={e => { setSearch(e.target.value); setShowDrop(true); }}
             onFocus={() => setShowDrop(true)}
           />
-          {showDrop && filtered.length > 0 && (
+          {showDrop && search.trim().length > 1 && (
             <div className="soap-cie-dropdown">
-              {filtered.map(item => (
-                <div key={item.code} className="soap-cie-item"
-                  onMouseDown={() => addDx(item)}>
-                  <span className="soap-cie-code">{item.code}</span>
-                  <span className="soap-cie-name">{item.name}</span>
+              {buscando ? (
+                <div className="soap-cie-item" style={{ color: "var(--text-muted)", cursor: "default" }}>
+                  Buscando…
                 </div>
-              ))}
+              ) : resultados.length === 0 ? (
+                <div className="soap-cie-item" style={{ color: "var(--text-muted)", cursor: "default" }}>
+                  Sin coincidencias en el catálogo CIE-10
+                </div>
+              ) : (
+                resultados.map(item => (
+                  <div key={item.codigo} className="soap-cie-item"
+                    onMouseDown={() => addDx(item)}>
+                    <span className="soap-cie-code">{item.codigo}</span>
+                    <span className="soap-cie-name">{item.descripcion}</span>
+                  </div>
+                ))
+              )}
             </div>
           )}
         </div>

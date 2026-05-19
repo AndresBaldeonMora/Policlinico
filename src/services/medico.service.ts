@@ -12,6 +12,25 @@ export interface MedicamentoPrescrito {
   observaciones?: string;
 }
 
+export interface DiagnosticoCIE10 {
+  codigo: string;
+  descripcion: string;
+  tipo: "presuntivo" | "confirmado";
+  esPrincipal: boolean;
+}
+
+export interface FirmaMedico {
+  medicoId: string;
+  medicoNombre: string;
+  numeroCMP: string;
+  fechaHoraFirma: string;
+}
+
+export interface EspecialidadNota {
+  nombre: string;
+  campos: Record<string, string>;
+}
+
 export interface CitaMedico {
   _id: string;
   pacienteId: {
@@ -36,8 +55,11 @@ export interface CitaMedico {
   notas?: string;
   notasClinicas?: string;
   diagnostico?: string;
+  diagnosticos?: DiagnosticoCIE10[];
   tratamiento?: string;
   medicamentosPrescritos?: MedicamentoPrescrito[];
+  firma?: FirmaMedico;
+  especialidad?: EspecialidadNota;
 }
 
 export interface MedicoPerfil {
@@ -62,6 +84,7 @@ export interface CitaHistorial {
   tipo?: string;
   estado: "PENDIENTE" | "ATENDIDA" | "CANCELADA" | "REPROGRAMADA";
   diagnostico?: string;
+  diagnosticos?: DiagnosticoCIE10[];
   tratamiento?: string;
   notasClinicas?: string;
   doctorId?: {
@@ -120,7 +143,7 @@ export class MedicoApiService {
 
   static async guardarNotasClinicas(
     citaId: string,
-    datos: { notasClinicas: string; diagnostico: string; tratamiento: string }
+    datos: { notasClinicas: string; diagnostico: string; tratamiento: string; diagnosticos: DiagnosticoCIE10[]; especialidad: EspecialidadNota }
   ): Promise<CitaMedico> {
     const response = await api.patch(`/medico/citas/${citaId}/notas`, datos);
     return response.data.data;

@@ -89,9 +89,12 @@ export default function NotaSOAP() {
             if (parsed.soap) setSoapData(parsed.soap);
             if (parsed.examenes) setExamenes(parsed.examenes);
             if (parsed.medicamentos) setMedicamentos(parsed.medicamentos);
-            if (parsed.especialidad) setEspecData(parsed.especialidad);
+            // Compat: borradores antiguos que aún tienen la especialidad en el JSON
+            if (parsed.especialidad && !data.especialidad) setEspecData(parsed.especialidad);
           } catch { /* borrador no parseable, ignorar */ }
         }
+        // Datos de especialidad desde su campo dedicado
+        if (data.especialidad?.campos) setEspecData(data.especialidad.campos);
         const pac = data.pacienteId;
         if (pac.alergias) setAlergias(pac.alergias);
         if (pac.medicamentosHabituales) setMedicHabituales(pac.medicamentosHabituales);
@@ -218,9 +221,18 @@ export default function NotaSOAP() {
   const buildPayload = () => {
     const dxPrimario = soapData.A.diagnoses[0];
     return {
-      notasClinicas: JSON.stringify({ soap: soapData, examenes, medicamentos, especialidad: especData }),
+      notasClinicas: JSON.stringify({ soap: soapData, examenes, medicamentos }),
       diagnostico:   dxPrimario ? `${dxPrimario.code} — ${dxPrimario.name}` : "",
       tratamiento:   medicamentos.map(m => `${m.nombre} ${m.concentracion} ${m.frecuencia}`).join("; "),
+      // Diagnósticos CIE-10 estructurados — consultables/auditables (NTS-022, NTS-139)
+      diagnosticos:  soapData.A.diagnoses.map((d, i) => ({
+        codigo:      d.code,
+        descripcion: d.name,
+        tipo:        d.tipo,
+        esPrincipal: i === 0,
+      })),
+      // Sección de especialidad — en su campo propio, fuera del blob JSON
+      especialidad:  { nombre: especialidadNombre, campos: especData },
     };
   };
 

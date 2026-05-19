@@ -77,31 +77,8 @@ export interface MedicamentoSOAP {
   instrucciones?: string;
 }
 
-export const CIE10_DB: { code: string; name: string }[] = [
-  { code: 'I10',   name: 'Hipertensión arterial esencial' },
-  { code: 'I50.0', name: 'Insuficiencia cardíaca congestiva' },
-  { code: 'I50.1', name: 'Insuficiencia ventricular izquierda' },
-  { code: 'I50.9', name: 'Insuficiencia cardíaca no especificada' },
-  { code: 'E11',   name: 'Diabetes mellitus tipo 2' },
-  { code: 'E11.9', name: 'DM tipo 2 sin complicaciones' },
-  { code: 'J06.9', name: 'IRA vías respiratorias superiores' },
-  { code: 'J18.9', name: 'Neumonía no especificada' },
-  { code: 'J45.9', name: 'Asma no especificada' },
-  { code: 'J20.9', name: 'Bronquitis aguda no especificada' },
-  { code: 'J02.9', name: 'Faringitis aguda no especificada' },
-  { code: 'N39.0', name: 'Infección de vías urinarias' },
-  { code: 'M54.5', name: 'Lumbalgia' },
-  { code: 'K29.7', name: 'Gastritis no especificada' },
-  { code: 'E78',   name: 'Trastornos del metabolismo de lipoproteínas' },
-  { code: 'Z34',   name: 'Supervisión del embarazo normal' },
-  { code: 'A09',   name: 'Gastroenteritis y colitis infecciosa' },
-  { code: 'R51',   name: 'Cefalea' },
-  { code: 'D50',   name: 'Anemia ferropénica' },
-  { code: 'F32.9', name: 'Episodio depresivo, no especificado' },
-  { code: 'G43.9', name: 'Migraña, no especificada' },
-  { code: 'L20.9', name: 'Dermatitis atópica, no especificada' },
-  { code: 'B34.9', name: 'Infección viral, no especificada' },
-];
+// El catálogo CIE-10 ya no se mantiene en el frontend: se consulta el catálogo
+// oficial completo (SUSALUD, ~12,600 códigos) vía CIE10ApiService → /api/cie10.
 
 export type EspecialidadData = Record<string, string>;
 
