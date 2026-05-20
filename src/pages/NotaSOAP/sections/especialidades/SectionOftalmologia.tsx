@@ -20,7 +20,7 @@ export default function SectionOftalmologia({ data, setData, onPrev }: Props) {
       </p>
       <div style={{ marginBottom: 14 }}>
         <label htmlFor="oftalmologia-patologiaOcularPrevia" className="soap-section-label">Patología ocular previa</label>
-        <input id="oftalmologia-patologiaOcularPrevia" className="soap-input" value={val('patologiaOcularPrevia')} onChange={e => up('patologiaOcularPrevia', e.target.value)} placeholder="Cataratas, glaucoma, miopía, astigmatismo, cirugías oculares…" />
+        <input id="oftalmologia-patologiaOcularPrevia" className="soap-input" value={val('patologiaOcularPrevia')} onChange={e => up('patologiaOcularPrevia', e.target.value)} placeholder="" />
       </div>
       <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12, marginBottom: 14 }}>
         <div>
@@ -35,7 +35,7 @@ export default function SectionOftalmologia({ data, setData, onPrev }: Props) {
         </div>
         <div>
           <label htmlFor="oftalmologia-enfermedadesSistemicas" className="soap-section-label">Enfermedades sistémicas oculares (DM, HTA)</label>
-          <input id="oftalmologia-enfermedadesSistemicas" className="soap-input" value={val('enfermedadesSistemicas')} onChange={e => up('enfermedadesSistemicas', e.target.value)} placeholder="DM2, HTA, tiroides…" />
+          <input id="oftalmologia-enfermedadesSistemicas" className="soap-input" value={val('enfermedadesSistemicas')} onChange={e => up('enfermedadesSistemicas', e.target.value)} placeholder="" />
         </div>
       </div>
 
@@ -47,7 +47,7 @@ export default function SectionOftalmologia({ data, setData, onPrev }: Props) {
       </p>
       <div style={{ marginBottom: 14 }}>
         <label htmlFor="oftalmologia-sintomasActuales" className="soap-section-label">Síntomas actuales</label>
-        <textarea id="oftalmologia-sintomasActuales" className="soap-input soap-textarea" style={{ minHeight: 60 }} value={val('sintomasActuales')} onChange={e => up('sintomasActuales', e.target.value)} placeholder="Borrosidad, dolor, ojo rojo, secreción, floaters, fotopsia, fotofobia, diplopía, pérdida de campo visual…" />
+        <textarea id="oftalmologia-sintomasActuales" className="soap-input soap-textarea" style={{ minHeight: 60 }} value={val('sintomasActuales')} onChange={e => up('sintomasActuales', e.target.value)} placeholder="" />
       </div>
 
       <div className="soap-section-divider" />
@@ -59,27 +59,27 @@ export default function SectionOftalmologia({ data, setData, onPrev }: Props) {
       <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12, marginBottom: 14 }}>
         <div>
           <label htmlFor="oftalmologia-avODSinCorreccion" className="soap-section-label">AV OD sin corrección</label>
-          <input id="oftalmologia-avODSinCorreccion" className="soap-input" value={val('avODSinCorreccion')} onChange={e => up('avODSinCorreccion', e.target.value)} placeholder="Ej: 20/40" />
+          <input id="oftalmologia-avODSinCorreccion" className="soap-input" value={val('avODSinCorreccion')} onChange={e => up('avODSinCorreccion', e.target.value)} placeholder="" />
         </div>
         <div>
           <label htmlFor="oftalmologia-avOISinCorreccion" className="soap-section-label">AV OI sin corrección</label>
-          <input id="oftalmologia-avOISinCorreccion" className="soap-input" value={val('avOISinCorreccion')} onChange={e => up('avOISinCorreccion', e.target.value)} placeholder="Ej: 20/60" />
+          <input id="oftalmologia-avOISinCorreccion" className="soap-input" value={val('avOISinCorreccion')} onChange={e => up('avOISinCorreccion', e.target.value)} placeholder="" />
         </div>
         <div>
           <label htmlFor="oftalmologia-avODConCorreccion" className="soap-section-label">AV OD con corrección</label>
-          <input id="oftalmologia-avODConCorreccion" className="soap-input" value={val('avODConCorreccion')} onChange={e => up('avODConCorreccion', e.target.value)} placeholder="Ej: 20/20" />
+          <input id="oftalmologia-avODConCorreccion" className="soap-input" value={val('avODConCorreccion')} onChange={e => up('avODConCorreccion', e.target.value)} placeholder="" />
         </div>
         <div>
           <label htmlFor="oftalmologia-avOIConCorreccion" className="soap-section-label">AV OI con corrección</label>
-          <input id="oftalmologia-avOIConCorreccion" className="soap-input" value={val('avOIConCorreccion')} onChange={e => up('avOIConCorreccion', e.target.value)} placeholder="Ej: 20/25" />
+          <input id="oftalmologia-avOIConCorreccion" className="soap-input" value={val('avOIConCorreccion')} onChange={e => up('avOIConCorreccion', e.target.value)} placeholder="" />
         </div>
         <div>
           <label htmlFor="oftalmologia-visionCercaOD" className="soap-section-label">Visión de cerca OD</label>
-          <input id="oftalmologia-visionCercaOD" className="soap-input" value={val('visionCercaOD')} onChange={e => up('visionCercaOD', e.target.value)} placeholder="Ej: J1" />
+          <input id="oftalmologia-visionCercaOD" className="soap-input" value={val('visionCercaOD')} onChange={e => up('visionCercaOD', e.target.value)} placeholder="" />
         </div>
         <div>
           <label htmlFor="oftalmologia-visionCercaOI" className="soap-section-label">Visión de cerca OI</label>
-          <input id="oftalmologia-visionCercaOI" className="soap-input" value={val('visionCercaOI')} onChange={e => up('visionCercaOI', e.target.value)} placeholder="Ej: J2" />
+          <input id="oftalmologia-visionCercaOI" className="soap-input" value={val('visionCercaOI')} onChange={e => up('visionCercaOI', e.target.value)} placeholder="" />
         </div>
       </div>
       <div style={{ marginBottom: 14 }}>
@@ -102,11 +102,11 @@ export default function SectionOftalmologia({ data, setData, onPrev }: Props) {
       <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 12, marginBottom: 14 }}>
         <div>
           <label htmlFor="oftalmologia-pioOD" className="soap-section-label">PIO OD (mmHg)</label>
-          <input id="oftalmologia-pioOD" className="soap-input" value={val('pioOD')} onChange={e => up('pioOD', e.target.value)} placeholder="Ej: 14" />
+          <input id="oftalmologia-pioOD" className="soap-input" value={val('pioOD')} onChange={e => up('pioOD', e.target.value)} placeholder="" />
         </div>
         <div>
           <label htmlFor="oftalmologia-pioOI" className="soap-section-label">PIO OI (mmHg)</label>
-          <input id="oftalmologia-pioOI" className="soap-input" value={val('pioOI')} onChange={e => up('pioOI', e.target.value)} placeholder="Ej: 15" />
+          <input id="oftalmologia-pioOI" className="soap-input" value={val('pioOI')} onChange={e => up('pioOI', e.target.value)} placeholder="" />
         </div>
         <div>
           <label htmlFor="oftalmologia-metodoPio" className="soap-section-label">Método de medición</label>
@@ -127,7 +127,7 @@ export default function SectionOftalmologia({ data, setData, onPrev }: Props) {
       </p>
       <div style={{ marginBottom: 14 }}>
         <label htmlFor="oftalmologia-segmentoAnterior" className="soap-section-label">Hallazgos (párpados, conjuntiva, córnea, cristalino)</label>
-        <textarea id="oftalmologia-segmentoAnterior" className="soap-input soap-textarea" style={{ minHeight: 60 }} value={val('segmentoAnterior')} onChange={e => up('segmentoAnterior', e.target.value)} placeholder="Ptosis, inyección conjuntival, úlcera corneal, opacidad de cristalino, cámara anterior…" />
+        <textarea id="oftalmologia-segmentoAnterior" className="soap-input soap-textarea" style={{ minHeight: 60 }} value={val('segmentoAnterior')} onChange={e => up('segmentoAnterior', e.target.value)} placeholder="" />
       </div>
 
       <div className="soap-section-divider" />
@@ -138,11 +138,11 @@ export default function SectionOftalmologia({ data, setData, onPrev }: Props) {
       </p>
       <div style={{ marginBottom: 14 }}>
         <label htmlFor="oftalmologia-fundoscopiaOD" className="soap-section-label">Hallazgos OD</label>
-        <textarea id="oftalmologia-fundoscopiaOD" className="soap-input soap-textarea" style={{ minHeight: 56 }} value={val('fundoscopiaOD')} onChange={e => up('fundoscopiaOD', e.target.value)} placeholder="Papila, relación excavación/papila, retina, mácula, vasos…" />
+        <textarea id="oftalmologia-fundoscopiaOD" className="soap-input soap-textarea" style={{ minHeight: 56 }} value={val('fundoscopiaOD')} onChange={e => up('fundoscopiaOD', e.target.value)} placeholder="" />
       </div>
       <div style={{ marginBottom: 14 }}>
         <label htmlFor="oftalmologia-fundoscopiaOI" className="soap-section-label">Hallazgos OI</label>
-        <textarea id="oftalmologia-fundoscopiaOI" className="soap-input soap-textarea" style={{ minHeight: 56 }} value={val('fundoscopiaOI')} onChange={e => up('fundoscopiaOI', e.target.value)} placeholder="Papila, relación excavación/papila, retina, mácula, vasos…" />
+        <textarea id="oftalmologia-fundoscopiaOI" className="soap-input soap-textarea" style={{ minHeight: 56 }} value={val('fundoscopiaOI')} onChange={e => up('fundoscopiaOI', e.target.value)} placeholder="" />
       </div>
 
       <div className="soap-section-divider" />
@@ -153,14 +153,14 @@ export default function SectionOftalmologia({ data, setData, onPrev }: Props) {
       </p>
       <div style={{ marginBottom: 14 }}>
         <label htmlFor="oftalmologia-motilidadOcular" className="soap-section-label">Evaluación de motilidad</label>
-        <input id="oftalmologia-motilidadOcular" className="soap-input" value={val('motilidadOcular')} onChange={e => up('motilidadOcular', e.target.value)} placeholder="Completa / restricción en… / estrabismo / nistagmo…" />
+        <input id="oftalmologia-motilidadOcular" className="soap-input" value={val('motilidadOcular')} onChange={e => up('motilidadOcular', e.target.value)} placeholder="" />
       </div>
 
       <div className="soap-section-divider" />
 
       <div style={{ marginBottom: 14 }}>
         <label htmlFor="oftalmologia-notasAdicionales" className="soap-section-label">Notas adicionales de Oftalmología</label>
-        <textarea id="oftalmologia-notasAdicionales" className="soap-input soap-textarea" style={{ minHeight: 60 }} value={val('notasAdicionales')} onChange={e => up('notasAdicionales', e.target.value)} placeholder="Observaciones clínicas adicionales, campos visuales, OCT…" />
+        <textarea id="oftalmologia-notasAdicionales" className="soap-input soap-textarea" style={{ minHeight: 60 }} value={val('notasAdicionales')} onChange={e => up('notasAdicionales', e.target.value)} placeholder="" />
       </div>
 
       <div className="soap-nav-row" style={{ justifyContent: "flex-start", marginTop: 8 }}>

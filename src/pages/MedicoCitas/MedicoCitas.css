@@ -97,10 +97,15 @@
 
 .mc-tipo-nueva {
   background: var(--info-bg, #e0f2fe);
-  color: #0369a1;
+  color: var(--info-text, #0369a1);
 }
 
 .mc-tipo-seguim {
-  background: var(--success-bg, #d1fae5);
-  color: #065f46;
+  background: var(--success-bg, #ecfdf5);
+  color: var(--success-text, #065f46);
+}
+
+.mc-tipo-lab {
+  background: var(--warning-bg, #fef3c7);
+  color: var(--warning, #92400e);
 }

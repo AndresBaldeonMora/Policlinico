@@ -27,9 +27,12 @@ const calcAge = (fechaNac?: string) => {
 const ESTADOS_FILTER = ["TODOS", "PENDIENTE", "ATENDIDA", "CANCELADA", "REPROGRAMADA"];
 
 const TIPO_CONFIG: Record<string, { label: string; cls: string }> = {
-  NUEVA:       { label: "Nueva",   cls: "mc-tipo-nueva" },
-  SEGUIMIENTO: { label: "Seguim.", cls: "mc-tipo-seguim" },
-  CONSULTA:    { label: "Consulta",cls: "mc-tipo-nueva" },
+  NUEVA:        { label: "1ª Consulta", cls: "mc-tipo-nueva" },
+  SEGUIMIENTO:  { label: "Seguimiento", cls: "mc-tipo-seguim" },
+  CONSULTA:     { label: "Consulta",    cls: "mc-tipo-nueva" },
+  LABORATORIO:  { label: "Laboratorio", cls: "mc-tipo-lab" },
+  REMOTA:       { label: "Remota",      cls: "mc-tipo-nueva" },
+  DOMICILIO:    { label: "Domicilio",   cls: "mc-tipo-nueva" },
 };
 
 export default function MedicoCitas() {
@@ -157,12 +160,15 @@ export default function MedicoCitas() {
                           </span>
                         </td>
 
-                        {/* Tipo */}
+                        {/* Tipo — muestra NUEVA/SEGUIMIENTO para consultas, tipo original para laboratorio */}
                         <td>
-                          {c.tipo ? (() => {
-                            const t = TIPO_CONFIG[c.tipo.toUpperCase()] ?? { label: c.tipo, cls: "mc-tipo-nueva" };
-                            return <span className={`mc-tipo-badge ${t.cls}`}>{t.label}</span>;
-                          })() : <span style={{ color: "var(--text-muted)", fontSize: "0.8rem" }}>-</span>}
+                          {(() => {
+                            const key = c.subtipoCita ?? c.tipo?.toUpperCase() ?? "";
+                            const t = TIPO_CONFIG[key] ?? { label: key || "-", cls: "mc-tipo-nueva" };
+                            return key
+                              ? <span className={`mc-tipo-badge ${t.cls}`}>{t.label}</span>
+                              : <span style={{ color: "var(--text-muted)", fontSize: "0.8rem" }}>-</span>;
+                          })()}
                         </td>
 
                         {/* Estado */}

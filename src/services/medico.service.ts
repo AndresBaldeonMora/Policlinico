@@ -59,6 +59,7 @@ export interface CitaMedico {
   fecha: string;
   hora: string;
   tipo?: string;
+  subtipoCita?: "NUEVA" | "SEGUIMIENTO";
   estado: "PENDIENTE" | "ASISTIO" | "ATENDIDA" | "CANCELADA" | "REPROGRAMADA";
   notas?: string;
   notasClinicas?: string;

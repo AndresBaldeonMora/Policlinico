@@ -38,12 +38,14 @@
   /* Status */
   --success: #10b981;
   --success-bg: #ecfdf5;
+  --success-text: #065f46;
   --warning: #f59e0b;
   --warning-bg: #fffbeb;
   --error: #ef4444;
   --error-bg: #fef2f2;
   --info: #0ea5e9;
   --info-bg: #e0f2fe;
+  --info-text: #0369a1;
 
   /* Shadows */
   --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.05);
@@ -92,9 +94,11 @@
 
   /* Status */
   --success-bg: rgba(16, 185, 129, 0.15);
+  --success-text: #6ee7b7;
   --warning-bg: rgba(245, 158, 11, 0.15);
   --error-bg: rgba(239, 68, 68, 0.15);
   --info-bg: rgba(14, 165, 233, 0.15);
+  --info-text: #7dd3fc;
 
   /* Shadows */
   --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.3);

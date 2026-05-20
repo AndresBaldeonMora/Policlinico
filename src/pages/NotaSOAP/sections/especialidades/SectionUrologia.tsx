@@ -19,16 +19,16 @@ export default function SectionUrologia({ data, setData, onPrev }: Props) {
       </p>
       <div style={{ marginBottom: 14 }}>
         <label htmlFor="urologia-antUrologia" className="soap-section-label">Patología urológica previa</label>
-        <input id="urologia-antUrologia" className="soap-input" value={val('antUrologia')} onChange={e => up('antUrologia', e.target.value)} placeholder="Litiasis renal, infecciones urinarias recurrentes, cirugías urológicas, prostatismo…" />
+        <input id="urologia-antUrologia" className="soap-input" value={val('antUrologia')} onChange={e => up('antUrologia', e.target.value)} placeholder="" />
       </div>
       <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12, marginBottom: 14 }}>
         <div>
           <label htmlFor="urologia-enfermedadesSistemicas" className="soap-section-label">Enfermedades sistémicas relacionadas</label>
-          <input id="urologia-enfermedadesSistemicas" className="soap-input" value={val('enfermedadesSistemicas')} onChange={e => up('enfermedadesSistemicas', e.target.value)} placeholder="DM, HTA, gota, enfermedad renal crónica…" />
+          <input id="urologia-enfermedadesSistemicas" className="soap-input" value={val('enfermedadesSistemicas')} onChange={e => up('enfermedadesSistemicas', e.target.value)} placeholder="" />
         </div>
         <div>
           <label htmlFor="urologia-medicamentosUro" className="soap-section-label">Medicamentos de interés urológico</label>
-          <input id="urologia-medicamentosUro" className="soap-input" value={val('medicamentosUro')} onChange={e => up('medicamentosUro', e.target.value)} placeholder="Alfa-bloqueantes, inhibidores 5-AR, anticolinérgicos, AINES…" />
+          <input id="urologia-medicamentosUro" className="soap-input" value={val('medicamentosUro')} onChange={e => up('medicamentosUro', e.target.value)} placeholder="" />
         </div>
       </div>
 
@@ -63,7 +63,7 @@ export default function SectionUrologia({ data, setData, onPrev }: Props) {
         </div>
         <div>
           <label htmlFor="urologia-ipss" className="soap-section-label">Puntuación IPSS (0–35)</label>
-          <input id="urologia-ipss" className="soap-input" type="number" min="0" max="35" value={val('ipss')} onChange={e => up('ipss', e.target.value)} placeholder="0–7: leve · 8–19: moderado · 20–35: grave" />
+          <input id="urologia-ipss" className="soap-input" type="number" min="0" max="35" value={val('ipss')} onChange={e => up('ipss', e.target.value)} placeholder="" />
           <p className="soap-field-hint">International Prostate Symptom Score</p>
         </div>
         <div>
@@ -87,7 +87,7 @@ export default function SectionUrologia({ data, setData, onPrev }: Props) {
       <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12, marginBottom: 14 }}>
         <div>
           <label htmlFor="urologia-dolorLumbar" className="soap-section-label">Dolor lumbar / cólico renal</label>
-          <input id="urologia-dolorLumbar" className="soap-input" value={val('dolorLumbar')} onChange={e => up('dolorLumbar', e.target.value)} placeholder="Localización, irradiación, intensidad EVA, episodios…" />
+          <input id="urologia-dolorLumbar" className="soap-input" value={val('dolorLumbar')} onChange={e => up('dolorLumbar', e.target.value)} placeholder="" />
         </div>
         <div>
           <label htmlFor="urologia-hematuria" className="soap-section-label">Hematuria</label>
@@ -139,15 +139,15 @@ export default function SectionUrologia({ data, setData, onPrev }: Props) {
         </div>
         <div>
           <label htmlFor="urologia-fertilidad" className="soap-section-label">Fertilidad / espermatograma</label>
-          <input id="urologia-fertilidad" className="soap-input" value={val('fertilidad')} onChange={e => up('fertilidad', e.target.value)} placeholder="Resultado espermatograma, tiempo infertilidad…" />
+          <input id="urologia-fertilidad" className="soap-input" value={val('fertilidad')} onChange={e => up('fertilidad', e.target.value)} placeholder="" />
         </div>
         <div>
           <label htmlFor="urologia-patologiaEscrotal" className="soap-section-label">Patología escrotal</label>
-          <input id="urologia-patologiaEscrotal" className="soap-input" value={val('patologiaEscrotal')} onChange={e => up('patologiaEscrotal', e.target.value)} placeholder="Varicocele, hidrocele, masa testicular…" />
+          <input id="urologia-patologiaEscrotal" className="soap-input" value={val('patologiaEscrotal')} onChange={e => up('patologiaEscrotal', e.target.value)} placeholder="" />
         </div>
         <div>
           <label htmlFor="urologia-tactoRectal" className="soap-section-label">Tacto rectal (próstata)</label>
-          <input id="urologia-tactoRectal" className="soap-input" value={val('tactoRectal')} onChange={e => up('tactoRectal', e.target.value)} placeholder="Tamaño estimado, consistencia, nódulos, límites, dolor…" />
+          <input id="urologia-tactoRectal" className="soap-input" value={val('tactoRectal')} onChange={e => up('tactoRectal', e.target.value)} placeholder="" />
         </div>
       </div>
 
@@ -159,31 +159,31 @@ export default function SectionUrologia({ data, setData, onPrev }: Props) {
       <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12, marginBottom: 14 }}>
         <div>
           <label htmlFor="urologia-uroanalisis" className="soap-section-label">Uroanálisis</label>
-          <input id="urologia-uroanalisis" className="soap-input" value={val('uroanalisis')} onChange={e => up('uroanalisis', e.target.value)} placeholder="pH, densidad, proteínas, leucocitos, nitritos, hematíes…" />
+          <input id="urologia-uroanalisis" className="soap-input" value={val('uroanalisis')} onChange={e => up('uroanalisis', e.target.value)} placeholder="" />
         </div>
         <div>
           <label htmlFor="urologia-urocultivo" className="soap-section-label">Urocultivo</label>
-          <input id="urologia-urocultivo" className="soap-input" value={val('urocultivo')} onChange={e => up('urocultivo', e.target.value)} placeholder="Germen aislado, sensibilidad antibiótica, UFC/mL…" />
+          <input id="urologia-urocultivo" className="soap-input" value={val('urocultivo')} onChange={e => up('urocultivo', e.target.value)} placeholder="" />
         </div>
         <div>
           <label htmlFor="urologia-creatinina" className="soap-section-label">Creatinina / TFG estimada</label>
-          <input id="urologia-creatinina" className="soap-input" value={val('creatinina')} onChange={e => up('creatinina', e.target.value)} placeholder="Creatinina mg/dL · TFG mL/min/1.73m²" />
+          <input id="urologia-creatinina" className="soap-input" value={val('creatinina')} onChange={e => up('creatinina', e.target.value)} placeholder="" />
         </div>
         <div>
           <label htmlFor="urologia-psa" className="soap-section-label">PSA total / libre (ng/mL)</label>
-          <input id="urologia-psa" className="soap-input" value={val('psa')} onChange={e => up('psa', e.target.value)} placeholder="PSA total · PSA libre · % libre/total" />
+          <input id="urologia-psa" className="soap-input" value={val('psa')} onChange={e => up('psa', e.target.value)} placeholder="" />
         </div>
       </div>
       <div style={{ marginBottom: 14 }}>
         <label htmlFor="urologia-ecografiaRenovesical" className="soap-section-label">Ecografía renal y vesical</label>
-        <textarea id="urologia-ecografiaRenovesical" className="soap-input soap-textarea" style={{ minHeight: 56 }} value={val('ecografiaRenovesical')} onChange={e => up('ecografiaRenovesical', e.target.value)} placeholder="Riñones: tamaño, ecotextura, hidronefrosis, litiasis&#10;Vejiga: residuo postmiccional (mL), paredes, lesiones&#10;Próstata: volumen cc (si transrectal), adenoma…" />
+        <textarea id="urologia-ecografiaRenovesical" className="soap-input soap-textarea" style={{ minHeight: 56 }} value={val('ecografiaRenovesical')} onChange={e => up('ecografiaRenovesical', e.target.value)} placeholder="" />
       </div>
 
       <div className="soap-section-divider" />
 
       <div style={{ marginBottom: 14 }}>
         <label htmlFor="urologia-notasAdicionales" className="soap-section-label">Notas adicionales de Urología</label>
-        <textarea id="urologia-notasAdicionales" className="soap-input soap-textarea" style={{ minHeight: 60 }} value={val('notasAdicionales')} onChange={e => up('notasAdicionales', e.target.value)} placeholder="Observaciones clínicas adicionales, plan quirúrgico, seguimiento…" />
+        <textarea id="urologia-notasAdicionales" className="soap-input soap-textarea" style={{ minHeight: 60 }} value={val('notasAdicionales')} onChange={e => up('notasAdicionales', e.target.value)} placeholder="" />
       </div>
 
       <div className="soap-nav-row" style={{ justifyContent: "flex-start", marginTop: 8 }}>

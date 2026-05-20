@@ -15,6 +15,8 @@ export interface MedicamentoHabitual {
   dosis: string;
   frecuencia: string;
   activo: boolean;
+  fechaSuspension?: string;
+  motivoSuspension?: string;
 }
 
 export interface ProblemaMedico {

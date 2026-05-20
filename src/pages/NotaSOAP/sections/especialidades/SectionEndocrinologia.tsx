@@ -20,11 +20,11 @@ export default function SectionEndocrinologia({ data, setData, onPrev }: Props) 
       <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12, marginBottom: 14 }}>
         <div>
           <label htmlFor="endocrinologia-patologiaEndocrina" className="soap-section-label">Patología endocrina previa</label>
-          <input id="endocrinologia-patologiaEndocrina" className="soap-input" value={val('patologiaEndocrina')} onChange={e => up('patologiaEndocrina', e.target.value)} placeholder="DM1/2, hipotiroidismo, hipertiroidismo, Cushing, Addison…" />
+          <input id="endocrinologia-patologiaEndocrina" className="soap-input" value={val('patologiaEndocrina')} onChange={e => up('patologiaEndocrina', e.target.value)} placeholder="" />
         </div>
         <div>
           <label htmlFor="endocrinologia-antFamEndocrino" className="soap-section-label">Antecedentes familiares</label>
-          <input id="endocrinologia-antFamEndocrino" className="soap-input" value={val('antFamEndocrino')} onChange={e => up('antFamEndocrino', e.target.value)} placeholder="DM, tiroides, obesidad, osteoporosis…" />
+          <input id="endocrinologia-antFamEndocrino" className="soap-input" value={val('antFamEndocrino')} onChange={e => up('antFamEndocrino', e.target.value)} placeholder="" />
         </div>
         <div>
           <label htmlFor="endocrinologia-tipoDiabetes" className="soap-section-label">Tipo de Diabetes (si aplica)</label>
@@ -40,7 +40,7 @@ export default function SectionEndocrinologia({ data, setData, onPrev }: Props) 
         </div>
         <div>
           <label htmlFor="endocrinologia-anosDiabetes" className="soap-section-label">Años de evolución de DM</label>
-          <input id="endocrinologia-anosDiabetes" className="soap-input" value={val('anosDiabetes')} onChange={e => up('anosDiabetes', e.target.value)} placeholder="Ej: 8 años" />
+          <input id="endocrinologia-anosDiabetes" className="soap-input" value={val('anosDiabetes')} onChange={e => up('anosDiabetes', e.target.value)} placeholder="" />
         </div>
       </div>
 
@@ -71,11 +71,11 @@ export default function SectionEndocrinologia({ data, setData, onPrev }: Props) 
       </div>
       <div style={{ marginBottom: 14 }}>
         <label htmlFor="endocrinologia-sintomasTiroideos" className="soap-section-label">Síntomas tiroideos</label>
-        <input id="endocrinologia-sintomasTiroideos" className="soap-input" value={val('sintomasTiroideos')} onChange={e => up('sintomasTiroideos', e.target.value)} placeholder="Intolerancia calor/frío, palpitaciones, cambios peso, caída cabello, voz, bocio…" />
+        <input id="endocrinologia-sintomasTiroideos" className="soap-input" value={val('sintomasTiroideos')} onChange={e => up('sintomasTiroideos', e.target.value)} placeholder="" />
       </div>
       <div style={{ marginBottom: 14 }}>
         <label htmlFor="endocrinologia-sintomasHipoglucemia" className="soap-section-label">Síntomas de hipoglucemia</label>
-        <input id="endocrinologia-sintomasHipoglucemia" className="soap-input" value={val('sintomasHipoglucemia')} onChange={e => up('sintomasHipoglucemia', e.target.value)} placeholder="Sudoración, temblor, confusión, palpitaciones — frecuencia…" />
+        <input id="endocrinologia-sintomasHipoglucemia" className="soap-input" value={val('sintomasHipoglucemia')} onChange={e => up('sintomasHipoglucemia', e.target.value)} placeholder="" />
       </div>
 
       <div className="soap-section-divider" />
@@ -86,37 +86,37 @@ export default function SectionEndocrinologia({ data, setData, onPrev }: Props) 
       <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 12, marginBottom: 14 }}>
         <div>
           <label htmlFor="endocrinologia-hba1c" className="soap-section-label">HbA1c (%)</label>
-          <input id="endocrinologia-hba1c" className="soap-input" value={val('hba1c')} onChange={e => up('hba1c', e.target.value)} placeholder="Ej: 7.8%" />
+          <input id="endocrinologia-hba1c" className="soap-input" value={val('hba1c')} onChange={e => up('hba1c', e.target.value)} placeholder="" />
         </div>
         <div>
           <label htmlFor="endocrinologia-glucosaBasal" className="soap-section-label">Glucosa basal (mg/dL)</label>
-          <input id="endocrinologia-glucosaBasal" className="soap-input" value={val('glucosaBasal')} onChange={e => up('glucosaBasal', e.target.value)} placeholder="Ej: 145" />
+          <input id="endocrinologia-glucosaBasal" className="soap-input" value={val('glucosaBasal')} onChange={e => up('glucosaBasal', e.target.value)} placeholder="" />
         </div>
         <div>
           <label htmlFor="endocrinologia-glucosaPost" className="soap-section-label">Glucosa 2h posprandial</label>
-          <input id="endocrinologia-glucosaPost" className="soap-input" value={val('glucosaPost')} onChange={e => up('glucosaPost', e.target.value)} placeholder="Ej: 195" />
+          <input id="endocrinologia-glucosaPost" className="soap-input" value={val('glucosaPost')} onChange={e => up('glucosaPost', e.target.value)} placeholder="" />
         </div>
         <div>
           <label htmlFor="endocrinologia-tsh" className="soap-section-label">TSH (mUI/L)</label>
-          <input id="endocrinologia-tsh" className="soap-input" value={val('tsh')} onChange={e => up('tsh', e.target.value)} placeholder="Normal: 0.4–4.0" />
+          <input id="endocrinologia-tsh" className="soap-input" value={val('tsh')} onChange={e => up('tsh', e.target.value)} placeholder="" />
         </div>
         <div>
           <label htmlFor="endocrinologia-t4Libre" className="soap-section-label">T4 libre (ng/dL)</label>
-          <input id="endocrinologia-t4Libre" className="soap-input" value={val('t4Libre')} onChange={e => up('t4Libre', e.target.value)} placeholder="Normal: 0.8–1.8" />
+          <input id="endocrinologia-t4Libre" className="soap-input" value={val('t4Libre')} onChange={e => up('t4Libre', e.target.value)} placeholder="" />
         </div>
         <div>
           <label htmlFor="endocrinologia-t3Libre" className="soap-section-label">T3 libre (pg/mL)</label>
-          <input id="endocrinologia-t3Libre" className="soap-input" value={val('t3Libre')} onChange={e => up('t3Libre', e.target.value)} placeholder="Normal: 2.3–4.2" />
+          <input id="endocrinologia-t3Libre" className="soap-input" value={val('t3Libre')} onChange={e => up('t3Libre', e.target.value)} placeholder="" />
         </div>
       </div>
       <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12, marginBottom: 14 }}>
         <div>
           <label htmlFor="endocrinologia-perimetroAbdominal" className="soap-section-label">Perímetro abdominal (cm)</label>
-          <input id="endocrinologia-perimetroAbdominal" className="soap-input" value={val('perimetroAbdominal')} onChange={e => up('perimetroAbdominal', e.target.value)} placeholder="Ej: 102" />
+          <input id="endocrinologia-perimetroAbdominal" className="soap-input" value={val('perimetroAbdominal')} onChange={e => up('perimetroAbdominal', e.target.value)} placeholder="" />
         </div>
         <div>
           <label htmlFor="endocrinologia-icc" className="soap-section-label">Índice cintura-cadera (ICC)</label>
-          <input id="endocrinologia-icc" className="soap-input" value={val('icc')} onChange={e => up('icc', e.target.value)} placeholder="Ej: 0.95" />
+          <input id="endocrinologia-icc" className="soap-input" value={val('icc')} onChange={e => up('icc', e.target.value)} placeholder="" />
         </div>
       </div>
 
@@ -140,7 +140,7 @@ export default function SectionEndocrinologia({ data, setData, onPrev }: Props) 
         </div>
         <div>
           <label htmlFor="endocrinologia-nefropatia" className="soap-section-label">Nefropatía (proteinuria/creatinina)</label>
-          <input id="endocrinologia-nefropatia" className="soap-input" value={val('nefropatia')} onChange={e => up('nefropatia', e.target.value)} placeholder="Ej: Microalbuminuria 50 mg/g, Cr 1.1 mg/dL" />
+          <input id="endocrinologia-nefropatia" className="soap-input" value={val('nefropatia')} onChange={e => up('nefropatia', e.target.value)} placeholder="" />
         </div>
         <div>
           <label htmlFor="endocrinologia-neuropatia" className="soap-section-label">Neuropatía periférica</label>
@@ -171,14 +171,14 @@ export default function SectionEndocrinologia({ data, setData, onPrev }: Props) 
       </p>
       <div style={{ marginBottom: 14 }}>
         <label htmlFor="endocrinologia-examenTiroides" className="soap-section-label">Hallazgos a la palpación</label>
-        <input id="endocrinologia-examenTiroides" className="soap-input" value={val('examenTiroides')} onChange={e => up('examenTiroides', e.target.value)} placeholder="Normal / bocio difuso / bocio nodular (descripción) / dolor / adenopatías" />
+        <input id="endocrinologia-examenTiroides" className="soap-input" value={val('examenTiroides')} onChange={e => up('examenTiroides', e.target.value)} placeholder="" />
       </div>
 
       <div className="soap-section-divider" />
 
       <div style={{ marginBottom: 14 }}>
         <label htmlFor="endocrinologia-notasAdicionales" className="soap-section-label">Notas adicionales de Endocrinología</label>
-        <textarea id="endocrinologia-notasAdicionales" className="soap-input soap-textarea" style={{ minHeight: 60 }} value={val('notasAdicionales')} onChange={e => up('notasAdicionales', e.target.value)} placeholder="Adherencia al tratamiento, tipo de dieta, actividad física, anticuerpos tiroideos…" />
+        <textarea id="endocrinologia-notasAdicionales" className="soap-input soap-textarea" style={{ minHeight: 60 }} value={val('notasAdicionales')} onChange={e => up('notasAdicionales', e.target.value)} placeholder="" />
       </div>
 
       <div className="soap-nav-row" style={{ justifyContent: "flex-start", marginTop: 8 }}>

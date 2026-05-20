@@ -90,12 +90,12 @@ export default function ModalReceta({ cita, alergias = EMPTY_ALERGIAS, onClose, 
             <div style={{ display: "grid", gridTemplateColumns: "2fr 1fr 1fr 1fr", gap: 8, marginBottom: 8 }}>
               <div>
                 <label className="soap-section-label">Medicamento <span className="soap-required">*</span></label>
-                <input className="soap-input" placeholder="Nombre genérico o comercial..."
+                <input className="soap-input" placeholder=""
                   value={form.nombre} onChange={e => { upF("nombre", e.target.value); checkAlergia(e.target.value); }} />
               </div>
               <div>
                 <label className="soap-section-label">Concentración</label>
-                <input className="soap-input" placeholder="40 mg" value={form.concentracion} onChange={e => upF("concentracion", e.target.value)} />
+                <input className="soap-input" placeholder="" value={form.concentracion} onChange={e => upF("concentracion", e.target.value)} />
               </div>
               <div>
                 <label className="soap-section-label">Forma farm.</label>
@@ -114,7 +114,7 @@ export default function ModalReceta({ cita, alergias = EMPTY_ALERGIAS, onClose, 
             <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 8, marginBottom: 10 }}>
               <div>
                 <label className="soap-section-label">Dosis</label>
-                <input className="soap-input" placeholder="1 tableta" value={form.dosis} onChange={e => upF("dosis", e.target.value)} />
+                <input className="soap-input" placeholder="" value={form.dosis} onChange={e => upF("dosis", e.target.value)} />
               </div>
               <div>
                 <label className="soap-section-label">Frecuencia</label>
@@ -132,7 +132,7 @@ export default function ModalReceta({ cita, alergias = EMPTY_ALERGIAS, onClose, 
 
             <div style={{ marginBottom: 12 }}>
               <label className="soap-section-label">Instrucciones al paciente</label>
-              <input className="soap-input" placeholder="Tomar con alimentos, no suspender sin indicación médica..."
+              <input className="soap-input" placeholder=""
                 value={form.instrucciones} onChange={e => upF("instrucciones", e.target.value)} />
             </div>
 

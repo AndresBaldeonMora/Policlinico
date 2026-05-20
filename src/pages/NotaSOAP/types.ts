@@ -1,6 +1,14 @@
+// SectionS — Subjetivo
+// Estructura basada en:
+//  - NCBI StatPearls, "SOAP Notes" (NIH): https://www.ncbi.nlm.nih.gov/books/NBK482263/
+//  - Wikipedia "SOAP note" (mnemónico OLD CARTS para Historia de la Enfermedad Actual)
+//  - MINSA Perú NTS N° 022-MINSA/DGSP-V.02 (motivo, tiempo, forma de inicio, curso,
+//    anamnesis y funciones biológicas como componentes obligatorios de la consulta externa)
 export interface SectionSData {
   motivoConsulta: string;
   tiempoEnfermedad: string;
+  formaInicio: 'Brusco' | 'Insidioso' | '';
+  curso: 'Estacionario' | 'Progresivo' | 'Recurrente' | '';
   enfermedadActual: string;
   sintomas: Record<string, 'si' | 'no' | undefined>;
   sinoDetalle: Record<string, string>;
@@ -94,7 +102,7 @@ export interface MedicamentoSOAP {
 export type EspecialidadData = Record<string, string>;
 
 export const INITIAL_SOAP: SOAPData = {
-  S: { motivoConsulta: '', tiempoEnfermedad: '', enfermedadActual: '', sintomas: {}, sinoDetalle: {}, otrosSintomas: '' },
+  S: { motivoConsulta: '', tiempoEnfermedad: '', formaInicio: '', curso: '', enfermedadActual: '', sintomas: {}, sinoDetalle: {}, otrosSintomas: '' },
   O: { temp: '', pa_s: '', pa_d: '', fc: '', fr: '', peso: '', talla: '', spo2: '', estadoGeneral: '', piel: '', edema: 'no', edemaLoc: '', edemaGrado: '', edemaDetalle: '', cardiovascular: '', respiratorio: '', abdomen: '', neurologico: '', musculoesqueletico: '', otrosAp: '' },
   A: { diagnoses: [], diferenciales: '', severidad: '', evaluacion: '', otrosDiagnosticos: { riesgo: '', nutricional: '', saludMental: '', causaExterna: '', estadoFuncional: '' } },
   P: { medidas: [], otrasIndicaciones: '', proximaCita: '', tiempoSeguimiento: '', criteriosAlarma: '' },

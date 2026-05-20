@@ -19,7 +19,7 @@ export default function SectionGastroenterologia({ data, setData, onPrev }: Prop
       </p>
       <div style={{ marginBottom: 14 }}>
         <label htmlFor="gastroenterologia-patologiaGI" className="soap-section-label">Patología GI previa</label>
-        <input id="gastroenterologia-patologiaGI" className="soap-input" value={val('patologiaGI')} onChange={e => up('patologiaGI', e.target.value)} placeholder="Úlcera péptica, gastritis, EII, diverticulosis, pólipos, cirugía GI…" />
+        <input id="gastroenterologia-patologiaGI" className="soap-input" value={val('patologiaGI')} onChange={e => up('patologiaGI', e.target.value)} placeholder="" />
       </div>
       <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12, marginBottom: 14 }}>
         <div>
@@ -51,7 +51,7 @@ export default function SectionGastroenterologia({ data, setData, onPrev }: Prop
       </p>
       <div style={{ marginBottom: 14 }}>
         <label htmlFor="gastroenterologia-dolorAbdominal" className="soap-section-label">Dolor abdominal (localización, carácter, factores)</label>
-        <textarea id="gastroenterologia-dolorAbdominal" className="soap-input soap-textarea" style={{ minHeight: 60 }} value={val('dolorAbdominal')} onChange={e => up('dolorAbdominal', e.target.value)} placeholder="Epigástrico / hipocondrio derecho / difuso, tipo cólico/ardor, relación con comidas…" />
+        <textarea id="gastroenterologia-dolorAbdominal" className="soap-input soap-textarea" style={{ minHeight: 60 }} value={val('dolorAbdominal')} onChange={e => up('dolorAbdominal', e.target.value)} placeholder="" />
       </div>
       <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12, marginBottom: 14 }}>
         <div>
@@ -66,7 +66,7 @@ export default function SectionGastroenterologia({ data, setData, onPrev }: Prop
         </div>
         <div>
           <label htmlFor="gastroenterologia-nauseasVomitos" className="soap-section-label">Náuseas / Vómitos</label>
-          <input id="gastroenterologia-nauseasVomitos" className="soap-input" value={val('nauseasVomitos')} onChange={e => up('nauseasVomitos', e.target.value)} placeholder="Frecuencia, contenido, relación con comidas…" />
+          <input id="gastroenterologia-nauseasVomitos" className="soap-input" value={val('nauseasVomitos')} onChange={e => up('nauseasVomitos', e.target.value)} placeholder="" />
         </div>
         <div>
           <label htmlFor="gastroenterologia-disfagia" className="soap-section-label">Disfagia</label>
@@ -110,7 +110,7 @@ export default function SectionGastroenterologia({ data, setData, onPrev }: Prop
       </div>
       <div style={{ marginBottom: 14 }}>
         <label htmlFor="gastroenterologia-distension" className="soap-section-label">Distensión / meteorismo / flatulencia</label>
-        <input id="gastroenterologia-distension" className="soap-input" value={val('distension')} onChange={e => up('distension', e.target.value)} placeholder="Frecuencia, relación con alimentos…" />
+        <input id="gastroenterologia-distension" className="soap-input" value={val('distension')} onChange={e => up('distension', e.target.value)} placeholder="" />
       </div>
 
       <div className="soap-section-divider" />
@@ -121,11 +121,11 @@ export default function SectionGastroenterologia({ data, setData, onPrev }: Prop
       <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12, marginBottom: 14 }}>
         <div>
           <label htmlFor="gastroenterologia-perdidaPeso" className="soap-section-label">Pérdida de peso reciente</label>
-          <input id="gastroenterologia-perdidaPeso" className="soap-input" value={val('perdidaPeso')} onChange={e => up('perdidaPeso', e.target.value)} placeholder="Ej: –4 kg en 2 meses" />
+          <input id="gastroenterologia-perdidaPeso" className="soap-input" value={val('perdidaPeso')} onChange={e => up('perdidaPeso', e.target.value)} placeholder="" />
         </div>
         <div>
           <label htmlFor="gastroenterologia-intolerancias" className="soap-section-label">Intolerancias alimentarias</label>
-          <input id="gastroenterologia-intolerancias" className="soap-input" value={val('intolerancias')} onChange={e => up('intolerancias', e.target.value)} placeholder="Lactosa, gluten, fructosa…" />
+          <input id="gastroenterologia-intolerancias" className="soap-input" value={val('intolerancias')} onChange={e => up('intolerancias', e.target.value)} placeholder="" />
         </div>
       </div>
 
@@ -136,11 +136,11 @@ export default function SectionGastroenterologia({ data, setData, onPrev }: Prop
       </p>
       <div style={{ marginBottom: 14 }}>
         <label htmlFor="gastroenterologia-examenAbdominal" className="soap-section-label">Hallazgos abdominales (palpación, percusión)</label>
-        <textarea id="gastroenterologia-examenAbdominal" className="soap-input soap-textarea" style={{ minHeight: 60 }} value={val('examenAbdominal')} onChange={e => up('examenAbdominal', e.target.value)} placeholder="Dolor a la palpación en…, hepatomegalia x cm, esplenomegalia, masa palpable, ascitis (matidez desplazable), Murphy+/-…" />
+        <textarea id="gastroenterologia-examenAbdominal" className="soap-input soap-textarea" style={{ minHeight: 60 }} value={val('examenAbdominal')} onChange={e => up('examenAbdominal', e.target.value)} placeholder="" />
       </div>
       <div style={{ marginBottom: 14 }}>
         <label htmlFor="gastroenterologia-signosAlarma" className="soap-section-label">Signos de alarma presentes</label>
-        <input id="gastroenterologia-signosAlarma" className="soap-input" value={val('signosAlarma')} onChange={e => up('signosAlarma', e.target.value)} placeholder="Disfagia progresiva, pérdida de peso, vómitos persistentes, anemia, hemorragia…" />
+        <input id="gastroenterologia-signosAlarma" className="soap-input" value={val('signosAlarma')} onChange={e => up('signosAlarma', e.target.value)} placeholder="" />
       </div>
 
       <div className="soap-section-divider" />
@@ -150,14 +150,14 @@ export default function SectionGastroenterologia({ data, setData, onPrev }: Prop
       </p>
       <div style={{ marginBottom: 14 }}>
         <label htmlFor="gastroenterologia-endoscopiaPrevia" className="soap-section-label">EDA / Colonoscopia previas (fecha y hallazgos)</label>
-        <textarea id="gastroenterologia-endoscopiaPrevia" className="soap-input soap-textarea" style={{ minHeight: 56 }} value={val('endoscopiaPrevia')} onChange={e => up('endoscopiaPrevia', e.target.value)} placeholder="EDA 2023: gastritis antral, biopsia (+) H. pylori…" />
+        <textarea id="gastroenterologia-endoscopiaPrevia" className="soap-input soap-textarea" style={{ minHeight: 56 }} value={val('endoscopiaPrevia')} onChange={e => up('endoscopiaPrevia', e.target.value)} placeholder="" />
       </div>
 
       <div className="soap-section-divider" />
 
       <div style={{ marginBottom: 14 }}>
         <label htmlFor="gastroenterologia-notasAdicionales" className="soap-section-label">Notas adicionales de Gastroenterología</label>
-        <textarea id="gastroenterologia-notasAdicionales" className="soap-input soap-textarea" style={{ minHeight: 60 }} value={val('notasAdicionales')} onChange={e => up('notasAdicionales', e.target.value)} placeholder="Observaciones clínicas adicionales…" />
+        <textarea id="gastroenterologia-notasAdicionales" className="soap-input soap-textarea" style={{ minHeight: 60 }} value={val('notasAdicionales')} onChange={e => up('notasAdicionales', e.target.value)} placeholder="" />
       </div>
 
       <div className="soap-nav-row" style={{ justifyContent: "flex-start", marginTop: 8 }}>

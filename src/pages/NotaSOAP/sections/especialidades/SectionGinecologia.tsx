@@ -21,7 +21,7 @@ export default function SectionGinecologia({ data, setData, onPrev }: Props) {
       <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12, marginBottom: 14 }}>
         <div>
           <label htmlFor="ginecologia-menarca" className="soap-section-label">Menarca (edad en años)</label>
-          <input id="ginecologia-menarca" className="soap-input" value={val('menarca')} onChange={e => up('menarca', e.target.value)} placeholder="Ej: 12" />
+          <input id="ginecologia-menarca" className="soap-input" value={val('menarca')} onChange={e => up('menarca', e.target.value)} placeholder="" />
         </div>
         <div>
           <label htmlFor="ginecologia-fur" className="soap-section-label">Última menstruación (FUR)</label>
@@ -29,11 +29,11 @@ export default function SectionGinecologia({ data, setData, onPrev }: Props) {
         </div>
         <div>
           <label htmlFor="ginecologia-frecuenciaCiclo" className="soap-section-label">Frecuencia del ciclo (días)</label>
-          <input id="ginecologia-frecuenciaCiclo" className="soap-input" value={val('frecuenciaCiclo')} onChange={e => up('frecuenciaCiclo', e.target.value)} placeholder="Ej: 28" />
+          <input id="ginecologia-frecuenciaCiclo" className="soap-input" value={val('frecuenciaCiclo')} onChange={e => up('frecuenciaCiclo', e.target.value)} placeholder="" />
         </div>
         <div>
           <label htmlFor="ginecologia-duracionSangrado" className="soap-section-label">Duración sangrado (días)</label>
-          <input id="ginecologia-duracionSangrado" className="soap-input" value={val('duracionSangrado')} onChange={e => up('duracionSangrado', e.target.value)} placeholder="Ej: 5" />
+          <input id="ginecologia-duracionSangrado" className="soap-input" value={val('duracionSangrado')} onChange={e => up('duracionSangrado', e.target.value)} placeholder="" />
         </div>
         <div>
           <label htmlFor="ginecologia-regularidadCiclo" className="soap-section-label">Regularidad del ciclo</label>
@@ -58,7 +58,7 @@ export default function SectionGinecologia({ data, setData, onPrev }: Props) {
       </div>
       <div style={{ marginBottom: 14 }}>
         <label htmlFor="ginecologia-metodoAnticonceptivo" className="soap-section-label">Método anticonceptivo actual</label>
-        <input id="ginecologia-metodoAnticonceptivo" className="soap-input" value={val('metodoAnticonceptivo')} onChange={e => up('metodoAnticonceptivo', e.target.value)} placeholder="ACO, DIU, condón, inyectable, ninguno…" />
+        <input id="ginecologia-metodoAnticonceptivo" className="soap-input" value={val('metodoAnticonceptivo')} onChange={e => up('metodoAnticonceptivo', e.target.value)} placeholder="" />
       </div>
 
       <div className="soap-section-divider" />
@@ -91,7 +91,7 @@ export default function SectionGinecologia({ data, setData, onPrev }: Props) {
       </div>
       <div style={{ marginBottom: 14 }}>
         <label htmlFor="ginecologia-complObstetricas" className="soap-section-label">Complicaciones obstétricas previas</label>
-        <input id="ginecologia-complObstetricas" className="soap-input" value={val('complObstetricas')} onChange={e => up('complObstetricas', e.target.value)} placeholder="Preeclampsia, hemorragia postparto, prematuridad…" />
+        <input id="ginecologia-complObstetricas" className="soap-input" value={val('complObstetricas')} onChange={e => up('complObstetricas', e.target.value)} placeholder="" />
       </div>
 
       <div className="soap-section-divider" />
@@ -102,15 +102,15 @@ export default function SectionGinecologia({ data, setData, onPrev }: Props) {
       </p>
       <div style={{ marginBottom: 14 }}>
         <label htmlFor="ginecologia-flujoVaginal" className="soap-section-label">Flujo vaginal (características)</label>
-        <input id="ginecologia-flujoVaginal" className="soap-input" value={val('flujoVaginal')} onChange={e => up('flujoVaginal', e.target.value)} placeholder="Color, olor, cantidad, picazón…" />
+        <input id="ginecologia-flujoVaginal" className="soap-input" value={val('flujoVaginal')} onChange={e => up('flujoVaginal', e.target.value)} placeholder="" />
       </div>
       <div style={{ marginBottom: 14 }}>
         <label htmlFor="ginecologia-sangradoAnormal" className="soap-section-label">Sangrado anormal / intermenstrual</label>
-        <input id="ginecologia-sangradoAnormal" className="soap-input" value={val('sangradoAnormal')} onChange={e => up('sangradoAnormal', e.target.value)} placeholder="Descripción, volumen, frecuencia…" />
+        <input id="ginecologia-sangradoAnormal" className="soap-input" value={val('sangradoAnormal')} onChange={e => up('sangradoAnormal', e.target.value)} placeholder="" />
       </div>
       <div style={{ marginBottom: 14 }}>
         <label htmlFor="ginecologia-dolorPelvico" className="soap-section-label">Dolor pélvico</label>
-        <input id="ginecologia-dolorPelvico" className="soap-input" value={val('dolorPelvico')} onChange={e => up('dolorPelvico', e.target.value)} placeholder="Localización, carácter, intensidad 0–10…" />
+        <input id="ginecologia-dolorPelvico" className="soap-input" value={val('dolorPelvico')} onChange={e => up('dolorPelvico', e.target.value)} placeholder="" />
       </div>
 
       <div className="soap-section-divider" />
@@ -121,15 +121,15 @@ export default function SectionGinecologia({ data, setData, onPrev }: Props) {
       </p>
       <div style={{ marginBottom: 14 }}>
         <label htmlFor="ginecologia-genitalesExternos" className="soap-section-label">Genitales externos</label>
-        <input id="ginecologia-genitalesExternos" className="soap-input" value={val('genitalesExternos')} onChange={e => up('genitalesExternos', e.target.value)} placeholder="Normal / hallazgos relevantes" />
+        <input id="ginecologia-genitalesExternos" className="soap-input" value={val('genitalesExternos')} onChange={e => up('genitalesExternos', e.target.value)} placeholder="" />
       </div>
       <div style={{ marginBottom: 14 }}>
         <label htmlFor="ginecologia-especuloscopia" className="soap-section-label">Especuloscopía (cuello uterino, secreciones)</label>
-        <textarea id="ginecologia-especuloscopia" className="soap-input soap-textarea" style={{ minHeight: 56 }} value={val('especuloscopia')} onChange={e => up('especuloscopia', e.target.value)} placeholder="Aspecto del cuello, ectropión, lesiones, secreción…" />
+        <textarea id="ginecologia-especuloscopia" className="soap-input soap-textarea" style={{ minHeight: 56 }} value={val('especuloscopia')} onChange={e => up('especuloscopia', e.target.value)} placeholder="" />
       </div>
       <div style={{ marginBottom: 14 }}>
         <label htmlFor="ginecologia-exploracionBimanual" className="soap-section-label">Exploración bimanual (útero, anexos)</label>
-        <textarea id="ginecologia-exploracionBimanual" className="soap-input soap-textarea" style={{ minHeight: 56 }} value={val('exploracionBimanual')} onChange={e => up('exploracionBimanual', e.target.value)} placeholder="Tamaño uterino, movilidad, dolor, masas anexiales…" />
+        <textarea id="ginecologia-exploracionBimanual" className="soap-input soap-textarea" style={{ minHeight: 56 }} value={val('exploracionBimanual')} onChange={e => up('exploracionBimanual', e.target.value)} placeholder="" />
       </div>
 
       <div className="soap-section-divider" />
@@ -140,11 +140,11 @@ export default function SectionGinecologia({ data, setData, onPrev }: Props) {
       </p>
       <div style={{ marginBottom: 14 }}>
         <label htmlFor="ginecologia-mamaInspeccion" className="soap-section-label">Inspección</label>
-        <input id="ginecologia-mamaInspeccion" className="soap-input" value={val('mamaInspeccion')} onChange={e => up('mamaInspeccion', e.target.value)} placeholder="Simetría, retracción, enrojecimiento, piel de naranja…" />
+        <input id="ginecologia-mamaInspeccion" className="soap-input" value={val('mamaInspeccion')} onChange={e => up('mamaInspeccion', e.target.value)} placeholder="" />
       </div>
       <div style={{ marginBottom: 14 }}>
         <label htmlFor="ginecologia-mamaPalpacion" className="soap-section-label">Palpación (nódulos, mastalgia, secreción)</label>
-        <input id="ginecologia-mamaPalpacion" className="soap-input" value={val('mamaPalpacion')} onChange={e => up('mamaPalpacion', e.target.value)} placeholder="Normal / hallazgos relevantes" />
+        <input id="ginecologia-mamaPalpacion" className="soap-input" value={val('mamaPalpacion')} onChange={e => up('mamaPalpacion', e.target.value)} placeholder="" />
       </div>
 
       <div className="soap-section-divider" />
@@ -178,7 +178,7 @@ export default function SectionGinecologia({ data, setData, onPrev }: Props) {
 
       <div style={{ marginBottom: 14 }}>
         <label htmlFor="ginecologia-notasAdicionales" className="soap-section-label">Notas adicionales de Ginecología</label>
-        <textarea id="ginecologia-notasAdicionales" className="soap-input soap-textarea" style={{ minHeight: 60 }} value={val('notasAdicionales')} onChange={e => up('notasAdicionales', e.target.value)} placeholder="Observaciones clínicas adicionales…" />
+        <textarea id="ginecologia-notasAdicionales" className="soap-input soap-textarea" style={{ minHeight: 60 }} value={val('notasAdicionales')} onChange={e => up('notasAdicionales', e.target.value)} placeholder="" />
       </div>
 
       <div className="soap-nav-row" style={{ justifyContent: "flex-start", marginTop: 8 }}>

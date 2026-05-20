@@ -21,21 +21,48 @@ const APARATOS = [
 
 type AparatoKey = (typeof APARATOS)[number]["id"];
 
+// Filtra el input para permitir solo números. decimal=true permite un punto decimal.
+function filterNumeric(val: string, decimal: boolean): string {
+  if (decimal) {
+    // Solo dígitos y un punto decimal
+    const cleaned = val.replace(/[^0-9.]/g, "");
+    const parts = cleaned.split(".");
+    return parts.length > 2 ? parts[0] + "." + parts.slice(1).join("") : cleaned;
+  }
+  return val.replace(/[^0-9]/g, "");
+}
+
 function VitalBox({
-  label, unit, placeholder, value, onChange, alertClass, note,
+  label, unit, value, onChange, alertClass, note, decimal = false, min, max, maxLength,
 }: {
-  label: string; unit: string; placeholder: string;
+  label: string; unit: string;
   value: string; onChange: (v: string) => void;
   alertClass?: string; note?: string;
+  decimal?: boolean; min?: number; max?: number; maxLength?: number;
 }) {
   return (
     <div className={`soap-vital-box ${alertClass ?? ""}`}>
       <div className="soap-vital-box-label">{label}</div>
       <input
         className="soap-vital-input"
-        placeholder={placeholder}
+        inputMode={decimal ? "decimal" : "numeric"}
         value={value}
-        onChange={e => onChange(e.target.value)}
+        maxLength={maxLength}
+        onChange={e => onChange(filterNumeric(e.target.value, decimal))}
+        onKeyDown={e => {
+          // Bloquea cualquier tecla que no sea número, punto (si decimal), control o navegación
+          const allowed = ["Backspace","Delete","Tab","ArrowLeft","ArrowRight","ArrowUp","ArrowDown","Enter","Home","End"];
+          if (allowed.includes(e.key)) return;
+          if (decimal && e.key === "." && !value.includes(".")) return;
+          if (!/^\d$/.test(e.key)) e.preventDefault();
+        }}
+        onBlur={() => {
+          // Valida rango al salir del campo
+          if (!value || min === undefined || max === undefined) return;
+          const num = parseFloat(value);
+          if (num < min) onChange(String(min));
+          if (num > max) onChange(String(max));
+        }}
       />
       <div className="soap-vital-unit">{unit}</div>
       {note && <div className={`soap-vital-note ${alertClass?.includes("warning") ? "warning" : "error"}`}>{note}</div>}
@@ -47,7 +74,7 @@ export default function SectionO({ data, setData, onPrev, onNext }: Props) {
   const [openAp, setOpenAp] = useState<AparatoKey | null>(null);
 
   const up = <K extends keyof SectionOData>(key: K, val: SectionOData[K]) =>
-    setData(prev => ({ ...prev, [key]: val }));
+    setData({ ...data, [key]: val });
 
   const imc =
     data.peso && data.talla
@@ -67,17 +94,31 @@ export default function SectionO({ data, setData, onPrev, onNext }: Props) {
         Signos Vitales
       </p>
       <div className="soap-vital-grid">
-        <VitalBox label="Temperatura" unit="°C" placeholder="36.5" value={data.temp} onChange={v => up("temp", v)} />
+        <VitalBox label="Temperatura" unit="°C" value={data.temp} onChange={v => up("temp", v)} decimal min={30} max={45} maxLength={5} />
 
         {/* PA - doble campo */}
         <div className={`soap-vital-box ${paHigh && (data.pa_s || data.pa_d) ? "alert-error" : ""}`}>
           <div className="soap-vital-box-label">Presión Arterial</div>
           <div style={{ display: "flex", alignItems: "center", gap: 4 }}>
-            <input className="soap-vital-input" style={{ flex: 1 }} placeholder="120" maxLength={3}
-              value={data.pa_s} onChange={e => up("pa_s", e.target.value)} />
+            <input
+              className="soap-vital-input" style={{ flex: 1 }} maxLength={3}
+              inputMode="numeric" value={data.pa_s}
+              onChange={e => up("pa_s", filterNumeric(e.target.value, false))}
+              onKeyDown={e => {
+                const ok = ["Backspace","Delete","Tab","ArrowLeft","ArrowRight","ArrowUp","ArrowDown","Enter","Home","End"];
+                if (!ok.includes(e.key) && !/^\d$/.test(e.key)) e.preventDefault();
+              }}
+            />
             <span style={{ color: "var(--text-muted)", fontWeight: 700 }}>/</span>
-            <input className="soap-vital-input" style={{ flex: 1 }} placeholder="80" maxLength={3}
-              value={data.pa_d} onChange={e => up("pa_d", e.target.value)} />
+            <input
+              className="soap-vital-input" style={{ flex: 1 }} maxLength={3}
+              inputMode="numeric" value={data.pa_d}
+              onChange={e => up("pa_d", filterNumeric(e.target.value, false))}
+              onKeyDown={e => {
+                const ok = ["Backspace","Delete","Tab","ArrowLeft","ArrowRight","ArrowUp","ArrowDown","Enter","Home","End"];
+                if (!ok.includes(e.key) && !/^\d$/.test(e.key)) e.preventDefault();
+              }}
+            />
           </div>
           <div className="soap-vital-unit">mmHg</div>
           {paHigh && (data.pa_s || data.pa_d) && (
@@ -85,13 +126,17 @@ export default function SectionO({ data, setData, onPrev, onNext }: Props) {
           )}
         </div>
 
-        <VitalBox label="Frec. Cardíaca" unit="lpm" placeholder="72" value={data.fc} onChange={v => up("fc", v)}
-          alertClass={fcAlert ? "alert-warning" : ""} note={fcAlert ? "Revisar ritmo cardíaco" : undefined} />
+        <VitalBox label="Frec. Cardíaca" unit="lpm" value={data.fc} onChange={v => up("fc", v)}
+          alertClass={fcAlert ? "alert-warning" : ""} note={fcAlert ? "Revisar ritmo cardíaco" : undefined}
+          min={20} max={300} maxLength={3} />
 
-        <VitalBox label="Frec. Respiratoria" unit="rpm" placeholder="16" value={data.fr} onChange={v => up("fr", v)} />
+        <VitalBox label="Frec. Respiratoria" unit="rpm" value={data.fr} onChange={v => up("fr", v)}
+          min={4} max={60} maxLength={2} />
 
-        <VitalBox label="Peso" unit="kg" placeholder="70" value={data.peso} onChange={v => up("peso", v)} />
-        <VitalBox label="Talla" unit="cm" placeholder="165" value={data.talla} onChange={v => up("talla", v)} />
+        <VitalBox label="Peso" unit="kg" value={data.peso} onChange={v => up("peso", v)}
+          decimal min={1} max={300} maxLength={6} />
+        <VitalBox label="Talla" unit="cm" value={data.talla} onChange={v => up("talla", v)}
+          decimal min={30} max={250} maxLength={6} />
 
         {/* IMC auto */}
         <div className="soap-imc-box">
@@ -100,9 +145,10 @@ export default function SectionO({ data, setData, onPrev, onNext }: Props) {
           <div className="soap-imc-unit">kg/m²</div>
         </div>
 
-        <VitalBox label="Saturación O₂" unit="%" placeholder="98" value={data.spo2} onChange={v => up("spo2", v)}
+        <VitalBox label="Saturación O₂" unit="%" value={data.spo2} onChange={v => up("spo2", v)}
           alertClass={spo2Alert ? `alert-${spo2Alert}` : ""}
-          note={spo2Alert === "error" ? "Hipoxemia severa" : spo2Alert === "warning" ? "Hipoxemia leve" : undefined} />
+          note={spo2Alert === "error" ? "Hipoxemia severa" : spo2Alert === "warning" ? "Hipoxemia leve" : undefined}
+          min={50} max={100} maxLength={3} />
       </div>
 
       {/* Examen físico general */}
@@ -114,13 +160,13 @@ export default function SectionO({ data, setData, onPrev, onNext }: Props) {
         <div>
           <label className="soap-section-label">Estado General</label>
           <textarea className="soap-input soap-textarea"
-            placeholder="Paciente adulta mayor, despierta, orientada en T/E/P, en regular estado general..."
+            placeholder=""
             value={data.estadoGeneral} onChange={e => up("estadoGeneral", e.target.value)} />
         </div>
         <div>
           <label className="soap-section-label">Piel y Mucosas</label>
           <textarea className="soap-input soap-textarea"
-            placeholder="Piel pálida, mucosas orales semihúmedas, sin ictericia, sin cianosis..."
+            placeholder=""
             value={data.piel} onChange={e => up("piel", e.target.value)} />
         </div>
       </div>
@@ -158,7 +204,7 @@ export default function SectionO({ data, setData, onPrev, onNext }: Props) {
               </div>
               <div>
                 <label className="soap-section-label" style={{ fontSize: 11 }}>Características</label>
-                <input className="soap-input" style={{ padding: "6px 8px" }} placeholder="Fóvea, blando..."
+                <input className="soap-input" style={{ padding: "6px 8px" }} placeholder=""
                   value={data.edemaDetalle} onChange={e => up("edemaDetalle", e.target.value)} />
               </div>
             </div>
@@ -183,7 +229,7 @@ export default function SectionO({ data, setData, onPrev, onNext }: Props) {
           </button>
           {openAp === ap.id && (
             <div className="soap-accordion-body">
-              <textarea className="soap-input soap-textarea" placeholder={ap.ph}
+              <textarea className="soap-input soap-textarea" placeholder=""
                 value={data[ap.id]} onChange={e => up(ap.id, e.target.value)} />
             </div>
           )}

@@ -19,11 +19,11 @@ export default function SectionMedicinaFamiliar({ data, setData, onPrev }: Props
       </p>
       <div style={{ marginBottom: 14 }}>
         <label htmlFor="medicinafamiliar-arbolGenealogico" className="soap-section-label">Árbol genealógico (3 generaciones)</label>
-        <textarea id="medicinafamiliar-arbolGenealogico" className="soap-input soap-textarea" style={{ minHeight: 72 }} value={val('arbolGenealogico')} onChange={e => up('arbolGenealogico', e.target.value)} placeholder="Abuelo paterno: HTA, fallecido por IAM a los 70a&#10;Padre: DM2, vivo 65a&#10;Madre: hipotiroidismo, viva 62a&#10;Hermano mayor: sin antecedentes…" />
+        <textarea id="medicinafamiliar-arbolGenealogico" className="soap-input soap-textarea" style={{ minHeight: 72 }} value={val('arbolGenealogico')} onChange={e => up('arbolGenealogico', e.target.value)} placeholder="" />
       </div>
       <div style={{ marginBottom: 14 }}>
         <label htmlFor="medicinafamiliar-enfermedadesFamiliares" className="soap-section-label">Enfermedades crónicas familiares relevantes</label>
-        <input id="medicinafamiliar-enfermedadesFamiliares" className="soap-input" value={val('enfermedadesFamiliares')} onChange={e => up('enfermedadesFamiliares', e.target.value)} placeholder="HTA, DM, cáncer, cardiopatía, TB, enfermedades hereditarias…" />
+        <input id="medicinafamiliar-enfermedadesFamiliares" className="soap-input" value={val('enfermedadesFamiliares')} onChange={e => up('enfermedadesFamiliares', e.target.value)} placeholder="" />
       </div>
 
       <div className="soap-section-divider" />
@@ -34,7 +34,7 @@ export default function SectionMedicinaFamiliar({ data, setData, onPrev }: Props
       <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12, marginBottom: 14 }}>
         <div>
           <label htmlFor="medicinafamiliar-composicionHogar" className="soap-section-label">Composición del hogar</label>
-          <input id="medicinafamiliar-composicionHogar" className="soap-input" value={val('composicionHogar')} onChange={e => up('composicionHogar', e.target.value)} placeholder="Ej: Paciente + cónyuge + 2 hijos (8 y 12 años)" />
+          <input id="medicinafamiliar-composicionHogar" className="soap-input" value={val('composicionHogar')} onChange={e => up('composicionHogar', e.target.value)} placeholder="" />
         </div>
         <div>
           <label htmlFor="medicinafamiliar-tipoFamilia" className="soap-section-label">Tipo de familia</label>
@@ -143,7 +143,7 @@ export default function SectionMedicinaFamiliar({ data, setData, onPrev }: Props
       </p>
       <div style={{ marginBottom: 14 }}>
         <label htmlFor="medicinafamiliar-riesgosBiopsicosociales" className="soap-section-label">Riesgos identificados</label>
-        <textarea id="medicinafamiliar-riesgosBiopsicosociales" className="soap-input soap-textarea" style={{ minHeight: 56 }} value={val('riesgosBiopsicosociales')} onChange={e => up('riesgosBiopsicosociales', e.target.value)} placeholder="Ocupacionales (exposición a tóxicos), ambientales (polvo/smog), violencia, consumo de drogas, desnutrición…" />
+        <textarea id="medicinafamiliar-riesgosBiopsicosociales" className="soap-input soap-textarea" style={{ minHeight: 56 }} value={val('riesgosBiopsicosociales')} onChange={e => up('riesgosBiopsicosociales', e.target.value)} placeholder="" />
       </div>
 
       <div className="soap-section-divider" />
@@ -153,18 +153,18 @@ export default function SectionMedicinaFamiliar({ data, setData, onPrev }: Props
       </p>
       <div style={{ marginBottom: 14 }}>
         <label htmlFor="medicinafamiliar-problemasFamiliares" className="soap-section-label">Problemas identificados a nivel familiar</label>
-        <textarea id="medicinafamiliar-problemasFamiliares" className="soap-input soap-textarea" style={{ minHeight: 56 }} value={val('problemasFamiliares')} onChange={e => up('problemasFamiliares', e.target.value)} placeholder="Enfermedades crónicas no controladas en 2 miembros, riesgo nutricional en niño menor…" />
+        <textarea id="medicinafamiliar-problemasFamiliares" className="soap-input soap-textarea" style={{ minHeight: 56 }} value={val('problemasFamiliares')} onChange={e => up('problemasFamiliares', e.target.value)} placeholder="" />
       </div>
       <div style={{ marginBottom: 14 }}>
         <label htmlFor="medicinafamiliar-intervencionFamiliar" className="soap-section-label">Intervenciones y seguimiento programado</label>
-        <textarea id="medicinafamiliar-intervencionFamiliar" className="soap-input soap-textarea" style={{ minHeight: 56 }} value={val('intervencionFamiliar')} onChange={e => up('intervencionFamiliar', e.target.value)} placeholder="Consejería nutricional para toda la familia, visita domiciliaria en 1 mes, referencia a trabajo social…" />
+        <textarea id="medicinafamiliar-intervencionFamiliar" className="soap-input soap-textarea" style={{ minHeight: 56 }} value={val('intervencionFamiliar')} onChange={e => up('intervencionFamiliar', e.target.value)} placeholder="" />
       </div>
 
       <div className="soap-section-divider" />
 
       <div style={{ marginBottom: 14 }}>
         <label htmlFor="medicinafamiliar-notasAdicionales" className="soap-section-label">Notas adicionales de Medicina Familiar</label>
-        <textarea id="medicinafamiliar-notasAdicionales" className="soap-input soap-textarea" style={{ minHeight: 60 }} value={val('notasAdicionales')} onChange={e => up('notasAdicionales', e.target.value)} placeholder="Observaciones clínicas adicionales…" />
+        <textarea id="medicinafamiliar-notasAdicionales" className="soap-input soap-textarea" style={{ minHeight: 60 }} value={val('notasAdicionales')} onChange={e => up('notasAdicionales', e.target.value)} placeholder="" />
       </div>
 
       <div className="soap-nav-row" style={{ justifyContent: "flex-start", marginTop: 8 }}>

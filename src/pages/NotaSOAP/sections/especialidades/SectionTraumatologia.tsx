@@ -19,7 +19,7 @@ export default function SectionTraumatologia({ data, setData, onPrev }: Props) {
       </p>
       <div style={{ marginBottom: 14 }}>
         <label htmlFor="traumatologia-antTraumatologicos" className="soap-section-label">Fracturas / cirugías ortopédicas previas</label>
-        <input id="traumatologia-antTraumatologicos" className="soap-input" value={val('antTraumatologicos')} onChange={e => up('antTraumatologicos', e.target.value)} placeholder="Fractura de tobillo 2020 (RAFI), prótesis de cadera izq…" />
+        <input id="traumatologia-antTraumatologicos" className="soap-input" value={val('antTraumatologicos')} onChange={e => up('antTraumatologicos', e.target.value)} placeholder="" />
       </div>
       <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12, marginBottom: 14 }}>
         <div>
@@ -34,7 +34,7 @@ export default function SectionTraumatologia({ data, setData, onPrev }: Props) {
         </div>
         <div>
           <label htmlFor="traumatologia-esguincesLuxaciones" className="soap-section-label">Esguinces / luxaciones previas</label>
-          <input id="traumatologia-esguincesLuxaciones" className="soap-input" value={val('esguincesLuxaciones')} onChange={e => up('esguincesLuxaciones', e.target.value)} placeholder="Zona afectada, recurrencia…" />
+          <input id="traumatologia-esguincesLuxaciones" className="soap-input" value={val('esguincesLuxaciones')} onChange={e => up('esguincesLuxaciones', e.target.value)} placeholder="" />
         </div>
       </div>
 
@@ -59,12 +59,12 @@ export default function SectionTraumatologia({ data, setData, onPrev }: Props) {
         </div>
         <div>
           <label htmlFor="traumatologia-fechaTrauma" className="soap-section-label">Fecha/hora del trauma</label>
-          <input id="traumatologia-fechaTrauma" className="soap-input" value={val('fechaTrauma')} onChange={e => up('fechaTrauma', e.target.value)} placeholder="Ej: 28/04/2026 — 15:00 h" />
+          <input id="traumatologia-fechaTrauma" className="soap-input" value={val('fechaTrauma')} onChange={e => up('fechaTrauma', e.target.value)} placeholder="" />
         </div>
       </div>
       <div style={{ marginBottom: 14 }}>
         <label htmlFor="traumatologia-descripcionMecanismo" className="soap-section-label">Descripción del mecanismo</label>
-        <textarea id="traumatologia-descripcionMecanismo" className="soap-input soap-textarea" style={{ minHeight: 56 }} value={val('descripcionMecanismo')} onChange={e => up('descripcionMecanismo', e.target.value)} placeholder="Caída al tropezar en escalera, impacto lateral sobre rodilla derecha en flexión…" />
+        <textarea id="traumatologia-descripcionMecanismo" className="soap-input soap-textarea" style={{ minHeight: 56 }} value={val('descripcionMecanismo')} onChange={e => up('descripcionMecanismo', e.target.value)} placeholder="" />
       </div>
 
       <div className="soap-section-divider" />
@@ -74,7 +74,7 @@ export default function SectionTraumatologia({ data, setData, onPrev }: Props) {
       </p>
       <div style={{ marginBottom: 14 }}>
         <label htmlFor="traumatologia-zonaAfectada" className="soap-section-label">Zona afectada</label>
-        <input id="traumatologia-zonaAfectada" className="soap-input" value={val('zonaAfectada')} onChange={e => up('zonaAfectada', e.target.value)} placeholder="Ej: Tobillo derecho, región distal de fíbula" />
+        <input id="traumatologia-zonaAfectada" className="soap-input" value={val('zonaAfectada')} onChange={e => up('zonaAfectada', e.target.value)} placeholder="" />
       </div>
       <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 12, marginBottom: 14 }}>
         <div>
@@ -131,7 +131,7 @@ export default function SectionTraumatologia({ data, setData, onPrev }: Props) {
       <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12, marginBottom: 14 }}>
         <div>
           <label htmlFor="traumatologia-pulsoDistales" className="soap-section-label">Pulsos distales</label>
-          <input id="traumatologia-pulsoDistales" className="soap-input" value={val('pulsoDistales')} onChange={e => up('pulsoDistales', e.target.value)} placeholder="Presentes y simétricos / disminuidos en…" />
+          <input id="traumatologia-pulsoDistales" className="soap-input" value={val('pulsoDistales')} onChange={e => up('pulsoDistales', e.target.value)} placeholder="" />
         </div>
         <div>
           <label htmlFor="traumatologia-llenadoCapilar" className="soap-section-label">Llenado capilar</label>
@@ -183,12 +183,12 @@ export default function SectionTraumatologia({ data, setData, onPrev }: Props) {
         </div>
         <div>
           <label htmlFor="traumatologia-clasificacionAO" className="soap-section-label">Clasificación AO/ASIF (fractura, si aplica)</label>
-          <input id="traumatologia-clasificacionAO" className="soap-input" value={val('clasificacionAO')} onChange={e => up('clasificacionAO', e.target.value)} placeholder="Ej: 44A1 — fractura simple fíbula" />
+          <input id="traumatologia-clasificacionAO" className="soap-input" value={val('clasificacionAO')} onChange={e => up('clasificacionAO', e.target.value)} placeholder="" />
         </div>
       </div>
       <div style={{ marginBottom: 14 }}>
         <label htmlFor="traumatologia-hallazgosRx" className="soap-section-label">Hallazgos radiológicos</label>
-        <textarea id="traumatologia-hallazgosRx" className="soap-input soap-textarea" style={{ minHeight: 60 }} value={val('hallazgosRx')} onChange={e => up('hallazgosRx', e.target.value)} placeholder="Radiografía AP y lateral: fractura transversa de fíbula distal sin desplazamiento…" />
+        <textarea id="traumatologia-hallazgosRx" className="soap-input soap-textarea" style={{ minHeight: 60 }} value={val('hallazgosRx')} onChange={e => up('hallazgosRx', e.target.value)} placeholder="" />
       </div>
       <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12, marginBottom: 14 }}>
         <div>
@@ -213,7 +213,7 @@ export default function SectionTraumatologia({ data, setData, onPrev }: Props) {
 
       <div style={{ marginBottom: 14 }}>
         <label htmlFor="traumatologia-notasAdicionales" className="soap-section-label">Notas adicionales de Traumatología</label>
-        <textarea id="traumatologia-notasAdicionales" className="soap-input soap-textarea" style={{ minHeight: 60 }} value={val('notasAdicionales')} onChange={e => up('notasAdicionales', e.target.value)} placeholder="Inmovilización temporal realizada, pruebas funcionales específicas (Lachman, cajón)…" />
+        <textarea id="traumatologia-notasAdicionales" className="soap-input soap-textarea" style={{ minHeight: 60 }} value={val('notasAdicionales')} onChange={e => up('notasAdicionales', e.target.value)} placeholder="" />
       </div>
 
       <div className="soap-nav-row" style={{ justifyContent: "flex-start", marginTop: 8 }}>

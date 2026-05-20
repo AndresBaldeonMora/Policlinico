@@ -38,7 +38,7 @@ export default function SectionEcografias({ data, setData, onPrev }: Props) {
         </div>
         <div>
           <label htmlFor="ecografias-indicacion" className="soap-section-label">Indicación clínica</label>
-          <input id="ecografias-indicacion" className="soap-input" value={val('indicacion')} onChange={e => up('indicacion', e.target.value)} placeholder="Dolor abdominal, control gestacional, masa palpable…" />
+          <input id="ecografias-indicacion" className="soap-input" value={val('indicacion')} onChange={e => up('indicacion', e.target.value)} placeholder="" />
         </div>
       </div>
       <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12, marginBottom: 14 }}>
@@ -71,7 +71,7 @@ export default function SectionEcografias({ data, setData, onPrev }: Props) {
       </p>
       <div style={{ marginBottom: 14 }}>
         <label htmlFor="ecografias-hallazgosPrincipales" className="soap-section-label">Hallazgos principales</label>
-        <textarea id="ecografias-hallazgosPrincipales" className="soap-input soap-textarea" style={{ minHeight: 100 }} value={val('hallazgosPrincipales')} onChange={e => up('hallazgosPrincipales', e.target.value)} placeholder="Hígado: tamaño y ecotextura normales / esteatosis leve-moderada-severa&#10;Vesícula: colelitiasis (tamaño, número)&#10;Páncreas: normal&#10;Riñones: quiste simple cortical der 2.5 cm&#10;Vejiga: normal&#10;Útero/ovarios: …&#10;Otros: …" />
+        <textarea id="ecografias-hallazgosPrincipales" className="soap-input soap-textarea" style={{ minHeight: 100 }} value={val('hallazgosPrincipales')} onChange={e => up('hallazgosPrincipales', e.target.value)} placeholder="" />
       </div>
 
       {/* SECCIÓN OBSTÉTRICA */}
@@ -81,33 +81,33 @@ export default function SectionEcografias({ data, setData, onPrev }: Props) {
       <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr 1fr", gap: 10, marginBottom: 14 }}>
         <div>
           <label htmlFor="ecografias-dbp" className="soap-section-label">DBP (mm)</label>
-          <input id="ecografias-dbp" className="soap-input" value={val('dbp')} onChange={e => up('dbp', e.target.value)} placeholder="Diámetro biparietal" />
+          <input id="ecografias-dbp" className="soap-input" value={val('dbp')} onChange={e => up('dbp', e.target.value)} placeholder="" />
         </div>
         <div>
           <label htmlFor="ecografias-pc" className="soap-section-label">PC (mm)</label>
-          <input id="ecografias-pc" className="soap-input" value={val('pc')} onChange={e => up('pc', e.target.value)} placeholder="Perímetro cefálico" />
+          <input id="ecografias-pc" className="soap-input" value={val('pc')} onChange={e => up('pc', e.target.value)} placeholder="" />
         </div>
         <div>
           <label htmlFor="ecografias-lf" className="soap-section-label">LF (mm)</label>
-          <input id="ecografias-lf" className="soap-input" value={val('lf')} onChange={e => up('lf', e.target.value)} placeholder="Longitud femoral" />
+          <input id="ecografias-lf" className="soap-input" value={val('lf')} onChange={e => up('lf', e.target.value)} placeholder="" />
         </div>
         <div>
           <label htmlFor="ecografias-egBiometria" className="soap-section-label">EG por biometría (semanas)</label>
-          <input id="ecografias-egBiometria" className="soap-input" value={val('egBiometria')} onChange={e => up('egBiometria', e.target.value)} placeholder="Ej: 24+3 sem" />
+          <input id="ecografias-egBiometria" className="soap-input" value={val('egBiometria')} onChange={e => up('egBiometria', e.target.value)} placeholder="" />
         </div>
       </div>
       <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 12, marginBottom: 14 }}>
         <div>
           <label htmlFor="ecografias-fcf" className="soap-section-label">FCF (lpm)</label>
-          <input id="ecografias-fcf" className="soap-input" value={val('fcf')} onChange={e => up('fcf', e.target.value)} placeholder="Normal: 120–160" />
+          <input id="ecografias-fcf" className="soap-input" value={val('fcf')} onChange={e => up('fcf', e.target.value)} placeholder="" />
         </div>
         <div>
           <label htmlFor="ecografias-ila" className="soap-section-label">Líquido amniótico (ILA cm)</label>
-          <input id="ecografias-ila" className="soap-input" value={val('ila')} onChange={e => up('ila', e.target.value)} placeholder="Normal: 8–24 cm" />
+          <input id="ecografias-ila" className="soap-input" value={val('ila')} onChange={e => up('ila', e.target.value)} placeholder="" />
         </div>
         <div>
           <label htmlFor="ecografias-placenta" className="soap-section-label">Placenta (localización)</label>
-          <input id="ecografias-placenta" className="soap-input" value={val('placenta')} onChange={e => up('placenta', e.target.value)} placeholder="Anterior / posterior / fúndica / previa…" />
+          <input id="ecografias-placenta" className="soap-input" value={val('placenta')} onChange={e => up('placenta', e.target.value)} placeholder="" />
         </div>
       </div>
 
@@ -154,18 +154,18 @@ export default function SectionEcografias({ data, setData, onPrev }: Props) {
       </p>
       <div style={{ marginBottom: 14 }}>
         <label htmlFor="ecografias-diagnosticoEcografico" className="soap-section-label">Diagnóstico ecográfico</label>
-        <textarea id="ecografias-diagnosticoEcografico" className="soap-input soap-textarea" style={{ minHeight: 60 }} value={val('diagnosticoEcografico')} onChange={e => up('diagnosticoEcografico', e.target.value)} placeholder="1. Colelitiasis simple sin colecistitis&#10;2. Quiste renal simple — Bosniak I&#10;3. Gestación única, viva, activa — 24 semanas…" />
+        <textarea id="ecografias-diagnosticoEcografico" className="soap-input soap-textarea" style={{ minHeight: 60 }} value={val('diagnosticoEcografico')} onChange={e => up('diagnosticoEcografico', e.target.value)} placeholder="" />
       </div>
       <div style={{ marginBottom: 14 }}>
         <label htmlFor="ecografias-recomendaciones" className="soap-section-label">Recomendaciones</label>
-        <input id="ecografias-recomendaciones" className="soap-input" value={val('recomendaciones')} onChange={e => up('recomendaciones', e.target.value)} placeholder="Control ecográfico en 6 meses, correlacionar con clínica, interconsulta…" />
+        <input id="ecografias-recomendaciones" className="soap-input" value={val('recomendaciones')} onChange={e => up('recomendaciones', e.target.value)} placeholder="" />
       </div>
 
       <div className="soap-section-divider" />
 
       <div style={{ marginBottom: 14 }}>
         <label htmlFor="ecografias-notasAdicionales" className="soap-section-label">Notas adicionales de Ecografía</label>
-        <textarea id="ecografias-notasAdicionales" className="soap-input soap-textarea" style={{ minHeight: 60 }} value={val('notasAdicionales')} onChange={e => up('notasAdicionales', e.target.value)} placeholder="Observaciones técnicas, comparación con estudios previos…" />
+        <textarea id="ecografias-notasAdicionales" className="soap-input soap-textarea" style={{ minHeight: 60 }} value={val('notasAdicionales')} onChange={e => up('notasAdicionales', e.target.value)} placeholder="" />
       </div>
 
       <div className="soap-nav-row" style={{ justifyContent: "flex-start", marginTop: 8 }}>

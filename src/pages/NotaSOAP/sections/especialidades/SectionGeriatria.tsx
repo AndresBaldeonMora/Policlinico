@@ -20,18 +20,18 @@ export default function SectionGeriatria({ data, setData, onPrev }: Props) {
       <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12, marginBottom: 14 }}>
         <div>
           <label htmlFor="geriatria-barthel" className="soap-section-label">Índice de Barthel AVD (0–100)</label>
-          <input id="geriatria-barthel" className="soap-input" type="number" min="0" max="100" value={val('barthel')} onChange={e => up('barthel', e.target.value)} placeholder="0=dependencia total" />
+          <input id="geriatria-barthel" className="soap-input" type="number" min="0" max="100" value={val('barthel')} onChange={e => up('barthel', e.target.value)} placeholder="" />
           <p className="soap-field-hint">100=independiente · 91–99=independiente con ayuda · ≤60=dependiente</p>
         </div>
         <div>
           <label htmlFor="geriatria-lawtonBrody" className="soap-section-label">Lawton-Brody AIVD (0–8)</label>
-          <input id="geriatria-lawtonBrody" className="soap-input" type="number" min="0" max="8" value={val('lawtonBrody')} onChange={e => up('lawtonBrody', e.target.value)} placeholder="0=dependencia total" />
+          <input id="geriatria-lawtonBrody" className="soap-input" type="number" min="0" max="8" value={val('lawtonBrody')} onChange={e => up('lawtonBrody', e.target.value)} placeholder="" />
           <p className="soap-field-hint">8=independiente en todas las AIVD</p>
         </div>
       </div>
       <div style={{ marginBottom: 14 }}>
         <label htmlFor="geriatria-actividadesLimitadas" className="soap-section-label">Actividades con mayor limitación</label>
-        <input id="geriatria-actividadesLimitadas" className="soap-input" value={val('actividadesLimitadas')} onChange={e => up('actividadesLimitadas', e.target.value)} placeholder="Bañarse, vestirse, transferencias, preparar alimentos, manejo de dinero…" />
+        <input id="geriatria-actividadesLimitadas" className="soap-input" value={val('actividadesLimitadas')} onChange={e => up('actividadesLimitadas', e.target.value)} placeholder="" />
       </div>
 
       <div className="soap-section-divider" />
@@ -42,16 +42,16 @@ export default function SectionGeriatria({ data, setData, onPrev }: Props) {
       <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12, marginBottom: 14 }}>
         <div>
           <label htmlFor="geriatria-mmse" className="soap-section-label">MMSE / Mini-Mental (puntuación /30)</label>
-          <input id="geriatria-mmse" className="soap-input" type="number" min="0" max="30" value={val('mmse')} onChange={e => up('mmse', e.target.value)} placeholder="Normal ≥24 · Deterioro &lt;24" />
+          <input id="geriatria-mmse" className="soap-input" type="number" min="0" max="30" value={val('mmse')} onChange={e => up('mmse', e.target.value)} placeholder="" />
         </div>
         <div>
           <label htmlFor="geriatria-miniCog" className="soap-section-label">Mini-Cog (0–5)</label>
-          <input id="geriatria-miniCog" className="soap-input" type="number" min="0" max="5" value={val('miniCog')} onChange={e => up('miniCog', e.target.value)} placeholder="Deterioro probable ≤2" />
+          <input id="geriatria-miniCog" className="soap-input" type="number" min="0" max="5" value={val('miniCog')} onChange={e => up('miniCog', e.target.value)} placeholder="" />
         </div>
       </div>
       <div style={{ marginBottom: 14 }}>
         <label htmlFor="geriatria-orientacion" className="soap-section-label">Orientación (persona / lugar / tiempo)</label>
-        <input id="geriatria-orientacion" className="soap-input" value={val('orientacion')} onChange={e => up('orientacion', e.target.value)} placeholder="Orientado en las 3 esferas / desorientado en…" />
+        <input id="geriatria-orientacion" className="soap-input" value={val('orientacion')} onChange={e => up('orientacion', e.target.value)} placeholder="" />
       </div>
       <div style={{ marginBottom: 14 }}>
         <label htmlFor="geriatria-quejasMemoria" className="soap-section-label">Queja de memoria (paciente / familiar)</label>
@@ -95,11 +95,11 @@ export default function SectionGeriatria({ data, setData, onPrev }: Props) {
       <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12, marginBottom: 14 }}>
         <div>
           <label htmlFor="geriatria-caidasUltimoAno" className="soap-section-label">Caídas en el último año</label>
-          <input id="geriatria-caidasUltimoAno" className="soap-input" type="number" min="0" value={val('caidasUltimoAno')} onChange={e => up('caidasUltimoAno', e.target.value)} placeholder="Número de caídas" />
+          <input id="geriatria-caidasUltimoAno" className="soap-input" type="number" min="0" value={val('caidasUltimoAno')} onChange={e => up('caidasUltimoAno', e.target.value)} placeholder="" />
         </div>
         <div>
           <label htmlFor="geriatria-tinetti" className="soap-section-label">Tinetti (0–28)</label>
-          <input id="geriatria-tinetti" className="soap-input" type="number" min="0" max="28" value={val('tinetti')} onChange={e => up('tinetti', e.target.value)} placeholder="&lt;19 = alto riesgo caída" />
+          <input id="geriatria-tinetti" className="soap-input" type="number" min="0" max="28" value={val('tinetti')} onChange={e => up('tinetti', e.target.value)} placeholder="" />
         </div>
         <div>
           <label htmlFor="geriatria-incontinenciaUrinaria" className="soap-section-label">Incontinencia urinaria</label>
@@ -180,11 +180,11 @@ export default function SectionGeriatria({ data, setData, onPrev }: Props) {
       <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12, marginBottom: 14 }}>
         <div>
           <label htmlFor="geriatria-numMedicamentos" className="soap-section-label">Número total de medicamentos</label>
-          <input id="geriatria-numMedicamentos" className="soap-input" type="number" min="0" value={val('numMedicamentos')} onChange={e => up('numMedicamentos', e.target.value)} placeholder="≥5 = polifarmacia" />
+          <input id="geriatria-numMedicamentos" className="soap-input" type="number" min="0" value={val('numMedicamentos')} onChange={e => up('numMedicamentos', e.target.value)} placeholder="" />
         </div>
         <div>
           <label htmlFor="geriatria-medicamentosInapropiados" className="soap-section-label">Medicamentos potencialmente inapropiados (Beers)</label>
-          <input id="geriatria-medicamentosInapropiados" className="soap-input" value={val('medicamentosInapropiados')} onChange={e => up('medicamentosInapropiados', e.target.value)} placeholder="BZD, anticolinérgicos, AINES, antihistamínicos 1ª gen…" />
+          <input id="geriatria-medicamentosInapropiados" className="soap-input" value={val('medicamentosInapropiados')} onChange={e => up('medicamentosInapropiados', e.target.value)} placeholder="" />
         </div>
       </div>
 
@@ -195,14 +195,14 @@ export default function SectionGeriatria({ data, setData, onPrev }: Props) {
       </p>
       <div style={{ marginBottom: 14 }}>
         <label htmlFor="geriatria-vacunacionGeriatrica" className="soap-section-label">Estado de vacunación geriátrica</label>
-        <textarea id="geriatria-vacunacionGeriatrica" className="soap-input soap-textarea" style={{ minHeight: 56 }} value={val('vacunacionGeriatrica')} onChange={e => up('vacunacionGeriatrica', e.target.value)} placeholder="Influenza: anual ✓/✗ · Neumocócica: ✓/✗ · COVID: dosis __· Tétano: año __ · Zóster: ✓/✗" />
+        <textarea id="geriatria-vacunacionGeriatrica" className="soap-input soap-textarea" style={{ minHeight: 56 }} value={val('vacunacionGeriatrica')} onChange={e => up('vacunacionGeriatrica', e.target.value)} placeholder="" />
       </div>
 
       <div className="soap-section-divider" />
 
       <div style={{ marginBottom: 14 }}>
         <label htmlFor="geriatria-notasAdicionales" className="soap-section-label">Notas adicionales de Geriatría</label>
-        <textarea id="geriatria-notasAdicionales" className="soap-input soap-textarea" style={{ minHeight: 60 }} value={val('notasAdicionales')} onChange={e => up('notasAdicionales', e.target.value)} placeholder="Fragilidad, consejería preventiva, objetivos de cuidado…" />
+        <textarea id="geriatria-notasAdicionales" className="soap-input soap-textarea" style={{ minHeight: 60 }} value={val('notasAdicionales')} onChange={e => up('notasAdicionales', e.target.value)} placeholder="" />
       </div>
 
       <div className="soap-nav-row" style={{ justifyContent: "flex-start", marginTop: 8 }}>

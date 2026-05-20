@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import Swal from "sweetalert2";
-import { AlertTriangle, Pill, FileText, Plus, ChevronDown, ChevronUp } from "lucide-react";
+import { AlertTriangle, Pill, FileText, Plus, ChevronDown, ChevronUp, Scissors, Users, Activity } from "lucide-react";
 import "./NotaSOAP.css";
 
 import type { SOAPData, ExamenOrdenado, MedicamentoSOAP, EspecialidadData } from "./types";
@@ -23,12 +23,15 @@ import { PacienteApiService } from "../../services/paciente.service";
 
 type Section = "S" | "O" | "A" | "P" | "E";
 
+// Sección "E" (Especialidad) temporalmente oculta del nav.
+// El código de SectionE se mantiene intacto para reactivarla en el futuro:
+// basta con descomentar la línea correspondiente abajo.
 const SECTIONS: { id: Section; label: string; sub: string }[] = [
   { id: "S", label: "S", sub: "Subjetivo" },
   { id: "O", label: "O", sub: "Objetivo" },
   { id: "A", label: "A", sub: "Análisis" },
   { id: "P", label: "P", sub: "Plan" },
-  { id: "E", label: "E", sub: "Especialidad" },
+  // { id: "E", label: "E", sub: "Especialidad" },
 ];
 
 function calcAge(fechaNac?: string): string {
@@ -71,6 +74,9 @@ export default function NotaSOAP() {
   const [savingHistorial,      setSavingHistorial]      = useState(false);
   const [modalHistorial,       setModalHistorial]       = useState<"alergia" | "medicamento" | "problema" | "cirugia" | "antFamiliar" | null>(null);
   const [nuevoItem,         setNuevoItem]         = useState<Record<string, string>>({});
+  const [verSuspendidos,    setVerSuspendidos]    = useState(false);
+  const [modalSuspender,    setModalSuspender]    = useState<MedicamentoHabitual | null>(null);
+  const [suspForm,          setSuspForm]          = useState({ fecha: "", motivo: "" });
 
   useEffect(() => {
     if (!citaId) return;
@@ -87,11 +93,28 @@ export default function NotaSOAP() {
           try {
             const parsed = JSON.parse(data.notasClinicas);
             if (parsed.soap) {
-              // Merge con defaults: borradores antiguos pueden no tener campos nuevos
+              // Merge profundo en TODAS las secciones para que borradores antiguos o
+              // parciales nunca dejen campos undefined (sintomas, diagnoses, medidas, etc.).
+              const sA = parsed.soap.A ?? {};
               setSoapData({
-                ...INITIAL_SOAP,
-                ...parsed.soap,
-                A: { ...INITIAL_SOAP.A, ...parsed.soap.A },
+                S: {
+                  ...INITIAL_SOAP.S,
+                  ...(parsed.soap.S ?? {}),
+                  sintomas:    { ...INITIAL_SOAP.S.sintomas,    ...((parsed.soap.S ?? {}).sintomas    ?? {}) },
+                  sinoDetalle: { ...INITIAL_SOAP.S.sinoDetalle, ...((parsed.soap.S ?? {}).sinoDetalle ?? {}) },
+                },
+                O: { ...INITIAL_SOAP.O, ...(parsed.soap.O ?? {}) },
+                A: {
+                  ...INITIAL_SOAP.A,
+                  ...sA,
+                  diagnoses:         Array.isArray(sA.diagnoses) ? sA.diagnoses : [],
+                  otrosDiagnosticos: { ...INITIAL_SOAP.A.otrosDiagnosticos, ...(sA.otrosDiagnosticos ?? {}) },
+                },
+                P: {
+                  ...INITIAL_SOAP.P,
+                  ...(parsed.soap.P ?? {}),
+                  medidas: Array.isArray((parsed.soap.P ?? {}).medidas) ? (parsed.soap.P).medidas : [],
+                },
               });
             }
             if (parsed.examenes) setExamenes(parsed.examenes);
@@ -212,16 +235,44 @@ export default function NotaSOAP() {
     await guardarHistorialClinico(alergias, medicHabituales, problemasMedicos, cirugiasPrevias, actualizados);
   };
 
+  const MOTIVOS_SUSPENSION = [
+    "Efectos adversos / intolerancia",
+    "Problema médico resuelto",
+    "Cambio de tratamiento",
+    "Indicación médica",
+    "Costo o acceso",
+    "Decisión del paciente",
+    "Otro",
+  ] as const;
+
+  const handleSuspenderMedicamento = async () => {
+    if (!modalSuspender) return;
+    const hoy = new Date().toISOString().slice(0, 10);
+    const actualizados = medicHabituales.map(m =>
+      (m._id ? m._id === modalSuspender._id : m.nombre === modalSuspender.nombre)
+        ? { ...m, activo: false, fechaSuspension: suspForm.fecha || hoy, motivoSuspension: suspForm.motivo }
+        : m
+    );
+    setMedicHabituales(actualizados);
+    setModalSuspender(null);
+    setSuspForm({ fecha: "", motivo: "" });
+    await guardarHistorialClinico(alergias, actualizados, problemasMedicos, cirugiasPrevias, antecedentesFam);
+  };
+
   const updateSection = <K extends keyof SOAPData>(sec: K, val: SOAPData[K]) =>
     setSoapData(prev => ({ ...prev, [sec]: val }));
 
   const isDone = (sec: Section) => {
-    if (sec === "E") return Object.keys(especData).some(k => especData[k] !== "");
+    if (sec === "E") return Object.keys(especData ?? {}).some(k => (especData as any)[k] !== "");
     const d = soapData[sec as Exclude<Section, "E">];
-    if (sec === "S") return !!(d as SOAPData["S"]).motivoConsulta && !!(d as SOAPData["S"]).enfermedadActual;
+    if (!d) return false;
+    if (sec === "S") return !!(d as SOAPData["S"]).motivoConsulta;
     if (sec === "O") return !!(d as SOAPData["O"]).pa_s || !!(d as SOAPData["O"]).temp;
-    if (sec === "A") return (d as SOAPData["A"]).diagnoses.length > 0;
-    if (sec === "P") return !!(examenes.length || medicamentos.length || (d as SOAPData["P"]).medidas.length);
+    if (sec === "A") return ((d as SOAPData["A"]).diagnoses?.length ?? 0) > 0;
+    if (sec === "P") {
+      const medidasLen = (d as SOAPData["P"]).medidas?.length ?? 0;
+      return !!(examenes.length || medicamentos.length || medidasLen);
+    }
     return false;
   };
 
@@ -311,42 +362,42 @@ export default function NotaSOAP() {
 
       {/* ── Left panel ── */}
       <aside className="soap-panel">
-        {/* Patient header */}
-        <div className="soap-panel-header">
+
+        {/* ── Encabezado paciente ── */}
+        <div className="sp-patient-header">
           <div className="soap-avatar">{initials(pac.nombres, pac.apellidos)}</div>
-          <div>
-            <div className="soap-panel-name">{pacNombre}</div>
-            <div className="soap-panel-meta">{calcAge(pac.fechaNacimiento)} · DNI {pac.dni}</div>
+          <div className="sp-patient-info">
+            <div className="sp-patient-name">{pacNombre}</div>
+            <div className="sp-patient-meta">{calcAge(pac.fechaNacimiento)} · DNI {pac.dni}</div>
           </div>
         </div>
 
-        {/* Cita info */}
-        <div className="soap-panel-cita">
-          <div style={{ fontWeight: 600, color: "var(--primary)", fontSize: 12 }}>Consulta #{cita._id.slice(-6).toUpperCase()}</div>
-          <div style={{ fontSize: 12, color: "var(--text-muted)", marginTop: 3 }}>
-            {new Date(cita.fecha).toLocaleDateString("es-PE")} - {cita.hora}
+        {/* ── Bloque de cita ── */}
+        <div className="sp-cita-block">
+          <div className="sp-cita-top">
+            <span className="sp-cita-id">Consulta #{cita._id.slice(-6).toUpperCase()}</span>
+            <div className="sp-cita-badges">
+              {cita.subtipoCita && (
+                <span className={`sp-badge ${cita.subtipoCita === "NUEVA" ? "sp-badge--nueva" : "sp-badge--seguimiento"}`}>
+                  {cita.subtipoCita === "NUEVA" ? "1ª Consulta" : "Seguimiento"}
+                </span>
+              )}
+              <span className={`sp-badge ${cita.estado === "PENDIENTE" ? "sp-badge--pendiente" : "sp-badge--atendida"}`}>
+                {cita.estado}
+              </span>
+            </div>
+          </div>
+          <div className="sp-cita-fecha">
+            {new Date(cita.fecha).toLocaleDateString("es-PE", { day: "2-digit", month: "long", year: "numeric" })} — {cita.hora}
           </div>
           {cita.notas && (
-            <div style={{ fontSize: 11, color: "var(--text-muted)", marginTop: 4, fontStyle: "italic" }}>
-              "{cita.notas.substring(0, 60)}{cita.notas.length > 60 ? "…" : ""}"
-            </div>
+            <div className="sp-cita-nota">"{cita.notas.substring(0, 70)}{cita.notas.length > 70 ? "…" : ""}"</div>
           )}
         </div>
 
-        {/* Estado */}
-        <div style={{ padding: "8px 14px", borderBottom: "1px solid var(--border)" }}>
-          <span style={{
-            fontSize: 11, fontWeight: 700, padding: "3px 10px", borderRadius: 10,
-            background: cita.estado === "PENDIENTE" ? "var(--warning-bg, #fffbeb)" : "var(--primary-lighter)",
-            color: cita.estado === "PENDIENTE" ? "var(--warning)" : "var(--primary)",
-          }}>
-            {cita.estado}
-          </span>
-        </div>
-
-        {/* Progress dots */}
+        {/* ── Progreso SOAP ── */}
         <div className="soap-panel-progress">
-          <div style={{ fontSize: 11, fontWeight: 700, color: "var(--text-muted)", textTransform: "uppercase", letterSpacing: 0.8, marginBottom: 10 }}>Progreso</div>
+          <div className="sp-progress-title">Progreso de la consulta</div>
           <div style={{ display: "flex", gap: 6, alignItems: "center" }}>
             {SECTIONS.map((s, i) => (
               <div key={s.id} style={{ display: "flex", alignItems: "center", flex: i < SECTIONS.length - 1 ? "1 1 0" : "none" }}>
@@ -361,166 +412,156 @@ export default function NotaSOAP() {
               </div>
             ))}
           </div>
-          <div style={{ fontSize: 11, color: "var(--text-muted)", marginTop: 8 }}>
-            Sección actual: <strong style={{ color: "var(--text-primary)" }}>{SECTIONS.find(s => s.id === section)?.sub}</strong>
+          <div className="sp-progress-current">
+            Completando: <strong>{SECTIONS.find(s => s.id === section)?.sub}</strong>
           </div>
         </div>
 
-        {/* Checklist summary */}
-        <div style={{ padding: "10px 14px" }}>
-          {SECTIONS.map(s => (
-            <div key={s.id} style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 6, fontSize: 12, cursor: "pointer" }}
-              onClick={() => setSection(s.id)}>
-              <span style={{
-                width: 16, height: 16, borderRadius: "50%", display: "flex", alignItems: "center", justifyContent: "center",
-                fontSize: 10, fontWeight: 700, flexShrink: 0,
-                background: isDone(s.id) ? "var(--success)" : "var(--border)",
-                color: isDone(s.id) ? "white" : "var(--text-muted)",
-              }}>
-                {isDone(s.id) ? "✓" : s.label}
-              </span>
-              <span style={{ color: isDone(s.id) ? "var(--text-primary)" : "var(--text-muted)", fontWeight: isDone(s.id) ? 600 : 400 }}>
-                {s.sub}
-              </span>
-            </div>
-          ))}
-        </div>
-
-        {/* ── Historial Clínico del Paciente ── */}
-        <div style={{ borderTop: "1px solid var(--border)", margin: "0 0 0 0" }}>
-          <button
-            onClick={() => setHistorialExpandido(v => !v)}
-            style={{
-              width: "100%", display: "flex", alignItems: "center", justifyContent: "space-between",
-              padding: "10px 14px", background: "none", border: "none", cursor: "pointer",
-              fontSize: 11, fontWeight: 700, color: "var(--text-muted)", textTransform: "uppercase", letterSpacing: 0.8,
-            }}
-          >
+        {/* ── Historial Clínico ── */}
+        <div className="sp-section-container">
+          <button className="sp-section-toggle" onClick={() => setHistorialExpandido(v => !v)}>
             <span>Historial Clínico</span>
             {historialExpandido ? <ChevronUp size={13} /> : <ChevronDown size={13} />}
           </button>
 
           {historialExpandido && (
-            <div style={{ padding: "0 14px 14px" }}>
-              {savingHistorial && (
-                <div style={{ fontSize: 10, color: "var(--primary)", marginBottom: 6 }}>Guardando…</div>
-              )}
+            <div className="sp-section-body">
+              {savingHistorial && <div className="sp-saving-indicator">Guardando…</div>}
 
               {/* Alergias */}
-              <div style={{ marginBottom: 10 }}>
-                <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 4 }}>
-                  <div style={{ display: "flex", alignItems: "center", gap: 5, fontSize: 11, fontWeight: 600 }}>
-                    <AlertTriangle size={11} style={{ color: "#f59e0b" }} />
+              <div className="sp-hist-group">
+                <div className="sp-hist-group-header">
+                  <div className="sp-hist-group-title">
+                    <span className="sp-hist-icon sp-hist-icon--warning"><AlertTriangle size={10} /></span>
                     Alergias
                   </div>
-                  <button onClick={() => { setNuevoItem({}); setModalHistorial("alergia"); }}
-                    style={{ background: "none", border: "none", cursor: "pointer", color: "var(--primary)", padding: 2 }}>
+                  <button className="sp-hist-add-btn" onClick={() => { setNuevoItem({}); setModalHistorial("alergia"); }} title="Agregar alergia">
                     <Plus size={12} />
                   </button>
                 </div>
                 {alergias.length === 0 ? (
-                  <p style={{ fontSize: 11, color: "var(--text-muted)", margin: 0 }}>Sin alergias registradas</p>
+                  <p className="sp-hist-empty">Sin alergias registradas</p>
                 ) : alergias.map((a) => (
-                  <div key={a._id ?? a.sustancia} style={{ fontSize: 11, padding: "2px 0", color: "var(--text-primary)", borderBottom: "1px solid var(--border)" }}>
-                    <span style={{ fontWeight: 500 }}>{a.sustancia}</span>
-                    {a.reaccion && <span style={{ color: "var(--text-muted)" }}> - {a.reaccion}</span>}
-                    <span style={{
-                      float: "right", fontSize: 10, fontWeight: 600, padding: "1px 5px", borderRadius: 4,
-                      background: a.severidad === "severa" ? "#fee2e2" : a.severidad === "moderada" ? "#fef3c7" : "#f0fdf4",
-                      color: a.severidad === "severa" ? "#dc2626" : a.severidad === "moderada" ? "#d97706" : "#16a34a",
-                    }}>
-                      {a.severidad}
-                    </span>
+                  <div key={a._id ?? a.sustancia} className="sp-hist-item">
+                    <div className="sp-hist-item-main">
+                      <span className="sp-hist-item-name">{a.sustancia}</span>
+                      {a.reaccion && <span className="sp-hist-item-sub">{a.reaccion}</span>}
+                    </div>
+                    <span className={`sp-sev-badge sp-sev--${a.severidad}`}>{a.severidad}</span>
                   </div>
                 ))}
               </div>
 
               {/* Medicamentos habituales */}
-              <div style={{ marginBottom: 10 }}>
-                <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 4 }}>
-                  <div style={{ display: "flex", alignItems: "center", gap: 5, fontSize: 11, fontWeight: 600 }}>
-                    <Pill size={11} style={{ color: "#6366f1" }} />
+              <div className="sp-hist-group">
+                <div className="sp-hist-group-header">
+                  <div className="sp-hist-group-title">
+                    <span className="sp-hist-icon sp-hist-icon--indigo"><Pill size={10} /></span>
                     Medicamentos Habituales
                   </div>
-                  <button onClick={() => { setNuevoItem({}); setModalHistorial("medicamento"); }}
-                    style={{ background: "none", border: "none", cursor: "pointer", color: "var(--primary)", padding: 2 }}>
+                  <button className="sp-hist-add-btn" onClick={() => { setNuevoItem({}); setModalHistorial("medicamento"); }} title="Agregar medicamento">
                     <Plus size={12} />
                   </button>
                 </div>
                 {medicHabituales.filter(m => m.activo).length === 0 ? (
-                  <p style={{ fontSize: 11, color: "var(--text-muted)", margin: 0 }}>Sin medicamentos registrados</p>
+                  <p className="sp-hist-empty">Sin medicamentos activos</p>
                 ) : medicHabituales.filter(m => m.activo).map((m) => (
-                  <div key={m._id ?? m.nombre} style={{ fontSize: 11, padding: "2px 0", borderBottom: "1px solid var(--border)" }}>
-                    <span style={{ fontWeight: 500 }}>{m.nombre}</span>
-                    {m.dosis && <span style={{ color: "var(--text-muted)" }}> {m.dosis}</span>}
-                    {m.frecuencia && <span style={{ color: "var(--text-muted)" }}> - {m.frecuencia}</span>}
+                  <div key={m._id ?? m.nombre} className="sp-hist-item sp-hist-item--med">
+                    <div className="sp-hist-item-main" style={{ flex: 1, minWidth: 0 }}>
+                      <span className="sp-hist-item-name">{m.nombre}</span>
+                      {(m.dosis || m.frecuencia) && (
+                        <span className="sp-hist-item-sub">
+                          {m.dosis}{m.dosis && m.frecuencia ? " · " : ""}{m.frecuencia}
+                        </span>
+                      )}
+                    </div>
+                    <button
+                      className="sp-suspender-btn"
+                      title="El paciente ya no toma este medicamento"
+                      onClick={() => { setSuspForm({ fecha: new Date().toISOString().slice(0, 10), motivo: "" }); setModalSuspender(m); }}
+                    >
+                      Ya no lo toma
+                    </button>
+                  </div>
+                ))}
+                {medicHabituales.filter(m => !m.activo).length > 0 && (
+                  <button className="sp-toggle-link" onClick={() => setVerSuspendidos(v => !v)}>
+                    {verSuspendidos ? "Ocultar" : "Ver"} suspendidos ({medicHabituales.filter(m => !m.activo).length})
+                  </button>
+                )}
+                {verSuspendidos && medicHabituales.filter(m => !m.activo).map((m) => (
+                  <div key={(m._id ?? m.nombre) + "-susp"} className="sp-hist-item sp-hist-item--suspended">
+                    <span className="sp-hist-item-name" style={{ textDecoration: "line-through" }}>{m.nombre}</span>
+                    {m.dosis && <span className="sp-hist-item-sub">{m.dosis}</span>}
+                    {m.fechaSuspension && (
+                      <span className="sp-hist-item-sub"> · {new Date(m.fechaSuspension).toLocaleDateString("es-PE")}</span>
+                    )}
                   </div>
                 ))}
               </div>
 
-              {/* Problemas médicos */}
-              <div style={{ marginBottom: 10 }}>
-                <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 4 }}>
-                  <div style={{ display: "flex", alignItems: "center", gap: 5, fontSize: 11, fontWeight: 600 }}>
-                    <FileText size={11} style={{ color: "#0ea5e9" }} />
+              {/* Problemas Médicos */}
+              <div className="sp-hist-group">
+                <div className="sp-hist-group-header">
+                  <div className="sp-hist-group-title">
+                    <span className="sp-hist-icon sp-hist-icon--sky"><Activity size={10} /></span>
                     Problemas Médicos
                   </div>
-                  <button onClick={() => { setNuevoItem({}); setModalHistorial("problema"); }}
-                    style={{ background: "none", border: "none", cursor: "pointer", color: "var(--primary)", padding: 2 }}>
+                  <button className="sp-hist-add-btn" onClick={() => { setNuevoItem({}); setModalHistorial("problema"); }} title="Agregar problema">
                     <Plus size={12} />
                   </button>
                 </div>
                 {problemasMedicos.filter(p => p.estado === "activo").length === 0 ? (
-                  <p style={{ fontSize: 11, color: "var(--text-muted)", margin: 0 }}>Sin problemas registrados</p>
+                  <p className="sp-hist-empty">Sin problemas registrados</p>
                 ) : problemasMedicos.filter(p => p.estado === "activo").map((p) => (
-                  <div key={p._id ?? p.descripcion} style={{ fontSize: 11, padding: "2px 0", borderBottom: "1px solid var(--border)" }}>
-                    <span style={{ fontWeight: 500 }}>{p.descripcion}</span>
-                    {p.fechaInicio && <span style={{ color: "var(--text-muted)", fontSize: 10 }}> ({new Date(p.fechaInicio).getFullYear()})</span>}
+                  <div key={p._id ?? p.descripcion} className="sp-hist-item">
+                    <span className="sp-hist-item-name">{p.descripcion}</span>
+                    {p.fechaInicio && <span className="sp-hist-item-year">{new Date(p.fechaInicio).getFullYear()}</span>}
                   </div>
                 ))}
               </div>
 
-              {/* Cirugías previas */}
-              <div style={{ marginBottom: 10 }}>
-                <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 4 }}>
-                  <div style={{ display: "flex", alignItems: "center", gap: 5, fontSize: 11, fontWeight: 600 }}>
-                    <span style={{ fontSize: 11, color: "#8b5cf6" }}>✂</span>
+              {/* Cirugías Previas */}
+              <div className="sp-hist-group">
+                <div className="sp-hist-group-header">
+                  <div className="sp-hist-group-title">
+                    <span className="sp-hist-icon sp-hist-icon--violet"><Scissors size={10} /></span>
                     Cirugías Previas
                   </div>
-                  <button onClick={() => { setNuevoItem({}); setModalHistorial("cirugia"); }}
-                    style={{ background: "none", border: "none", cursor: "pointer", color: "var(--primary)", padding: 2 }}>
+                  <button className="sp-hist-add-btn" onClick={() => { setNuevoItem({}); setModalHistorial("cirugia"); }} title="Agregar cirugía">
                     <Plus size={12} />
                   </button>
                 </div>
                 {cirugiasPrevias.length === 0 ? (
-                  <p style={{ fontSize: 11, color: "var(--text-muted)", margin: 0 }}>Sin cirugías registradas</p>
+                  <p className="sp-hist-empty">Sin cirugías registradas</p>
                 ) : cirugiasPrevias.map((c) => (
-                  <div key={c._id ?? c.procedimiento} style={{ fontSize: 11, padding: "2px 0", borderBottom: "1px solid var(--border)" }}>
-                    <span style={{ fontWeight: 500 }}>{c.procedimiento}</span>
-                    {c.fecha && <span style={{ color: "var(--text-muted)", fontSize: 10 }}> ({new Date(c.fecha).getFullYear()})</span>}
-                    {c.hospital && <span style={{ color: "var(--text-muted)" }}> · {c.hospital}</span>}
+                  <div key={c._id ?? c.procedimiento} className="sp-hist-item">
+                    <div className="sp-hist-item-main">
+                      <span className="sp-hist-item-name">{c.procedimiento}</span>
+                      {c.hospital && <span className="sp-hist-item-sub">{c.hospital}</span>}
+                    </div>
+                    {c.fecha && <span className="sp-hist-item-year">{new Date(c.fecha).getFullYear()}</span>}
                   </div>
                 ))}
               </div>
 
-              {/* Antecedentes familiares */}
-              <div>
-                <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 4 }}>
-                  <div style={{ display: "flex", alignItems: "center", gap: 5, fontSize: 11, fontWeight: 600 }}>
-                    <span style={{ fontSize: 11, color: "#ec4899" }}>👨‍👩‍👧</span>
+              {/* Antecedentes Familiares */}
+              <div className="sp-hist-group" style={{ marginBottom: 0 }}>
+                <div className="sp-hist-group-header">
+                  <div className="sp-hist-group-title">
+                    <span className="sp-hist-icon sp-hist-icon--pink"><Users size={10} /></span>
                     Antecedentes Familiares
                   </div>
-                  <button onClick={() => { setNuevoItem({}); setModalHistorial("antFamiliar"); }}
-                    style={{ background: "none", border: "none", cursor: "pointer", color: "var(--primary)", padding: 2 }}>
+                  <button className="sp-hist-add-btn" onClick={() => { setNuevoItem({}); setModalHistorial("antFamiliar"); }} title="Agregar antecedente">
                     <Plus size={12} />
                   </button>
                 </div>
                 {antecedentesFam.length === 0 ? (
-                  <p style={{ fontSize: 11, color: "var(--text-muted)", margin: 0 }}>Sin antecedentes registrados</p>
+                  <p className="sp-hist-empty">Sin antecedentes registrados</p>
                 ) : antecedentesFam.map((a) => (
-                  <div key={a._id ?? `${a.parentesco}-${a.condicion}`} style={{ fontSize: 11, padding: "2px 0", borderBottom: "1px solid var(--border)" }}>
-                    <span style={{ fontWeight: 500, color: "var(--text-muted)", textTransform: "capitalize" }}>{a.parentesco}:</span>
-                    <span style={{ marginLeft: 4 }}>{a.condicion}</span>
+                  <div key={a._id ?? `${a.parentesco}-${a.condicion}`} className="sp-hist-item sp-hist-item--fam">
+                    <span className="sp-hist-item-rel">{a.parentesco}:</span>
+                    <span className="sp-hist-item-cond">{a.condicion}</span>
                   </div>
                 ))}
               </div>
@@ -528,31 +569,26 @@ export default function NotaSOAP() {
           )}
         </div>
 
-        {/* ── Historial de Citas Anteriores ── */}
-        <div style={{ borderTop: "1px solid var(--border)" }}>
-          <button
-            onClick={() => setHistorialCitasExp(v => !v)}
-            style={{
-              width: "100%", display: "flex", alignItems: "center", justifyContent: "space-between",
-              padding: "10px 14px", background: "none", border: "none", cursor: "pointer",
-              fontSize: 11, fontWeight: 700, color: "var(--text-muted)", textTransform: "uppercase", letterSpacing: 0.8,
-            }}
-          >
-            <span>Citas Anteriores {historialCitas.length > 0 && <span style={{ fontWeight: 400, textTransform: "none" }}>({historialCitas.length})</span>}</span>
+        {/* ── Citas Anteriores ── */}
+        <div className="sp-section-container">
+          <button className="sp-section-toggle" onClick={() => setHistorialCitasExp(v => !v)}>
+            <span>
+              Citas Anteriores
+              {historialCitas.filter(c => c.estado === "ATENDIDA").length > 0 && (
+                <span className="sp-count-pill">{historialCitas.filter(c => c.estado === "ATENDIDA").length}</span>
+              )}
+            </span>
             {historialCitasExp ? <ChevronUp size={13} /> : <ChevronDown size={13} />}
           </button>
 
           {historialCitasExp && (
-            <div style={{ padding: "0 14px 14px" }}>
-              {historialCitas.length === 0 ? (
-                <p style={{ fontSize: 11, color: "var(--text-muted)", margin: 0 }}>Sin consultas previas registradas</p>
-              ) : historialCitas.map(c => {
+            <div className="sp-section-body">
+              {historialCitas.filter(c => c.estado === "ATENDIDA").length === 0 ? (
+                <p className="sp-hist-empty">Sin consultas previas registradas</p>
+              ) : historialCitas.filter(c => c.estado === "ATENDIDA").map(c => {
                 const esExpandida = citaExpandidaId === c._id;
                 const especialidad = (c.doctorId as any)?.especialidadId?.nombre ?? "—";
                 const doctor = c.doctorId ? `${c.doctorId.nombres} ${c.doctorId.apellidos}` : "—";
-                const estadoColor = c.estado === "ATENDIDA" ? "#16a34a" : c.estado === "CANCELADA" ? "#dc2626" : "#d97706";
-                const estadoBg = c.estado === "ATENDIDA" ? "rgba(22,163,74,0.12)" : c.estado === "CANCELADA" ? "rgba(220,38,38,0.12)" : "rgba(217,119,6,0.12)";
-
                 let motivoConsulta = "";
                 if (c.notasClinicas) {
                   try {
@@ -560,53 +596,37 @@ export default function NotaSOAP() {
                     motivoConsulta = parsed.soap?.S?.motivoConsulta ?? "";
                   } catch { /* ignorar */ }
                 }
-
                 return (
-                  <div key={c._id} style={{
-                    marginBottom: 8, border: "1px solid var(--border)", borderRadius: 8, overflow: "hidden",
-                  }}>
-                    <div
-                      onClick={() => setCitaExpandidaId(esExpandida ? null : c._id)}
-                      style={{
-                        padding: "7px 10px", cursor: "pointer",
-                        background: esExpandida ? "var(--bg-body)" : "var(--bg-card)",
-                        display: "flex", flexDirection: "column", gap: 2,
-                      }}
-                    >
-                      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
-                        <span style={{ fontSize: 11, fontWeight: 600, color: "var(--text-primary)" }}>
+                  <div key={c._id} className={`sp-cita-card${esExpandida ? " sp-cita-card--open" : ""}`}>
+                    <div className="sp-cita-card-header" onClick={() => setCitaExpandidaId(esExpandida ? null : c._id)}>
+                      <div className="sp-cita-card-left">
+                        <span className="sp-cita-card-fecha">
                           {new Date(c.fecha).toLocaleDateString("es-PE", { day: "2-digit", month: "short", year: "numeric" })}
                         </span>
-                        <span style={{
-                          fontSize: 10, fontWeight: 700, padding: "1px 6px", borderRadius: 4,
-                          background: estadoBg, color: estadoColor,
-                        }}>
-                          {c.estado}
-                        </span>
+                        <span className="sp-cita-card-esp">{especialidad}</span>
+                        <span className="sp-cita-card-dr">Dr. {doctor}</span>
                       </div>
-                      <div style={{ fontSize: 11, color: "var(--primary)", fontWeight: 500 }}>{especialidad}</div>
-                      <div style={{ fontSize: 10, color: "var(--text-muted)" }}>Dr. {doctor}</div>
+                      <span className="sp-badge sp-badge--atendida">ATENDIDA</span>
                     </div>
-
                     {esExpandida && (
-                      <div style={{ padding: "8px 10px", background: "var(--bg-body)", borderTop: "1px solid var(--border)", fontSize: 11 }}>
+                      <div className="sp-cita-card-body">
                         {motivoConsulta && (
-                          <div style={{ marginBottom: 4 }}>
-                            <span style={{ fontWeight: 700, color: "var(--text-muted)", fontSize: 10 }}>MOTIVO </span>
+                          <div className="sp-cita-detail-row">
+                            <span className="sp-cita-detail-lbl">Motivo</span>
                             <span>{motivoConsulta}</span>
                           </div>
                         )}
                         {c.diagnostico ? (
-                          <div style={{ marginBottom: 4 }}>
-                            <span style={{ fontWeight: 700, color: "var(--text-muted)", fontSize: 10 }}>DX </span>
+                          <div className="sp-cita-detail-row">
+                            <span className="sp-cita-detail-lbl">Dx</span>
                             <span>{c.diagnostico}</span>
                           </div>
                         ) : (
-                          <span style={{ color: "var(--text-muted)", fontStyle: "italic" }}>Sin diagnóstico</span>
+                          <span className="sp-hist-empty" style={{ fontStyle: "italic" }}>Sin diagnóstico registrado</span>
                         )}
                         {c.tratamiento && (
-                          <div>
-                            <span style={{ fontWeight: 700, color: "var(--text-muted)", fontSize: 10 }}>TX </span>
+                          <div className="sp-cita-detail-row">
+                            <span className="sp-cita-detail-lbl">Tx</span>
                             <span>{c.tratamiento}</span>
                           </div>
                         )}
@@ -721,6 +741,7 @@ export default function NotaSOAP() {
       {modalAbierto === "receta" && (
         <ModalReceta
           cita={cita}
+          alergias={alergias.map(a => a.sustancia)}
           onClose={() => setModalAbierto(null)}
           onAdd={m => { setMedicamentos(prev => [...prev, { ...m, _uid: crypto.randomUUID() }]); setModalAbierto(null); }}
         />
@@ -732,6 +753,84 @@ export default function NotaSOAP() {
         <ModalInterconsulta cita={cita} onClose={() => setModalAbierto(null)} />
       )}
 
+      {/* ── Modal suspender medicamento ── */}
+      {modalSuspender && (
+        <div style={{
+          position: "fixed", inset: 0, background: "rgba(0,0,0,0.45)", zIndex: 1000,
+          display: "flex", alignItems: "center", justifyContent: "center",
+        }}>
+          <div style={{
+            background: "var(--bg-card)", borderRadius: 12, padding: 24, width: 380, maxWidth: "90vw",
+            boxShadow: "var(--shadow-xl)", border: "1px solid var(--border)",
+          }}>
+            <h3 style={{ margin: "0 0 4px", fontSize: 15, fontWeight: 600, color: "var(--text-primary)" }}>
+              Suspender medicamento
+            </h3>
+            <p style={{ margin: "0 0 16px", fontSize: 12, color: "var(--text-muted)" }}>
+              El medicamento queda en el historial como suspendido, no se elimina.
+            </p>
+
+            {/* Nombre del medicamento */}
+            <div style={{
+              background: "var(--bg-muted)", borderRadius: 8, padding: "8px 12px", marginBottom: 14,
+              border: "1px solid var(--border)",
+            }}>
+              <div style={{ fontWeight: 700, fontSize: 13 }}>{modalSuspender.nombre}</div>
+              {modalSuspender.dosis && <div style={{ fontSize: 12, color: "var(--text-muted)" }}>{modalSuspender.dosis} · {modalSuspender.frecuencia}</div>}
+            </div>
+
+            <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
+              <div>
+                <label style={{ fontSize: 11, fontWeight: 600, color: "var(--text-muted)", display: "block", marginBottom: 4 }}>
+                  Fecha en que dejó de tomarlo
+                </label>
+                <input
+                  type="date"
+                  value={suspForm.fecha}
+                  max={new Date().toISOString().slice(0, 10)}
+                  onChange={e => setSuspForm(p => ({ ...p, fecha: e.target.value }))}
+                  style={{ width: "100%", padding: "8px 12px", border: "1px solid var(--border)", borderRadius: 8, fontSize: 13, background: "var(--bg-body)", color: "var(--text-primary)", boxSizing: "border-box" }}
+                />
+              </div>
+              <div>
+                <label style={{ fontSize: 11, fontWeight: 600, color: "var(--text-muted)", display: "block", marginBottom: 4 }}>
+                  Motivo de suspensión <span style={{ color: "var(--error)" }}>*</span>
+                </label>
+                <select
+                  value={suspForm.motivo}
+                  onChange={e => setSuspForm(p => ({ ...p, motivo: e.target.value }))}
+                  style={{ width: "100%", padding: "8px 12px", border: "1px solid var(--border)", borderRadius: 8, fontSize: 13, background: "var(--bg-body)", color: "var(--text-primary)" }}
+                >
+                  <option value="">Seleccionar motivo...</option>
+                  {MOTIVOS_SUSPENSION.map(m => <option key={m} value={m}>{m}</option>)}
+                </select>
+              </div>
+            </div>
+
+            <div style={{ display: "flex", gap: 10, marginTop: 20, justifyContent: "flex-end" }}>
+              <button
+                onClick={() => { setModalSuspender(null); setSuspForm({ fecha: "", motivo: "" }); }}
+                style={{ padding: "8px 16px", border: "1px solid var(--border)", borderRadius: 8, background: "var(--bg-body)", color: "var(--text-primary)", cursor: "pointer", fontSize: 13 }}
+              >
+                Cancelar
+              </button>
+              <button
+                onClick={handleSuspenderMedicamento}
+                disabled={!suspForm.motivo}
+                style={{
+                  padding: "8px 16px", border: "none", borderRadius: 8, fontSize: 13, fontWeight: 600,
+                  background: suspForm.motivo ? "var(--warning, #d97706)" : "var(--border)",
+                  color: suspForm.motivo ? "white" : "var(--text-muted)",
+                  cursor: suspForm.motivo ? "pointer" : "not-allowed",
+                }}
+              >
+                Confirmar suspensión
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* ── Modales de historial clínico ── */}
       {modalHistorial && (
         <div style={{
@@ -739,10 +838,10 @@ export default function NotaSOAP() {
           display: "flex", alignItems: "center", justifyContent: "center",
         }}>
           <div style={{
-            background: "white", borderRadius: 12, padding: 24, width: 360, maxWidth: "90vw",
-            boxShadow: "0 20px 60px rgba(0,0,0,0.25)",
+            background: "var(--bg-card)", borderRadius: 12, padding: 24, width: 360, maxWidth: "90vw",
+            boxShadow: "var(--shadow-xl)", border: "1px solid var(--border)",
           }}>
-            <h3 style={{ margin: "0 0 16px", fontSize: 15, fontWeight: 600 }}>
+            <h3 style={{ margin: "0 0 16px", fontSize: 15, fontWeight: 600, color: "var(--text-primary)" }}>
               {modalHistorial === "alergia"     && "Agregar Alergia"}
               {modalHistorial === "medicamento" && "Agregar Medicamento Habitual"}
               {modalHistorial === "problema"    && "Agregar Problema Médico"}
@@ -752,60 +851,93 @@ export default function NotaSOAP() {
 
             {modalHistorial === "alergia" && (
               <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
-                <input placeholder="Sustancia alérgena *" value={nuevoItem.sustancia || ""}
-                  onChange={e => setNuevoItem(p => ({ ...p, sustancia: e.target.value }))}
-                  style={{ padding: "8px 12px", border: "1px solid var(--border)", borderRadius: 8, fontSize: 13 }} />
-                <input placeholder="Reacción (ej: urticaria, anafilaxia)" value={nuevoItem.reaccion || ""}
-                  onChange={e => setNuevoItem(p => ({ ...p, reaccion: e.target.value }))}
-                  style={{ padding: "8px 12px", border: "1px solid var(--border)", borderRadius: 8, fontSize: 13 }} />
-                <select value={nuevoItem.severidad || "leve"}
-                  onChange={e => setNuevoItem(p => ({ ...p, severidad: e.target.value }))}
-                  style={{ padding: "8px 12px", border: "1px solid var(--border)", borderRadius: 8, fontSize: 13 }}>
-                  <option value="leve">Leve</option>
-                  <option value="moderada">Moderada</option>
-                  <option value="severa">Severa</option>
-                </select>
+                <div style={{ display: "flex", flexDirection: "column", gap: 4 }}>
+                  <label style={{ fontSize: 12, color: "var(--text-muted)", fontWeight: 500 }}>Sustancia o alergeno *</label>
+                  <input placeholder="Ej. Penicilina, mariscos, látex" value={nuevoItem.sustancia || ""}
+                    onChange={e => setNuevoItem(p => ({ ...p, sustancia: e.target.value }))}
+                    style={{ padding: "8px 12px", border: "1px solid var(--border)", borderRadius: 8, fontSize: 13, background: "var(--bg-body)", color: "var(--text-primary)" }} />
+                </div>
+                <div style={{ display: "flex", flexDirection: "column", gap: 4 }}>
+                  <label style={{ fontSize: 12, color: "var(--text-muted)", fontWeight: 500 }}>Reacción presentada *</label>
+                  <input placeholder="Ej. Urticaria, anafilaxia, edema" value={nuevoItem.reaccion || ""}
+                    onChange={e => setNuevoItem(p => ({ ...p, reaccion: e.target.value }))}
+                    style={{ padding: "8px 12px", border: "1px solid var(--border)", borderRadius: 8, fontSize: 13, background: "var(--bg-body)", color: "var(--text-primary)" }} />
+                </div>
+                <div style={{ display: "flex", flexDirection: "column", gap: 4 }}>
+                  <label style={{ fontSize: 12, color: "var(--text-muted)", fontWeight: 500 }}>Severidad</label>
+                  <select value={nuevoItem.severidad || "leve"}
+                    onChange={e => setNuevoItem(p => ({ ...p, severidad: e.target.value }))}
+                    style={{ padding: "8px 12px", border: "1px solid var(--border)", borderRadius: 8, fontSize: 13, background: "var(--bg-body)", color: "var(--text-primary)" }}>
+                    <option value="leve">Leve</option>
+                    <option value="moderada">Moderada</option>
+                    <option value="severa">Severa</option>
+                  </select>
+                </div>
               </div>
             )}
 
             {modalHistorial === "medicamento" && (
               <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
-                <input placeholder="Nombre del medicamento *" value={nuevoItem.nombre || ""}
-                  onChange={e => setNuevoItem(p => ({ ...p, nombre: e.target.value }))}
-                  style={{ padding: "8px 12px", border: "1px solid var(--border)", borderRadius: 8, fontSize: 13 }} />
-                <input placeholder="Dosis (ej: 500mg)" value={nuevoItem.dosis || ""}
-                  onChange={e => setNuevoItem(p => ({ ...p, dosis: e.target.value }))}
-                  style={{ padding: "8px 12px", border: "1px solid var(--border)", borderRadius: 8, fontSize: 13 }} />
-                <input placeholder="Frecuencia (ej: cada 8 horas)" value={nuevoItem.frecuencia || ""}
-                  onChange={e => setNuevoItem(p => ({ ...p, frecuencia: e.target.value }))}
-                  style={{ padding: "8px 12px", border: "1px solid var(--border)", borderRadius: 8, fontSize: 13 }} />
+                <div style={{ display: "flex", flexDirection: "column", gap: 4 }}>
+                  <label style={{ fontSize: 12, color: "var(--text-muted)", fontWeight: 500 }}>Nombre del medicamento *</label>
+                  <input placeholder="Ej. Metformina, Losartán, Atorvastatina" value={nuevoItem.nombre || ""}
+                    onChange={e => setNuevoItem(p => ({ ...p, nombre: e.target.value }))}
+                    style={{ padding: "8px 12px", border: "1px solid var(--border)", borderRadius: 8, fontSize: 13, background: "var(--bg-body)", color: "var(--text-primary)" }} />
+                </div>
+                <div style={{ display: "flex", flexDirection: "column", gap: 4 }}>
+                  <label style={{ fontSize: 12, color: "var(--text-muted)", fontWeight: 500 }}>Dosis</label>
+                  <input placeholder="Ej. 500 mg, 10 mg" value={nuevoItem.dosis || ""}
+                    onChange={e => setNuevoItem(p => ({ ...p, dosis: e.target.value }))}
+                    style={{ padding: "8px 12px", border: "1px solid var(--border)", borderRadius: 8, fontSize: 13, background: "var(--bg-body)", color: "var(--text-primary)" }} />
+                </div>
+                <div style={{ display: "flex", flexDirection: "column", gap: 4 }}>
+                  <label style={{ fontSize: 12, color: "var(--text-muted)", fontWeight: 500 }}>Frecuencia</label>
+                  <input placeholder="Ej. Cada 8 horas, 1 vez al día" value={nuevoItem.frecuencia || ""}
+                    onChange={e => setNuevoItem(p => ({ ...p, frecuencia: e.target.value }))}
+                    style={{ padding: "8px 12px", border: "1px solid var(--border)", borderRadius: 8, fontSize: 13, background: "var(--bg-body)", color: "var(--text-primary)" }} />
+                </div>
               </div>
             )}
 
             {modalHistorial === "problema" && (
               <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
-                <input placeholder="Descripción del problema *" value={nuevoItem.descripcion || ""}
-                  onChange={e => setNuevoItem(p => ({ ...p, descripcion: e.target.value }))}
-                  style={{ padding: "8px 12px", border: "1px solid var(--border)", borderRadius: 8, fontSize: 13 }} />
-                <input type="date" placeholder="Fecha de inicio"
-                  value={nuevoItem.fechaInicio || ""}
-                  onChange={e => setNuevoItem(p => ({ ...p, fechaInicio: e.target.value }))}
-                  style={{ padding: "8px 12px", border: "1px solid var(--border)", borderRadius: 8, fontSize: 13 }} />
+                <div style={{ display: "flex", flexDirection: "column", gap: 4 }}>
+                  <label style={{ fontSize: 12, color: "var(--text-muted)", fontWeight: 500 }}>Problema o enfermedad *</label>
+                  <input placeholder="Ej. Diabetes tipo 2, Hipertensión arterial" value={nuevoItem.descripcion || ""}
+                    onChange={e => setNuevoItem(p => ({ ...p, descripcion: e.target.value }))}
+                    style={{ padding: "8px 12px", border: "1px solid var(--border)", borderRadius: 8, fontSize: 13, background: "var(--bg-body)", color: "var(--text-primary)" }} />
+                </div>
+                <div style={{ display: "flex", flexDirection: "column", gap: 4 }}>
+                  <label style={{ fontSize: 12, color: "var(--text-muted)", fontWeight: 500 }}>Fecha de inicio (aproximada)</label>
+                  <input type="date"
+                    value={nuevoItem.fechaInicio || ""}
+                    onChange={e => setNuevoItem(p => ({ ...p, fechaInicio: e.target.value }))}
+                    style={{ padding: "8px 12px", border: "1px solid var(--border)", borderRadius: 8, fontSize: 13, background: "var(--bg-body)", color: "var(--text-primary)" }} />
+                </div>
               </div>
             )}
 
             {modalHistorial === "cirugia" && (
               <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
-                <input placeholder="Procedimiento quirúrgico *" value={nuevoItem.procedimiento || ""}
-                  onChange={e => setNuevoItem(p => ({ ...p, procedimiento: e.target.value }))}
-                  style={{ padding: "8px 12px", border: "1px solid var(--border)", borderRadius: 8, fontSize: 13 }} />
-                <input type="date" placeholder="Fecha"
-                  value={nuevoItem.fecha || ""}
-                  onChange={e => setNuevoItem(p => ({ ...p, fecha: e.target.value }))}
-                  style={{ padding: "8px 12px", border: "1px solid var(--border)", borderRadius: 8, fontSize: 13 }} />
-                <input placeholder="Hospital / Centro (opcional)" value={nuevoItem.hospital || ""}
-                  onChange={e => setNuevoItem(p => ({ ...p, hospital: e.target.value }))}
-                  style={{ padding: "8px 12px", border: "1px solid var(--border)", borderRadius: 8, fontSize: 13 }} />
+                <div style={{ display: "flex", flexDirection: "column", gap: 4 }}>
+                  <label style={{ fontSize: 12, color: "var(--text-muted)", fontWeight: 500 }}>Procedimiento quirúrgico *</label>
+                  <input placeholder="Ej. Apendicectomía, colecistectomía" value={nuevoItem.procedimiento || ""}
+                    onChange={e => setNuevoItem(p => ({ ...p, procedimiento: e.target.value }))}
+                    style={{ padding: "8px 12px", border: "1px solid var(--border)", borderRadius: 8, fontSize: 13, background: "var(--bg-body)", color: "var(--text-primary)" }} />
+                </div>
+                <div style={{ display: "flex", flexDirection: "column", gap: 4 }}>
+                  <label style={{ fontSize: 12, color: "var(--text-muted)", fontWeight: 500 }}>Fecha de la cirugía</label>
+                  <input type="date"
+                    value={nuevoItem.fecha || ""}
+                    onChange={e => setNuevoItem(p => ({ ...p, fecha: e.target.value }))}
+                    style={{ padding: "8px 12px", border: "1px solid var(--border)", borderRadius: 8, fontSize: 13, background: "var(--bg-body)", color: "var(--text-primary)" }} />
+                </div>
+                <div style={{ display: "flex", flexDirection: "column", gap: 4 }}>
+                  <label style={{ fontSize: 12, color: "var(--text-muted)", fontWeight: 500 }}>Hospital o clínica</label>
+                  <input placeholder="Ej. Hospital Loayza, Clínica San Pablo" value={nuevoItem.hospital || ""}
+                    onChange={e => setNuevoItem(p => ({ ...p, hospital: e.target.value }))}
+                    style={{ padding: "8px 12px", border: "1px solid var(--border)", borderRadius: 8, fontSize: 13, background: "var(--bg-body)", color: "var(--text-primary)" }} />
+                </div>
               </div>
             )}
 
@@ -813,7 +945,7 @@ export default function NotaSOAP() {
               <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
                 <select value={nuevoItem.parentesco || ""}
                   onChange={e => setNuevoItem(p => ({ ...p, parentesco: e.target.value }))}
-                  style={{ padding: "8px 12px", border: "1px solid var(--border)", borderRadius: 8, fontSize: 13 }}>
+                  style={{ padding: "8px 12px", border: "1px solid var(--border)", borderRadius: 8, fontSize: 13, background: "var(--bg-body)", color: "var(--text-primary)" }}>
                   <option value="">Parentesco *</option>
                   <option value="Padre">Padre</option>
                   <option value="Madre">Madre</option>
@@ -825,15 +957,18 @@ export default function NotaSOAP() {
                   <option value="Tío/a">Tío/a</option>
                   <option value="Otro">Otro</option>
                 </select>
-                <input placeholder="Condición / enfermedad *" value={nuevoItem.condicion || ""}
-                  onChange={e => setNuevoItem(p => ({ ...p, condicion: e.target.value }))}
-                  style={{ padding: "8px 12px", border: "1px solid var(--border)", borderRadius: 8, fontSize: 13 }} />
+                <div style={{ display: "flex", flexDirection: "column", gap: 4 }}>
+                  <label style={{ fontSize: 12, color: "var(--text-muted)", fontWeight: 500 }}>Condición médica *</label>
+                  <input placeholder="Ej. Diabetes tipo 2, cardiopatía, cáncer" value={nuevoItem.condicion || ""}
+                    onChange={e => setNuevoItem(p => ({ ...p, condicion: e.target.value }))}
+                    style={{ padding: "8px 12px", border: "1px solid var(--border)", borderRadius: 8, fontSize: 13, background: "var(--bg-body)", color: "var(--text-primary)" }} />
+                </div>
               </div>
             )}
 
             <div style={{ display: "flex", gap: 10, marginTop: 18, justifyContent: "flex-end" }}>
               <button onClick={() => { setModalHistorial(null); setNuevoItem({}); }}
-                style={{ padding: "8px 16px", border: "1px solid var(--border)", borderRadius: 8, background: "white", cursor: "pointer", fontSize: 13 }}>
+                style={{ padding: "8px 16px", border: "1px solid var(--border)", borderRadius: 8, background: "var(--bg-body)", color: "var(--text-primary)", cursor: "pointer", fontSize: 13 }}>
                 Cancelar
               </button>
               <button

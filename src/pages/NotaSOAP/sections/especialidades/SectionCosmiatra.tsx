@@ -19,11 +19,11 @@ export default function SectionCosmiatra({ data, setData, onPrev }: Props) {
       </p>
       <div style={{ marginBottom: 14 }}>
         <label htmlFor="cosmiatra-areaInteres" className="soap-section-label">Área(s) de interés del paciente</label>
-        <input id="cosmiatra-areaInteres" className="soap-input" value={val('areaInteres')} onChange={e => up('areaInteres', e.target.value)} placeholder="Rostro, cuello, abdomen, piernas, manos, espalda…" />
+        <input id="cosmiatra-areaInteres" className="soap-input" value={val('areaInteres')} onChange={e => up('areaInteres', e.target.value)} placeholder="" />
       </div>
       <div style={{ marginBottom: 14 }}>
         <label htmlFor="cosmiatra-objetivoEstetico" className="soap-section-label">Objetivo estético</label>
-        <input id="cosmiatra-objetivoEstetico" className="soap-input" value={val('objetivoEstetico')} onChange={e => up('objetivoEstetico', e.target.value)} placeholder="Rejuvenecimiento, hidratación, manchas, arrugas, flacidez, celulitis, cicatrices…" />
+        <input id="cosmiatra-objetivoEstetico" className="soap-input" value={val('objetivoEstetico')} onChange={e => up('objetivoEstetico', e.target.value)} placeholder="" />
       </div>
 
       <div className="soap-section-divider" />
@@ -34,11 +34,11 @@ export default function SectionCosmiatra({ data, setData, onPrev }: Props) {
       <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12, marginBottom: 14 }}>
         <div>
           <label htmlFor="cosmiatra-patologiaDerm" className="soap-section-label">Patología dermatológica previa</label>
-          <input id="cosmiatra-patologiaDerm" className="soap-input" value={val('patologiaDerm')} onChange={e => up('patologiaDerm', e.target.value)} placeholder="Acné, rosácea, vitiligo, psoriasis, dermatitis atópica…" />
+          <input id="cosmiatra-patologiaDerm" className="soap-input" value={val('patologiaDerm')} onChange={e => up('patologiaDerm', e.target.value)} placeholder="" />
         </div>
         <div>
           <label htmlFor="cosmiatra-tratamientosPrevios" className="soap-section-label">Tratamientos estéticos previos</label>
-          <input id="cosmiatra-tratamientosPrevios" className="soap-input" value={val('tratamientosPrevios')} onChange={e => up('tratamientosPrevios', e.target.value)} placeholder="Peeling, toxina botulínica, rellenos, láser, mesoterapia, IPL…" />
+          <input id="cosmiatra-tratamientosPrevios" className="soap-input" value={val('tratamientosPrevios')} onChange={e => up('tratamientosPrevios', e.target.value)} placeholder="" />
         </div>
         <div>
           <label htmlFor="cosmiatra-reaccionesAdversas" className="soap-section-label">Reacciones adversas previas</label>
@@ -68,11 +68,11 @@ export default function SectionCosmiatra({ data, setData, onPrev }: Props) {
       <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12, marginBottom: 14 }}>
         <div>
           <label htmlFor="cosmiatra-alergiasCosmeticos" className="soap-section-label">Alergias a cosméticos o medicamentos tópicos</label>
-          <input id="cosmiatra-alergiasCosmeticos" className="soap-input" value={val('alergiasCosmeticos')} onChange={e => up('alergiasCosmeticos', e.target.value)} placeholder="Parabenos, fragancias, ácido retinoico, hidroquinona…" />
+          <input id="cosmiatra-alergiasCosmeticos" className="soap-input" value={val('alergiasCosmeticos')} onChange={e => up('alergiasCosmeticos', e.target.value)} placeholder="" />
         </div>
         <div>
           <label htmlFor="cosmiatra-medicamentosSistemicos" className="soap-section-label">Uso de medicamentos sistémicos de interés</label>
-          <input id="cosmiatra-medicamentosSistemicos" className="soap-input" value={val('medicamentosSistemicos')} onChange={e => up('medicamentosSistemicos', e.target.value)} placeholder="Retinoides orales, anticoagulantes, antiagregantes, corticoides…" />
+          <input id="cosmiatra-medicamentosSistemicos" className="soap-input" value={val('medicamentosSistemicos')} onChange={e => up('medicamentosSistemicos', e.target.value)} placeholder="" />
         </div>
       </div>
 
@@ -148,11 +148,11 @@ export default function SectionCosmiatra({ data, setData, onPrev }: Props) {
       </div>
       <div style={{ marginBottom: 14 }}>
         <label htmlFor="cosmiatra-celulitis" className="soap-section-label">Celulitis (localización y grado)</label>
-        <input id="cosmiatra-celulitis" className="soap-input" value={val('celulitis')} onChange={e => up('celulitis', e.target.value)} placeholder="Grado I–IV según clasificación de Nürnberger-Müller, zona afectada…" />
+        <input id="cosmiatra-celulitis" className="soap-input" value={val('celulitis')} onChange={e => up('celulitis', e.target.value)} placeholder="" />
       </div>
       <div style={{ marginBottom: 14 }}>
         <label htmlFor="cosmiatra-lesionesRelevantes" className="soap-section-label">Lesiones relevantes observadas</label>
-        <textarea id="cosmiatra-lesionesRelevantes" className="soap-input soap-textarea" style={{ minHeight: 56 }} value={val('lesionesRelevantes')} onChange={e => up('lesionesRelevantes', e.target.value)} placeholder="Describir lesiones elementales: máculas, pápulas, cicatrices, queloides, telangiectasias, angiomas, nevos…" />
+        <textarea id="cosmiatra-lesionesRelevantes" className="soap-input soap-textarea" style={{ minHeight: 56 }} value={val('lesionesRelevantes')} onChange={e => up('lesionesRelevantes', e.target.value)} placeholder="" />
       </div>
 
       <div className="soap-section-divider" />
@@ -162,28 +162,28 @@ export default function SectionCosmiatra({ data, setData, onPrev }: Props) {
       </p>
       <div style={{ marginBottom: 14 }}>
         <label htmlFor="cosmiatra-procedimientosIndicados" className="soap-section-label">Procedimiento(s) indicado(s)</label>
-        <textarea id="cosmiatra-procedimientosIndicados" className="soap-input soap-textarea" style={{ minHeight: 56 }} value={val('procedimientosIndicados')} onChange={e => up('procedimientosIndicados', e.target.value)} placeholder="Peeling químico (TCA 15%, glicólico 30%), toxina botulínica (unidades, zona), relleno (ácido hialurónico), mesoterapia, radiofrecuencia, láser IPL…" />
+        <textarea id="cosmiatra-procedimientosIndicados" className="soap-input soap-textarea" style={{ minHeight: 56 }} value={val('procedimientosIndicados')} onChange={e => up('procedimientosIndicados', e.target.value)} placeholder="" />
       </div>
       <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12, marginBottom: 14 }}>
         <div>
           <label htmlFor="cosmiatra-numSesiones" className="soap-section-label">Número de sesiones previstas</label>
-          <input id="cosmiatra-numSesiones" className="soap-input" value={val('numSesiones')} onChange={e => up('numSesiones', e.target.value)} placeholder="Ej: 6 sesiones mensuales" />
+          <input id="cosmiatra-numSesiones" className="soap-input" value={val('numSesiones')} onChange={e => up('numSesiones', e.target.value)} placeholder="" />
         </div>
         <div>
           <label htmlFor="cosmiatra-contraindicaciones" className="soap-section-label">Contraindicaciones identificadas</label>
-          <input id="cosmiatra-contraindicaciones" className="soap-input" value={val('contraindicaciones')} onChange={e => up('contraindicaciones', e.target.value)} placeholder="Embarazo, lactancia, infección activa, herpes labial activo, isotretinoína <6m…" />
+          <input id="cosmiatra-contraindicaciones" className="soap-input" value={val('contraindicaciones')} onChange={e => up('contraindicaciones', e.target.value)} placeholder="" />
         </div>
       </div>
       <div style={{ marginBottom: 14 }}>
         <label htmlFor="cosmiatra-cuidadosCasa" className="soap-section-label">Cuidados en casa indicados</label>
-        <textarea id="cosmiatra-cuidadosCasa" className="soap-input soap-textarea" style={{ minHeight: 56 }} value={val('cuidadosCasa')} onChange={e => up('cuidadosCasa', e.target.value)} placeholder="Fotoprotección diaria SPF ≥50, hidratante, ácido retinoico nocturno, vitamina C, evitar sol post procedimiento…" />
+        <textarea id="cosmiatra-cuidadosCasa" className="soap-input soap-textarea" style={{ minHeight: 56 }} value={val('cuidadosCasa')} onChange={e => up('cuidadosCasa', e.target.value)} placeholder="" />
       </div>
 
       <div className="soap-section-divider" />
 
       <div style={{ marginBottom: 14 }}>
         <label htmlFor="cosmiatra-notasAdicionales" className="soap-section-label">Notas adicionales de Cosmiatría</label>
-        <textarea id="cosmiatra-notasAdicionales" className="soap-input soap-textarea" style={{ minHeight: 60 }} value={val('notasAdicionales')} onChange={e => up('notasAdicionales', e.target.value)} placeholder="Consentimiento informado, fotografías clínicas, próxima sesión, derivación a dermatología…" />
+        <textarea id="cosmiatra-notasAdicionales" className="soap-input soap-textarea" style={{ minHeight: 60 }} value={val('notasAdicionales')} onChange={e => up('notasAdicionales', e.target.value)} placeholder="" />
       </div>
 
       <div className="soap-nav-row" style={{ justifyContent: "flex-start", marginTop: 8 }}>

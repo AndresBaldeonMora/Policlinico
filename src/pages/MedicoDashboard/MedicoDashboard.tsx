@@ -8,12 +8,6 @@ import { MedicoApiService } from "../../services/medico.service";
 import type { CitaMedico, MedicoPerfil } from "../../services/medico.service";
 import "./MedicoDashboard.css";
 
-const calcAge = (fechaNac?: string): string => {
-  if (!fechaNac) return "";
-  const diff = Date.now() - new Date(fechaNac).getTime();
-  return `${Math.floor(diff / (365.25 * 24 * 3600 * 1000))} a.`;
-};
-
 const formatHoy = () =>
   new Date().toLocaleDateString("es-PE", {
     weekday: "long", day: "numeric", month: "long", year: "numeric",
@@ -134,7 +128,6 @@ export default function MedicoDashboard() {
               {proximas.map(c => {
                 const pac      = c.pacienteId;
                 const iniciales = `${pac.nombres[0] ?? ""}${pac.apellidos[0] ?? ""}`.toUpperCase();
-                const edad     = calcAge(pac.fechaNacimiento);
                 return (
                   <div
                     key={c._id}
@@ -155,7 +148,6 @@ export default function MedicoDashboard() {
                         )}
                       </div>
                       <div className="dash-cita-meta">
-                        {edad && <span>{edad}</span>}
                         {c.notas && (
                           <span className="dash-cita-motivo">
                             {c.notas.substring(0, 65)}{c.notas.length > 65 ? "…" : ""}

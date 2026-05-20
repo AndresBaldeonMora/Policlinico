@@ -46,7 +46,7 @@ export default function ModalReferencia({ cita, onClose }: Props) {
             <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12, marginBottom: 12 }}>
               <div>
                 <label className="soap-section-label">Establecimiento de destino <span className="soap-required">*</span></label>
-                <input className="soap-input" placeholder="Ej: Hospital Regional del Cusco"
+                <input className="soap-input" placeholder=""
                   value={form.establecimiento} onChange={e => upF("establecimiento", e.target.value)} />
               </div>
               <div>
@@ -58,7 +58,7 @@ export default function ModalReferencia({ cita, onClose }: Props) {
               </div>
               <div>
                 <label className="soap-section-label">Médico que recibirá (opcional)</label>
-                <input className="soap-input" placeholder="Ej: Dr. Marco Paredes, Cardiólogo"
+                <input className="soap-input" placeholder=""
                   value={form.medicoDestino} onChange={e => upF("medicoDestino", e.target.value)} />
               </div>
               <div>
@@ -84,33 +84,33 @@ export default function ModalReferencia({ cita, onClose }: Props) {
             <div className="modal-section-title">Información Clínica</div>
             <div style={{ marginBottom: 12 }}>
               <label className="soap-section-label">Diagnóstico actual (CIE-10)</label>
-              <input className="soap-input" placeholder="Ej: Insuficiencia cardíaca congestiva (I50.0)"
+              <input className="soap-input" placeholder=""
                 value={form.diagnostico} onChange={e => upF("diagnostico", e.target.value)} />
             </div>
             <div style={{ marginBottom: 12 }}>
               <label className="soap-section-label">Resumen de síntomas y hallazgos principales</label>
               <textarea className="soap-input soap-textarea" style={{ minHeight: 70 }}
-                placeholder="Motivo de consulta, evolución, hallazgos relevantes al examen físico..."
+                placeholder=""
                 value={form.sintomasResumen} onChange={e => upF("sintomasResumen", e.target.value)} />
             </div>
             <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12, marginBottom: 12 }}>
               <div>
                 <label className="soap-section-label">Tratamiento recibido</label>
                 <textarea className="soap-input soap-textarea" style={{ minHeight: 70 }}
-                  placeholder="Medicamentos actuales y dosis..."
+                  placeholder=""
                   value={form.tratamientoActual} onChange={e => upF("tratamientoActual", e.target.value)} />
               </div>
               <div>
                 <label className="soap-section-label">Exámenes realizados</label>
                 <textarea className="soap-input soap-textarea" style={{ minHeight: 70 }}
-                  placeholder="Resultados relevantes de laboratorio e imágenes..."
+                  placeholder=""
                   value={form.examenesRealizados} onChange={e => upF("examenesRealizados", e.target.value)} />
               </div>
             </div>
             <div>
               <label className="soap-section-label">Motivo específico de referencia <span className="soap-required">*</span></label>
               <textarea className="soap-input soap-textarea" style={{ minHeight: 80 }}
-                placeholder="¿Por qué no puede ser manejado en este nivel? Ej: Patología fuera del nivel de complejidad del establecimiento..."
+                placeholder=""
                 value={form.motivoReferencia} onChange={e => upF("motivoReferencia", e.target.value)} />
             </div>
           </div>

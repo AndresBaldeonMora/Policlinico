@@ -20,7 +20,7 @@ export default function SectionMedicinaInterna({ data, setData, onPrev }: Props)
       </p>
       <div style={{ marginBottom: 14 }}>
         <label htmlFor="medicinainterna-enfermedadesCronicas" className="soap-section-label">Enfermedades crónicas sistémicas</label>
-        <textarea id="medicinainterna-enfermedadesCronicas" className="soap-input soap-textarea" style={{ minHeight: 56 }} value={val('enfermedadesCronicas')} onChange={e => up('enfermedadesCronicas', e.target.value)} placeholder="HTA, DM2, dislipidemia, ERC, EPOC, hepatopatía…" />
+        <textarea id="medicinainterna-enfermedadesCronicas" className="soap-input soap-textarea" style={{ minHeight: 56 }} value={val('enfermedadesCronicas')} onChange={e => up('enfermedadesCronicas', e.target.value)} placeholder="" />
       </div>
       <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12, marginBottom: 14 }}>
         <div>
@@ -34,7 +34,7 @@ export default function SectionMedicinaInterna({ data, setData, onPrev }: Props)
         </div>
         <div>
           <label htmlFor="medicinainterna-exposicionOcupacional" className="soap-section-label">Exposición ocupacional</label>
-          <input id="medicinainterna-exposicionOcupacional" className="soap-input" value={val('exposicionOcupacional')} onChange={e => up('exposicionOcupacional', e.target.value)} placeholder="Sustancias tóxicas, polvo, vapores…" />
+          <input id="medicinainterna-exposicionOcupacional" className="soap-input" value={val('exposicionOcupacional')} onChange={e => up('exposicionOcupacional', e.target.value)} placeholder="" />
         </div>
       </div>
 
@@ -56,7 +56,7 @@ export default function SectionMedicinaInterna({ data, setData, onPrev }: Props)
         </div>
         <div>
           <label htmlFor="medicinainterna-paquetesAno" className="soap-section-label">Paquetes/año (si fumador)</label>
-          <input id="medicinainterna-paquetesAno" className="soap-input" value={val('paquetesAno')} onChange={e => up('paquetesAno', e.target.value)} placeholder="Ej: 10" />
+          <input id="medicinainterna-paquetesAno" className="soap-input" value={val('paquetesAno')} onChange={e => up('paquetesAno', e.target.value)} placeholder="" />
         </div>
         <div>
           <label htmlFor="medicinainterna-actividadFisica" className="soap-section-label">Actividad física</label>
@@ -72,19 +72,19 @@ export default function SectionMedicinaInterna({ data, setData, onPrev }: Props)
       <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12, marginBottom: 14 }}>
         <div>
           <label htmlFor="medicinainterna-colesterolTotal" className="soap-section-label">Colesterol total (mg/dL)</label>
-          <input id="medicinainterna-colesterolTotal" className="soap-input" value={val('colesterolTotal')} onChange={e => up('colesterolTotal', e.target.value)} placeholder="Ej: 200" />
+          <input id="medicinainterna-colesterolTotal" className="soap-input" value={val('colesterolTotal')} onChange={e => up('colesterolTotal', e.target.value)} placeholder="" />
         </div>
         <div>
           <label htmlFor="medicinainterna-perfilLipidico" className="soap-section-label">LDL / HDL / Triglicéridos (mg/dL)</label>
-          <input id="medicinainterna-perfilLipidico" className="soap-input" value={val('perfilLipidico')} onChange={e => up('perfilLipidico', e.target.value)} placeholder="Ej: LDL 130 / HDL 45 / TG 180" />
+          <input id="medicinainterna-perfilLipidico" className="soap-input" value={val('perfilLipidico')} onChange={e => up('perfilLipidico', e.target.value)} placeholder="" />
         </div>
         <div>
           <label htmlFor="medicinainterna-glucemia" className="soap-section-label">Glucemia (mg/dL)</label>
-          <input id="medicinainterna-glucemia" className="soap-input" value={val('glucemia')} onChange={e => up('glucemia', e.target.value)} placeholder="Ej: 98" />
+          <input id="medicinainterna-glucemia" className="soap-input" value={val('glucemia')} onChange={e => up('glucemia', e.target.value)} placeholder="" />
         </div>
         <div>
           <label htmlFor="medicinainterna-perimetroAbdominal" className="soap-section-label">Perímetro abdominal (cm)</label>
-          <input id="medicinainterna-perimetroAbdominal" className="soap-input" value={val('perimetroAbdominal')} onChange={e => up('perimetroAbdominal', e.target.value)} placeholder="Ej: 92" />
+          <input id="medicinainterna-perimetroAbdominal" className="soap-input" value={val('perimetroAbdominal')} onChange={e => up('perimetroAbdominal', e.target.value)} placeholder="" />
         </div>
       </div>
 
@@ -97,16 +97,16 @@ export default function SectionMedicinaInterna({ data, setData, onPrev }: Props)
       <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12, marginBottom: 14 }}>
         <div>
           <label htmlFor="medicinainterna-pesoIdeal" className="soap-section-label">Peso ideal estimado (kg)</label>
-          <input id="medicinainterna-pesoIdeal" className="soap-input" value={val('pesoIdeal')} onChange={e => up('pesoIdeal', e.target.value)} placeholder="Ej: 68" />
+          <input id="medicinainterna-pesoIdeal" className="soap-input" value={val('pesoIdeal')} onChange={e => up('pesoIdeal', e.target.value)} placeholder="" />
         </div>
         <div>
           <label htmlFor="medicinainterna-cambioPeso" className="soap-section-label">Cambio de peso reciente</label>
-          <input id="medicinainterna-cambioPeso" className="soap-input" value={val('cambioPeso')} onChange={e => up('cambioPeso', e.target.value)} placeholder="Ej: –5 kg en 3 meses" />
+          <input id="medicinainterna-cambioPeso" className="soap-input" value={val('cambioPeso')} onChange={e => up('cambioPeso', e.target.value)} placeholder="" />
         </div>
       </div>
       <div style={{ marginBottom: 14 }}>
         <label htmlFor="medicinainterna-sintomasMetabolicos" className="soap-section-label">Síntomas de desregulación metabólica</label>
-        <input id="medicinainterna-sintomasMetabolicos" className="soap-input" value={val('sintomasMetabolicos')} onChange={e => up('sintomasMetabolicos', e.target.value)} placeholder="Polidipsia, polifagia, poliuria, intolerancia al calor/frío…" />
+        <input id="medicinainterna-sintomasMetabolicos" className="soap-input" value={val('sintomasMetabolicos')} onChange={e => up('sintomasMetabolicos', e.target.value)} placeholder="" />
       </div>
 
       <div className="soap-section-divider" />
@@ -117,18 +117,18 @@ export default function SectionMedicinaInterna({ data, setData, onPrev }: Props)
       </p>
       <div style={{ marginBottom: 14 }}>
         <label htmlFor="medicinainterna-fiebrePatron" className="soap-section-label">Fiebre (patrón y duración)</label>
-        <input id="medicinainterna-fiebrePatron" className="soap-input" value={val('fiebrePatron')} onChange={e => up('fiebrePatron', e.target.value)} placeholder="Ej: Continua 5 días, T° máx 38.5°C" />
+        <input id="medicinainterna-fiebrePatron" className="soap-input" value={val('fiebrePatron')} onChange={e => up('fiebrePatron', e.target.value)} placeholder="" />
       </div>
       <div style={{ marginBottom: 14 }}>
         <label htmlFor="medicinainterna-evaluacionSistemas" className="soap-section-label">Evaluación por sistemas</label>
-        <textarea id="medicinainterna-evaluacionSistemas" className="soap-input soap-textarea" style={{ minHeight: 80 }} value={val('evaluacionSistemas')} onChange={e => up('evaluacionSistemas', e.target.value)} placeholder="Cardiovascular: …&#10;Respiratorio: …&#10;GI: …&#10;Neurológico: …&#10;Dermatológico: …" />
+        <textarea id="medicinainterna-evaluacionSistemas" className="soap-input soap-textarea" style={{ minHeight: 80 }} value={val('evaluacionSistemas')} onChange={e => up('evaluacionSistemas', e.target.value)} placeholder="" />
       </div>
 
       <div className="soap-section-divider" />
 
       <div style={{ marginBottom: 14 }}>
         <label htmlFor="medicinainterna-notasAdicionales" className="soap-section-label">Notas adicionales de Medicina Interna</label>
-        <textarea id="medicinainterna-notasAdicionales" className="soap-input soap-textarea" style={{ minHeight: 60 }} value={val('notasAdicionales')} onChange={e => up('notasAdicionales', e.target.value)} placeholder="Observaciones clínicas adicionales…" />
+        <textarea id="medicinainterna-notasAdicionales" className="soap-input soap-textarea" style={{ minHeight: 60 }} value={val('notasAdicionales')} onChange={e => up('notasAdicionales', e.target.value)} placeholder="" />
       </div>
 
       <div className="soap-nav-row" style={{ justifyContent: "flex-start", marginTop: 8 }}>

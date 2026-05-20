@@ -19,7 +19,7 @@ export default function SectionOdontologia({ data, setData, onPrev }: Props) {
       </p>
       <div style={{ marginBottom: 14 }}>
         <label htmlFor="odontologia-antDentales" className="soap-section-label">Antecedentes bucales relevantes</label>
-        <input id="odontologia-antDentales" className="soap-input" value={val('antDentales')} onChange={e => up('antDentales', e.target.value)} placeholder="Caries, enfermedad periodontal, traumatismo dental, bruxismo, implantes, prótesis…" />
+        <input id="odontologia-antDentales" className="soap-input" value={val('antDentales')} onChange={e => up('antDentales', e.target.value)} placeholder="" />
       </div>
       <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12, marginBottom: 14 }}>
         <div>
@@ -51,12 +51,12 @@ export default function SectionOdontologia({ data, setData, onPrev }: Props) {
       </p>
       <div style={{ marginBottom: 14 }}>
         <label htmlFor="odontologia-evaluacionExtraoral" className="soap-section-label">Cara y músculos masticadores</label>
-        <input id="odontologia-evaluacionExtraoral" className="soap-input" value={val('evaluacionExtraoral')} onChange={e => up('evaluacionExtraoral', e.target.value)} placeholder="Simetría, maseter, temporal, ATM (click, crepitación, apertura mm)…" />
+        <input id="odontologia-evaluacionExtraoral" className="soap-input" value={val('evaluacionExtraoral')} onChange={e => up('evaluacionExtraoral', e.target.value)} placeholder="" />
       </div>
       <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12, marginBottom: 14 }}>
         <div>
           <label htmlFor="odontologia-aperturaBucal" className="soap-section-label">Apertura bucal (mm)</label>
-          <input id="odontologia-aperturaBucal" className="soap-input" type="number" value={val('aperturaBucal')} onChange={e => up('aperturaBucal', e.target.value)} placeholder="Normal: 35–55 mm" />
+          <input id="odontologia-aperturaBucal" className="soap-input" type="number" value={val('aperturaBucal')} onChange={e => up('aperturaBucal', e.target.value)} placeholder="" />
         </div>
         <div>
           <label htmlFor="odontologia-ruidosAtm" className="soap-section-label">Ruidos ATM</label>
@@ -77,7 +77,7 @@ export default function SectionOdontologia({ data, setData, onPrev }: Props) {
       </p>
       <div style={{ marginBottom: 14 }}>
         <label htmlFor="odontologia-estadoMucosas" className="soap-section-label">Estado de mucosas (labios, encías, lengua, paladar)</label>
-        <textarea id="odontologia-estadoMucosas" className="soap-input soap-textarea" style={{ minHeight: 56 }} value={val('estadoMucosas')} onChange={e => up('estadoMucosas', e.target.value)} placeholder="Color, lesiones, inflamación gingival, sangrado, úlceras, leucoplasias…" />
+        <textarea id="odontologia-estadoMucosas" className="soap-input soap-textarea" style={{ minHeight: 56 }} value={val('estadoMucosas')} onChange={e => up('estadoMucosas', e.target.value)} placeholder="" />
       </div>
       <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr 1fr", gap: 10, marginBottom: 14 }}>
         <div>
@@ -99,7 +99,7 @@ export default function SectionOdontologia({ data, setData, onPrev }: Props) {
       </div>
       <div style={{ marginBottom: 14 }}>
         <label htmlFor="odontologia-indiceCaod" className="soap-section-label">Índice CAOD (calculado)</label>
-        <input id="odontologia-indiceCaod" className="soap-input" value={val('indiceCaod')} onChange={e => up('indiceCaod', e.target.value)} placeholder="C+A+O = total (ej: 2+3+4 = 9)" />
+        <input id="odontologia-indiceCaod" className="soap-input" value={val('indiceCaod')} onChange={e => up('indiceCaod', e.target.value)} placeholder="" />
       </div>
 
       <div className="soap-section-divider" />
@@ -119,7 +119,7 @@ export default function SectionOdontologia({ data, setData, onPrev }: Props) {
         </div>
         <div>
           <label htmlFor="odontologia-bolsasPeriodontales" className="soap-section-label">Profundidad de bolsas (máx. mm)</label>
-          <input id="odontologia-bolsasPeriodontales" className="soap-input" value={val('bolsasPeriodontales')} onChange={e => up('bolsasPeriodontales', e.target.value)} placeholder="Ej: 4 mm sector posterior" />
+          <input id="odontologia-bolsasPeriodontales" className="soap-input" value={val('bolsasPeriodontales')} onChange={e => up('bolsasPeriodontales', e.target.value)} placeholder="" />
         </div>
         <div>
           <label htmlFor="odontologia-movilidadDental" className="soap-section-label">Movilidad dental</label>
@@ -133,7 +133,7 @@ export default function SectionOdontologia({ data, setData, onPrev }: Props) {
         </div>
         <div>
           <label htmlFor="odontologia-recesionGingival" className="soap-section-label">Recesión gingival</label>
-          <input id="odontologia-recesionGingival" className="soap-input" value={val('recesionGingival')} onChange={e => up('recesionGingival', e.target.value)} placeholder="Ej: Clase I Miller en dientes 13, 23" />
+          <input id="odontologia-recesionGingival" className="soap-input" value={val('recesionGingival')} onChange={e => up('recesionGingival', e.target.value)} placeholder="" />
         </div>
       </div>
 
@@ -155,11 +155,11 @@ export default function SectionOdontologia({ data, setData, onPrev }: Props) {
         </div>
         <div>
           <label htmlFor="odontologia-overjet" className="soap-section-label">Overjet (mm)</label>
-          <input id="odontologia-overjet" className="soap-input" value={val('overjet')} onChange={e => up('overjet', e.target.value)} placeholder="Normal: 2–4 mm" />
+          <input id="odontologia-overjet" className="soap-input" value={val('overjet')} onChange={e => up('overjet', e.target.value)} placeholder="" />
         </div>
         <div>
           <label htmlFor="odontologia-overbite" className="soap-section-label">Overbite (mm)</label>
-          <input id="odontologia-overbite" className="soap-input" value={val('overbite')} onChange={e => up('overbite', e.target.value)} placeholder="Normal: 2–4 mm" />
+          <input id="odontologia-overbite" className="soap-input" value={val('overbite')} onChange={e => up('overbite', e.target.value)} placeholder="" />
         </div>
       </div>
 
@@ -170,18 +170,18 @@ export default function SectionOdontologia({ data, setData, onPrev }: Props) {
       </p>
       <div style={{ marginBottom: 14 }}>
         <label htmlFor="odontologia-planTratamientoOdonto" className="soap-section-label">Tratamientos indicados</label>
-        <textarea id="odontologia-planTratamientoOdonto" className="soap-input soap-textarea" style={{ minHeight: 60 }} value={val('planTratamientoOdonto')} onChange={e => up('planTratamientoOdonto', e.target.value)} placeholder="Detartraje, fluorización, obturaciones, endodoncia, exodoncia, prótesis, ortodoncia…" />
+        <textarea id="odontologia-planTratamientoOdonto" className="soap-input soap-textarea" style={{ minHeight: 60 }} value={val('planTratamientoOdonto')} onChange={e => up('planTratamientoOdonto', e.target.value)} placeholder="" />
       </div>
       <div style={{ marginBottom: 14 }}>
         <label htmlFor="odontologia-educacionHigiene" className="soap-section-label">Educación en higiene indicada</label>
-        <input id="odontologia-educacionHigiene" className="soap-input" value={val('educacionHigiene')} onChange={e => up('educacionHigiene', e.target.value)} placeholder="Técnica de cepillado, seda dental, enjuague, dieta…" />
+        <input id="odontologia-educacionHigiene" className="soap-input" value={val('educacionHigiene')} onChange={e => up('educacionHigiene', e.target.value)} placeholder="" />
       </div>
 
       <div className="soap-section-divider" />
 
       <div style={{ marginBottom: 14 }}>
         <label htmlFor="odontologia-notasAdicionales" className="soap-section-label">Notas adicionales de Odontología</label>
-        <textarea id="odontologia-notasAdicionales" className="soap-input soap-textarea" style={{ minHeight: 60 }} value={val('notasAdicionales')} onChange={e => up('notasAdicionales', e.target.value)} placeholder="Observaciones, radiografías solicitadas, consentimiento…" />
+        <textarea id="odontologia-notasAdicionales" className="soap-input soap-textarea" style={{ minHeight: 60 }} value={val('notasAdicionales')} onChange={e => up('notasAdicionales', e.target.value)} placeholder="" />
       </div>
 
       <div className="soap-nav-row" style={{ justifyContent: "flex-start", marginTop: 8 }}>

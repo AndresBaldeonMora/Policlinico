@@ -14,15 +14,37 @@ interface Props {
   onOpenModal: (m: string) => void;
 }
 
+// Medidas no farmacológicas más comunes en atención primaria.
+// Base: GPC MINSA (HTA, diabetes, obesidad), recomendaciones OMS para riesgo
+// cardiovascular y guías nacionales de promoción de la salud.
 const MEDIDAS = [
+  // Dieta y nutrición
+  "Dieta hiposódica (< 2 g sal/día)",
+  "Dieta hipograsa",
+  "Dieta para diabético (control glucémico)",
+  "Dieta hipocalórica (reducción de peso)",
+  "Hidratación oral abundante (1.5 – 2 L/día)",
+  // Actividad física y peso
+  "Actividad física aeróbica ≥ 150 min/semana",
+  "Reducción de peso corporal",
+  // Hábitos
+  "Cese del consumo de tabaco",
+  "Reducción del consumo de alcohol",
+  "Higiene del sueño",
+  // Reposo y postura
   "Reposo relativo",
-  "Restricción de sal (<2 g/día)",
-  "Restricción hídrica (especificar mL/día)",
-  "Dieta hipocalórica",
-  "Actividad física moderada",
-  "Elevar miembros inferiores",
-  "Monitoreo de presión en domicilio",
-  "Dejar de fumar",
+  "Reposo absoluto",
+  "Elevación de miembros inferiores",
+  "Aplicación de frío local",
+  "Aplicación de calor local",
+  // Monitoreo en domicilio
+  "Monitoreo domiciliario de presión arterial",
+  "Monitoreo domiciliario de glucemia capilar",
+  // Educación y adherencia
+  "Educación en signos de alarma",
+  "Adherencia estricta al tratamiento",
+  "Vacunación según calendario nacional",
+  "Apoyo en salud mental",
 ];
 
 const TIEMPOS_SEGUIMIENTO = [
@@ -34,10 +56,12 @@ export default function SectionP({
   examenes, setExamenes, medicamentos, setMedicamentos, onOpenModal,
 }: Props) {
   const up = <K extends keyof SectionPData>(key: K, val: SectionPData[K]) =>
-    setData(prev => ({ ...prev, [key]: val }));
+    setData({ ...data, [key]: val });
 
-  const toggleMedida = (m: string) =>
-    setData(prev => ({ ...prev, medidas: prev.medidas.includes(m) ? prev.medidas.filter(x => x !== m) : [...prev.medidas, m] }));
+  const toggleMedida = (m: string) => {
+    const medidas = data.medidas ?? [];
+    setData({ ...data, medidas: medidas.includes(m) ? medidas.filter(x => x !== m) : [...medidas, m] });
+  };
 
   const removeExamen = (i: number) => setExamenes(prev => prev.filter((_, idx) => idx !== i));
   const removeMed    = (i: number) => setMedicamentos(prev => prev.filter((_, idx) => idx !== i));
@@ -131,7 +155,7 @@ export default function SectionP({
           <textarea
             className="soap-input soap-textarea"
             style={{ minHeight: 56 }}
-            placeholder="Indicaciones adicionales para el paciente..."
+            placeholder=""
             value={data.otrasIndicaciones}
             onChange={e => up("otrasIndicaciones", e.target.value)}
           />
@@ -166,7 +190,7 @@ export default function SectionP({
           <textarea
             className="soap-input soap-textarea"
             style={{ minHeight: 70 }}
-            placeholder="Indicar al paciente que consulte urgente si: disnea en reposo, PA >180/110, dolor torácico..."
+            placeholder=""
             value={data.criteriosAlarma}
             onChange={e => up("criteriosAlarma", e.target.value)}
           />

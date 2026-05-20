@@ -20,11 +20,11 @@ export default function SectionCardiologia({ data, setData, onPrev }: Props) {
       </p>
       <div style={{ marginBottom: 14 }}>
         <label htmlFor="cardiologia-antCardiologicos" className="soap-section-label">Enfermedades cardiovasculares previas</label>
-        <input id="cardiologia-antCardiologicos" className="soap-input" value={val('antCardiologicos')} onChange={e => up('antCardiologicos', e.target.value)} placeholder="Infarto, angina, arritmia, IC, cirugía cardíaca, marcapasos…" />
+        <input id="cardiologia-antCardiologicos" className="soap-input" value={val('antCardiologicos')} onChange={e => up('antCardiologicos', e.target.value)} placeholder="" />
       </div>
       <div style={{ marginBottom: 14 }}>
         <label htmlFor="cardiologia-antFamCardiologicos" className="soap-section-label">Antecedentes familiares de ECV precoz</label>
-        <input id="cardiologia-antFamCardiologicos" className="soap-input" value={val('antFamCardiologicos')} onChange={e => up('antFamCardiologicos', e.target.value)} placeholder="Infarto <55 años (hombre) / <65 años (mujer) en familiar directo" />
+        <input id="cardiologia-antFamCardiologicos" className="soap-input" value={val('antFamCardiologicos')} onChange={e => up('antFamCardiologicos', e.target.value)} placeholder="" />
       </div>
 
       <div className="soap-section-divider" />
@@ -36,11 +36,11 @@ export default function SectionCardiologia({ data, setData, onPrev }: Props) {
       <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 12, marginBottom: 14 }}>
         <div>
           <label className="soap-section-label">HTA (años de evolución)</label>
-          <input className="soap-input" value={val('htaAños')} onChange={e => up('htaAños', e.target.value)} placeholder="Ej: 5 años" />
+          <input className="soap-input" value={val('htaAños')} onChange={e => up('htaAños', e.target.value)} placeholder="" />
         </div>
         <div>
           <label htmlFor="cardiologia-dmTipo" className="soap-section-label">DM (tipo y años)</label>
-          <input id="cardiologia-dmTipo" className="soap-input" value={val('dmTipo')} onChange={e => up('dmTipo', e.target.value)} placeholder="Ej: DM2 — 3 años" />
+          <input id="cardiologia-dmTipo" className="soap-input" value={val('dmTipo')} onChange={e => up('dmTipo', e.target.value)} placeholder="" />
         </div>
         <div>
           <label htmlFor="cardiologia-tabaquismo" className="soap-section-label">Tabaquismo</label>
@@ -53,15 +53,15 @@ export default function SectionCardiologia({ data, setData, onPrev }: Props) {
         </div>
         <div>
           <label htmlFor="cardiologia-paquetesAno" className="soap-section-label">Paquetes/año</label>
-          <input id="cardiologia-paquetesAno" className="soap-input" value={val('paquetesAno')} onChange={e => up('paquetesAno', e.target.value)} placeholder="Ej: 15" />
+          <input id="cardiologia-paquetesAno" className="soap-input" value={val('paquetesAno')} onChange={e => up('paquetesAno', e.target.value)} placeholder="" />
         </div>
         <div>
           <label htmlFor="cardiologia-dislipidemia" className="soap-section-label">Dislipidemia (valores)</label>
-          <input id="cardiologia-dislipidemia" className="soap-input" value={val('dislipidemia')} onChange={e => up('dislipidemia', e.target.value)} placeholder="Ej: LDL 160 / HDL 38 / TG 250" />
+          <input id="cardiologia-dislipidemia" className="soap-input" value={val('dislipidemia')} onChange={e => up('dislipidemia', e.target.value)} placeholder="" />
         </div>
         <div>
           <label htmlFor="cardiologia-perimetroAbdominal" className="soap-section-label">Perímetro abdominal (cm)</label>
-          <input id="cardiologia-perimetroAbdominal" className="soap-input" value={val('perimetroAbdominal')} onChange={e => up('perimetroAbdominal', e.target.value)} placeholder="Ej: 98" />
+          <input id="cardiologia-perimetroAbdominal" className="soap-input" value={val('perimetroAbdominal')} onChange={e => up('perimetroAbdominal', e.target.value)} placeholder="" />
         </div>
       </div>
 
@@ -73,7 +73,7 @@ export default function SectionCardiologia({ data, setData, onPrev }: Props) {
       </p>
       <div style={{ marginBottom: 14 }}>
         <label htmlFor="cardiologia-dolorToracico" className="soap-section-label">Dolor torácico (carácter, localización, irradiación, factores)</label>
-        <textarea id="cardiologia-dolorToracico" className="soap-input soap-textarea" style={{ minHeight: 60 }} value={val('dolorToracico')} onChange={e => up('dolorToracico', e.target.value)} placeholder="Opresivo retroesternal, irradiación al brazo izq., con el esfuerzo, dura 10 min…" />
+        <textarea id="cardiologia-dolorToracico" className="soap-input soap-textarea" style={{ minHeight: 60 }} value={val('dolorToracico')} onChange={e => up('dolorToracico', e.target.value)} placeholder="" />
       </div>
       <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12, marginBottom: 14 }}>
         <div>
@@ -102,16 +102,16 @@ export default function SectionCardiologia({ data, setData, onPrev }: Props) {
       <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12, marginBottom: 14 }}>
         <div>
           <label htmlFor="cardiologia-palpitaciones" className="soap-section-label">Palpitaciones</label>
-          <input id="cardiologia-palpitaciones" className="soap-input" value={val('palpitaciones')} onChange={e => up('palpitaciones', e.target.value)} placeholder="Frecuencia, regularidad, duración…" />
+          <input id="cardiologia-palpitaciones" className="soap-input" value={val('palpitaciones')} onChange={e => up('palpitaciones', e.target.value)} placeholder="" />
         </div>
         <div>
           <label htmlFor="cardiologia-sincope" className="soap-section-label">Síncope / Presíncope</label>
-          <input id="cardiologia-sincope" className="soap-input" value={val('sincope')} onChange={e => up('sincope', e.target.value)} placeholder="Sí/No — contexto, frecuencia…" />
+          <input id="cardiologia-sincope" className="soap-input" value={val('sincope')} onChange={e => up('sincope', e.target.value)} placeholder="" />
         </div>
       </div>
       <div style={{ marginBottom: 14 }}>
         <label htmlFor="cardiologia-edemaMI" className="soap-section-label">Edema de miembros inferiores</label>
-        <input id="cardiologia-edemaMI" className="soap-input" value={val('edemaMI')} onChange={e => up('edemaMI', e.target.value)} placeholder="Grado, localización, horario…" />
+        <input id="cardiologia-edemaMI" className="soap-input" value={val('edemaMI')} onChange={e => up('edemaMI', e.target.value)} placeholder="" />
       </div>
 
       <div className="soap-section-divider" />
@@ -123,19 +123,19 @@ export default function SectionCardiologia({ data, setData, onPrev }: Props) {
       <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12, marginBottom: 14 }}>
         <div>
           <label htmlFor="cardiologia-paBilateral" className="soap-section-label">PA brazo derecho / brazo izquierdo</label>
-          <input id="cardiologia-paBilateral" className="soap-input" value={val('paBilateral')} onChange={e => up('paBilateral', e.target.value)} placeholder="Ej: 140/90 / 138/88" />
+          <input id="cardiologia-paBilateral" className="soap-input" value={val('paBilateral')} onChange={e => up('paBilateral', e.target.value)} placeholder="" />
         </div>
         <div>
           <label htmlFor="cardiologia-auscultacionCardiaca" className="soap-section-label">Auscultación cardíaca</label>
-          <input id="cardiologia-auscultacionCardiaca" className="soap-input" value={val('auscultacionCardiaca')} onChange={e => up('auscultacionCardiaca', e.target.value)} placeholder="Soplos, clicks, R3/R4, roces…" />
+          <input id="cardiologia-auscultacionCardiaca" className="soap-input" value={val('auscultacionCardiaca')} onChange={e => up('auscultacionCardiaca', e.target.value)} placeholder="" />
         </div>
         <div>
           <label htmlFor="cardiologia-pulsosPeriferico" className="soap-section-label">Pulsos periféricos</label>
-          <input id="cardiologia-pulsosPeriferico" className="soap-input" value={val('pulsosPeriferico')} onChange={e => up('pulsosPeriferico', e.target.value)} placeholder="Simétricos / asimétricos / disminuidos" />
+          <input id="cardiologia-pulsosPeriferico" className="soap-input" value={val('pulsosPeriferico')} onChange={e => up('pulsosPeriferico', e.target.value)} placeholder="" />
         </div>
         <div>
           <label htmlFor="cardiologia-pvj" className="soap-section-label">Presión venosa yugular</label>
-          <input id="cardiologia-pvj" className="soap-input" value={val('pvj')} onChange={e => up('pvj', e.target.value)} placeholder="Normal / Elevada" />
+          <input id="cardiologia-pvj" className="soap-input" value={val('pvj')} onChange={e => up('pvj', e.target.value)} placeholder="" />
         </div>
       </div>
 
@@ -147,20 +147,20 @@ export default function SectionCardiologia({ data, setData, onPrev }: Props) {
       </p>
       <div style={{ marginBottom: 14 }}>
         <label htmlFor="cardiologia-ecgHallazgos" className="soap-section-label">ECG (hallazgos principales)</label>
-        <textarea id="cardiologia-ecgHallazgos" className="soap-input soap-textarea" style={{ minHeight: 56 }} value={val('ecgHallazgos')} onChange={e => up('ecgHallazgos', e.target.value)} placeholder="Ritmo sinusal / FA / Bloqueo / Elevación ST / Hipertrofia VI…" />
+        <textarea id="cardiologia-ecgHallazgos" className="soap-input soap-textarea" style={{ minHeight: 56 }} value={val('ecgHallazgos')} onChange={e => up('ecgHallazgos', e.target.value)} placeholder="" />
       </div>
       <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12, marginBottom: 14 }}>
         <div>
           <label htmlFor="cardiologia-fevi" className="soap-section-label">Fracción de eyección (FEVI %)</label>
-          <input id="cardiologia-fevi" className="soap-input" value={val('fevi')} onChange={e => up('fevi', e.target.value)} placeholder="Ej: 55%" />
+          <input id="cardiologia-fevi" className="soap-input" value={val('fevi')} onChange={e => up('fevi', e.target.value)} placeholder="" />
         </div>
         <div>
           <label htmlFor="cardiologia-troponinas" className="soap-section-label">Troponinas</label>
-          <input id="cardiologia-troponinas" className="soap-input" value={val('troponinas')} onChange={e => up('troponinas', e.target.value)} placeholder="Valor / Negativo / No solicitado" />
+          <input id="cardiologia-troponinas" className="soap-input" value={val('troponinas')} onChange={e => up('troponinas', e.target.value)} placeholder="" />
         </div>
         <div>
           <label htmlFor="cardiologia-bnp" className="soap-section-label">BNP / NT-proBNP</label>
-          <input id="cardiologia-bnp" className="soap-input" value={val('bnp')} onChange={e => up('bnp', e.target.value)} placeholder="Valor / No solicitado" />
+          <input id="cardiologia-bnp" className="soap-input" value={val('bnp')} onChange={e => up('bnp', e.target.value)} placeholder="" />
         </div>
       </div>
 
@@ -168,7 +168,7 @@ export default function SectionCardiologia({ data, setData, onPrev }: Props) {
 
       <div style={{ marginBottom: 14 }}>
         <label htmlFor="cardiologia-notasAdicionales" className="soap-section-label">Notas adicionales de Cardiología</label>
-        <textarea id="cardiologia-notasAdicionales" className="soap-input soap-textarea" style={{ minHeight: 60 }} value={val('notasAdicionales')} onChange={e => up('notasAdicionales', e.target.value)} placeholder="Observaciones clínicas adicionales…" />
+        <textarea id="cardiologia-notasAdicionales" className="soap-input soap-textarea" style={{ minHeight: 60 }} value={val('notasAdicionales')} onChange={e => up('notasAdicionales', e.target.value)} placeholder="" />
       </div>
 
       <div className="soap-nav-row" style={{ justifyContent: "flex-start", marginTop: 8 }}>

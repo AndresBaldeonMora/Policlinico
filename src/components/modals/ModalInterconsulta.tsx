@@ -46,7 +46,7 @@ export default function ModalInterconsulta({ cita, onClose }: Props) {
             </div>
             <div>
               <label className="soap-section-label">Médico solicitado (opcional)</label>
-              <input className="soap-input" placeholder="Nombre del especialista..."
+              <input className="soap-input" placeholder=""
                 value={form.medicoSolicitado} onChange={e => upF("medicoSolicitado", e.target.value)} />
             </div>
           </div>
@@ -72,21 +72,21 @@ export default function ModalInterconsulta({ cita, onClose }: Props) {
           <div style={{ marginBottom: 12 }}>
             <label className="soap-section-label">Motivo de la interconsulta <span className="soap-required">*</span></label>
             <textarea className="soap-input soap-textarea" style={{ minHeight: 70 }}
-              placeholder="Descripción del problema clínico que motiva la consulta..."
+              placeholder=""
               value={form.motivoConsulta} onChange={e => upF("motivoConsulta", e.target.value)} />
           </div>
 
           <div style={{ marginBottom: 12 }}>
             <label className="soap-section-label">Pregunta clínica específica</label>
             <textarea className="soap-input soap-textarea" style={{ minHeight: 60 }}
-              placeholder="¿Qué necesito saber del especialista? Ej: ¿Requiere ajuste de dosis de Furosemida? ¿Amerita cateterismo?"
+              placeholder=""
               value={form.preguntaClinica} onChange={e => upF("preguntaClinica", e.target.value)} />
           </div>
 
           <div>
             <label className="soap-section-label">Información clínica relevante</label>
             <textarea className="soap-input soap-textarea" style={{ minHeight: 70 }}
-              placeholder="Diagnóstico actual, medicamentos, resultados de exámenes relevantes..."
+              placeholder=""
               value={form.informacionRelevante} onChange={e => upF("informacionRelevante", e.target.value)} />
           </div>
         </div>

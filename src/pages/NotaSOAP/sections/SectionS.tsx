@@ -1,3 +1,4 @@
+import { useState } from "react";
 import type { Dispatch, SetStateAction } from "react";
 import type { SectionSData } from "../types";
 
@@ -8,83 +9,159 @@ interface Props {
 }
 
 const SINTOMAS = [
-  { id: "fiebre",        label: "Fiebre",            det: "Temperatura máxima (°C)" },
-  { id: "tos",           label: "Tos",                det: "Características (seca, productiva...)" },
-  { id: "disnea",        label: "Disnea",             det: "Tipo: esfuerzo / reposo / nocturna" },
-  { id: "dolorToracico", label: "Dolor torácico",     det: "Características, irradiación" },
-  { id: "palpitaciones", label: "Palpitaciones",      det: null },
-  { id: "nauseas",       label: "Náuseas / vómitos",  det: null },
-  { id: "pesoChange",    label: "Cambios en peso",    det: "¿Cuánto? ¿En cuánto tiempo?" },
-  { id: "dolor",         label: "Dolor",              det: "Localización + intensidad (0-10)" },
-  { id: "urinario",      label: "Cambios urinarios",  det: null },
-  { id: "apetito",       label: "Cambios en apetito", det: null },
+  { id: "fiebre",        label: "Fiebre" },
+  { id: "tos",           label: "Tos" },
+  { id: "disnea",        label: "Disnea" },
+  { id: "dolorToracico", label: "Dolor torácico" },
+  { id: "palpitaciones", label: "Palpitaciones" },
+  { id: "nauseas",       label: "Náuseas / vómitos" },
+  { id: "pesoChange",    label: "Cambios en peso" },
+  { id: "dolor",         label: "Dolor" },
+  { id: "urinario",      label: "Cambios urinarios" },
+  { id: "apetito",       label: "Cambios en apetito" },
 ] as const;
 
+const UNIDADES = ["días", "semanas", "meses", "años"] as const;
+
+// Parsea "5 días" → { num: "5", unidad: "días" }
+function parseTiempo(val: string | undefined | null): { num: string; unidad: string } {
+  const m = (val ?? "").match(/^(\d+)\s*(días|semanas|meses|años)$/);
+  if (m) return { num: m[1], unidad: m[2] };
+  return { num: "", unidad: "días" };
+}
+
 export default function SectionS({ data, setData, onNext }: Props) {
+  const parsed = parseTiempo(data.tiempoEnfermedad);
+  const [tiempoNum,    setTiempoNum]    = useState(parsed.num);
+  const [tiempoUnidad, setTiempoUnidad] = useState(parsed.unidad || "días");
+
   const up = <K extends keyof SectionSData>(key: K, val: SectionSData[K]) =>
-    setData(prev => ({ ...prev, [key]: val }));
+    setData({ ...data, [key]: val });
 
   const upSintoma = (id: string, val: "si" | "no") =>
-    setData(prev => ({ ...prev, sintomas: { ...prev.sintomas, [id]: val } }));
+    setData({ ...data, sintomas: { ...(data.sintomas ?? {}), [id]: val } });
 
-  const upDetalle = (id: string, val: string) =>
-    setData(prev => ({ ...prev, sinoDetalle: { ...prev.sinoDetalle, [id]: val } }));
+  const handleTiempoNum = (val: string) => {
+    setTiempoNum(val);
+    if (val && tiempoUnidad) up("tiempoEnfermedad", `${val} ${tiempoUnidad}`);
+    else up("tiempoEnfermedad", "");
+  };
+
+  const handleTiempoUnidad = (val: string) => {
+    setTiempoUnidad(val);
+    if (tiempoNum && val) up("tiempoEnfermedad", `${tiempoNum} ${val}`);
+  };
 
   return (
     <div className="soap-content-inner">
-      {/* Motivo */}
+      {/* Motivo de consulta */}
       <div style={{ marginBottom: 18 }}>
         <label className="soap-section-label">
           Motivo de consulta <span className="soap-required">*</span>
         </label>
         <textarea
           className="soap-input soap-textarea"
-          style={{ minHeight: 60 }}
-          placeholder='"Refiere edemas en piernas y sensación de ahogo al caminar..."'
+          style={{ minHeight: 90 }}
+          placeholder=""
           value={data.motivoConsulta}
           onChange={e => up("motivoConsulta", e.target.value)}
         />
         <p className="soap-field-hint">Registre en primera persona cuando sea posible</p>
       </div>
 
-      {/* Tiempo de enfermedad */}
-      <div style={{ marginBottom: 18 }}>
-        <label className="soap-section-label">
-          Tiempo de enfermedad <span className="soap-required">*</span>
-        </label>
-        <input
-          className="soap-input"
-          style={{ maxWidth: 260 }}
-          placeholder="Ej: 5 días, 2 semanas, 3 meses"
-          value={data.tiempoEnfermedad}
-          onChange={e => up("tiempoEnfermedad", e.target.value)}
-        />
+      {/* Tiempo de enfermedad + Forma de inicio + Curso */}
+      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 12, marginBottom: 18 }}>
+        <div>
+          <label className="soap-section-label">Tiempo de enfermedad</label>
+          <div style={{ display: "flex", gap: 6, alignItems: "center" }}>
+            <input
+              type="number"
+              min={1}
+              max={999}
+              className="soap-input"
+              style={{ width: 70, textAlign: "center" }}
+              placeholder=""
+              value={tiempoNum}
+              onChange={e => handleTiempoNum(e.target.value)}
+            />
+            <select
+              className="soap-input"
+              style={{ flex: 1 }}
+              value={tiempoUnidad}
+              onChange={e => handleTiempoUnidad(e.target.value)}
+            >
+              {UNIDADES.map(u => <option key={u} value={u}>{u}</option>)}
+            </select>
+          </div>
+        </div>
+        <div>
+          <label className="soap-section-label">Forma de inicio</label>
+          <select
+            className="soap-input"
+            value={data.formaInicio}
+            onChange={e => up("formaInicio", e.target.value as SectionSData["formaInicio"])}
+          >
+            <option value="">— Seleccionar —</option>
+            <option value="Brusco">Brusco</option>
+            <option value="Insidioso">Insidioso</option>
+          </select>
+        </div>
+        <div>
+          <label className="soap-section-label">Curso</label>
+          <select
+            className="soap-input"
+            value={data.curso}
+            onChange={e => up("curso", e.target.value as SectionSData["curso"])}
+          >
+            <option value="">— Seleccionar —</option>
+            <option value="Estacionario">Estacionario</option>
+            <option value="Progresivo">Progresivo</option>
+            <option value="Recurrente">Recurrente</option>
+          </select>
+        </div>
       </div>
 
-      {/* Enfermedad actual */}
+      {/*
+        Enfermedad actual — narrativa cronológica (HPI).
+        Fuente: NCBI StatPearls "SOAP Notes" (NIH) — mnemónico OLD CARTS:
+        Onset, Location, Duration, Character, Aggravating/Alleviating,
+        Radiation, Temporal pattern, Severity.
+        Ref: https://www.ncbi.nlm.nih.gov/books/NBK482263/
+      */}
       <div style={{ marginBottom: 20 }}>
         <label className="soap-section-label">
-          Descripción de la enfermedad actual <span className="soap-required">*</span>
+          Enfermedad Actual <span className="soap-required">*</span>
         </label>
         <textarea
           className="soap-input soap-textarea"
           style={{ minHeight: 110 }}
-          placeholder="Cronología, evolución, factores que mejoran o empeoran, síntomas asociados..."
+          placeholder="Narre cronológicamente: inicio, localización, duración, carácter del dolor/síntoma, factores que lo agravan o alivian, irradiación, patrón temporal y severidad."
           value={data.enfermedadActual}
           onChange={e => up("enfermedadActual", e.target.value)}
         />
+        <p className="soap-field-hint">
+          Guía OLD CARTS: <strong>O</strong>nset · <strong>L</strong>ocation · <strong>D</strong>uration · <strong>C</strong>haracter ·
+          <strong> A</strong>ggravating/Alleviating · <strong>R</strong>adiation · <strong>T</strong>emporal · <strong>S</strong>everity
+        </p>
       </div>
 
-      {/* Interrogatorio */}
+      {/*
+        Revisión por Sistemas (ROS) — componente estándar del Subjetivo SOAP.
+        Fuente: NCBI StatPearls "SOAP Notes" (NIH) — sección Review of Systems.
+        Se aplica como interrogatorio dirigido por aparatos para detectar síntomas
+        positivos o negativos relevantes.
+      */}
       <div className="soap-section-divider" />
-      <p style={{ fontWeight: 700, fontSize: 13, color: "var(--text-primary)", marginBottom: 12 }}>
-        Interrogatorio Dirigido
+      <p style={{ fontWeight: 700, fontSize: 13, color: "var(--text-primary)", marginBottom: 4 }}>
+        Revisión por Sistemas (ROS)
+      </p>
+      <p className="soap-field-hint" style={{ marginBottom: 12 }}>
+        Interrogatorio dirigido — marque Sí/No para cada síntoma según refiera el paciente.
       </p>
 
       <div className="soap-check-grid" style={{ marginBottom: 16 }}>
         {SINTOMAS.map(s => {
-          const val = data.sintomas[s.id];
-          const det = data.sinoDetalle[s.id] || "";
+          const val = (data.sintomas ?? {})[s.id];
           return (
             <div key={s.id} className={`soap-sintoma-item ${val === "si" ? "si" : ""}`}>
               <div className="soap-sintoma-row">
@@ -105,15 +182,6 @@ export default function SectionS({ data, setData, onNext }: Props) {
                   ))}
                 </div>
               </div>
-              {val === "si" && s.det && (
-                <input
-                  className="soap-input"
-                  style={{ marginTop: 8, fontSize: 12, padding: "5px 9px" }}
-                  placeholder={s.det}
-                  value={det}
-                  onChange={e => upDetalle(s.id, e.target.value)}
-                />
-              )}
             </div>
           );
         })}
@@ -124,7 +192,7 @@ export default function SectionS({ data, setData, onNext }: Props) {
         <textarea
           className="soap-input soap-textarea"
           style={{ minHeight: 56 }}
-          placeholder="Otros síntomas relevantes no incluidos arriba..."
+          placeholder=""
           value={data.otrosSintomas}
           onChange={e => up("otrosSintomas", e.target.value)}
         />

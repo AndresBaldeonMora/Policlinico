@@ -20,11 +20,11 @@ export default function SectionNeumologia({ data, setData, onPrev }: Props) {
       </p>
       <div style={{ marginBottom: 14 }}>
         <label htmlFor="neumologia-patologiaRespiratoria" className="soap-section-label">Patología respiratoria previa</label>
-        <input id="neumologia-patologiaRespiratoria" className="soap-input" value={val('patologiaRespiratoria')} onChange={e => up('patologiaRespiratoria', e.target.value)} placeholder="Asma, EPOC, TBC, COVID-19, neumonía, bronquiectasias…" />
+        <input id="neumologia-patologiaRespiratoria" className="soap-input" value={val('patologiaRespiratoria')} onChange={e => up('patologiaRespiratoria', e.target.value)} placeholder="" />
       </div>
       <div style={{ marginBottom: 14 }}>
         <label htmlFor="neumologia-alergiasRespiratorias" className="soap-section-label">Alergias respiratorias</label>
-        <input id="neumologia-alergiasRespiratorias" className="soap-input" value={val('alergiasRespiratorias')} onChange={e => up('alergiasRespiratorias', e.target.value)} placeholder="Polvo, pólenes, ácaros, mascotas, hongos…" />
+        <input id="neumologia-alergiasRespiratorias" className="soap-input" value={val('alergiasRespiratorias')} onChange={e => up('alergiasRespiratorias', e.target.value)} placeholder="" />
       </div>
 
       <div className="soap-section-divider" />
@@ -45,16 +45,16 @@ export default function SectionNeumologia({ data, setData, onPrev }: Props) {
         </div>
         <div>
           <label htmlFor="neumologia-paquetesAno" className="soap-section-label">Paquetes/año</label>
-          <input id="neumologia-paquetesAno" className="soap-input" value={val('paquetesAno')} onChange={e => up('paquetesAno', e.target.value)} placeholder="Ej: 20" />
+          <input id="neumologia-paquetesAno" className="soap-input" value={val('paquetesAno')} onChange={e => up('paquetesAno', e.target.value)} placeholder="" />
         </div>
         <div>
           <label htmlFor="neumologia-anosFumador" className="soap-section-label">Años de fumador / cese</label>
-          <input id="neumologia-anosFumador" className="soap-input" value={val('anosFumador')} onChange={e => up('anosFumador', e.target.value)} placeholder="Ej: 15 años / cesó hace 2 años" />
+          <input id="neumologia-anosFumador" className="soap-input" value={val('anosFumador')} onChange={e => up('anosFumador', e.target.value)} placeholder="" />
         </div>
       </div>
       <div style={{ marginBottom: 14 }}>
         <label htmlFor="neumologia-exposicionOcupacional" className="soap-section-label">Exposición ocupacional / doméstica</label>
-        <input id="neumologia-exposicionOcupacional" className="soap-input" value={val('exposicionOcupacional')} onChange={e => up('exposicionOcupacional', e.target.value)} placeholder="Polvo, gases, vapores, humo de biomasa (leña/carbón), asbesto…" />
+        <input id="neumologia-exposicionOcupacional" className="soap-input" value={val('exposicionOcupacional')} onChange={e => up('exposicionOcupacional', e.target.value)} placeholder="" />
       </div>
 
       <div className="soap-section-divider" />
@@ -65,12 +65,12 @@ export default function SectionNeumologia({ data, setData, onPrev }: Props) {
       </p>
       <div style={{ marginBottom: 14 }}>
         <label htmlFor="neumologia-tosCaracteristicas" className="soap-section-label">Tos (características)</label>
-        <input id="neumologia-tosCaracteristicas" className="soap-input" value={val('tosCaracteristicas')} onChange={e => up('tosCaracteristicas', e.target.value)} placeholder="Seca / productiva / hemoptoica / duración / horario…" />
+        <input id="neumologia-tosCaracteristicas" className="soap-input" value={val('tosCaracteristicas')} onChange={e => up('tosCaracteristicas', e.target.value)} placeholder="" />
       </div>
       <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12, marginBottom: 14 }}>
         <div>
           <label htmlFor="neumologia-expectoracion" className="soap-section-label">Expectoración (características)</label>
-          <input id="neumologia-expectoracion" className="soap-input" value={val('expectoracion')} onChange={e => up('expectoracion', e.target.value)} placeholder="Mucosa, purulenta, hemoptoica, cantidad…" />
+          <input id="neumologia-expectoracion" className="soap-input" value={val('expectoracion')} onChange={e => up('expectoracion', e.target.value)} placeholder="" />
         </div>
         <div>
           <label htmlFor="neumologia-hemoptisis" className="soap-section-label">Hemoptisis</label>
@@ -109,7 +109,7 @@ export default function SectionNeumologia({ data, setData, onPrev }: Props) {
       </div>
       <div style={{ marginBottom: 14 }}>
         <label htmlFor="neumologia-dolorTorPleuritico" className="soap-section-label">Dolor torácico pleurítico</label>
-        <input id="neumologia-dolorTorPleuritico" className="soap-input" value={val('dolorTorPleuritico')} onChange={e => up('dolorTorPleuritico', e.target.value)} placeholder="Localización, carácter, relación con la respiración…" />
+        <input id="neumologia-dolorTorPleuritico" className="soap-input" value={val('dolorTorPleuritico')} onChange={e => up('dolorTorPleuritico', e.target.value)} placeholder="" />
       </div>
 
       <div className="soap-section-divider" />
@@ -143,7 +143,7 @@ export default function SectionNeumologia({ data, setData, onPrev }: Props) {
       </div>
       <div style={{ marginBottom: 14 }}>
         <label htmlFor="neumologia-auscultacionPulmonar" className="soap-section-label">Auscultación pulmonar</label>
-        <textarea id="neumologia-auscultacionPulmonar" className="soap-input soap-textarea" style={{ minHeight: 60 }} value={val('auscultacionPulmonar')} onChange={e => up('auscultacionPulmonar', e.target.value)} placeholder="MV conservado/disminuido, estertores (localizados/difusos, crepitantes/subcrepitantes), sibilancias, roncus, frote pleural…" />
+        <textarea id="neumologia-auscultacionPulmonar" className="soap-input soap-textarea" style={{ minHeight: 60 }} value={val('auscultacionPulmonar')} onChange={e => up('auscultacionPulmonar', e.target.value)} placeholder="" />
       </div>
       <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12, marginBottom: 14 }}>
         <div>
@@ -174,15 +174,15 @@ export default function SectionNeumologia({ data, setData, onPrev }: Props) {
       <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr 1fr", gap: 12, marginBottom: 14 }}>
         <div>
           <label htmlFor="neumologia-fev1" className="soap-section-label">FEV1 (% predicho)</label>
-          <input id="neumologia-fev1" className="soap-input" value={val('fev1')} onChange={e => up('fev1', e.target.value)} placeholder="Ej: 65%" />
+          <input id="neumologia-fev1" className="soap-input" value={val('fev1')} onChange={e => up('fev1', e.target.value)} placeholder="" />
         </div>
         <div>
           <label htmlFor="neumologia-fvc" className="soap-section-label">FVC (% predicho)</label>
-          <input id="neumologia-fvc" className="soap-input" value={val('fvc')} onChange={e => up('fvc', e.target.value)} placeholder="Ej: 80%" />
+          <input id="neumologia-fvc" className="soap-input" value={val('fvc')} onChange={e => up('fvc', e.target.value)} placeholder="" />
         </div>
         <div>
           <label htmlFor="neumologia-fev1Fvc" className="soap-section-label">FEV1/FVC (cociente)</label>
-          <input id="neumologia-fev1Fvc" className="soap-input" value={val('fev1Fvc')} onChange={e => up('fev1Fvc', e.target.value)} placeholder="Ej: 0.65" />
+          <input id="neumologia-fev1Fvc" className="soap-input" value={val('fev1Fvc')} onChange={e => up('fev1Fvc', e.target.value)} placeholder="" />
         </div>
         <div>
           <label htmlFor="neumologia-goldEpoc" className="soap-section-label">Clasificación GOLD (EPOC)</label>
@@ -199,11 +199,11 @@ export default function SectionNeumologia({ data, setData, onPrev }: Props) {
       <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12, marginBottom: 14 }}>
         <div>
           <label htmlFor="neumologia-satO2Basal" className="soap-section-label">SatO2 basal (%)</label>
-          <input id="neumologia-satO2Basal" className="soap-input" value={val('satO2Basal')} onChange={e => up('satO2Basal', e.target.value)} placeholder="Ej: 95" />
+          <input id="neumologia-satO2Basal" className="soap-input" value={val('satO2Basal')} onChange={e => up('satO2Basal', e.target.value)} placeholder="" />
         </div>
         <div>
           <label htmlFor="neumologia-satO2Esfuerzo" className="soap-section-label">SatO2 con esfuerzo (%)</label>
-          <input id="neumologia-satO2Esfuerzo" className="soap-input" value={val('satO2Esfuerzo')} onChange={e => up('satO2Esfuerzo', e.target.value)} placeholder="Ej: 88" />
+          <input id="neumologia-satO2Esfuerzo" className="soap-input" value={val('satO2Esfuerzo')} onChange={e => up('satO2Esfuerzo', e.target.value)} placeholder="" />
         </div>
       </div>
 
@@ -211,7 +211,7 @@ export default function SectionNeumologia({ data, setData, onPrev }: Props) {
 
       <div style={{ marginBottom: 14 }}>
         <label htmlFor="neumologia-notasAdicionales" className="soap-section-label">Notas adicionales de Neumología</label>
-        <textarea id="neumologia-notasAdicionales" className="soap-input soap-textarea" style={{ minHeight: 60 }} value={val('notasAdicionales')} onChange={e => up('notasAdicionales', e.target.value)} placeholder="Observaciones clínicas adicionales, radiografía, TC tórax…" />
+        <textarea id="neumologia-notasAdicionales" className="soap-input soap-textarea" style={{ minHeight: 60 }} value={val('notasAdicionales')} onChange={e => up('notasAdicionales', e.target.value)} placeholder="" />
       </div>
 
       <div className="soap-nav-row" style={{ justifyContent: "flex-start", marginTop: 8 }}>

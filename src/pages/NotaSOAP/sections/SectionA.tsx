@@ -20,7 +20,7 @@ export default function SectionA({ data, setData, onPrev, onNext }: Props) {
   const wrapperRef = useRef<HTMLDivElement>(null);
 
   const up = <K extends keyof SectionAData>(key: K, val: SectionAData[K]) =>
-    setData(prev => ({ ...prev, [key]: val }));
+    setData({ ...data, [key]: val });
 
   // Búsqueda contra el catálogo CIE-10 oficial (backend), con debounce
   useEffect(() => {
@@ -66,7 +66,7 @@ export default function SectionA({ data, setData, onPrev, onNext }: Props) {
           <input
             className="soap-input"
             style={{ marginBottom: 10 }}
-            placeholder="Buscar por nombre de enfermedad o código CIE-10..."
+            placeholder=""
             value={search}
             onChange={e => { setSearch(e.target.value); setShowDrop(true); }}
             onFocus={() => setShowDrop(true)}
@@ -105,7 +105,7 @@ export default function SectionA({ data, setData, onPrev, onNext }: Props) {
                 <div className="soap-dx-chip-actions">
                   {(["presuntivo", "confirmado"] as const).map(t => (
                     <label key={t} style={{ display: "flex", alignItems: "center", gap: 4, cursor: "pointer", fontSize: 12 }}>
-                      <input type="radio" checked={d.tipo === t} onChange={() => updateTipo(d.code, t)}
+                      <input type="radio" name={`dx-tipo-${d.code}`} checked={d.tipo === t} onChange={() => updateTipo(d.code, t)}
                         style={{ accentColor: "var(--primary)" }} />
                       <span style={{ fontWeight: d.tipo === t ? 700 : 400, color: d.tipo === t ? "var(--primary)" : "var(--text-muted)" }}>
                         {t === "presuntivo" ? "Presuntivo" : "Confirmado"}
@@ -135,7 +135,7 @@ export default function SectionA({ data, setData, onPrev, onNext }: Props) {
         <textarea
           className="soap-input soap-textarea"
           style={{ minHeight: 60 }}
-          placeholder="Ej: Síndrome nefrótico — descartado por proteinuria negativa..."
+          placeholder=""
           value={data.diferenciales}
           onChange={e => up("diferenciales", e.target.value)}
         />
@@ -199,7 +199,7 @@ export default function SectionA({ data, setData, onPrev, onNext }: Props) {
         <textarea
           className="soap-input soap-textarea"
           style={{ minHeight: 110 }}
-          placeholder="Paciente con ICC descompensada evidenciada por disnea progresiva, edemas en MMII y rales bibasales. Se suma HTA no controlada como factor desencadenante..."
+          placeholder=""
           value={data.evaluacion}
           onChange={e => up("evaluacion", e.target.value)}
         />

@@ -104,7 +104,7 @@ export default function ModalSolicitudExamen({ cita, onClose, onAdd }: Props) {
           <div style={{ marginBottom: 16 }}>
             <label className="soap-section-label">Otro examen (campo libre)</label>
             <div style={{ display: "flex", gap: 8 }}>
-              <input className="soap-input" style={{ flex: 1 }} placeholder="Nombre del examen..."
+              <input className="soap-input" style={{ flex: 1 }} placeholder=""
                 value={otroExamen} onChange={e => setOtro(e.target.value)}
                 onKeyDown={e => e.key === "Enter" && addOtro()} />
               <button className="soap-btn-secondary" onClick={addOtro}>Agregar</button>
@@ -116,7 +116,7 @@ export default function ModalSolicitudExamen({ cita, onClose, onAdd }: Props) {
             <div>
               <label className="soap-section-label">Instrucciones para el paciente</label>
               <textarea className="soap-input soap-textarea" style={{ minHeight: 60 }}
-                placeholder="Ej: Ayuno de 8 horas para laboratorio. Traer resultados anteriores..."
+                placeholder=""
                 value={instrucciones} onChange={e => setInstr(e.target.value)} />
             </div>
             <div>
