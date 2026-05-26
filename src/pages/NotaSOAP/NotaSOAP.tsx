@@ -4,13 +4,12 @@ import Swal from "sweetalert2";
 import { AlertTriangle, Pill, FileText, Plus, ChevronDown, ChevronUp, Scissors, Users, Activity } from "lucide-react";
 import "./NotaSOAP.css";
 
-import type { SOAPData, ExamenOrdenado, MedicamentoSOAP, EspecialidadData } from "./types";
+import type { SOAPData, ExamenOrdenado, MedicamentoSOAP } from "./types";
 import { INITIAL_SOAP } from "./types";
 import SectionS from "./sections/SectionS";
 import SectionO from "./sections/SectionO";
 import SectionA from "./sections/SectionA";
 import SectionP from "./sections/SectionP";
-import SectionE from "./sections/SectionE";
 
 import ModalSolicitudExamen from "../../components/modals/ModalSolicitudExamen";
 import ModalReceta          from "../../components/modals/ModalReceta";
@@ -21,17 +20,16 @@ import { MedicoApiService } from "../../services/medico.service";
 import type { CitaMedico, CitaHistorial, Alergia, MedicamentoHabitual, ProblemaMedico, CirugiaPevia, AntecedenteFamiliar } from "../../services/medico.service";
 import { PacienteApiService } from "../../services/paciente.service";
 
-type Section = "S" | "O" | "A" | "P" | "E";
+// SOAP: 4 secciones estándar según NTS-022 MINSA y CMP.
+// No existe "Sección E" — la NTS-022 no la define; variaciones por especialidad
+// van dentro de S/O/A como "otras variables" (norma lo autoriza, pero no tipifica).
+type Section = "S" | "O" | "A" | "P";
 
-// Sección "E" (Especialidad) temporalmente oculta del nav.
-// El código de SectionE se mantiene intacto para reactivarla en el futuro:
-// basta con descomentar la línea correspondiente abajo.
 const SECTIONS: { id: Section; label: string; sub: string }[] = [
   { id: "S", label: "S", sub: "Subjetivo" },
   { id: "O", label: "O", sub: "Objetivo" },
   { id: "A", label: "A", sub: "Análisis" },
   { id: "P", label: "P", sub: "Plan" },
-  // { id: "E", label: "E", sub: "Especialidad" },
 ];
 
 function calcAge(fechaNac?: string): string {
@@ -58,8 +56,6 @@ export default function NotaSOAP() {
   const [modalAbierto, setModalAbierto] = useState<string | null>(null);
   const [lastSaved,    setLastSaved]    = useState<string | null>(null);
   const [saving,       setSaving]       = useState(false);
-  const [especData,    setEspecData]    = useState<EspecialidadData>({});
-  const [especialidadNombre, setEspecialidadNombre] = useState<string>("");
 
   // ── Historial clínico del paciente ──────────────────────────
   const [alergias,          setAlergias]          = useState<Alergia[]>([]);
@@ -84,11 +80,8 @@ export default function NotaSOAP() {
       MedicoApiService.obtenerDetalleCita(citaId),
       MedicoApiService.obtenerMiPerfil(),
     ])
-      .then(([data, perfil]) => {
+      .then(([data]) => {
         setCita(data);
-        if (perfil?.especialidadId?.nombre) {
-          setEspecialidadNombre(perfil.especialidadId.nombre);
-        }
         if (data.notasClinicas) {
           try {
             const parsed = JSON.parse(data.notasClinicas);
@@ -119,12 +112,8 @@ export default function NotaSOAP() {
             }
             if (parsed.examenes) setExamenes(parsed.examenes);
             if (parsed.medicamentos) setMedicamentos(parsed.medicamentos);
-            // Compat: borradores antiguos que aún tienen la especialidad en el JSON
-            if (parsed.especialidad && !data.especialidad) setEspecData(parsed.especialidad);
           } catch { /* borrador no parseable, ignorar */ }
         }
-        // Datos de especialidad desde su campo dedicado
-        if (data.especialidad?.campos) setEspecData(data.especialidad.campos);
         const pac = data.pacienteId;
         if (pac.alergias) setAlergias(pac.alergias);
         if (pac.medicamentosHabituales) setMedicHabituales(pac.medicamentosHabituales);
@@ -263,8 +252,7 @@ export default function NotaSOAP() {
     setSoapData(prev => ({ ...prev, [sec]: val }));
 
   const isDone = (sec: Section) => {
-    if (sec === "E") return Object.keys(especData ?? {}).some(k => (especData as any)[k] !== "");
-    const d = soapData[sec as Exclude<Section, "E">];
+    const d = soapData[sec];
     if (!d) return false;
     if (sec === "S") return !!(d as SOAPData["S"]).motivoConsulta;
     if (sec === "O") return !!(d as SOAPData["O"]).pa_s || !!(d as SOAPData["O"]).temp;
@@ -289,8 +277,6 @@ export default function NotaSOAP() {
         tipo:        d.tipo,
         esPrincipal: i === 0,
       })),
-      // Sección de especialidad — en su campo propio, fuera del blob JSON
-      especialidad:  { nombre: especialidadNombre, campos: especData },
       // Otros diagnósticos (NTS-022) — campo estructurado consultable
       otrosDiagnosticos: soapData.A.otrosDiagnosticos,
     };
@@ -695,14 +681,6 @@ export default function NotaSOAP() {
               medicamentos={medicamentos}
               setMedicamentos={setMedicamentos}
               onOpenModal={setModalAbierto}
-            />
-          )}
-          {section === "E" && (
-            <SectionE
-              especialidadNombre={especialidadNombre}
-              data={especData}
-              setData={setEspecData}
-              onPrev={() => setSection("P")}
             />
           )}
         </div>

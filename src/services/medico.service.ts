@@ -153,7 +153,7 @@ export class MedicoApiService {
 
   static async guardarNotasClinicas(
     citaId: string,
-    datos: { notasClinicas: string; diagnostico: string; tratamiento: string; diagnosticos: DiagnosticoCIE10[]; especialidad: EspecialidadNota; otrosDiagnosticos: OtrosDiagnosticos }
+    datos: { notasClinicas: string; diagnostico: string; tratamiento: string; diagnosticos: DiagnosticoCIE10[]; especialidad?: EspecialidadNota; otrosDiagnosticos: OtrosDiagnosticos }
   ): Promise<CitaMedico> {
     const response = await api.patch(`/medico/citas/${citaId}/notas`, datos);
     return response.data.data;
@@ -174,6 +174,11 @@ export class MedicoApiService {
     const params = excluirCitaId ? `?excluirCitaId=${excluirCitaId}` : "";
     const response = await api.get(`/medico/pacientes/${pacienteId}/historial-citas${params}`);
     return response.data.data;
+  }
+
+  static async obtenerResultadosRecientes(): Promise<any[]> {
+    const response = await api.get("/medico/resultados-recientes");
+    return response.data.data ?? [];
   }
 
   static async obtenerHistorialPaciente(pacienteId: string): Promise<{

@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { MedicoApiService } from "../../services/medico.service";
 import type { CitaMedico } from "../../services/medico.service";
-import { Search, Calendar, User, Play } from "lucide-react";
+import { Search, Calendar, User, Play, FileText } from "lucide-react";
 import "../ListaCitas/ListaCitas.css";
 import "./MedicoCitas.css";
 
@@ -182,6 +182,13 @@ export default function MedicoCitas() {
                         {/* Acciones */}
                         <td>
                           <div style={{ display: "flex", gap: 6, alignItems: "center" }}>
+                            <button
+                              className="btn btn-secondary btn-sm"
+                              onClick={() => navigate(`/pacientes/${pac._id}`)}
+                              title="Ver historia clínica del paciente"
+                            >
+                              <FileText size={12} /> Ver HC
+                            </button>
                             <button
                               className="btn btn-secondary btn-sm"
                               onClick={() => navigate(`/citas/${c._id}`)}

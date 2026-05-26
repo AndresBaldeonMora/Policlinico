@@ -39,6 +39,7 @@ const Sidebar = () => {
   const medicoMenu = [
     { path: "/medico",       label: "Dashboard", icon: LayoutDashboard, description: "Panel principal del médico" },
     { path: "/medico/citas", label: "Mis Citas", icon: ClipboardList,   description: "Listado de mis citas" },
+    { path: "/pacientes",    label: "Pacientes", icon: Users,           description: "Historias clínicas de pacientes" },
   ];
 
   // Menú ADMINISTRADOR

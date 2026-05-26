@@ -1,23 +1,65 @@
 import { useState } from "react";
+import Swal from "sweetalert2";
 import { X } from "lucide-react";
 import type { CitaMedico } from "../../services/medico.service";
+import { InterconsultaApiService, type PrioridadInterconsulta } from "../../services/interconsulta.service";
+import { toastExito } from "../../utils/toast";
 
 interface Props {
   cita: CitaMedico;
   onClose: () => void;
+  onGuardada?: () => void;
 }
 
 const ESPECIALIDADES_INT = ["Cardiología", "Neumología", "Nefrología", "Neurología", "Traumatología", "Ginecología", "Endocrinología", "Psiquiatría", "Dermatología", "Gastroenterología", "Oftalmología", "Otorrinolaringología", "Urología", "Otro"];
 
-export default function ModalInterconsulta({ cita, onClose }: Props) {
+export default function ModalInterconsulta({ cita, onClose, onGuardada }: Props) {
   const [form, setForm] = useState({
     especialidad: "", medicoSolicitado: "", prioridad: "electiva",
     motivoConsulta: "", preguntaClinica: "", informacionRelevante: "",
   });
+  const [guardando, setGuardando] = useState(false);
 
   const pac = cita.pacienteId;
   const nombre = `${pac.nombres} ${pac.apellidos}`;
   const upF = (key: string, val: string) => setForm(p => ({ ...p, [key]: val }));
+
+  const handleGuardar = async () => {
+    if (!form.especialidad.trim() || !form.motivoConsulta.trim()) {
+      Swal.fire({
+        icon: "warning",
+        title: "Campos obligatorios",
+        text: "Indica la especialidad solicitada y el motivo de la interconsulta.",
+        confirmButtonColor: "var(--primary)",
+      });
+      return;
+    }
+    setGuardando(true);
+    try {
+      await InterconsultaApiService.crear({
+        pacienteId: pac._id,
+        citaId: cita._id,
+        especialidadSolicitada: form.especialidad,
+        medicoSolicitado: form.medicoSolicitado || undefined,
+        prioridad: form.prioridad as PrioridadInterconsulta,
+        motivoConsulta: form.motivoConsulta,
+        preguntaClinica: form.preguntaClinica || undefined,
+        informacionRelevante: form.informacionRelevante || undefined,
+      });
+      toastExito("Interconsulta enviada al especialista");
+      onGuardada?.();
+      onClose();
+    } catch {
+      Swal.fire({
+        icon: "error",
+        title: "Error",
+        text: "No se pudo registrar la interconsulta. Intenta de nuevo.",
+        confirmButtonColor: "var(--primary)",
+      });
+    } finally {
+      setGuardando(false);
+    }
+  };
 
   return (
     <div className="modal-overlay" onClick={e => { if (e.target === e.currentTarget) onClose(); }}>
@@ -92,8 +134,10 @@ export default function ModalInterconsulta({ cita, onClose }: Props) {
         </div>
 
         <div className="modal-footer">
-          <button className="soap-btn-secondary" onClick={onClose}>Cancelar</button>
-          <button className="soap-btn-next" onClick={onClose}>Guardar Interconsulta</button>
+          <button className="soap-btn-secondary" onClick={onClose} disabled={guardando}>Cancelar</button>
+          <button className="soap-btn-next" onClick={handleGuardar} disabled={guardando}>
+            {guardando ? "Guardando…" : "Guardar Interconsulta"}
+          </button>
         </div>
       </div>
     </div>

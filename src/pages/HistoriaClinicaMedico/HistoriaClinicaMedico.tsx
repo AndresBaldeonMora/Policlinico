@@ -3,9 +3,11 @@ import { useParams, useNavigate } from "react-router-dom";
 import {
   ArrowLeft, Phone, Mail, BookOpen,
   FlaskConical, Pill, Stethoscope, Calendar,
-  ChevronDown, ChevronRight,
+  ChevronDown, ChevronRight, FileText,
+  AlertTriangle, Activity, Scissors, Users,
 } from "lucide-react";
 import { MedicoApiService } from "../../services/medico.service";
+import { useAuth } from "../../hooks/userAuth";
 import "./HistoriaClinicaMedico.css";
 
 type Tab = "resumen" | "consultas" | "estudios";
@@ -45,6 +47,8 @@ export default function HistoriaClinicaMedico() {
   const params = useParams<{ pacienteId?: string; id?: string }>();
   const pacienteId = params.pacienteId ?? params.id;
   const navigate = useNavigate();
+  const { user } = useAuth();
+  const rutaPacientes = user?.rol === "administrador" ? "/admin/pacientes" : "/pacientes";
 
   const [tab,      setTab]      = useState<Tab>("resumen");
   const [loading,  setLoading]  = useState(true);
@@ -86,8 +90,8 @@ export default function HistoriaClinicaMedico() {
 
       {/* Breadcrumb */}
       <div className="hcm-breadcrumb">
-        <button className="hcm-back-btn" onClick={() => navigate("/medico/pacientes")}>
-          <ArrowLeft size={14} /> Mis Pacientes
+        <button className="hcm-back-btn" onClick={() => navigate(rutaPacientes)}>
+          <ArrowLeft size={14} /> Pacientes
         </button>
         <span className="hcm-sep">/</span>
         <span className="hcm-current">{nombre}</span>
@@ -199,6 +203,79 @@ export default function HistoriaClinicaMedico() {
                 </>
               ) : (
                 <p className="hcm-empty-hint">Sin medicamentos registrados.</p>
+              )}
+            </div>
+
+            {/* Alergias (antecedente persistente del paciente) */}
+            <div className="hcm-clinical-card">
+              <div className="hcm-clinical-title">
+                <AlertTriangle size={13} /> Alergias
+              </div>
+              {paciente.alergias?.length ? (
+                paciente.alergias.map((a: any) => (
+                  <div key={a._id ?? a.sustancia} className="hcm-dx-item">
+                    <span className="hcm-dx-name">{a.sustancia}{a.reaccion ? ` — ${a.reaccion}` : ""}</span>
+                    <span className={`hcm-sev-badge hcm-sev-badge--${a.severidad}`}>{a.severidad}</span>
+                  </div>
+                ))
+              ) : (
+                <p className="hcm-empty-hint">Sin alergias registradas.</p>
+              )}
+            </div>
+
+            {/* Problemas médicos activos */}
+            <div className="hcm-clinical-card">
+              <div className="hcm-clinical-title">
+                <Activity size={13} /> Problemas Médicos
+              </div>
+              {paciente.problemasMedicos?.filter((p: any) => p.estado === "activo").length ? (
+                paciente.problemasMedicos
+                  .filter((p: any) => p.estado === "activo")
+                  .map((p: any) => (
+                    <div key={p._id ?? p.descripcion} className="hcm-dx-item">
+                      <span className="hcm-dx-name">{p.descripcion}</span>
+                      {p.fechaInicio && (
+                        <span className="hcm-dx-tipo">{new Date(p.fechaInicio).getFullYear()}</span>
+                      )}
+                    </div>
+                  ))
+              ) : (
+                <p className="hcm-empty-hint">Sin problemas registrados.</p>
+              )}
+            </div>
+
+            {/* Cirugías previas */}
+            <div className="hcm-clinical-card">
+              <div className="hcm-clinical-title">
+                <Scissors size={13} /> Cirugías Previas
+              </div>
+              {paciente.cirugiasPrevias?.length ? (
+                paciente.cirugiasPrevias.map((c: any) => (
+                  <div key={c._id ?? c.procedimiento} className="hcm-dx-item">
+                    <span className="hcm-dx-name">{c.procedimiento}{c.hospital ? ` · ${c.hospital}` : ""}</span>
+                    {c.fecha && (
+                      <span className="hcm-dx-tipo">{new Date(c.fecha).getFullYear()}</span>
+                    )}
+                  </div>
+                ))
+              ) : (
+                <p className="hcm-empty-hint">Sin cirugías registradas.</p>
+              )}
+            </div>
+
+            {/* Antecedentes familiares */}
+            <div className="hcm-clinical-card">
+              <div className="hcm-clinical-title">
+                <Users size={13} /> Antecedentes Familiares
+              </div>
+              {paciente.antecedentesFamiliares?.length ? (
+                paciente.antecedentesFamiliares.map((a: any) => (
+                  <div key={a._id ?? `${a.parentesco}-${a.condicion}`} className="hcm-dx-item">
+                    <span className="hcm-dx-name"><strong>{a.parentesco}:</strong> {a.condicion}</span>
+                  </div>
+                ))
+              ) : (
+                <p className="hcm-empty-hint">Sin antecedentes registrados.</p>
               )}
             </div>
 
@@ -373,6 +450,7 @@ export default function HistoriaClinicaMedico() {
                       <th>Exámenes</th>
                       <th>Estado</th>
                       <th>Médico</th>
+                      <th>Resultados</th>
                     </tr>
                   </thead>
                   <tbody>
@@ -404,6 +482,22 @@ export default function HistoriaClinicaMedico() {
                           {o.doctorId
                             ? `${o.doctorId.nombres} ${o.doctorId.apellidos}`
                             : "—"}
+                        </td>
+                        <td>
+                          {o.estado === "FINALIZADO" && o.archivoResultadoUrl ? (
+                            <a
+                              className="hcm-resultado-link"
+                              href={o.archivoResultadoUrl}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                            >
+                              <FileText size={13} /> Ver PDF
+                            </a>
+                          ) : (
+                            <span style={{ fontSize: "0.82rem", color: "var(--text-muted)" }}>
+                              Pendiente
+                            </span>
+                          )}
                         </td>
                       </tr>
                     ))}

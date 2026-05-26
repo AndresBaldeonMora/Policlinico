@@ -1,12 +1,22 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
+import Swal from "sweetalert2";
 import {
   Calendar, Clock, CheckCircle, XCircle,
-  User, ChevronRight, AlertTriangle, Info, AlertCircle,
+  User, ChevronRight, AlertTriangle, Info, AlertCircle, FileText,
+  Inbox, FlaskConical, Reply,
 } from "lucide-react";
 import { MedicoApiService } from "../../services/medico.service";
 import type { CitaMedico, MedicoPerfil } from "../../services/medico.service";
+import { InterconsultaApiService, type Interconsulta } from "../../services/interconsulta.service";
+import { toastExito } from "../../utils/toast";
 import "./MedicoDashboard.css";
+
+const PRIORIDAD_LABEL: Record<string, { label: string; cls: string }> = {
+  urgente:    { label: "Urgente",    cls: "danger" },
+  preferente: { label: "Preferente", cls: "warning" },
+  electiva:   { label: "Electiva",   cls: "info" },
+};
 
 const formatHoy = () =>
   new Date().toLocaleDateString("es-PE", {
@@ -17,7 +27,18 @@ export default function MedicoDashboard() {
   const navigate = useNavigate();
   const [perfil,    setPerfil]    = useState<MedicoPerfil | null>(null);
   const [citasHoy,  setCitasHoy]  = useState<CitaMedico[]>([]);
+  const [interconsultas, setInterconsultas] = useState<Interconsulta[]>([]);
+  const [resultados, setResultados] = useState<any[]>([]);
   const [loading,   setLoading]   = useState(true);
+
+  const cargarBandeja = () => {
+    InterconsultaApiService.listarRecibidas("PENDIENTE")
+      .then(setInterconsultas)
+      .catch(() => {});
+    MedicoApiService.obtenerResultadosRecientes()
+      .then(setResultados)
+      .catch(() => {});
+  };
 
   useEffect(() => {
     Promise.all([
@@ -27,7 +48,35 @@ export default function MedicoDashboard() {
       .then(([p, c]) => { setPerfil(p); setCitasHoy(c); })
       .catch(console.error)
       .finally(() => setLoading(false));
+    cargarBandeja();
   }, []);
+
+  const handleResponder = async (ic: Interconsulta) => {
+    const { value: respuesta } = await Swal.fire({
+      title: "Responder interconsulta",
+      html: `<div style="text-align:left;font-size:13px;color:#475569">
+        <strong>Paciente:</strong> ${ic.pacienteId?.nombres ?? ""} ${ic.pacienteId?.apellidos ?? ""}<br/>
+        <strong>Solicita:</strong> ${ic.solicitanteNombre}<br/>
+        <strong>Motivo:</strong> ${ic.motivoConsulta}${ic.preguntaClinica ? `<br/><strong>Pregunta:</strong> ${ic.preguntaClinica}` : ""}
+      </div>`,
+      input: "textarea",
+      inputPlaceholder: "Escribe tu respuesta o recomendación clínica…",
+      inputAttributes: { "aria-label": "Respuesta" },
+      showCancelButton: true,
+      confirmButtonText: "Enviar respuesta",
+      cancelButtonText: "Cancelar",
+      confirmButtonColor: "var(--primary)",
+      inputValidator: (v) => (!v?.trim() ? "La respuesta no puede estar vacía" : undefined),
+    });
+    if (!respuesta?.trim()) return;
+    try {
+      await InterconsultaApiService.responder(ic._id, respuesta.trim());
+      toastExito("Respuesta enviada");
+      cargarBandeja();
+    } catch {
+      Swal.fire({ icon: "error", title: "Error", text: "No se pudo enviar la respuesta.", confirmButtonColor: "var(--primary)" });
+    }
+  };
 
   if (loading) {
     return (
@@ -65,6 +114,9 @@ export default function MedicoDashboard() {
       : []),
     ...(pendientes.length > 0
       ? [{ tipo: "info" as AlertaTipo, msg: `${pendientes.length} paciente${pendientes.length > 1 ? "s" : ""} pendiente${pendientes.length > 1 ? "s" : ""} de atención` }]
+      : []),
+    ...(interconsultas.length > 0
+      ? [{ tipo: "warning" as AlertaTipo, msg: `${interconsultas.length} interconsulta${interconsultas.length > 1 ? "s" : ""} por responder` }]
       : []),
   ];
 
@@ -155,6 +207,13 @@ export default function MedicoDashboard() {
                         )}
                       </div>
                     </div>
+                    <button
+                      className="dash-cita-hc-btn"
+                      onClick={(e) => { e.stopPropagation(); navigate(`/pacientes/${pac._id}`); }}
+                      title="Ver historia clínica antes de la consulta"
+                    >
+                      <FileText size={14} />
+                    </button>
                     <ChevronRight size={15} className="dash-cita-arrow" />
                   </div>
                 );
@@ -176,6 +235,79 @@ export default function MedicoDashboard() {
 
         {/* Alerts & Summary Cards */}
         <div className="dash-side-cards">
+          {/* Bandeja de tareas */}
+          <div className="dash-card dash-card-compact">
+            <div className="dash-card-header">
+              <span className="dash-card-title"><Inbox size={15} style={{ verticalAlign: "-2px" }} /> Bandeja de tareas</span>
+            </div>
+            <div className="dash-bandeja">
+              {/* Interconsultas recibidas */}
+              <div className="dash-bandeja-group">
+                <div className="dash-bandeja-group-title">
+                  <Reply size={13} /> Interconsultas por responder ({interconsultas.length})
+                </div>
+                {interconsultas.length === 0 ? (
+                  <p className="dash-bandeja-empty">No tienes interconsultas pendientes</p>
+                ) : (
+                  interconsultas.slice(0, 4).map((ic) => {
+                    const prio = PRIORIDAD_LABEL[ic.prioridad] ?? PRIORIDAD_LABEL.electiva;
+                    return (
+                      <button key={ic._id} className="dash-bandeja-item" onClick={() => handleResponder(ic)}>
+                        <div className="dash-bandeja-item-main">
+                          <span className="dash-bandeja-item-name">
+                            {ic.pacienteId?.nombres} {ic.pacienteId?.apellidos}
+                          </span>
+                          <span className="dash-bandeja-item-sub">
+                            De {ic.solicitanteNombre} · {ic.motivoConsulta.slice(0, 40)}{ic.motivoConsulta.length > 40 ? "…" : ""}
+                          </span>
+                        </div>
+                        <span className={`dash-bandeja-prio dash-bandeja-prio--${prio.cls}`}>{prio.label}</span>
+                      </button>
+                    );
+                  })
+                )}
+              </div>
+
+              {/* Resultados listos */}
+              <div className="dash-bandeja-group">
+                <div className="dash-bandeja-group-title">
+                  <FlaskConical size={13} /> Resultados listos ({resultados.length})
+                </div>
+                {resultados.length === 0 ? (
+                  <p className="dash-bandeja-empty">Sin resultados recientes</p>
+                ) : (
+                  resultados.slice(0, 4).map((o) => (
+                    <button
+                      key={o._id}
+                      className="dash-bandeja-item"
+                      onClick={() => navigate(`/pacientes/${o.pacienteId?._id}`)}
+                    >
+                      <div className="dash-bandeja-item-main">
+                        <span className="dash-bandeja-item-name">
+                          {o.pacienteId?.nombres} {o.pacienteId?.apellidos}
+                        </span>
+                        <span className="dash-bandeja-item-sub">
+                          {o.items?.length ?? 0} examen(es) · {o.especialidadId?.nombre ?? ""}
+                        </span>
+                      </div>
+                      {o.archivoResultadoUrl && (
+                        <a
+                          className="dash-bandeja-pdf"
+                          href={o.archivoResultadoUrl}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          onClick={(e) => e.stopPropagation()}
+                        >
+                          <FileText size={13} /> PDF
+                        </a>
+                      )}
+                    </button>
+                  ))
+                )}
+              </div>
+            </div>
+          </div>
+
           {/* Alertas Clínicas */}
           <div className="dash-card dash-card-compact">
             <div className="dash-card-header">

@@ -625,6 +625,17 @@ const PerfilCita = () => {
                         >
                           <Printer size={13} /> Imprimir
                         </button>
+                        {orden.estado === "FINALIZADO" &&
+                          orden.archivoResultadoUrl && (
+                            <a
+                              className="btn btn-primary btn-sm"
+                              href={orden.archivoResultadoUrl}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                            >
+                              <FileText size={13} /> Ver resultados
+                            </a>
+                          )}
                         {orden.estado === "PENDIENTE" &&
                           user?.rol === "MEDICO" && (
                             <>
@@ -734,14 +745,27 @@ const PerfilCita = () => {
                             <span className="perfil-orden-fecha">
                               {formatearFechaHora(orden.fecha.toString())}
                             </span>
-                            <span
-                              className={`perfil-orden-estado perfil-orden-estado--${orden.estado.toLowerCase()}`}
-                            >
-                              {orden.estado === "PENDIENTE" && "Pendiente"}
-                              {orden.estado === "EN_PROCESO" && "En proceso"}
-                              {orden.estado === "FINALIZADO" && "Finalizado"}
-                              {orden.estado === "CANCELADA" && "Cancelada"}
-                            </span>
+                            <div className="perfil-orden-top-actions">
+                              <span
+                                className={`perfil-orden-estado perfil-orden-estado--${orden.estado.toLowerCase()}`}
+                              >
+                                {orden.estado === "PENDIENTE" && "Pendiente"}
+                                {orden.estado === "EN_PROCESO" && "En proceso"}
+                                {orden.estado === "FINALIZADO" && "Finalizado"}
+                                {orden.estado === "CANCELADA" && "Cancelada"}
+                              </span>
+                              {orden.estado === "FINALIZADO" &&
+                                orden.archivoResultadoUrl && (
+                                  <a
+                                    className="btn btn-primary btn-sm"
+                                    href={orden.archivoResultadoUrl}
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                  >
+                                    <FileText size={13} /> Ver resultados
+                                  </a>
+                                )}
+                            </div>
                           </div>
                           {orden.observacionesGenerales && (
                             <p className="perfil-orden-obs">

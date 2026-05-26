@@ -99,8 +99,6 @@ export interface MedicamentoSOAP {
 // El catálogo CIE-10 ya no se mantiene en el frontend: se consulta el catálogo
 // oficial completo (SUSALUD, ~12,600 códigos) vía CIE10ApiService → /api/cie10.
 
-export type EspecialidadData = Record<string, string>;
-
 export const INITIAL_SOAP: SOAPData = {
   S: { motivoConsulta: '', tiempoEnfermedad: '', formaInicio: '', curso: '', enfermedadActual: '', sintomas: {}, sinoDetalle: {}, otrosSintomas: '' },
   O: { temp: '', pa_s: '', pa_d: '', fc: '', fr: '', peso: '', talla: '', spo2: '', estadoGeneral: '', piel: '', edema: 'no', edemaLoc: '', edemaGrado: '', edemaDetalle: '', cardiovascular: '', respiratorio: '', abdomen: '', neurologico: '', musculoesqueletico: '', otrosAp: '' },
