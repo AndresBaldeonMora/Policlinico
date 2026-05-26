@@ -13,6 +13,16 @@ export interface ReporteExamenSolicitado {
   total: number;
 }
 
+export interface ReporteCitaPorEstado {
+  _id: string;      // estado de la cita
+  cantidad: number;
+}
+
+export interface ReporteCitaPorEspecialidad {
+  _id: string;      // nombre de la especialidad
+  cantidad: number;
+}
+
 interface AxiosErrorResponse {
   response?: { data?: { message?: string } };
   message?: string;
@@ -46,6 +56,38 @@ export class ReportesApiService {
     } catch (error: unknown) {
       const err = error as AxiosErrorResponse;
       throw new Error(err.response?.data?.message || "Error al obtener reporte de exámenes");
+    }
+  }
+
+  static async citasPorPeriodo(
+    fechaInicio: string,
+    fechaFin: string
+  ): Promise<ReporteCitaPorEstado[]> {
+    try {
+      const response = await api.get<{ success: boolean; data: ReporteCitaPorEstado[] }>(
+        "/reportes/citas-por-periodo",
+        { params: { fechaInicio, fechaFin } }
+      );
+      return response.data.data ?? [];
+    } catch (error: unknown) {
+      const err = error as AxiosErrorResponse;
+      throw new Error(err.response?.data?.message || "Error al obtener reporte de citas");
+    }
+  }
+
+  static async citasPorEspecialidad(
+    fechaInicio?: string,
+    fechaFin?: string
+  ): Promise<ReporteCitaPorEspecialidad[]> {
+    try {
+      const response = await api.get<{ success: boolean; data: ReporteCitaPorEspecialidad[] }>(
+        "/reportes/citas-por-especialidad",
+        { params: { fechaInicio, fechaFin } }
+      );
+      return response.data.data ?? [];
+    } catch (error: unknown) {
+      const err = error as AxiosErrorResponse;
+      throw new Error(err.response?.data?.message || "Error al obtener reporte por especialidad");
     }
   }
 }

@@ -1,0 +1,11 @@
+.gm-estado {
+  display: inline-block;
+  padding: 0.22rem 0.65rem;
+  border-radius: 999px;
+  font-size: 0.72rem;
+  font-weight: 600;
+}
+.gm-estado--on  { background: rgba(16, 185, 129, 0.12); color: #059669; }
+.gm-estado--off { background: rgba(239, 68, 68, 0.12);  color: #dc2626; }
+
+.gm-row--inactivo { opacity: 0.6; }

@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import {
   Stethoscope, Users, BookOpen, ArrowRight,
-  ClipboardList, FlaskConical, Search,
+  ClipboardList, FlaskConical, Search, CalendarDays, Layers,
 } from "lucide-react";
 import { DoctorApiService } from "../../services/doctor.service";
 import { EspecialidadApiService } from "../../services/especialidad.service";
@@ -11,6 +11,8 @@ import {
   ReportesApiService,
   type ReporteOrdenPorEstado,
   type ReporteExamenSolicitado,
+  type ReporteCitaPorEstado,
+  type ReporteCitaPorEspecialidad,
 } from "../../services/reportes.service";
 import "./AdminDashboard.css";
 
@@ -34,6 +36,25 @@ const ESTADO_COLORS: Record<string, string> = {
   CANCELADA:  "#ef4444",
 };
 
+// Estados propios de las CITAS (distintos a los de las órdenes)
+const CITA_ESTADO_LABELS: Record<string, string> = {
+  PENDIENTE:    "Pendiente",
+  ASISTIO:      "Asistió",
+  ATENDIDA:     "Atendida",
+  CANCELADA:    "Cancelada",
+  REPROGRAMADA: "Reprogramada",
+  VENCIDA:      "Vencida",
+};
+
+const CITA_ESTADO_COLORS: Record<string, string> = {
+  PENDIENTE:    "#3b82f6",
+  ASISTIO:      "#8b5cf6",
+  ATENDIDA:     "#10b981",
+  CANCELADA:    "#ef4444",
+  REPROGRAMADA: "#f59e0b",
+  VENCIDA:      "#64748b",
+};
+
 const AdminDashboard = () => {
   const navigate = useNavigate();
   const [stats, setStats] = useState<StatsState>({ doctores: 0, especialidades: 0, pacientes: 0 });
@@ -52,6 +73,12 @@ const AdminDashboard = () => {
   const [examenes,         setExamenes]         = useState<ReporteExamenSolicitado[]>([]);
   const [cargandoExamenes, setCargandoExamenes] = useState(true);
   const [errorExamenes,    setErrorExamenes]    = useState<string | null>(null);
+
+  // Reportes - citas
+  const [citasEstado,       setCitasEstado]       = useState<ReporteCitaPorEstado[]>([]);
+  const [citasEspecialidad, setCitasEspecialidad] = useState<ReporteCitaPorEspecialidad[]>([]);
+  const [cargandoCitas,     setCargandoCitas]     = useState(false);
+  const [errorCitas,        setErrorCitas]        = useState<string | null>(null);
 
   useEffect(() => {
     const fetchData = async () => {
@@ -105,10 +132,34 @@ const AdminDashboard = () => {
     }
   };
  
-  useEffect(() => { buscarOrdenes(); }, []);
- 
-  const totalOrdenes = ordenes.reduce((acc, o) => acc + o.cantidad, 0);
-  const maxExamen    = examenes[0]?.total ?? 1;
+  // ── Buscar citas por período (estado + especialidad) ──
+  const buscarCitas = async () => {
+    if (!fechaInicio || !fechaFin) return;
+    try {
+      setCargandoCitas(true);
+      setErrorCitas(null);
+      const [estado, especialidad] = await Promise.all([
+        ReportesApiService.citasPorPeriodo(fechaInicio, fechaFin),
+        ReportesApiService.citasPorEspecialidad(fechaInicio, fechaFin),
+      ]);
+      setCitasEstado(estado);
+      setCitasEspecialidad(especialidad);
+    } catch {
+      setErrorCitas("No se pudo cargar el reporte de citas.");
+    } finally {
+      setCargandoCitas(false);
+    }
+  };
+
+  // Un único botón "Buscar" actualiza órdenes y citas del mismo período.
+  const buscarPeriodo = () => { buscarOrdenes(); buscarCitas(); };
+
+  useEffect(() => { buscarPeriodo(); }, []);
+
+  const totalOrdenes        = ordenes.reduce((acc, o) => acc + o.cantidad, 0);
+  const totalCitas          = citasEstado.reduce((acc, c) => acc + c.cantidad, 0);
+  const maxExamen           = examenes[0]?.total ?? 1;
+  const maxCitaEspecialidad = citasEspecialidad[0]?.cantidad ?? 1;
 
   const cards = [
     {
@@ -192,8 +243,8 @@ const AdminDashboard = () => {
                 onChange={(e) => setFechaFin(e.target.value)} min={fechaInicio} max={hoy}
               />
             </div>
-            <button className="btn-page-action" onClick={buscarOrdenes} disabled={cargandoOrdenes}>
-              {cargandoOrdenes
+            <button className="btn-page-action" onClick={buscarPeriodo} disabled={cargandoOrdenes || cargandoCitas}>
+              {cargandoOrdenes || cargandoCitas
                 ? <><span className="ar-spinner" /> Buscando…</>
                 : <><Search size={15} /> Buscar</>
               }
@@ -229,6 +280,97 @@ const AdminDashboard = () => {
         )}
       </div>
  
+      {/* ── Reporte: Citas por Período (por estado) ── */}
+      <div className="ar-section">
+        <div className="ar-section-header">
+          <div className="ar-section-title">
+            <CalendarDays size={18} />
+            <h2>Citas por Período</h2>
+          </div>
+        </div>
+
+        {errorCitas && <div className="ar-error">{errorCitas}</div>}
+
+        {cargandoCitas ? (
+          <div className="lista-loading"><div className="lista-loading-spinner" /><p>Cargando reporte…</p></div>
+        ) : citasEstado.length === 0 ? (
+          <div className="ar-empty"><CalendarDays size={32} /><p>No hay citas en este período.</p></div>
+        ) : (
+          <>
+            <div className="ar-stats-row">
+              {citasEstado.map((c) => (
+                <div
+                  key={c._id} className="ar-stat-card"
+                  style={{ "--estado-color": CITA_ESTADO_COLORS[c._id] ?? "var(--primary)" } as React.CSSProperties}
+                >
+                  <span className="ar-stat-label">{CITA_ESTADO_LABELS[c._id] ?? c._id}</span>
+                  <span className="ar-stat-value">{c.cantidad}</span>
+                  <div className="ar-stat-bar">
+                    <div className="ar-stat-bar-fill" style={{ width: `${(c.cantidad / totalCitas) * 100}%` }} />
+                  </div>
+                  <span className="ar-stat-pct">{Math.round((c.cantidad / totalCitas) * 100)}%</span>
+                </div>
+              ))}
+            </div>
+            <p className="ar-total">Total: <strong>{totalCitas}</strong> citas en el período</p>
+          </>
+        )}
+      </div>
+
+      {/* ── Reporte: Citas por Especialidad ── */}
+      <div className="ar-section">
+        <div className="ar-section-header">
+          <div className="ar-section-title">
+            <Layers size={18} />
+            <h2>Citas por Especialidad</h2>
+          </div>
+        </div>
+
+        {cargandoCitas ? (
+          <div className="lista-loading"><div className="lista-loading-spinner" /><p>Cargando reporte…</p></div>
+        ) : citasEspecialidad.length === 0 ? (
+          <div className="ar-empty"><Layers size={32} /><p>No hay datos de citas por especialidad.</p></div>
+        ) : (
+          <div className="lista-table-card">
+            <div className="table-container">
+              <table className="modern-table">
+                <thead>
+                  <tr>
+                    <th style={{ width: 50 }}>#</th>
+                    <th>Especialidad</th>
+                    <th style={{ width: 200 }}>Distribución</th>
+                    <th style={{ width: 80, textAlign: "center" }}>Citas</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {citasEspecialidad.map((c, idx) => (
+                    <tr key={c._id}>
+                      <td>
+                        <span className={`ar-rank ${idx < 3 ? "ar-rank--top" : ""}`}>{idx + 1}</span>
+                      </td>
+                      <td>
+                        <div className="ge-especialidad-cell">
+                          <div className="ge-icon-wrap"><Layers size={14} /></div>
+                          <span className="ge-nombre">{c._id}</span>
+                        </div>
+                      </td>
+                      <td>
+                        <div className="ar-bar-wrap">
+                          <div className="ar-bar" style={{ width: `${(c.cantidad / maxCitaEspecialidad) * 100}%` }} />
+                        </div>
+                      </td>
+                      <td className="td-center">
+                        <span className="ar-count">{c.cantidad}</span>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        )}
+      </div>
+
       {/* ── Reporte: Exámenes más solicitados ── */}
       <div className="ar-section">
         <div className="ar-section-header">

@@ -16,6 +16,9 @@ import {
   LayoutDashboard,
   Home,
   User,
+  UserCog,
+  Pill,
+  ScrollText,
 } from "lucide-react";
 import "./Sidebar.css";
 const Sidebar = () => {
@@ -38,12 +41,15 @@ const Sidebar = () => {
     { path: "/medico/citas", label: "Mis Citas", icon: ClipboardList,   description: "Listado de mis citas" },
   ];
 
-  // Menú ADMINISTRADOR 
+  // Menú ADMINISTRADOR
   const administradorMenu = [
     { path: "/admin", label: "Panel Admin", icon: ShieldCheck, description: "Inicio administración" },
+    { path: "/admin/usuarios", label: "Usuarios", icon: UserCog, description: "Gestión de usuarios del sistema" },
     { path: "/admin/especialidades", label: "Especialidades", icon: BookOpen, description: "CRUD especialidades" },
     { path: "/admin/doctores", label: "Doctores", icon: Stethoscope, description: "CRUD doctores" },
     { path: "/admin/pacientes", label: "Pacientes", icon: Users, description: "CRUD pacientes" },
+    { path: "/admin/medicamentos", label: "Medicamentos", icon: Pill, description: "Catálogo de medicamentos" },
+    { path: "/admin/auditoria", label: "Auditoría", icon: ScrollText, description: "Registro de acciones del sistema" },
   ];
 
   const pacienteMenu = [

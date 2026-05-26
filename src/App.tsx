@@ -27,6 +27,9 @@ import MiCuentaPerfil from "./pages/PacienteDashboard/MiCuenta/MiCuentaPerfil";
 import AdminDashboard from "./pages/AdminDash/AdminDashboard";
 import GestionEspecialidades from "./pages/AdminDash/GestionEspecialidades";
 import GestionDoctores from "./pages/AdminDash/GestionDoctores";
+import GestionUsuarios from "./pages/AdminDash/GestionUsuarios";
+import VisorAuditoria from "./pages/AdminDash/VisorAuditoria";
+import GestionMedicamentos from "./pages/AdminDash/GestionMedicamentos";
 
 import { AuthProvider } from "./context/AuthProvider";
 import { ThemeProvider } from "./context/ThemeContext";
@@ -254,6 +257,30 @@ function App() {
               element={
                 <ProtectedRoute roles={["administrador"]}>
                   <GestionEspecialidades />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/admin/usuarios"
+              element={
+                <ProtectedRoute roles={["administrador"]}>
+                  <GestionUsuarios />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/admin/medicamentos"
+              element={
+                <ProtectedRoute roles={["administrador"]}>
+                  <GestionMedicamentos />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/admin/auditoria"
+              element={
+                <ProtectedRoute roles={["administrador"]}>
+                  <VisorAuditoria />
                 </ProtectedRoute>
               }
             />

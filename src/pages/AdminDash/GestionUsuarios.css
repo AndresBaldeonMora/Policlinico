@@ -1,0 +1,97 @@
+/* ── Filtros ───────────────────────────────────────────── */
+.gu-filters {
+  display: flex;
+  gap: 0.75rem;
+  align-items: center;
+  margin-bottom: 1rem;
+  flex-wrap: wrap;
+}
+
+.gu-filter-select {
+  height: 42px;
+  padding: 0 0.85rem;
+  border: 1px solid var(--border, #e2e8f0);
+  border-radius: 10px;
+  background: var(--surface, #fff);
+  color: var(--text-primary, #1e293b);
+  font-size: 0.875rem;
+  cursor: pointer;
+  min-width: 170px;
+}
+.gu-filter-select:focus { outline: none; border-color: var(--primary, #14b8a6); }
+
+/* ── Badge de rol ──────────────────────────────────────── */
+.gu-rol-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  padding: 0.25rem 0.7rem;
+  border-radius: 999px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  white-space: nowrap;
+}
+.gu-rol-badge--administrador { background: rgba(99, 102, 241, 0.12);  color: #6366f1; }
+.gu-rol-badge--medico        { background: rgba(20, 184, 166, 0.12);  color: #0f766e; }
+.gu-rol-badge--recepcionista { background: rgba(245, 158, 11, 0.12);  color: #b45309; }
+.gu-rol-badge--paciente      { background: rgba(148, 163, 184, 0.15); color: #64748b; }
+
+/* ── Estado activo/inactivo ────────────────────────────── */
+.gu-estado {
+  display: inline-block;
+  padding: 0.22rem 0.65rem;
+  border-radius: 999px;
+  font-size: 0.72rem;
+  font-weight: 600;
+}
+.gu-estado--on  { background: rgba(16, 185, 129, 0.12); color: #059669; }
+.gu-estado--off { background: rgba(239, 68, 68, 0.12);  color: #dc2626; }
+
+.gu-row--inactivo { opacity: 0.62; }
+
+/* ── Hint en el modal ──────────────────────────────────── */
+.gu-hint {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  margin-top: 0.85rem;
+  padding: 0.6rem 0.75rem;
+  background: rgba(20, 184, 166, 0.07);
+  border: 1px dashed rgba(20, 184, 166, 0.35);
+  border-radius: 9px;
+  font-size: 0.8rem;
+  color: var(--text-secondary, #64748b);
+}
+
+/* ── Credenciales temporales ───────────────────────────── */
+.gu-cred-field {
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+  padding: 0.65rem 0.85rem;
+  background: var(--surface-alt, #f8fafc);
+  border: 1px solid var(--border, #e2e8f0);
+  border-radius: 10px;
+  margin-bottom: 0.6rem;
+}
+.gu-cred-label {
+  font-size: 0.72rem;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--text-secondary, #94a3b8);
+}
+.gu-cred-value { font-size: 0.95rem; font-weight: 600; color: var(--text-primary, #1e293b); }
+.gu-cred-value--pass { font-family: ui-monospace, "SFMono-Regular", Menlo, monospace; letter-spacing: 0.05em; }
+
+.gu-cred-warning {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.45rem;
+  margin-top: 0.3rem;
+  padding: 0.6rem 0.75rem;
+  background: rgba(245, 158, 11, 0.08);
+  border-radius: 9px;
+  font-size: 0.78rem;
+  color: #b45309;
+}
+.gu-cred-warning svg { flex-shrink: 0; margin-top: 1px; }
