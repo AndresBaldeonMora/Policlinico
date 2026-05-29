@@ -161,7 +161,7 @@ const ListaPacientes = ({ puedeEliminar = false }: Props) => {
                   <th style={{ width: 130 }}>Telefono</th>
                   <th>Correo</th>
                   <th style={{ width: 80 }}>Edad</th>
-                  <th style={{ width: 90 }}>Portal</th>
+                  {!esMedico && <th style={{ width: 90 }}>Portal</th>}
                   <th style={{ width: 110 }}>Accion</th>
                 </tr>
               </thead>
@@ -186,20 +186,22 @@ const ListaPacientes = ({ puedeEliminar = false }: Props) => {
                       <td>{p.telefono || <span className="td-muted">--</span>}</td>
                       <td className="td-truncate">{p.correo || <span className="td-muted">--</span>}</td>
                       <td className="td-center">{p.edad != null ? `${p.edad}` : <span className="td-muted">--</span>}</td>
-                      <td className="td-center">
-                        {p.tieneCuentaPortal ? (
-                          <span className="lp-badge lp-badge--ok" title="Tiene cuenta de portal">
-                            <ShieldCheck size={13} /> Activa
-                          </span>
-                        ) : (
-                          <span className="lp-badge lp-badge--off" title="Sin cuenta de portal">
-                            <ShieldOff size={13} /> Sin cuenta
-                          </span>
-                        )}
-                      </td>
+                      {!esMedico && (
+                        <td className="td-center">
+                          {p.tieneCuentaPortal ? (
+                            <span className="lp-badge lp-badge--ok" title="Tiene cuenta de portal">
+                              <ShieldCheck size={13} /> Activa
+                            </span>
+                          ) : (
+                            <span className="lp-badge lp-badge--off" title="Sin cuenta de portal">
+                              <ShieldOff size={13} /> Sin cuenta
+                            </span>
+                          )}
+                        </td>
+                      )}
                       <td className="td-center">
                         <div className="ge-actions">
-                          {!p.tieneCuentaPortal && (
+                          {!esMedico && !p.tieneCuentaPortal && (
                             <button
                               className="btn-action btn-action--primary"
                               onClick={() => handleCrearCuenta(p)}
@@ -232,7 +234,7 @@ const ListaPacientes = ({ puedeEliminar = false }: Props) => {
                   ))
                 ) : (
                   <tr>
-                    <td colSpan={7} className="td-empty">
+                    <td colSpan={esMedico ? 6 : 7} className="td-empty">
                       <Users size={32} className="td-empty-icon" />
                       <p>{busqueda ? "No se encontraron pacientes con ese criterio." : "No hay pacientes registrados."}</p>
                     </td>

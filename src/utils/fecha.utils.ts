@@ -63,3 +63,10 @@ export const formatearFechaDMY = (isoBackend: string): string =>
     year: "numeric",
     timeZone: "UTC",
   });
+
+// "EN_PROCESO" → "En Proceso" (reemplaza _ y capitaliza cada palabra)
+export const fmtEstado = (estado?: string): string =>
+  (estado ?? "")
+    .replace(/_/g, " ")
+    .toLowerCase()
+    .replace(/\b\w/g, (c) => c.toUpperCase());

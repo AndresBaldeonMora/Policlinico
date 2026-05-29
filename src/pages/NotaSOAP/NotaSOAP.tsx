@@ -3,6 +3,7 @@ import { useParams, useNavigate } from "react-router-dom";
 import Swal from "sweetalert2";
 import { AlertTriangle, Pill, FileText, Plus, ChevronDown, ChevronUp, Scissors, Users, Activity } from "lucide-react";
 import "./NotaSOAP.css";
+import { fmtEstado } from "../../utils/fecha.utils";
 
 import type { SOAPData, ExamenOrdenado, MedicamentoSOAP } from "./types";
 import { INITIAL_SOAP } from "./types";
@@ -369,7 +370,7 @@ export default function NotaSOAP() {
                 </span>
               )}
               <span className={`sp-badge ${cita.estado === "PENDIENTE" ? "sp-badge--pendiente" : "sp-badge--atendida"}`}>
-                {cita.estado}
+                {fmtEstado(cita.estado)}
               </span>
             </div>
           </div>

@@ -3,7 +3,7 @@ import { Fragment } from "react";
 import type { CitaTransformada } from "../../services/cita.service";
 import type { DoctorTransformado } from "../../services/doctor.service";
 import { getDoctorIdString } from "../../services/cita.service";
-import { toISODateLocal, fechaISO } from "../../utils/fecha.utils";
+import { toISODateLocal, fechaISO, fmtEstado } from "../../utils/fecha.utils";
 
 interface Props {
   fecha: Date;
@@ -76,7 +76,7 @@ const VistaDia = ({ fecha, horas, citas, doctores, doctorId, onVerCita }: Props)
                       <span className="agenda-cita-nombre">
                         {cita.pacienteId.nombres} {cita.pacienteId.apellidos}
                       </span>
-                      <span className="agenda-cita-estado">{cita.estado}</span>
+                      <span className="agenda-cita-estado">{fmtEstado(cita.estado)}</span>
                     </div>
                   )}
                 </div>

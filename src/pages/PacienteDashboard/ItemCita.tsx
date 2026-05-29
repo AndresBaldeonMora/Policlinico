@@ -1,4 +1,5 @@
 import { Calendar, Clock, Stethoscope, CalendarClock } from "lucide-react";
+import { fmtEstado } from "../../utils/fecha.utils";
 import type { CitaHistorial } from "../../services/cita.service";
 import "./ItemCita.css";
 
@@ -36,7 +37,7 @@ const formatFecha = (iso: string) =>
 const ItemCita = ({ cita, onClick, hideEstado = false, onReprogramar }: Props) => {
   const estadoKey = cita.estado?.toUpperCase()?.trim() ?? "PENDIENTE";
   const badge = ESTADO_CONFIG[estadoKey] ?? {
-    label: cita.estado || "Desconocido",
+    label: fmtEstado(cita.estado) || "Desconocido",
     clase: "ic-badge--pending"
   };
 

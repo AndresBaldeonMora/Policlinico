@@ -109,6 +109,15 @@ interface AxiosErrorResponse {
   message?: string;
 }
 
+const calcEdadLocal = (fechaNac?: string): number | undefined => {
+  if (!fechaNac) return undefined;
+  const b = new Date(fechaNac);
+  const t = new Date();
+  const age = t.getFullYear() - b.getFullYear() -
+    (t < new Date(t.getFullYear(), b.getMonth(), b.getDate()) ? 1 : 0);
+  return age;
+};
+
 const transformarPaciente = (p: Paciente): PacienteTransformado => ({
   id: p._id || p.id || "",
   _id: p._id || p.id || "",
@@ -125,7 +134,7 @@ const transformarPaciente = (p: Paciente): PacienteTransformado => ({
   apoderadoNombre: p.apoderadoNombre,
   apoderadoParentesco: p.apoderadoParentesco,
   apoderadoTelefono: p.apoderadoTelefono,
-  edad: p.edad,
+  edad: p.edad ?? calcEdadLocal(p.fechaNacimiento),
   tieneCuentaPortal: p.tieneCuentaPortal,
 });
 

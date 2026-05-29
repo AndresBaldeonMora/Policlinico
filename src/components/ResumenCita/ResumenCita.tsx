@@ -1,6 +1,6 @@
 import { useCallback } from "react";
 import { Calendar, Clock, Stethoscope, CalendarX } from "lucide-react";
-import { formatearFechaLarga } from "../../utils/fecha.utils";
+import { formatearFechaLarga, fmtEstado } from "../../utils/fecha.utils";
 import type { CitaResumen } from "../types";
 import "./ResumenCita.css";
 
@@ -98,7 +98,7 @@ const ResumenCita = ({ cita, loading, onVerDetalle }: ResumenCitaProps) => {
             {tipoLabel}
           </span>
           <span className={`resumen-cita__badge ${estadoClass}`}>
-            {cita.estado}
+            {fmtEstado(cita.estado)}
           </span>
         </div>
       </div>

@@ -9,6 +9,7 @@ import {
 import { MedicoApiService } from "../../services/medico.service";
 import { useAuth } from "../../hooks/userAuth";
 import "./HistoriaClinicaMedico.css";
+import { fmtEstado } from "../../utils/fecha.utils";
 
 type Tab = "resumen" | "consultas" | "estudios";
 
@@ -475,7 +476,7 @@ export default function HistoriaClinicaMedico() {
                         </td>
                         <td>
                           <span className={`hcm-orden-estado hcm-orden-estado--${(o.estado ?? "").toLowerCase()}`}>
-                            {o.estado}
+                            {fmtEstado(o.estado)}
                           </span>
                         </td>
                         <td style={{ fontSize: "0.82rem", color: "var(--text-muted)" }}>

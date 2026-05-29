@@ -11,7 +11,7 @@ const ESTADO_CONFIG: Record<string, { class: string; label: string }> = {
   REPROGRAMADA: { class: "badge-reprogramada", label: "Reprogramada" },
   ATENDIDA:     { class: "badge-success",      label: "Atendida" },
   CANCELADA:    { class: "badge-danger",       label: "Cancelada" },
-  ASISTIO:      { class: "badge-asistio",      label: "Asistió" },
+  ASISTIO:      { class: "badge-asistio",      label: "En sala" },
   VENCIDA:      { class: "badge-vencida",      label: "Vencida" },
 };
 
@@ -24,7 +24,7 @@ const calcAge = (fechaNac?: string) => {
   return `${Math.floor(diff / (365.25 * 24 * 3600 * 1000))} a.`;
 };
 
-const ESTADOS_FILTER = ["TODOS", "PENDIENTE", "ATENDIDA", "CANCELADA", "REPROGRAMADA"];
+const ESTADOS_FILTER = ["ASISTIO", "PENDIENTE", "ATENDIDA", "CANCELADA"];
 
 const TIPO_CONFIG: Record<string, { label: string; cls: string }> = {
   NUEVA:        { label: "1ª Consulta", cls: "mc-tipo-nueva" },
@@ -38,7 +38,7 @@ const TIPO_CONFIG: Record<string, { label: string; cls: string }> = {
 export default function MedicoCitas() {
   const navigate = useNavigate();
   const [citas,        setCitas]       = useState<CitaMedico[]>([]);
-  const [filtroEstado, setFiltro]      = useState("TODOS");
+  const [filtroEstado, setFiltro]      = useState("PENDIENTE");
   const [busqueda,     setBusqueda]    = useState("");
   const [cargando,     setCargando]    = useState(true);
 
@@ -49,15 +49,26 @@ export default function MedicoCitas() {
       .finally(() => setCargando(false));
   }, []);
 
-  const filtradas = citas.filter(c => {
-    const pasaEstado   = filtroEstado === "TODOS" || c.estado === filtroEstado;
-    const term         = normalize(busqueda);
-    const pasaBusqueda = !term ||
-      normalize(`${c.pacienteId.nombres} ${c.pacienteId.apellidos}`).includes(term) ||
-      normalize(c.pacienteId.dni).includes(term) ||
-      (c.notas && normalize(c.notas).includes(term));
-    return pasaEstado && pasaBusqueda;
-  });
+  const toMin = (hora: string) => {
+    const [h, m] = (hora || "00:00").split(":").map(Number);
+    return h * 60 + (m || 0);
+  };
+  const ahoraMin = new Date().getHours() * 60 + new Date().getMinutes();
+
+  const filtradas = citas
+    .filter(c => {
+      const pasaEstado =
+        filtroEstado === "PENDIENTE"
+          ? c.estado === "PENDIENTE" || c.estado === "REPROGRAMADA"
+          : c.estado === filtroEstado;
+      const term         = normalize(busqueda);
+      const pasaBusqueda = !term ||
+        normalize(`${c.pacienteId.nombres} ${c.pacienteId.apellidos}`).includes(term) ||
+        normalize(c.pacienteId.dni).includes(term) ||
+        (c.notas && normalize(c.notas).includes(term));
+      return pasaEstado && pasaBusqueda;
+    })
+    .sort((a, b) => toMin(a.hora) - toMin(b.hora) || Math.abs(toMin(a.hora) - ahoraMin) - Math.abs(toMin(b.hora) - ahoraMin));
 
   return (
     <div className="lista-page">
@@ -91,7 +102,7 @@ export default function MedicoCitas() {
               className={`mc-filter-btn${filtroEstado === e ? " mc-filter-btn--active" : ""}`}
               onClick={() => setFiltro(e)}
             >
-              {e === "TODOS" ? "Todas" : ESTADO_CONFIG[e]?.label ?? e}
+              {ESTADO_CONFIG[e]?.label ?? e}
             </button>
           ))}
         </div>
@@ -114,7 +125,6 @@ export default function MedicoCitas() {
                   <th style={{ width: 55 }}>Edad</th>
                   <th style={{ width: 120 }}>Fecha</th>
                   <th style={{ width: 100 }}>Tipo</th>
-                  <th style={{ width: 115 }}>Estado</th>
                   <th style={{ width: 190 }}>Acciones</th>
                 </tr>
               </thead>
@@ -122,7 +132,6 @@ export default function MedicoCitas() {
                 {filtradas.length > 0 ? (
                   filtradas.map(c => {
                     const pac       = c.pacienteId;
-                    const estadoInfo = ESTADO_CONFIG[c.estado] ?? { class: "badge-warning", label: c.estado };
                     const iniciales  = `${pac.nombres[0] ?? ""}${pac.apellidos[0] ?? ""}`.toUpperCase();
                     const edad       = calcAge(pac.fechaNacimiento);
                     const puedeConsultar = c.estado === "PENDIENTE" || c.estado === "ASISTIO";
@@ -171,14 +180,6 @@ export default function MedicoCitas() {
                           })()}
                         </td>
 
-                        {/* Estado */}
-                        <td>
-                          <span className={`modern-badge ${estadoInfo.class}`}>
-                            <span className="modern-badge-dot" />
-                            {estadoInfo.label}
-                          </span>
-                        </td>
-
                         {/* Acciones */}
                         <td>
                           <div style={{ display: "flex", gap: 6, alignItems: "center" }}>
@@ -212,7 +213,7 @@ export default function MedicoCitas() {
                   })
                 ) : (
                   <tr>
-                    <td colSpan={7} className="td-empty">
+                    <td colSpan={6} className="td-empty">
                       <User size={28} className="td-empty-icon" />
                       <p>No hay citas que coincidan con los filtros.</p>
                     </td>

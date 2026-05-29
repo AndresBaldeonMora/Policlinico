@@ -4,7 +4,7 @@ import Swal from "sweetalert2";
 import {
   Calendar, Clock, CheckCircle, XCircle,
   User, ChevronRight, AlertTriangle, Info, AlertCircle, FileText,
-  Inbox, FlaskConical, Reply,
+  Inbox, FlaskConical, Reply, Users,
 } from "lucide-react";
 import { MedicoApiService } from "../../services/medico.service";
 import type { CitaMedico, MedicoPerfil } from "../../services/medico.service";
@@ -23,13 +23,23 @@ const formatHoy = () =>
     weekday: "long", day: "numeric", month: "long", year: "numeric",
   });
 
+function calcEdad(fechaNacimiento?: string): string {
+  if (!fechaNacimiento) return "";
+  const b = new Date(fechaNacimiento);
+  const t = new Date();
+  const age =
+    t.getFullYear() - b.getFullYear() -
+    (t < new Date(t.getFullYear(), b.getMonth(), b.getDate()) ? 1 : 0);
+  return `${age}a`;
+}
+
 export default function MedicoDashboard() {
   const navigate = useNavigate();
-  const [perfil,    setPerfil]    = useState<MedicoPerfil | null>(null);
-  const [citasHoy,  setCitasHoy]  = useState<CitaMedico[]>([]);
+  const [perfil,        setPerfil]        = useState<MedicoPerfil | null>(null);
+  const [citasHoy,      setCitasHoy]      = useState<CitaMedico[]>([]);
   const [interconsultas, setInterconsultas] = useState<Interconsulta[]>([]);
-  const [resultados, setResultados] = useState<any[]>([]);
-  const [loading,   setLoading]   = useState(true);
+  const [resultados,    setResultados]    = useState<any[]>([]);
+  const [loading,       setLoading]       = useState(true);
 
   const cargarBandeja = () => {
     InterconsultaApiService.listarRecibidas("PENDIENTE")
@@ -89,28 +99,28 @@ export default function MedicoDashboard() {
     );
   }
 
-  const pendientes = citasHoy.filter(c => c.estado === "PENDIENTE");
-  const atendidas  = citasHoy.filter(c => c.estado === "ATENDIDA");
-  const canceladas = citasHoy.filter(c => c.estado === "CANCELADA");
-  const total      = citasHoy.length;
+  const citas      = [...citasHoy].sort((a, b) => a.hora.localeCompare(b.hora));
+  const asistio    = citas.filter(c => c.estado === "ASISTIO");
+  const pendientes = citas.filter(c => c.estado === "PENDIENTE");
+  const atendidas  = citas.filter(c => c.estado === "ATENDIDA");
+  const canceladas = citas.filter(c => c.estado === "CANCELADA" || c.estado === "REPROGRAMADA");
+  const total      = citas.length;
+  const pct        = total > 0 ? Math.round((atendidas.length / total) * 100) : 0;
+  const firstActId = (asistio[0] ?? pendientes[0])?._id;
 
-  const stats = [
-    { label: "Citas hoy",  value: total,             color: "info",    icon: <Calendar size={18} /> },
-    { label: "Pendientes", value: pendientes.length,  color: "warning", icon: <Clock size={18} /> },
-    { label: "Atendidas",  value: atendidas.length,   color: "success", icon: <CheckCircle size={18} /> },
-    { label: "Canceladas", value: canceladas.length,  color: "danger",  icon: <XCircle size={18} /> },
-  ];
+  const nombreDoctor = perfil ? `${perfil.nombres} ${perfil.apellidos}` : "Doctor";
+  const especialidad = perfil?.especialidadId?.nombre ?? "Medicina General";
+  const horaActual   = new Date().getHours();
+  const saludo       = horaActual < 12 ? "Buenos días" : horaActual < 18 ? "Buenas tardes" : "Buenas noches";
+  const turno        = citas.length > 0 ? `${citas[0].hora} – ${citas[citas.length - 1].hora}` : null;
 
-  const proximas      = pendientes.slice(0, 6);
-  const nombreDoctor  = perfil ? `${perfil.nombres} ${perfil.apellidos}` : "Doctor";
-  const especialidad  = perfil?.especialidadId?.nombre ?? "Medicina General";
-  const hora          = new Date().getHours();
-  const saludo        = hora < 12 ? "Buenos días" : hora < 18 ? "Buenas tardes" : "Buenas noches";
-
-  type AlertaTipo = "danger" | "warning" | "info";
+  type AlertaTipo = "danger" | "warning" | "info" | "primary";
   const alertas: { tipo: AlertaTipo; msg: string }[] = [
     ...(canceladas.length > 0
       ? [{ tipo: "danger" as AlertaTipo, msg: `${canceladas.length} cita${canceladas.length > 1 ? "s" : ""} cancelada${canceladas.length > 1 ? "s" : ""} hoy` }]
+      : []),
+    ...(asistio.length > 0
+      ? [{ tipo: "primary" as AlertaTipo, msg: `${asistio.length} paciente${asistio.length > 1 ? "s" : ""} esperando en sala` }]
       : []),
     ...(pendientes.length > 0
       ? [{ tipo: "info" as AlertaTipo, msg: `${pendientes.length} paciente${pendientes.length > 1 ? "s" : ""} pendiente${pendientes.length > 1 ? "s" : ""} de atención` }]
@@ -122,132 +132,263 @@ export default function MedicoDashboard() {
 
   return (
     <div className="medico-dash">
-      {/* Header Section */}
+
+      {/* ── Header ── */}
       <div className="dash-header-section">
         <div className="dash-greeting">
           <h1 className="dash-greeting-title">👋 {saludo}, {nombreDoctor}</h1>
           <p className="dash-greeting-sub">{formatHoy()} · {especialidad}</p>
         </div>
-
-        {perfil && (
-          <div className="dash-profile-chip">
-            <div className="dash-profile-avatar-small">{perfil.nombres[0]}{perfil.apellidos[0]}</div>
-            <div className="dash-profile-chip-info">
-              <div className="dash-profile-name">{perfil.nombres} {perfil.apellidos}</div>
-              {perfil.cmp && <div className="dash-profile-cmp">CMP: {perfil.cmp}</div>}
+        <div className="dash-header-chips">
+          {turno && (
+            <div className="dash-header-chip">
+              <Clock size={15} className="dash-chip-icon" />
+              <div>
+                <div className="dash-chip-label">Turno</div>
+                <div className="dash-chip-value">{turno}</div>
+              </div>
             </div>
-          </div>
-        )}
+          )}
+          {perfil?.cmp && (
+            <div className="dash-header-chip">
+              <FileText size={15} className="dash-chip-icon" />
+              <div>
+                <div className="dash-chip-label">CMP</div>
+                <div className="dash-chip-value">{perfil.cmp}</div>
+              </div>
+            </div>
+          )}
+        </div>
       </div>
 
-      {/* Stats Grid */}
-      <div className="dash-stats">
-        {stats.map(s => (
-          <div key={s.label} className={`dash-stat-card dash-stat-card--${s.color}`}>
-            <div className="dash-stat-icon">{s.icon}</div>
-            <div className="dash-stat-body">
-              <div className="dash-stat-value">{s.value}</div>
-              <div className="dash-stat-label">{s.label}</div>
+      {/* ── KPI tiles (5) ── */}
+      <div className="dash-kpis">
+        {[
+          { label: "Programadas", value: total,             sub: "agenda del día",     cls: "info",    icon: <Calendar size={16} />,     accent: false },
+          { label: "Atendidas",   value: atendidas.length,  sub: `${pct}% completado`, cls: "success", icon: <CheckCircle size={16} />,  accent: true  },
+          { label: "En sala",     value: asistio.length,    sub: "esperando atención", cls: "primary", icon: <User size={16} />,         accent: asistio.length > 0 },
+          { label: "Pendientes",  value: pendientes.length, sub: "por atender",        cls: "warning", icon: <Clock size={16} />,        accent: true  },
+          { label: "Canceladas",  value: canceladas.length, sub: "no se presentaron",  cls: "danger",  icon: <XCircle size={16} />,      accent: false },
+        ].map(k => (
+          <div key={k.label} className={`dash-kpi-tile dash-kpi-tile--${k.cls}${k.accent ? " dash-kpi-tile--accent" : ""}`}>
+            <div className="dash-kpi-accent-bar" />
+            <div className="dash-kpi-head">
+              <span className="dash-kpi-label">{k.label}</span>
+              <div className="dash-kpi-icon">{k.icon}</div>
             </div>
+            <div className={`dash-kpi-value${k.accent ? " dash-kpi-value--color" : ""}`}>{k.value}</div>
+            <div className="dash-kpi-sub">{k.sub}</div>
           </div>
         ))}
       </div>
 
-      {/* Content Grid - Centered */}
+      {/* ── Barra de progreso ── */}
+      {total > 0 && (
+        <div className="dash-progress-panel">
+          <div className="dash-progress-info">
+            <span className="dash-progress-label">Progreso de la jornada</span>
+            <span className="dash-progress-text">
+              {atendidas.length} de {total} atendidas ·{" "}
+              <strong className="dash-progress-pct">{pct}%</strong>
+            </span>
+          </div>
+          <div className="dash-progress-track">
+            <div className="dash-progress-seg dash-progress-seg--success" style={{ width: `${(atendidas.length / total) * 100}%` }} />
+            <div className="dash-progress-seg dash-progress-seg--primary" style={{ width: `${(asistio.length  / total) * 100}%` }} />
+            <div className="dash-progress-seg dash-progress-seg--warning" style={{ width: `${(pendientes.length / total) * 100}%` }} />
+          </div>
+        </div>
+      )}
+
+      {/* ── Grid principal ── */}
       <div className="dash-content-grid">
-        {/* Main Card - Citas Pendientes */}
+
+        {/* Agenda del día */}
         <div className="dash-card">
           <div className="dash-card-header">
-            <span className="dash-card-title">📋 Citas Pendientes Hoy</span>
-            <button className="dash-link" onClick={() => navigate("/medico/citas")}>
-              Ver todas →
-            </button>
+            <span className="dash-card-title">Agenda de hoy</span>
+            <div className="dash-card-header-right">
+              <span className="dash-agenda-total">{citas.length} citas</span>
+              <button className="dash-link" onClick={() => navigate("/medico/citas")}>Ver todas →</button>
+            </div>
           </div>
 
-          {proximas.length === 0 ? (
+          {asistio.length > 0 && (
+            <div className="dash-en-sala-banner">
+              <span className="dash-dot-pulse" />
+              {asistio.length} paciente{asistio.length > 1 ? "s" : ""} en sala — esperando atención
+            </div>
+          )}
+
+          {citas.length === 0 ? (
             <div className="dash-empty">
               <User size={32} />
-              <p>No hay citas pendientes para hoy</p>
-              <button
-                className="dash-link-secondary"
-                onClick={() => navigate("/medico/citas")}
-              >
+              <p>No hay citas para hoy</p>
+              <button className="dash-link-secondary" onClick={() => navigate("/medico/citas")}>
                 Ver mis citas
               </button>
             </div>
           ) : (
-            <div className="dash-citas-list">
-              {proximas.map(c => {
-                const pac      = c.pacienteId;
-                const iniciales = `${pac.nombres[0] ?? ""}${pac.apellidos[0] ?? ""}`.toUpperCase();
+            <div className="dash-agenda-list">
+              {citas.map((c, i) => {
+                const pac           = c.pacienteId;
+                const isAsistio     = c.estado === "ASISTIO";
+                const isAtendida    = c.estado === "ATENDIDA";
+                const isNext        = c._id === firstActId;
+                const tieneAlergias = (pac.alergias?.length ?? 0) > 0;
+                const tieneCronicas = (pac.problemasMedicos?.length ?? 0) > 0;
+                const edad          = calcEdad(pac.fechaNacimiento);
+                const dotCls        = isAtendida ? "success" : isAsistio ? "primary" : "warning";
+                const estadoLabel   = isAtendida ? "Atendida" : isAsistio ? "En sala" : isNext ? "Siguiente" : "Pendiente";
+                const estadoCls     = isAtendida ? "success"  : isAsistio ? "primary" : isNext  ? "next"      : "warning";
+
                 return (
                   <div
                     key={c._id}
-                    className="dash-cita-row"
+                    className={`dash-agenda-row${isAsistio ? " dash-agenda-row--active" : ""}${isAtendida ? " dash-agenda-row--done" : ""}`}
                     onClick={() => navigate(`/medico/citas/${c._id}/consulta`)}
+                    style={{ borderBottom: i === citas.length - 1 ? "none" : undefined }}
                   >
-                    <div className="dash-cita-hora">{c.hora}</div>
-                    <div className="dash-cita-avatar">{iniciales}</div>
-                    <div className="dash-cita-info">
-                      <div className="dash-cita-nombre-row">
-                        <span className="dash-cita-nombre">
-                          {pac.nombres} {pac.apellidos}
-                        </span>
-                        {c.tipo && (
-                          <span className={`dash-tipo-badge ${c.tipo.toUpperCase() === "SEGUIMIENTO" ? "dash-tipo-seguim" : "dash-tipo-nueva"}`}>
-                            {c.tipo.toUpperCase() === "SEGUIMIENTO" ? "Seguim." : "Nueva"}
-                          </span>
-                        )}
-                      </div>
-                      <div className="dash-cita-meta">
-                        {c.notas && (
-                          <span className="dash-cita-motivo">
-                            {c.notas.substring(0, 65)}{c.notas.length > 65 ? "…" : ""}
-                          </span>
-                        )}
-                      </div>
+                    {/* Hora + dot */}
+                    <div className="dash-agenda-hora-col">
+                      <span className={`dash-agenda-dot dash-agenda-dot--${dotCls}${isAsistio ? " dash-agenda-dot--pulse" : ""}`} />
+                      <span className="dash-agenda-hora">{c.hora}</span>
                     </div>
-                    <button
-                      className="dash-cita-hc-btn"
-                      onClick={(e) => { e.stopPropagation(); navigate(`/pacientes/${pac._id}`); }}
-                      title="Ver historia clínica antes de la consulta"
-                    >
-                      <FileText size={14} />
-                    </button>
-                    <ChevronRight size={15} className="dash-cita-arrow" />
+
+                    {/* Paciente */}
+                    <div className="dash-agenda-patient">
+                      <div className="dash-agenda-top-row">
+                        <span className="dash-agenda-nombre">{pac.nombres} {pac.apellidos}</span>
+                        {edad && <span className="dash-agenda-meta">{edad}</span>}
+                        {tieneAlergias && (
+                          <span className="dash-flag dash-flag--danger">
+                            <AlertCircle size={10} /> Alergia
+                          </span>
+                        )}
+                        {tieneCronicas && (
+                          <span className="dash-flag dash-flag--warning">Crónico</span>
+                        )}
+                      </div>
+                      {c.notas && (
+                        <div className="dash-agenda-motivo">
+                          {c.notas.substring(0, 70)}{c.notas.length > 70 ? "…" : ""}
+                        </div>
+                      )}
+                    </div>
+
+                    {/* Acciones */}
+                    <div className="dash-agenda-actions" onClick={(e) => e.stopPropagation()}>
+                      <span className={`dash-estado-chip dash-estado-chip--${estadoCls}`}>{estadoLabel}</span>
+                      {(isAsistio || isNext) && (
+                        <button
+                          className="dash-btn-primary dash-btn-sm"
+                          onClick={() => navigate(`/medico/citas/${c._id}/consulta`)}
+                        >
+                          {isAsistio ? "Continuar" : "Iniciar"}
+                        </button>
+                      )}
+                      {!isAsistio && !isNext && !isAtendida && (
+                        <button
+                          className="dash-btn-ghost dash-btn-sm"
+                          onClick={() => navigate(`/medico/citas/${c._id}/consulta`)}
+                        >
+                          Ver
+                        </button>
+                      )}
+                      <button
+                        className="dash-cita-hc-btn"
+                        onClick={() => navigate(`/pacientes/${pac._id}`)}
+                        title="Ver historia clínica"
+                      >
+                        <FileText size={13} />
+                      </button>
+                    </div>
                   </div>
                 );
               })}
             </div>
           )}
-
-          {proximas.length > 0 && (
-            <div className="dash-card-footer">
-              <button
-                className="dash-btn-primary"
-                onClick={() => navigate(`/medico/citas/${proximas[0]._id}/consulta`)}
-              >
-                ▶ Iniciar siguiente consulta
-              </button>
-            </div>
-          )}
         </div>
 
-        {/* Alerts & Summary Cards */}
+        {/* ── Rail derecho ── */}
         <div className="dash-side-cards">
+
+          {/* Métricas de la jornada */}
+          <div className="dash-card">
+            <div className="dash-card-header">
+              <span className="dash-card-title">Métricas de la jornada</span>
+            </div>
+            <div className="dash-metric-row">
+              <div className="dash-metric-icon dash-metric-icon--info"><Users size={17} /></div>
+              <div className="dash-metric-body">
+                <div className="dash-metric-label">Pacientes atendidos</div>
+                <div className="dash-metric-nums">
+                  <span className="dash-metric-value">{atendidas.length}</span>
+                  <span className="dash-metric-unit">/ {total}</span>
+                </div>
+                <div className="dash-metric-track">
+                  <div className="dash-metric-fill dash-metric-fill--info" style={{ width: `${pct}%` }} />
+                </div>
+              </div>
+            </div>
+            <div className="dash-metric-row">
+              <div className="dash-metric-icon dash-metric-icon--primary"><User size={17} /></div>
+              <div className="dash-metric-body">
+                <div className="dash-metric-label">En sala ahora</div>
+                <div className="dash-metric-nums">
+                  <span className="dash-metric-value">{asistio.length}</span>
+                  <span className="dash-metric-unit">esperando</span>
+                </div>
+              </div>
+            </div>
+            <div className="dash-metric-row dash-metric-row--last">
+              <div className="dash-metric-icon dash-metric-icon--warning"><Clock size={17} /></div>
+              <div className="dash-metric-body">
+                <div className="dash-metric-label">Por atender</div>
+                <div className="dash-metric-nums">
+                  <span className="dash-metric-value">{pendientes.length}</span>
+                  <span className="dash-metric-unit">pendientes</span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Alertas del día */}
+          <div className="dash-card">
+            <div className="dash-card-header">
+              <span className="dash-card-title">⚠️ Alertas del día</span>
+              {alertas.length > 0 && <span className="dash-badge-count dash-badge-count--danger">{alertas.length}</span>}
+            </div>
+            <div className="dash-alertas">
+              {alertas.length === 0 ? (
+                <p className="dash-alertas-empty">Sin alertas para hoy</p>
+              ) : (
+                alertas.map((a, i) => (
+                  <div key={i} className={`dash-alerta dash-alerta--${a.tipo}`}>
+                    {a.tipo === "danger"  && <AlertCircle   size={14} />}
+                    {a.tipo === "warning" && <AlertTriangle size={14} />}
+                    {a.tipo === "info"    && <Info          size={14} />}
+                    {a.tipo === "primary" && <Users         size={14} />}
+                    <span>{a.msg}</span>
+                  </div>
+                ))
+              )}
+            </div>
+          </div>
+
           {/* Bandeja de tareas */}
           <div className="dash-card dash-card-compact">
             <div className="dash-card-header">
               <span className="dash-card-title"><Inbox size={15} style={{ verticalAlign: "-2px" }} /> Bandeja de tareas</span>
             </div>
             <div className="dash-bandeja">
-              {/* Interconsultas recibidas */}
+
               <div className="dash-bandeja-group">
                 <div className="dash-bandeja-group-title">
                   <Reply size={13} /> Interconsultas por responder ({interconsultas.length})
                 </div>
                 {interconsultas.length === 0 ? (
-                  <p className="dash-bandeja-empty">No tienes interconsultas pendientes</p>
+                  <p className="dash-bandeja-empty">Sin interconsultas pendientes</p>
                 ) : (
                   interconsultas.slice(0, 4).map((ic) => {
                     const prio = PRIORIDAD_LABEL[ic.prioridad] ?? PRIORIDAD_LABEL.electiva;
@@ -268,7 +409,6 @@ export default function MedicoDashboard() {
                 )}
               </div>
 
-              {/* Resultados listos */}
               <div className="dash-bandeja-group">
                 <div className="dash-bandeja-group-title">
                   <FlaskConical size={13} /> Resultados listos ({resultados.length})
@@ -301,53 +441,15 @@ export default function MedicoDashboard() {
                           <FileText size={13} /> PDF
                         </a>
                       )}
+                      <ChevronRight size={14} className="dash-bandeja-chevron" />
                     </button>
                   ))
                 )}
               </div>
+
             </div>
           </div>
 
-          {/* Alertas Clínicas */}
-          <div className="dash-card dash-card-compact">
-            <div className="dash-card-header">
-              <span className="dash-card-title">⚠️ Alertas</span>
-            </div>
-            <div className="dash-alertas">
-              {alertas.length === 0 ? (
-                <p className="dash-alertas-empty">Sin alertas para hoy</p>
-              ) : (
-                alertas.map((a) => (
-                  <div key={`${a.tipo}-${a.msg}`} className={`dash-alerta dash-alerta--${a.tipo}`}>
-                    {a.tipo === "danger"  && <AlertCircle  size={15} />}
-                    {a.tipo === "warning" && <AlertTriangle size={15} />}
-                    {a.tipo === "info"    && <Info          size={15} />}
-                    <span>{a.msg}</span>
-                  </div>
-                ))
-              )}
-            </div>
-          </div>
-
-          {/* Resumen del día */}
-          <div className="dash-card dash-card-compact">
-            <div className="dash-card-header">
-              <span className="dash-card-title">📊 Resumen</span>
-            </div>
-            <div className="dash-resumen">
-              {[
-                { label: "Total citas",  value: total,             color: "var(--info)" },
-                { label: "Pendientes",   value: pendientes.length,  color: "var(--warning)" },
-                { label: "Atendidas",    value: atendidas.length,   color: "var(--success)" },
-                { label: "Canceladas",   value: canceladas.length,  color: "var(--error)" },
-              ].map(r => (
-                <div key={r.label} className="dash-resumen-row">
-                  <span className="dash-resumen-label">{r.label}</span>
-                  <span className="dash-resumen-value" style={{ color: r.color }}>{r.value}</span>
-                </div>
-              ))}
-            </div>
-          </div>
         </div>
       </div>
     </div>

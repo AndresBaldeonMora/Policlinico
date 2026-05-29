@@ -12,6 +12,7 @@ import {
   X,
   CornerDownLeft,
 } from "lucide-react";
+import { fmtEstado } from "../../utils/fecha.utils";
 import { PacienteApiService } from "../../services/paciente.service";
 import { CitaApiService } from "../../services/cita.service";
 import { DoctorApiService } from "../../services/doctor.service";
@@ -130,7 +131,7 @@ const SearchPalette = ({ open, onClose }: { open: boolean; onClose: () => void }
               id: `cita-${c._id}`,
               type: "cita",
               title: `Cita: ${c.paciente}`,
-              subtitle: `${c.doctor} | ${c.fecha} ${c.hora} | ${c.estado}`,
+              subtitle: `${c.doctor} | ${c.fecha} ${c.hora} | ${fmtEstado(c.estado)}`,
               path: `/lista-citas?highlight=${c._id}`,
               icon: FileText,
             });

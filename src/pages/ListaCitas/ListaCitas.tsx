@@ -12,7 +12,7 @@ import {
 import type { MesOption, HorarioPorDia } from "./ListaCitasReducer";
 import ReprogramarModal from "./ReprogramarModal";
 import CitaQuickModal from "../../components/CitaQuickModal/CitaQuickModal";
-import { hoyISO, isoADMY } from "../../utils/fecha.utils";
+import { hoyISO, isoADMY, fmtEstado } from "../../utils/fecha.utils";
 
 const normalizeString = (str: string): string =>
   str.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
@@ -340,7 +340,7 @@ const ListaCitas = () => {
               <tbody>
                 {filtrarCitas.length > 0 ? (
                   filtrarCitas.map((cita) => {
-                    const estadoInfo = ESTADO_CONFIG[cita.estado] || { class: "badge-warning", label: cita.estado };
+                    const estadoInfo = ESTADO_CONFIG[cita.estado] || { class: "badge-warning", label: fmtEstado(cita.estado) };
                     const inicialPaciente = cita.paciente.charAt(0).toUpperCase();
                     return (
                       <tr
