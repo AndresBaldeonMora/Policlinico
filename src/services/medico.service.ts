@@ -3,12 +3,18 @@ import type { Alergia, MedicamentoHabitual, ProblemaMedico, CirugiaPevia, Antece
 
 export type { Alergia, MedicamentoHabitual, ProblemaMedico, CirugiaPevia, AntecedenteFamiliar };
 
+// Alineado a la Receta Única Estandarizada (DIGEMID / NTS 057-MINSA/DIGEMID).
 export interface MedicamentoPrescrito {
-  medicamentoId: string;
+  medicamentoId?: string;
   nombre: string;
-  dosis: string;
-  frecuencia: string;
-  duracion: string;
+  dci?: string;
+  concentracion?: string;
+  formaFarmaceutica?: string;
+  viaAdministracion?: string;
+  dosis?: string;
+  frecuencia?: string;
+  duracion?: string;
+  cantidad?: string;
   observaciones?: string;
 }
 
@@ -153,10 +159,19 @@ export class MedicoApiService {
 
   static async guardarNotasClinicas(
     citaId: string,
-    datos: { notasClinicas: string; diagnostico: string; tratamiento: string; diagnosticos: DiagnosticoCIE10[]; especialidad?: EspecialidadNota; otrosDiagnosticos: OtrosDiagnosticos }
+    datos: { notasClinicas: string; diagnostico: string; tratamiento: string; diagnosticos: DiagnosticoCIE10[]; especialidad?: EspecialidadNota; otrosDiagnosticos: OtrosDiagnosticos; medicamentosPrescritos?: MedicamentoPrescrito[] }
   ): Promise<CitaMedico> {
     const response = await api.patch(`/medico/citas/${citaId}/notas`, datos);
     return response.data.data;
+  }
+
+  // Descarga la Receta Única Estandarizada (PDF) y la abre en una pestaña nueva.
+  static async abrirReceta(citaId: string): Promise<void> {
+    const response = await api.get(`/medico/citas/${citaId}/receta`, { responseType: "blob" });
+    const url = window.URL.createObjectURL(new Blob([response.data], { type: "application/pdf" }));
+    window.open(url, "_blank");
+    // Liberar el object URL tras un momento (la pestaña ya cargó el blob)
+    setTimeout(() => window.URL.revokeObjectURL(url), 60_000);
   }
 
   static async prescribirMedicamentos(

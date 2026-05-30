@@ -280,6 +280,19 @@ export default function NotaSOAP() {
       })),
       // Otros diagnósticos (NTS-022) — campo estructurado consultable
       otrosDiagnosticos: soapData.A.otrosDiagnosticos,
+      // Medicamentos estructurados → Receta Única Estandarizada (DIGEMID / NTS 057)
+      medicamentosPrescritos: medicamentos.map(m => ({
+        nombre:            m.nombre,
+        dci:               m.dci ?? "",
+        concentracion:     m.concentracion ?? "",
+        formaFarmaceutica: m.forma ?? "",
+        viaAdministracion: m.via ?? "",
+        dosis:             m.dosis ?? "",
+        frecuencia:        m.frecuencia ?? "",
+        duracion:          m.duracion ?? "",
+        cantidad:          m.cantidad ?? "",
+        observaciones:     m.instrucciones ?? "",
+      })),
     };
   };
 
@@ -292,6 +305,24 @@ export default function NotaSOAP() {
       setLastSaved(now);
     } catch {
       Swal.fire({ icon: "error", title: "Error", text: "No se pudo guardar el borrador.", confirmButtonColor: "var(--primary)" });
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const handleImprimirReceta = async () => {
+    if (!citaId || saving) return;
+    if (medicamentos.length === 0) {
+      Swal.fire({ icon: "info", title: "Sin medicamentos", text: "Agregue al menos un medicamento para generar la receta.", confirmButtonColor: "var(--primary)" });
+      return;
+    }
+    setSaving(true);
+    try {
+      // Guardar primero para persistir los medicamentos estructurados en el backend.
+      await MedicoApiService.guardarNotasClinicas(citaId, buildPayload());
+      await MedicoApiService.abrirReceta(citaId);
+    } catch {
+      Swal.fire({ icon: "error", title: "Error", text: "No se pudo generar la receta.", confirmButtonColor: "var(--primary)" });
     } finally {
       setSaving(false);
     }
@@ -702,6 +733,15 @@ export default function NotaSOAP() {
             <button className="soap-btn-secondary" onClick={handleSaveDraft} disabled={saving}>
               {saving ? "Guardando…" : "Guardar borrador"}
             </button>
+            <button
+              className="soap-btn-secondary"
+              onClick={handleImprimirReceta}
+              disabled={saving || medicamentos.length === 0}
+              title={medicamentos.length === 0 ? "Agregue medicamentos para generar la receta" : "Generar Receta Única Estandarizada (PDF)"}
+              style={{ opacity: medicamentos.length === 0 ? 0.5 : 1 }}
+            >
+              Imprimir receta
+            </button>
             <button className="soap-btn-next" onClick={handleFinalizar} disabled={saving}>
               Finalizar Consulta
             </button>
@@ -715,6 +755,11 @@ export default function NotaSOAP() {
           cita={cita}
           onClose={() => setModalAbierto(null)}
           onAdd={e => { setExamenes(prev => [...prev, { ...e, _uid: crypto.randomUUID() }]); setModalAbierto(null); }}
+          diagnosticoPrefill={
+            soapData.A.diagnoses[0]
+              ? `${soapData.A.diagnoses[0].name}${soapData.A.diagnoses[0].code ? ` (${soapData.A.diagnoses[0].code})` : ""}`
+              : undefined
+          }
         />
       )}
       {modalAbierto === "receta" && (

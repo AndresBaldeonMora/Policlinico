@@ -80,19 +80,22 @@ export interface SOAPData {
 export interface ExamenOrdenado {
   _uid?: string;
   nombre: string;
-  tipo: 'Laboratorio' | 'Radiología' | 'Especializado';
+  tipo: 'Patología Clínica' | 'Diagnóstico por Imágenes';
   urgente: boolean;
+  diagnosticoPresuntivo?: string;
 }
 
 export interface MedicamentoSOAP {
   _uid?: string;
   nombre: string;
+  dci?: string;          // Denominación Común Internacional (principio activo) — MINSA
   concentracion: string;
   forma: string;
   via: string;
   dosis: string;
   frecuencia: string;
   duracion: string;
+  cantidad?: string;     // Cantidad total a dispensar en farmacia — MINSA
   instrucciones?: string;
 }
 

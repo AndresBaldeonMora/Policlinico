@@ -98,6 +98,7 @@ export interface OrdenExamen {
   items: ItemOrden[];
   estado: EstadoOrden;
   observacionesGenerales?: string;
+  diagnosticoPresuntivo?: string;
   notas?: string;
   historialEstados?: HistorialEstadoOrden[];
   createdAt?: string;
@@ -123,6 +124,7 @@ export class ExamenService {
     citaId?: string;
     especialidadId: string;
     observacionesGenerales?: string;
+    diagnosticoPresuntivo?: string;
     items: {
       examenId: string;
       observaciones?: string;
@@ -248,11 +250,12 @@ export class ExamenService {
       observaciones?: string;
       respuestasProtocolares?: RespuestaProtocolar[];
     }[],
-    observacionesGenerales?: string
+    observacionesGenerales?: string,
+    diagnosticoPresuntivo?: string
   ): Promise<OrdenExamen> {
     const res = await api.patch<{ success: boolean; data: OrdenExamen }>(
       `/ordenes/${ordenId}`,
-      { items, observacionesGenerales }
+      { items, observacionesGenerales, diagnosticoPresuntivo }
     );
     return res.data.data;
   }
