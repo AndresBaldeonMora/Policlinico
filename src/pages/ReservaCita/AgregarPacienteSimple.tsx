@@ -1,5 +1,5 @@
-// src/pages/ReservaCita/AgregarPacienteSimple.tsx
 import { useReducer } from "react";
+import { User, AlertCircle, Lightbulb } from "lucide-react";
 import { PacienteApiService } from "../../services/paciente.service";
 import "./AgregarPacienteSimple.css";
 
@@ -86,8 +86,8 @@ const AgregarPacienteSimple = ({ dniInicial, onPacienteCreado, onCancelar }: Pro
       <div className="modal-content-simple">
         {/* Header */}
         <div className="modal-header-simple">
-          <h3>👤 Nuevo Paciente</h3>
-          <button className="close-btn-simple" onClick={onCancelar} disabled={state.loading}>✕</button>
+          <h3 style={{ display: "inline-flex", alignItems: "center", gap: 6 }}><User size={16} /> Nuevo Paciente</h3>
+          <button className="close-btn-simple" aria-label="Cerrar" onClick={onCancelar} disabled={state.loading}>×</button>
         </div>
 
 
@@ -100,7 +100,7 @@ const AgregarPacienteSimple = ({ dniInicial, onPacienteCreado, onCancelar }: Pro
 
 
           {state.error && (
-            <div className="error-message-simple">⚠️ {state.error}</div>
+            <div className="error-message-simple"><AlertCircle size={14} /> {state.error}</div>
           )}
 
 
@@ -124,8 +124,9 @@ const AgregarPacienteSimple = ({ dniInicial, onPacienteCreado, onCancelar }: Pro
           </div>
 
 
-          <p className="aps-nota">
-            💡 Solo datos esenciales para la cita. Puedes completar el perfil completo desde la sección <strong>Pacientes</strong>.
+          <p className="aps-nota" style={{ display: "flex", alignItems: "flex-start", gap: 6 }}>
+            <Lightbulb size={14} style={{ flexShrink: 0, marginTop: 2 }} />
+            <span>Solo datos esenciales para la cita. Puedes completar el perfil completo desde la sección <strong>Pacientes</strong>.</span>
           </p>
 
 

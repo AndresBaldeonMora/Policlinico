@@ -1,5 +1,5 @@
 import { useEffect, useReducer, useState } from "react";
-import { Search, Plus, Pencil, Power, Pill, X, AlertCircle } from "lucide-react";
+import { Search, Plus, Pencil, Power, Pill, X, AlertCircle, Check } from "lucide-react";
 import {
   MedicamentoApiService,
   type Medicamento,
@@ -272,7 +272,7 @@ const GestionMedicamentos = () => {
                 <div className="pm-header-icon"><Pill size={18} /></div>
                 <div><h2>{modal.medicamento ? "Editar Medicamento" : "Nuevo Medicamento"}</h2></div>
               </div>
-              <button className="pm-close" onClick={() => dispatch({ type: "CERRAR" })} disabled={modal.loading}>✕</button>
+              <button className="pm-close" aria-label="Cerrar" onClick={() => dispatch({ type: "CERRAR" })} disabled={modal.loading}><X size={16} /></button>
             </div>
 
             {modal.error && (
@@ -304,7 +304,7 @@ const GestionMedicamentos = () => {
                   <button type="submit" className="pm-btn pm-btn--primary" disabled={modal.loading}>
                     {modal.loading
                       ? <><span className="pm-spinner-sm" /> Guardando…</>
-                      : modal.medicamento ? "✓ Guardar cambios" : "✓ Agregar medicamento"}
+                      : <><Check size={14} /> {modal.medicamento ? "Guardar cambios" : "Agregar medicamento"}</>}
                   </button>
                 </div>
               </div>

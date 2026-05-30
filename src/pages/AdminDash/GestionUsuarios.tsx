@@ -350,7 +350,7 @@ const GestionUsuarios = () => {
                 <div className="pm-header-icon"><UserCog size={18} /></div>
                 <div><h2>{modal.usuario ? "Editar Usuario" : "Nuevo Usuario"}</h2></div>
               </div>
-              <button className="pm-close" onClick={() => dispatch({ type: "CERRAR" })} disabled={modal.loading}>✕</button>
+              <button className="pm-close" aria-label="Cerrar" onClick={() => dispatch({ type: "CERRAR" })} disabled={modal.loading}><X size={16} /></button>
             </div>
 
             {modal.error && (
@@ -399,7 +399,7 @@ const GestionUsuarios = () => {
                   <button type="submit" className="pm-btn pm-btn--primary" disabled={modal.loading}>
                     {modal.loading
                       ? <><span className="pm-spinner-sm" /> Guardando…</>
-                      : modal.usuario ? "✓ Guardar cambios" : "✓ Crear usuario"}
+                      : <><Check size={14} /> {modal.usuario ? "Guardar cambios" : "Crear usuario"}</>}
                   </button>
                 </div>
               </div>
@@ -417,7 +417,7 @@ const GestionUsuarios = () => {
                 <div className="pm-header-icon"><KeyRound size={18} /></div>
                 <div><h2>Credenciales de acceso</h2></div>
               </div>
-              <button className="pm-close" onClick={() => setCredenciales(null)}>✕</button>
+              <button className="pm-close" aria-label="Cerrar" onClick={() => setCredenciales(null)}><X size={16} /></button>
             </div>
             <div className="pm-section">
               <div className="gu-cred-field">

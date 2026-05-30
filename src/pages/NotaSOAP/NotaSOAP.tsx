@@ -11,6 +11,7 @@ import SectionS from "./sections/SectionS";
 import SectionO from "./sections/SectionO";
 import SectionA from "./sections/SectionA";
 import SectionP from "./sections/SectionP";
+import PanelOrdenesPaciente from "./PanelOrdenesPaciente";
 
 import ModalSolicitudExamen from "../../components/modals/ModalSolicitudExamen";
 import ModalReceta          from "../../components/modals/ModalReceta";
@@ -656,6 +657,9 @@ export default function NotaSOAP() {
             </div>
           )}
         </div>
+
+        {/* ── Órdenes y resultados del paciente (solo lectura) ── */}
+        <PanelOrdenesPaciente pacienteId={pac._id} />
       </aside>
 
       {/* ── Main area ── */}

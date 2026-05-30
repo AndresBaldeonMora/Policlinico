@@ -1,16 +1,23 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import Swal from "sweetalert2";
 import {
   Calendar, Clock, CheckCircle, XCircle,
   User, ChevronRight, AlertTriangle, Info, AlertCircle, FileText,
-  Inbox, FlaskConical, Reply, Users,
+  Inbox, FlaskConical, Reply, Users, Send,
+  CheckCircle2, CalendarCheck, Hourglass, BadgeCheck,
 } from "lucide-react";
 import { MedicoApiService } from "../../services/medico.service";
 import type { CitaMedico, MedicoPerfil } from "../../services/medico.service";
-import { InterconsultaApiService, type Interconsulta } from "../../services/interconsulta.service";
-import { toastExito } from "../../utils/toast";
+import { InterconsultaApiService, type Interconsulta, type EstadoInterconsulta } from "../../services/interconsulta.service";
 import "./MedicoDashboard.css";
+
+const ESTADO_ENV_LABEL: Record<EstadoInterconsulta, { label: string; cls: string; icon: any }> = {
+  PENDIENTE:  { label: "Pendiente",     cls: "warning", icon: Hourglass },
+  RESPONDIDA: { label: "Respondida",    cls: "success", icon: CheckCircle2 },
+  CITADA:     { label: "Cita agendada", cls: "info",    icon: CalendarCheck },
+  ATENDIDA:   { label: "Atendida",      cls: "success", icon: BadgeCheck },
+  CANCELADA:  { label: "Cancelada",     cls: "muted",   icon: XCircle },
+};
 
 const PRIORIDAD_LABEL: Record<string, { label: string; cls: string }> = {
   urgente:    { label: "Urgente",    cls: "danger" },
@@ -33,17 +40,34 @@ function calcEdad(fechaNacimiento?: string): string {
   return `${age}a`;
 }
 
+function iniciales(nombres?: string, apellidos?: string): string {
+  const n = (nombres ?? "").trim().split(/\s+/)[0]?.[0] ?? "";
+  const a = (apellidos ?? "").trim().split(/\s+/)[0]?.[0] ?? "";
+  return (n + a).toUpperCase() || "·";
+}
+
+type BandejaTab = "recibidas" | "respondidas" | "resultados" | "enviadas";
+
 export default function MedicoDashboard() {
   const navigate = useNavigate();
   const [perfil,        setPerfil]        = useState<MedicoPerfil | null>(null);
   const [citasHoy,      setCitasHoy]      = useState<CitaMedico[]>([]);
   const [interconsultas, setInterconsultas] = useState<Interconsulta[]>([]);
+  const [respondidas,   setRespondidas]   = useState<Interconsulta[]>([]);
+  const [enviadas,      setEnviadas]      = useState<Interconsulta[]>([]);
   const [resultados,    setResultados]    = useState<any[]>([]);
   const [loading,       setLoading]       = useState(true);
+  const [tabActiva,     setTabActiva]     = useState<BandejaTab>("recibidas");
 
   const cargarBandeja = () => {
     InterconsultaApiService.listarRecibidas("PENDIENTE")
       .then(setInterconsultas)
+      .catch(() => {});
+    InterconsultaApiService.listarRecibidas("PROCESADAS")
+      .then(setRespondidas)
+      .catch(() => {});
+    InterconsultaApiService.listarEnviadas()
+      .then(setEnviadas)
       .catch(() => {});
     MedicoApiService.obtenerResultadosRecientes()
       .then(setResultados)
@@ -61,32 +85,15 @@ export default function MedicoDashboard() {
     cargarBandeja();
   }, []);
 
-  const handleResponder = async (ic: Interconsulta) => {
-    const { value: respuesta } = await Swal.fire({
-      title: "Responder interconsulta",
-      html: `<div style="text-align:left;font-size:13px;color:#475569">
-        <strong>Paciente:</strong> ${ic.pacienteId?.nombres ?? ""} ${ic.pacienteId?.apellidos ?? ""}<br/>
-        <strong>Solicita:</strong> ${ic.solicitanteNombre}<br/>
-        <strong>Motivo:</strong> ${ic.motivoConsulta}${ic.preguntaClinica ? `<br/><strong>Pregunta:</strong> ${ic.preguntaClinica}` : ""}
-      </div>`,
-      input: "textarea",
-      inputPlaceholder: "Escribe tu respuesta o recomendación clínica…",
-      inputAttributes: { "aria-label": "Respuesta" },
-      showCancelButton: true,
-      confirmButtonText: "Enviar respuesta",
-      cancelButtonText: "Cancelar",
-      confirmButtonColor: "var(--primary)",
-      inputValidator: (v) => (!v?.trim() ? "La respuesta no puede estar vacía" : undefined),
-    });
-    if (!respuesta?.trim()) return;
-    try {
-      await InterconsultaApiService.responder(ic._id, respuesta.trim());
-      toastExito("Respuesta enviada");
-      cargarBandeja();
-    } catch {
-      Swal.fire({ icon: "error", title: "Error", text: "No se pudo enviar la respuesta.", confirmButtonColor: "var(--primary)" });
-    }
+  const irADetalle = (ic: Interconsulta) => {
+    navigate(`/medico/interconsultas/${ic._id}`);
   };
+
+  // Solo cuentan como "novedades" para el solicitante las que ya fueron
+  // procesadas pero aún no las ha visto (RESPONDIDA o CITADA recientes).
+  const enviadasNovedades = enviadas.filter(
+    (ic) => ic.estado === "RESPONDIDA" || ic.estado === "CITADA"
+  );
 
   if (loading) {
     return (
@@ -106,7 +113,8 @@ export default function MedicoDashboard() {
   const canceladas = citas.filter(c => c.estado === "CANCELADA" || c.estado === "REPROGRAMADA");
   const total      = citas.length;
   const pct        = total > 0 ? Math.round((atendidas.length / total) * 100) : 0;
-  const firstActId = (asistio[0] ?? pendientes[0])?._id;
+  const proxima    = asistio[0] ?? pendientes[0];
+  const firstActId = proxima?._id;
 
   const nombreDoctor = perfil ? `${perfil.nombres} ${perfil.apellidos}` : "Doctor";
   const especialidad = perfil?.especialidadId?.nombre ?? "Medicina General";
@@ -128,6 +136,9 @@ export default function MedicoDashboard() {
     ...(interconsultas.length > 0
       ? [{ tipo: "warning" as AlertaTipo, msg: `${interconsultas.length} interconsulta${interconsultas.length > 1 ? "s" : ""} por responder` }]
       : []),
+    ...(enviadasNovedades.length > 0
+      ? [{ tipo: "info" as AlertaTipo, msg: `${enviadasNovedades.length} interconsulta${enviadasNovedades.length > 1 ? "s" : ""} tuya${enviadasNovedades.length > 1 ? "s" : ""} respondida${enviadasNovedades.length > 1 ? "s" : ""}` }]
+      : []),
   ];
 
   return (
@@ -136,7 +147,7 @@ export default function MedicoDashboard() {
       {/* ── Header ── */}
       <div className="dash-header-section">
         <div className="dash-greeting">
-          <h1 className="dash-greeting-title">👋 {saludo}, {nombreDoctor}</h1>
+          <h1 className="dash-greeting-title">{saludo}, {nombreDoctor}</h1>
           <p className="dash-greeting-sub">{formatHoy()} · {especialidad}</p>
         </div>
         <div className="dash-header-chips">
@@ -161,46 +172,125 @@ export default function MedicoDashboard() {
         </div>
       </div>
 
-      {/* ── KPI tiles (5) ── */}
-      <div className="dash-kpis">
-        {[
-          { label: "Programadas", value: total,             sub: "agenda del día",     cls: "info",    icon: <Calendar size={16} />,     accent: false },
-          { label: "Atendidas",   value: atendidas.length,  sub: `${pct}% completado`, cls: "success", icon: <CheckCircle size={16} />,  accent: true  },
-          { label: "En sala",     value: asistio.length,    sub: "esperando atención", cls: "primary", icon: <User size={16} />,         accent: asistio.length > 0 },
-          { label: "Pendientes",  value: pendientes.length, sub: "por atender",        cls: "warning", icon: <Clock size={16} />,        accent: true  },
-          { label: "Canceladas",  value: canceladas.length, sub: "no se presentaron",  cls: "danger",  icon: <XCircle size={16} />,      accent: false },
-        ].map(k => (
-          <div key={k.label} className={`dash-kpi-tile dash-kpi-tile--${k.cls}${k.accent ? " dash-kpi-tile--accent" : ""}`}>
-            <div className="dash-kpi-accent-bar" />
-            <div className="dash-kpi-head">
-              <span className="dash-kpi-label">{k.label}</span>
-              <div className="dash-kpi-icon">{k.icon}</div>
+      {/* ── Stats strip + progress (reemplaza 5 KPI tiles) ── */}
+      <div className="dash-stats-strip">
+        <div className="dash-stat">
+          <Calendar size={13} className="dash-stat-icon" />
+          <span className="dash-stat-val">{total}</span>
+          <span className="dash-stat-lbl">programadas</span>
+        </div>
+        <div className="dash-stat-sep" />
+        <div className="dash-stat dash-stat--success">
+          <CheckCircle size={13} className="dash-stat-icon" />
+          <span className="dash-stat-val">{atendidas.length}</span>
+          <span className="dash-stat-lbl">atendidas <em>· {pct}%</em></span>
+        </div>
+        <div className="dash-stat-sep" />
+        <div className={`dash-stat${asistio.length > 0 ? " dash-stat--primary" : ""}`}>
+          <User size={13} className="dash-stat-icon" />
+          <span className="dash-stat-val">{asistio.length}</span>
+          <span className="dash-stat-lbl">en sala</span>
+        </div>
+        <div className="dash-stat-sep" />
+        <div className={`dash-stat${pendientes.length > 0 ? " dash-stat--warning" : ""}`}>
+          <Clock size={13} className="dash-stat-icon" />
+          <span className="dash-stat-val">{pendientes.length}</span>
+          <span className="dash-stat-lbl">pendientes</span>
+        </div>
+        {canceladas.length > 0 && (
+          <>
+            <div className="dash-stat-sep" />
+            <div className="dash-stat dash-stat--danger">
+              <XCircle size={13} className="dash-stat-icon" />
+              <span className="dash-stat-val">{canceladas.length}</span>
+              <span className="dash-stat-lbl">canceladas</span>
             </div>
-            <div className={`dash-kpi-value${k.accent ? " dash-kpi-value--color" : ""}`}>{k.value}</div>
-            <div className="dash-kpi-sub">{k.sub}</div>
+          </>
+        )}
+
+        {total > 0 && (
+          <div className="dash-stats-progress">
+            <div className="dash-stats-progress-track">
+              <div className="dash-stats-progress-seg dash-stats-progress-seg--success" style={{ width: `${(atendidas.length / total) * 100}%` }} />
+              <div className="dash-stats-progress-seg dash-stats-progress-seg--primary" style={{ width: `${(asistio.length / total) * 100}%` }} />
+              <div className="dash-stats-progress-seg dash-stats-progress-seg--warning" style={{ width: `${(pendientes.length / total) * 100}%` }} />
+            </div>
           </div>
-        ))}
+        )}
       </div>
 
-      {/* ── Barra de progreso ── */}
-      {total > 0 && (
-        <div className="dash-progress-panel">
-          <div className="dash-progress-info">
-            <span className="dash-progress-label">Progreso de la jornada</span>
-            <span className="dash-progress-text">
-              {atendidas.length} de {total} atendidas ·{" "}
-              <strong className="dash-progress-pct">{pct}%</strong>
-            </span>
-          </div>
-          <div className="dash-progress-track">
-            <div className="dash-progress-seg dash-progress-seg--success" style={{ width: `${(atendidas.length / total) * 100}%` }} />
-            <div className="dash-progress-seg dash-progress-seg--primary" style={{ width: `${(asistio.length  / total) * 100}%` }} />
-            <div className="dash-progress-seg dash-progress-seg--warning" style={{ width: `${(pendientes.length / total) * 100}%` }} />
-          </div>
+      {/* ── Alertas banner slim ── */}
+      {alertas.length > 0 && (
+        <div className="dash-alertas-strip">
+          {alertas.slice(0, 4).map((a, i) => (
+            <div key={i} className={`dash-alerta-chip dash-alerta-chip--${a.tipo}`}>
+              {a.tipo === "danger"  && <AlertCircle   size={12} />}
+              {a.tipo === "warning" && <AlertTriangle size={12} />}
+              {a.tipo === "info"    && <Info          size={12} />}
+              {a.tipo === "primary" && <Users         size={12} />}
+              <span>{a.msg}</span>
+            </div>
+          ))}
         </div>
       )}
 
-      {/* ── Grid principal ── */}
+      {/* ── HERO: Próxima atención / En sala ── */}
+      {proxima && (() => {
+        const enSala = proxima.estado === "ASISTIO";
+        const pac = proxima.pacienteId;
+        const edadStr = calcEdad(pac.fechaNacimiento);
+        const tieneAlergias = (pac.alergias?.length ?? 0) > 0;
+        const tieneCronicas = (pac.problemasMedicos?.length ?? 0) > 0;
+        return (
+          <div className={`dash-proxima${enSala ? " dash-proxima--sala" : ""}`}>
+            <div className="dash-proxima-glow" />
+            <div className="dash-proxima-left">
+              <div className="dash-proxima-eyebrow">
+                {enSala && <span className="dash-proxima-dot" />}
+                {enSala ? "En sala — listo para atender" : "Próxima atención"}
+              </div>
+              <div className="dash-proxima-body">
+                <div className="dash-proxima-avatar">
+                  {iniciales(pac.nombres, pac.apellidos)}
+                </div>
+                <div className="dash-proxima-info">
+                  <h2 className="dash-proxima-name">{pac.nombres} {pac.apellidos}</h2>
+                  <div className="dash-proxima-meta">
+                    <span><Clock size={11} /> {proxima.hora}</span>
+                    {edadStr && <span>{edadStr.replace("a", " años")}</span>}
+                    <span>DNI {pac.dni}</span>
+                    {tieneAlergias && (
+                      <span className="dash-flag dash-flag--danger">
+                        <AlertCircle size={10} /> Alergia
+                      </span>
+                    )}
+                    {tieneCronicas && (
+                      <span className="dash-flag dash-flag--warning">Crónico</span>
+                    )}
+                  </div>
+                </div>
+              </div>
+            </div>
+            <div className="dash-proxima-actions">
+              <button
+                className="dash-proxima-hc-btn"
+                onClick={() => navigate(`/pacientes/${pac._id}`)}
+                title="Ver historia clínica"
+              >
+                <FileText size={14} />
+              </button>
+              <button
+                className="dash-proxima-cta"
+                onClick={() => navigate(`/medico/citas/${proxima._id}/consulta`)}
+              >
+                {enSala ? "Continuar consulta" : "Iniciar consulta"} →
+              </button>
+            </div>
+          </div>
+        );
+      })()}
+
+      {/* ── Grid principal: Agenda | Bandeja ── */}
       <div className="dash-content-grid">
 
         {/* Agenda del día */}
@@ -310,147 +400,223 @@ export default function MedicoDashboard() {
           )}
         </div>
 
-        {/* ── Rail derecho ── */}
-        <div className="dash-side-cards">
-
-          {/* Métricas de la jornada */}
-          <div className="dash-card">
-            <div className="dash-card-header">
-              <span className="dash-card-title">Métricas de la jornada</span>
-            </div>
-            <div className="dash-metric-row">
-              <div className="dash-metric-icon dash-metric-icon--info"><Users size={17} /></div>
-              <div className="dash-metric-body">
-                <div className="dash-metric-label">Pacientes atendidos</div>
-                <div className="dash-metric-nums">
-                  <span className="dash-metric-value">{atendidas.length}</span>
-                  <span className="dash-metric-unit">/ {total}</span>
-                </div>
-                <div className="dash-metric-track">
-                  <div className="dash-metric-fill dash-metric-fill--info" style={{ width: `${pct}%` }} />
-                </div>
-              </div>
-            </div>
-            <div className="dash-metric-row">
-              <div className="dash-metric-icon dash-metric-icon--primary"><User size={17} /></div>
-              <div className="dash-metric-body">
-                <div className="dash-metric-label">En sala ahora</div>
-                <div className="dash-metric-nums">
-                  <span className="dash-metric-value">{asistio.length}</span>
-                  <span className="dash-metric-unit">esperando</span>
-                </div>
-              </div>
-            </div>
-            <div className="dash-metric-row dash-metric-row--last">
-              <div className="dash-metric-icon dash-metric-icon--warning"><Clock size={17} /></div>
-              <div className="dash-metric-body">
-                <div className="dash-metric-label">Por atender</div>
-                <div className="dash-metric-nums">
-                  <span className="dash-metric-value">{pendientes.length}</span>
-                  <span className="dash-metric-unit">pendientes</span>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          {/* Alertas del día */}
-          <div className="dash-card">
-            <div className="dash-card-header">
-              <span className="dash-card-title">⚠️ Alertas del día</span>
-              {alertas.length > 0 && <span className="dash-badge-count dash-badge-count--danger">{alertas.length}</span>}
-            </div>
-            <div className="dash-alertas">
-              {alertas.length === 0 ? (
-                <p className="dash-alertas-empty">Sin alertas para hoy</p>
+          {/* Bandeja de tareas — tabs con items full-width */}
+          <div className="dash-card dash-bandeja-card-v2">
+            <div className="dash-card-header dash-bandeja-header-v2">
+              <span className="dash-card-title">
+                <Inbox size={15} style={{ verticalAlign: "-2px" }} /> Bandeja de tareas
+              </span>
+              {(interconsultas.length + enviadasNovedades.length) > 0 ? (
+                <span className="dash-bandeja-summary-v2">
+                  {interconsultas.length + enviadasNovedades.length} requieren atención
+                </span>
               ) : (
-                alertas.map((a, i) => (
-                  <div key={i} className={`dash-alerta dash-alerta--${a.tipo}`}>
-                    {a.tipo === "danger"  && <AlertCircle   size={14} />}
-                    {a.tipo === "warning" && <AlertTriangle size={14} />}
-                    {a.tipo === "info"    && <Info          size={14} />}
-                    {a.tipo === "primary" && <Users         size={14} />}
-                    <span>{a.msg}</span>
-                  </div>
-                ))
+                <span className="dash-bandeja-summary-v2 dash-bandeja-summary-v2--ok">
+                  <CheckCircle size={11} /> Al día
+                </span>
               )}
             </div>
-          </div>
 
-          {/* Bandeja de tareas */}
-          <div className="dash-card dash-card-compact">
-            <div className="dash-card-header">
-              <span className="dash-card-title"><Inbox size={15} style={{ verticalAlign: "-2px" }} /> Bandeja de tareas</span>
+            {/* Tabs */}
+            <div className="dash-tabs">
+              {([
+                { id: "recibidas",   label: "Por responder", icon: Reply,         count: interconsultas.length, badge: 0 },
+                { id: "respondidas", label: "Respondidas",   icon: CheckCircle2,  count: respondidas.length,    badge: 0 },
+                { id: "resultados",  label: "Resultados",    icon: FlaskConical,  count: resultados.length,     badge: 0 },
+                { id: "enviadas",    label: "Mis enviadas",  icon: Send,          count: enviadas.length,       badge: enviadasNovedades.length },
+              ] as const).map((t) => {
+                const TabIcon = t.icon;
+                const activa = tabActiva === t.id;
+                return (
+                  <button
+                    key={t.id}
+                    className={`dash-tab${activa ? " dash-tab--activa" : ""}`}
+                    onClick={() => setTabActiva(t.id as BandejaTab)}
+                  >
+                    <TabIcon size={13} />
+                    <span className="dash-tab-label">{t.label}</span>
+                    {t.count > 0 && <span className="dash-tab-count">{t.count}</span>}
+                    {t.badge > 0 && <span className="dash-tab-novedad" title={`${t.badge} con novedad`} />}
+                  </button>
+                );
+              })}
             </div>
-            <div className="dash-bandeja">
 
-              <div className="dash-bandeja-group">
-                <div className="dash-bandeja-group-title">
-                  <Reply size={13} /> Interconsultas por responder ({interconsultas.length})
-                </div>
-                {interconsultas.length === 0 ? (
-                  <p className="dash-bandeja-empty">Sin interconsultas pendientes</p>
+            {/* Contenido de la tab activa */}
+            <div className="dash-tab-content">
+
+              {tabActiva === "recibidas" && (
+                interconsultas.length === 0 ? (
+                  <div className="dash-tab-empty">
+                    <div className="dash-tab-empty-icon dash-tab-empty-icon--ok">
+                      <CheckCircle2 size={22} />
+                    </div>
+                    <p className="dash-tab-empty-title">Bandeja al día</p>
+                    <p className="dash-tab-empty-sub">No tienes interconsultas por responder</p>
+                  </div>
                 ) : (
-                  interconsultas.slice(0, 4).map((ic) => {
-                    const prio = PRIORIDAD_LABEL[ic.prioridad] ?? PRIORIDAD_LABEL.electiva;
-                    return (
-                      <button key={ic._id} className="dash-bandeja-item" onClick={() => handleResponder(ic)}>
-                        <div className="dash-bandeja-item-main">
-                          <span className="dash-bandeja-item-name">
-                            {ic.pacienteId?.nombres} {ic.pacienteId?.apellidos}
+                  <div className="dash-tab-list">
+                    {interconsultas.slice(0, 5).map((ic) => {
+                      const prio = PRIORIDAD_LABEL[ic.prioridad] ?? PRIORIDAD_LABEL.electiva;
+                      return (
+                        <button key={ic._id} className="dash-tab-item" onClick={() => irADetalle(ic)}>
+                          <div className="dash-tab-item-avatar dash-tab-item-avatar--warn">
+                            <Reply size={14} />
+                          </div>
+                          <div className="dash-tab-item-main">
+                            <span className="dash-tab-item-name">
+                              {ic.pacienteId?.nombres} {ic.pacienteId?.apellidos}
+                            </span>
+                            <span className="dash-tab-item-sub">
+                              De <b>{ic.solicitanteNombre}</b> · {ic.motivoConsulta}
+                            </span>
+                          </div>
+                          <span className={`dash-tab-item-meta dash-tab-item-meta--${prio.cls}`}>
+                            {prio.label}
                           </span>
-                          <span className="dash-bandeja-item-sub">
-                            De {ic.solicitanteNombre} · {ic.motivoConsulta.slice(0, 40)}{ic.motivoConsulta.length > 40 ? "…" : ""}
+                          <ChevronRight size={14} className="dash-tab-item-arrow" />
+                        </button>
+                      );
+                    })}
+                  </div>
+                )
+              )}
+
+              {tabActiva === "respondidas" && (
+                respondidas.length === 0 ? (
+                  <div className="dash-tab-empty">
+                    <div className="dash-tab-empty-icon dash-tab-empty-icon--info">
+                      <CheckCircle2 size={22} />
+                    </div>
+                    <p className="dash-tab-empty-title">Sin historial</p>
+                    <p className="dash-tab-empty-sub">Aquí verás interconsultas que respondiste o derivaste a cita</p>
+                  </div>
+                ) : (
+                  <div className="dash-tab-list">
+                    {respondidas.slice(0, 6).map((ic) => {
+                      const est = ESTADO_ENV_LABEL[ic.estado] ?? ESTADO_ENV_LABEL.RESPONDIDA;
+                      const EstIcon = est.icon;
+                      return (
+                        <button
+                          key={ic._id}
+                          className="dash-tab-item"
+                          onClick={() => navigate(`/medico/interconsultas/${ic._id}`)}
+                        >
+                          <div className="dash-tab-item-avatar dash-tab-item-avatar--success">
+                            <CheckCircle2 size={14} />
+                          </div>
+                          <div className="dash-tab-item-main">
+                            <span className="dash-tab-item-name">
+                              {ic.pacienteId?.nombres} {ic.pacienteId?.apellidos}
+                            </span>
+                            <span className="dash-tab-item-sub">
+                              De <b>{ic.solicitanteNombre}</b> · {ic.motivoConsulta}
+                            </span>
+                          </div>
+                          <span className={`dash-tab-item-meta dash-tab-item-meta--${est.cls}`}>
+                            <EstIcon size={10} /> {est.label}
+                          </span>
+                          <ChevronRight size={14} className="dash-tab-item-arrow" />
+                        </button>
+                      );
+                    })}
+                  </div>
+                )
+              )}
+
+              {tabActiva === "resultados" && (
+                resultados.length === 0 ? (
+                  <div className="dash-tab-empty">
+                    <div className="dash-tab-empty-icon dash-tab-empty-icon--info">
+                      <FlaskConical size={22} />
+                    </div>
+                    <p className="dash-tab-empty-title">Sin resultados recientes</p>
+                    <p className="dash-tab-empty-sub">Aquí verás resultados de exámenes que ordenaste</p>
+                  </div>
+                ) : (
+                  <div className="dash-tab-list">
+                    {resultados.slice(0, 5).map((o) => (
+                      <button
+                        key={o._id}
+                        className="dash-tab-item"
+                        onClick={() => navigate(`/pacientes/${o.pacienteId?._id}`)}
+                      >
+                        <div className="dash-tab-item-avatar dash-tab-item-avatar--success">
+                          <FlaskConical size={14} />
+                        </div>
+                        <div className="dash-tab-item-main">
+                          <span className="dash-tab-item-name">
+                            {o.pacienteId?.nombres} {o.pacienteId?.apellidos}
+                          </span>
+                          <span className="dash-tab-item-sub">
+                            {o.items?.length ?? 0} examen(es) · {o.especialidadId?.nombre ?? ""}
                           </span>
                         </div>
-                        <span className={`dash-bandeja-prio dash-bandeja-prio--${prio.cls}`}>{prio.label}</span>
+                        {o.archivoResultadoUrl ? (
+                          <a
+                            className="dash-bandeja-pdf"
+                            href={o.archivoResultadoUrl}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            onClick={(e) => e.stopPropagation()}
+                          >
+                            <FileText size={12} /> PDF
+                          </a>
+                        ) : null}
+                        <ChevronRight size={14} className="dash-tab-item-arrow" />
                       </button>
-                    );
-                  })
-                )}
-              </div>
+                    ))}
+                  </div>
+                )
+              )}
 
-              <div className="dash-bandeja-group">
-                <div className="dash-bandeja-group-title">
-                  <FlaskConical size={13} /> Resultados listos ({resultados.length})
-                </div>
-                {resultados.length === 0 ? (
-                  <p className="dash-bandeja-empty">Sin resultados recientes</p>
+              {tabActiva === "enviadas" && (
+                enviadas.length === 0 ? (
+                  <div className="dash-tab-empty">
+                    <div className="dash-tab-empty-icon dash-tab-empty-icon--info">
+                      <Send size={22} />
+                    </div>
+                    <p className="dash-tab-empty-title">Aún no has enviado interconsultas</p>
+                    <p className="dash-tab-empty-sub">Aquí verás el estado de las interconsultas que envíes</p>
+                  </div>
                 ) : (
-                  resultados.slice(0, 4).map((o) => (
-                    <button
-                      key={o._id}
-                      className="dash-bandeja-item"
-                      onClick={() => navigate(`/pacientes/${o.pacienteId?._id}`)}
-                    >
-                      <div className="dash-bandeja-item-main">
-                        <span className="dash-bandeja-item-name">
-                          {o.pacienteId?.nombres} {o.pacienteId?.apellidos}
-                        </span>
-                        <span className="dash-bandeja-item-sub">
-                          {o.items?.length ?? 0} examen(es) · {o.especialidadId?.nombre ?? ""}
-                        </span>
-                      </div>
-                      {o.archivoResultadoUrl && (
-                        <a
-                          className="dash-bandeja-pdf"
-                          href={o.archivoResultadoUrl}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          onClick={(e) => e.stopPropagation()}
+                  <div className="dash-tab-list">
+                    {enviadas.slice(0, 5).map((ic) => {
+                      const est = ESTADO_ENV_LABEL[ic.estado] ?? ESTADO_ENV_LABEL.PENDIENTE;
+                      const EstIcon = est.icon;
+                      const esNovedad = ic.estado === "RESPONDIDA" || ic.estado === "CITADA";
+                      return (
+                        <button
+                          key={ic._id}
+                          className={`dash-tab-item${esNovedad ? " dash-tab-item--nuevo" : ""}`}
+                          onClick={() => irADetalle(ic)}
                         >
-                          <FileText size={13} /> PDF
-                        </a>
-                      )}
-                      <ChevronRight size={14} className="dash-bandeja-chevron" />
-                    </button>
-                  ))
-                )}
-              </div>
+                          {esNovedad && <span className="dash-tab-item-dot" />}
+                          <div className="dash-tab-item-avatar dash-tab-item-avatar--info">
+                            <Send size={14} />
+                          </div>
+                          <div className="dash-tab-item-main">
+                            <span className="dash-tab-item-name">
+                              {ic.pacienteId?.nombres} {ic.pacienteId?.apellidos}
+                            </span>
+                            <span className="dash-tab-item-sub">
+                              A <b>{ic.especialidadSolicitada}</b> · {ic.motivoConsulta}
+                            </span>
+                          </div>
+                          <span className={`dash-tab-item-meta dash-tab-item-meta--${est.cls}`}>
+                            <EstIcon size={10} /> {est.label}
+                          </span>
+                          <ChevronRight size={14} className="dash-tab-item-arrow" />
+                        </button>
+                      );
+                    })}
+                  </div>
+                )
+              )}
 
             </div>
           </div>
 
-        </div>
       </div>
     </div>
   );

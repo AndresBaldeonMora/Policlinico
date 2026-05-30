@@ -1,4 +1,5 @@
 import { useEffect, useReducer, useCallback, useState } from "react";
+import { Calendar } from "lucide-react";
 import { useAuth } from "../../hooks/userAuth";
 import { useSearchParams } from "react-router-dom";
 
@@ -133,27 +134,31 @@ const ReservaCita = () => {
   const cargarDatos = useCallback(async () => {
     dispatch({ type: "CARGA_INICIO" });
     try {
+      // Si el usuario es PACIENTE no listamos la BD entera de pacientes
+      // (endpoint restringido a staff). Sólo pedimos su propio perfil.
+      const pacientesPromise = esPaciente
+        ? PacienteApiService.obtenerMiPerfil().then((p) => (p ? [p as any] : []))
+        : PacienteApiService.listar();
+
       const [pacientes, especialidades, doctores] = await Promise.all([
-        PacienteApiService.listar(),
+        pacientesPromise,
         EspecialidadApiService.listar(),
         DoctorApiService.listar(),
       ]);
       dispatch({ type: "CARGA_EXITO", pacientes, especialidades, doctores, meses: generarMesesDisponibles() });
 
-      if (esPaciente && user?.correo) {
-        const pacienteLocal = pacientes.find(p => p.correo?.toLowerCase() === user.correo.toLowerCase());
-        if (pacienteLocal && pacienteLocal.id) {
-          dispatch({ type: "SELECCIONAR_PACIENTE", paciente: pacienteLocal });
-        } else if (pacienteLocal) {
-          dispatch({ type: "CARGA_ERROR", message: "Tu usuario no está vinculado a un paciente válido (ID faltante). Contacta a recepción." });
+      if (esPaciente) {
+        const pacienteLocal = pacientes[0];
+        if (pacienteLocal && (pacienteLocal as any).id) {
+          dispatch({ type: "SELECCIONAR_PACIENTE", paciente: pacienteLocal as any });
         } else {
-          dispatch({ type: "CARGA_ERROR", message: "No se encontró un paciente registrado con tu correo. Contacta a recepción." });
+          dispatch({ type: "CARGA_ERROR", message: "Tu usuario no está vinculado a un paciente válido. Contacta a recepción." });
         }
       }
     } catch {
       dispatch({ type: "CARGA_ERROR", message: "Error de conexión al cargar datos." });
     }
-  }, [esPaciente, user?.correo]);
+  }, [esPaciente]);
 
   useEffect(() => { cargarDatos(); }, [cargarDatos]);
 
@@ -343,7 +348,7 @@ const ReservaCita = () => {
       )}
 
       <div className="reserva-cita-header">
-        <h1>📅 Reservar Cita Médica</h1>
+        <h1 style={{ display: "inline-flex", alignItems: "center", gap: 8 }}><Calendar size={22} /> Reservar Cita Médica</h1>
         <button
           onClick={() => dispatch({ type: "RESET" })}
           className="btn-close-form"

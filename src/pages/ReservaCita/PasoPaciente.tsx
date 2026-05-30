@@ -1,3 +1,4 @@
+import { ChevronRight, UserPlus } from "lucide-react";
 import type { PacienteTransformado } from "../../services/paciente.service";
 
 const DNI_LENGTH = 8;
@@ -52,15 +53,15 @@ const PasoPaciente = ({
               <span>DNI: {pacienteEncontrado.dni}</span>
             </div>
           </div>
-          <div style={{ marginLeft: "auto", color: "#16a34a", fontSize: "1.2rem" }}>👉</div>
+          <div style={{ marginLeft: "auto", color: "#16a34a", display: "inline-flex", alignItems: "center" }}><ChevronRight size={18} /></div>
         </div>
       )}
 
       {esDNIValido(searchDNI)  && !pacienteEncontrado && !pacienteSeleccionado && (
         <div className="not-found-container">
           <p className="not-found-text">No encontramos resultados para este DNI.</p>
-          <button type="button" onClick={onNuevoPaciente} className="btn-nuevo-paciente">
-            ➕ Registrar Nuevo Paciente
+          <button type="button" onClick={onNuevoPaciente} className="btn-nuevo-paciente" style={{ display: "inline-flex", alignItems: "center", gap: 6 }}>
+            <UserPlus size={14} /> Registrar Nuevo Paciente
           </button>
         </div>
       )}

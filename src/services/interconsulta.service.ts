@@ -1,7 +1,20 @@
 import api from "./api";
 
 export type PrioridadInterconsulta = "urgente" | "preferente" | "electiva";
-export type EstadoInterconsulta = "PENDIENTE" | "RESPONDIDA" | "CANCELADA";
+export type EstadoInterconsulta =
+  | "PENDIENTE"
+  | "RESPONDIDA"
+  | "CITADA"
+  | "ATENDIDA"
+  | "CANCELADA";
+
+export interface CitaGeneradaRef {
+  _id: string;
+  fecha: string;
+  hora?: string;
+  estado: string;
+  tipo: string;
+}
 
 export interface PacienteRef {
   _id: string;
@@ -35,7 +48,14 @@ export interface Interconsulta {
   respondidoPorId?: DoctorRef;
   respondidoPorNombre?: string;
   fechaRespuesta?: string;
+  citaGeneradaId?: CitaGeneradaRef | string;
   createdAt?: string;
+}
+
+export interface AgendarCitaPayload {
+  fecha: string;        // "YYYY-MM-DD"
+  hora: string;         // "HH:MM"
+  respuesta?: string;
 }
 
 export interface CrearInterconsultaPayload {
@@ -55,7 +75,7 @@ export class InterconsultaApiService {
     return res.data.data;
   }
 
-  static async listarRecibidas(estado?: EstadoInterconsulta): Promise<Interconsulta[]> {
+  static async listarRecibidas(estado?: EstadoInterconsulta | "PROCESADAS"): Promise<Interconsulta[]> {
     const params = estado ? `?estado=${estado}` : "";
     const res = await api.get<{ success: boolean; data: Interconsulta[] }>(`/interconsultas/recibidas${params}`);
     return res.data.data ?? [];
@@ -75,6 +95,21 @@ export class InterconsultaApiService {
     const res = await api.patch<{ success: boolean; data: Interconsulta }>(
       `/interconsultas/${id}/responder`,
       { respuesta }
+    );
+    return res.data.data;
+  }
+
+  static async obtenerPorId(id: string): Promise<Interconsulta> {
+    const res = await api.get<{ success: boolean; data: Interconsulta }>(
+      `/interconsultas/${id}`
+    );
+    return res.data.data;
+  }
+
+  static async agendarCita(id: string, payload: AgendarCitaPayload): Promise<Interconsulta> {
+    const res = await api.post<{ success: boolean; data: Interconsulta }>(
+      `/interconsultas/${id}/agendar`,
+      payload
     );
     return res.data.data;
   }

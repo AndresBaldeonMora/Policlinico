@@ -42,21 +42,19 @@ const PacienteOrdenes = () => {
     const initData = async () => {
       setLoading(true);
       try {
-        if (!user?.correo) {
-          setErrorMsg("Usuario sin correo especificado");
-          setLoading(false);
-          return;
+        // Usa el pacienteId del JWT cuando esté disponible (caso normal).
+        // Fallback: /api/paciente/me, que devuelve el paciente del token.
+        let pacienteId = user?.pacienteId;
+        if (!pacienteId) {
+          const me = await PacienteApiService.obtenerMiPerfil();
+          pacienteId = (me as any)?.id ?? (me as any)?._id;
         }
-        const pacientes = await PacienteApiService.listar();
-        const pacienteMatch = pacientes.find(
-          (p) => p.correo?.toLowerCase() === user.correo.toLowerCase(),
-        );
-        if (!pacienteMatch?.id) {
+        if (!pacienteId) {
           setErrorMsg("Su cuenta no está vinculada a un registro de paciente válido. Contacte a recepción.");
           setLoading(false);
           return;
         }
-        const data = await ExamenService.listarOrdenesPorPaciente(pacienteMatch.id);
+        const data = await ExamenService.listarOrdenesPorPaciente(pacienteId);
         setOrdenes(data);
       } catch {
         setErrorMsg("Error al conectar con la base de datos de órdenes.");
@@ -65,7 +63,7 @@ const PacienteOrdenes = () => {
       }
     };
     initData();
-  }, [user?.correo]);
+  }, [user?.pacienteId]);
 
   const cambiarTab = (tab: Tab) => {
     setActiveTab(tab);
