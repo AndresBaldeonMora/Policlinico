@@ -15,6 +15,8 @@ import {
   ExternalLink,
   RefreshCw,
   CalendarClock,
+  ChevronLeft,
+  ChevronRight,
 } from "lucide-react";
 import type { OrdenExamen, EstadoOrden } from "../../services/examen.service";
 import { ExamenService, TIPO_EXAMEN_LABEL } from "../../services/examen.service";
@@ -285,9 +287,10 @@ const ModalGenerarOrden = ({ orden, onCerrar, onGuardado }: ModalGenerarOrdenPro
                 className="lab-cal-nav-btn"
                 onClick={irMesAnterior}
                 disabled={!puedeRetroceder}
+                aria-label="Mes anterior"
                 title="Mes anterior"
               >
-                ‹
+                <ChevronLeft size={16} />
               </button>
               <span className="lab-cal-mes-label">
                 {NOMBRES_MESES[calMes]} {calAño}
@@ -301,9 +304,10 @@ const ModalGenerarOrden = ({ orden, onCerrar, onGuardado }: ModalGenerarOrdenPro
               <button
                 className="lab-cal-nav-btn"
                 onClick={irMesSiguiente}
+                aria-label="Mes siguiente"
                 title="Mes siguiente"
               >
-                ›
+                <ChevronRight size={16} />
               </button>
             </div>
 

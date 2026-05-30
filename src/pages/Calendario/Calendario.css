@@ -537,6 +537,24 @@
   background: #b45309;
 }
 
+/* ── Cita generada desde una interconsulta ──
+   El estado base (PENDIENTE, ATENDIDA, etc.) se mantiene; solo se sobrescribe
+   el border-left para que el médico identifique el origen interconsulta. */
+.agenda-cita--interconsulta {
+  border-left-color: #6d28d9;
+  border-left-width: 4px;
+}
+.agenda-cita-tag {
+  font-size: 0.55rem;
+  font-weight: 800;
+  letter-spacing: 0.04em;
+  background: #6d28d9;
+  color: #fff;
+  padding: 1px 4px;
+  border-radius: 3px;
+  margin-right: 4px;
+}
+
 .agenda-cita-nombre {
   font-weight: 700;
   overflow: hidden;

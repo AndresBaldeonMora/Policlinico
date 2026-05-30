@@ -61,7 +61,7 @@ const VistaDia = ({ fecha, horas, citas, doctores, doctorId, onVerCita }: Props)
                 <div key={`${doc.id}-${hora}`} className="multi-celda">
                   {cita?.pacienteId && (
                     <div
-                      className={`agenda-cita clickable ${ESTADO_COLOR[cita.estado] ?? ""}`}
+                      className={`agenda-cita clickable ${ESTADO_COLOR[cita.estado] ?? ""}${cita.tipo === "INTERCONSULTA" ? " agenda-cita--interconsulta" : ""}`}
                       onClick={(e) => { e.stopPropagation(); onVerCita(e, cita._id); }}
                       role="button"
                       tabIndex={0}
@@ -74,6 +74,9 @@ const VistaDia = ({ fecha, horas, citas, doctores, doctorId, onVerCita }: Props)
                       }}
                     >
                       <span className="agenda-cita-nombre">
+                        {cita.tipo === "INTERCONSULTA" && (
+                          <span className="agenda-cita-tag" title="Interconsulta">IC</span>
+                        )}
                         {cita.pacienteId.nombres} {cita.pacienteId.apellidos}
                       </span>
                       <span className="agenda-cita-estado">{fmtEstado(cita.estado)}</span>

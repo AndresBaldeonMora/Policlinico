@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { X, AlertTriangle } from "lucide-react";
+import { X, AlertTriangle, Ban } from "lucide-react";
 import type { MedicamentoSOAP } from "../../pages/NotaSOAP/types";
 import type { CitaMedico } from "../../services/medico.service";
 
@@ -67,7 +67,7 @@ export default function ModalReceta({ cita, alergias = EMPTY_ALERGIAS, onClose, 
             {alergias.length > 0 && (
               <div style={{ display: "flex", gap: 5, flexWrap: "wrap" }}>
                 {alergias.map((a) => (
-                  <span key={a} style={{ fontSize: 11, fontWeight: 700, background: "var(--error-bg)", color: "var(--error)", padding: "2px 8px", borderRadius: 10 }}>⛔ {a}</span>
+                  <span key={a} style={{ display: "inline-flex", alignItems: "center", gap: 3, fontSize: 11, fontWeight: 700, background: "var(--error-bg)", color: "var(--error)", padding: "2px 8px", borderRadius: 10 }}><Ban size={11} /> {a}</span>
                 ))}
               </div>
             )}

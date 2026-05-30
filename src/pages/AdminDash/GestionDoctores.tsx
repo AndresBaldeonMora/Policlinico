@@ -1,5 +1,5 @@
 import { useEffect, useReducer, useState } from "react";
-import { Search, Plus, Pencil, Trash2, Stethoscope, X, AlertCircle } from "lucide-react";
+import { Search, Plus, Pencil, Trash2, Stethoscope, X, AlertCircle, Check } from "lucide-react";
 import { DoctorApiService, type DoctorTransformado } from "../../services/doctor.service";
 import { EspecialidadApiService, type Especialidad } from "../../services/especialidad.service";
 import "./GestionarDoctores.css";
@@ -293,12 +293,12 @@ const GestionarDoctores = () => {
           <div className="pm-modal" style={{ maxWidth: 520 }}>
             <div className="pm-header">
               <div className="pm-header-info">
-                <div className="pm-header-icon">{modal.doctor ? "✏️" : "🩺"}</div>
+                <div className="pm-header-icon">{modal.doctor ? <Pencil size={16} /> : <Stethoscope size={16} />}</div>
                 <div>
                   <h2>{modal.doctor ? "Editar Doctor" : "Nuevo Doctor"}</h2>
                 </div>
               </div>
-              <button className="pm-close" onClick={() => dispatch({ type: "CERRAR" })} disabled={modal.loading}>✕</button>
+              <button className="pm-close" aria-label="Cerrar" onClick={() => dispatch({ type: "CERRAR" })} disabled={modal.loading}><X size={16} /></button>
             </div>
 
             {modal.error && (
@@ -357,7 +357,7 @@ const GestionarDoctores = () => {
                   <button type="submit" className="pm-btn pm-btn--primary" disabled={modal.loading}>
                     {modal.loading
                       ? <><span className="pm-spinner-sm" /> Guardando…</>
-                      : modal.doctor ? "✓ Guardar cambios" : "✓ Registrar doctor"
+                      : <><Check size={14} /> {modal.doctor ? "Guardar cambios" : "Registrar doctor"}</>
                     }
                   </button>
                 </div>
@@ -377,10 +377,10 @@ const GestionarDoctores = () => {
           >
             <div className="pm-header">
               <div className="pm-header-info">
-                <div className="pm-header-icon">🗑️</div>
+                <div className="pm-header-icon"><Trash2 size={16} /></div>
                 <div><h2>¿Eliminar doctor?</h2></div>
               </div>
-              <button className="pm-close" onClick={() => setConfirmDelete(null)}>✕</button>
+              <button className="pm-close" aria-label="Cerrar" onClick={() => setConfirmDelete(null)}><X size={16} /></button>
             </div>
             <p style={{ padding: "0 1.25rem 1rem", color: "var(--text-secondary)", fontSize: "0.875rem" }}>
               Esta acción no se puede deshacer.

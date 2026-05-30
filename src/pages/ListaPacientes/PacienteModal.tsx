@@ -1,5 +1,5 @@
-// src/pages/ListaPacientes/PacienteModal.tsx
 import { useReducer, useMemo } from "react";
+import { Pencil, UserPlus, AlertCircle, Lock, Baby } from "lucide-react";
 import {
   PacienteApiService,
   type PacienteTransformado,
@@ -173,7 +173,7 @@ const PacienteModal = ({ paciente, onGuardado, onCancelar }: Props) => {
       <div className="pm-modal">
         <div className="pm-header">
           <div className="pm-header-info">
-            <div className="pm-header-icon">{esEdicion ? "✏️" : "👤"}</div>
+            <div className="pm-header-icon">{esEdicion ? <Pencil size={16} /> : <UserPlus size={16} />}</div>
             <div>
               <h2>{esEdicion ? "Editar Paciente" : "Nuevo Paciente"}</h2>
               {esEdicion && <span className="pm-header-dni">DNI: {paciente!.dni}</span>}
@@ -196,7 +196,7 @@ const PacienteModal = ({ paciente, onGuardado, onCancelar }: Props) => {
           ))}
         </div>
 
-        {state.error && <div className="pm-error"><span>⚠️</span> {state.error}</div>}
+        {state.error && <div className="pm-error"><AlertCircle size={14} /> {state.error}</div>}
 
         <form onSubmit={handleSubmit} className="pm-form">
           {state.seccionActiva === 0 && (
@@ -308,13 +308,13 @@ const PacienteModal = ({ paciente, onGuardado, onCancelar }: Props) => {
             <div className="pm-section">
               {!esMenor ? (
                 <div className="pm-no-aplica">
-                  <span>🔒</span>
+                  <Lock size={12} />
                   <p>Esta sección aplica solo para pacientes menores de 18 años.</p>
                   <small>Ingresa la fecha de nacimiento en "Datos Personales" para habilitarla.</small>
                 </div>
               ) : (
                 <>
-                  <div className="pm-menor-aviso">👶 Paciente menor de edad - se requiere datos del apoderado</div>
+                  <div className="pm-menor-aviso"><Baby size={14} /> Paciente menor de edad — se requiere datos del apoderado</div>
                   <div className="pm-row">
                     <div className="pm-field">
                       <label className="pm-label">Nombre del Apoderado <span className="pm-req">*</span></label>

@@ -15,6 +15,7 @@ import MedicoDashboard from "./pages/MedicoDashboard/MedicoDashboard";
 import MedicoCitas from "./pages/MedicoCitas/MedicoCitas";
 import NotaSOAP from "./pages/NotaSOAP/NotaSOAP";
 import HistoriaClinicaMedico from "./pages/HistoriaClinicaMedico/HistoriaClinicaMedico";
+import InterconsultaDetalle from "./pages/InterconsultaDetalle/InterconsultaDetalle";
 
 // Páginas del paciente
 import PacienteDashboard from "./pages/PacienteDashboard/PacienteDashboard";
@@ -160,6 +161,15 @@ function App() {
               element={
                 <ProtectedRoute roles={["MEDICO"]}>
                   <NotaSOAP />
+                </ProtectedRoute>
+              }
+            />
+
+            <Route
+              path="/medico/interconsultas/:id"
+              element={
+                <ProtectedRoute roles={["MEDICO"]}>
+                  <InterconsultaDetalle />
                 </ProtectedRoute>
               }
             />
