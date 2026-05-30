@@ -9,7 +9,9 @@
       "Bash(grep -E \"^d|\\\\.ts$\")",
       "Bash(echo \"exit: $?\")",
       "Bash(git rm *)",
-      "PowerShell(Get-ChildItem D:\\\\Github\\\\Tesis\\\\Policlinico-Backend\\\\src -Recurse | Where-Object { $_.Name -match \"cita|paciente\" } | Select-Object FullName)"
+      "PowerShell(Get-ChildItem D:\\\\Github\\\\Tesis\\\\Policlinico-Backend\\\\src -Recurse | Where-Object { $_.Name -match \"cita|paciente\" } | Select-Object FullName)",
+      "Bash(dir D:\\\\Github\\\\Tesis\\\\ *)",
+      "PowerShell(Get-ChildItem \"D:\\\\Github\\\\Tesis\\\\Policlinico-Backend\\\\src\" -Recurse | Where-Object { $_.Name -match \"schedule|cron|job|app\\\\.\" } | Select-Object FullName)"
     ]
   }
 }
