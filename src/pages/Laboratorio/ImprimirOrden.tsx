@@ -79,6 +79,14 @@ const ImprimirOrden = () => {
           </div>
         </div>
 
+        {/* Diagnóstico presuntivo — NTS 139-MINSA */}
+        {orden.diagnosticoPresuntivo && (
+          <div className="imprimir-seccion">
+            <h3>Diagnóstico Presuntivo</h3>
+            <p>{orden.diagnosticoPresuntivo}</p>
+          </div>
+        )}
+
         {/* Tabla de exámenes */}
         <div className="imprimir-seccion">
           <h3>Exámenes Solicitados</h3>

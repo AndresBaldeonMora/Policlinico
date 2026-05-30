@@ -48,6 +48,7 @@ const OrdenExamenModal = ({
   const [respuestasProtocolo, setRespuestasProtocolo] = useState<
     Record<string, Record<string, string>>
   >(respuestasProtocolaresIniciales ?? {});
+  const [diagnosticoPresuntivo, setDiagnosticoPresuntivo] = useState("");
   const [loading, setLoading] = useState(true);
   const [guardando, setGuardando] = useState(false);
   const [gruposAbiertos, setGruposAbiertos] = useState<Set<string>>(new Set());
@@ -124,7 +125,8 @@ const OrdenExamenModal = ({
       }
     }
 
-    const obsGeneralesTrimmed = observacionesGenerales.trim();
+    const obsGeneralesTrimmed  = observacionesGenerales.trim();
+    const dxPresuntivo         = diagnosticoPresuntivo.trim();
     const itemsPayload = [...seleccionados].map((examenId) => {
       const examen = examenesPorId.get(examenId);
       const respuestas: RespuestaProtocolar[] =
@@ -148,7 +150,7 @@ const OrdenExamenModal = ({
     setGuardando(true);
     try {
       if (modoEdicion && ordenId) {
-        await ExamenService.actualizarOrden(ordenId, itemsPayload, obsGeneralesTrimmed);
+        await ExamenService.actualizarOrden(ordenId, itemsPayload, obsGeneralesTrimmed, dxPresuntivo || undefined);
         toastExito("Orden actualizada correctamente");
       } else {
         await ExamenService.crearOrden({
@@ -157,6 +159,7 @@ const OrdenExamenModal = ({
           citaId,
           especialidadId,
           observacionesGenerales: obsGeneralesTrimmed,
+          diagnosticoPresuntivo: dxPresuntivo || undefined,
           items: itemsPayload,
         });
         toastExito("Orden de examen creada exitosamente");
@@ -193,6 +196,29 @@ const OrdenExamenModal = ({
             </div>
           ) : (
             <>
+              {/* Diagnóstico presuntivo — campo obligatorio NTS 139-MINSA */}
+              <div className="orden-obs-general" style={{ marginBottom: 0 }}>
+                <label>
+                  Diagnóstico presuntivo <span style={{ color: "#dc2626" }}>*</span>
+                </label>
+                <input
+                  type="text"
+                  style={{
+                    padding: "0.6rem 0.8rem",
+                    border: "1px solid var(--text-muted)",
+                    borderRadius: "var(--radius-md)",
+                    fontSize: "0.875rem",
+                    background: "transparent",
+                    color: "var(--text-primary)",
+                    width: "100%",
+                    boxSizing: "border-box",
+                  }}
+                  placeholder="Ej: Diabetes mellitus tipo 2 (E11), Anemia ferropénica (D50)…"
+                  value={diagnosticoPresuntivo}
+                  onChange={e => setDiagnosticoPresuntivo(e.target.value)}
+                />
+              </div>
+
               <p className="orden-modal-hint">
                 Selecciona los exámenes que necesita el paciente:
               </p>

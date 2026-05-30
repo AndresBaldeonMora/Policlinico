@@ -7,33 +7,111 @@ interface Props {
   cita: CitaMedico;
   onClose: () => void;
   onAdd: (e: ExamenOrdenado) => void;
+  diagnosticoPrefill?: string;
 }
 
-const EXAMENES: Record<string, Record<string, string[]>> = {
-  Laboratorio: {
-    Hematología:  ["Hemograma completo", "Recuento de plaquetas", "Velocidad de sedimentación"],
-    Bioquímica:   ["Glucosa basal", "HbA1c (hemoglobina glicosilada)", "Creatinina / BUN", "Perfil lipídico", "Perfil hepático (TGO, TGP)", "Electrolitos (Na, K, Cl)", "Ácido úrico"],
-    Cardiaco:     ["BNP (Péptido natriurético)", "Troponina I o T", "CK-MB"],
-    Otros:        ["Uroanálisis", "Urocultivo", "TSH (Tiroides)", "Examen de orina 24h"],
+type TabMINSA = "Patología Clínica" | "Diagnóstico por Imágenes";
+
+// Categorías basadas en NTS N°139-MINSA/2018 (Gestión de Historia Clínica)
+// y NTS N°072-MINSA (UPS de Patología Clínica).
+const EXAMENES: Record<TabMINSA, Record<string, string[]>> = {
+  "Patología Clínica": {
+    Hematología: [
+      "Hemograma completo",
+      "Recuento de plaquetas",
+      "Velocidad de sedimentación (VSG)",
+      "Tiempo de protrombina (TP) / TTPA",
+      "Grupo sanguíneo y factor Rh",
+    ],
+    Bioquímica: [
+      "Glucosa basal",
+      "HbA1c (hemoglobina glicosilada)",
+      "Creatinina",
+      "Urea / BUN",
+      "Perfil lipídico (colesterol total, HDL, LDL, triglicéridos)",
+      "Perfil hepático (TGO, TGP, bilirrubinas, fosfatasa alcalina)",
+      "Electrolitos (Na, K, Cl)",
+      "Ácido úrico",
+      "Proteínas totales y albúmina",
+    ],
+    "Orina y Heces": [
+      "Uroanálisis (examen completo de orina)",
+      "Urocultivo + antibiograma",
+      "Examen de orina de 24 horas",
+      "Examen parasitológico de heces (seriado x3)",
+      "Coprocultivo + antibiograma",
+      "Test de sangre oculta en heces",
+    ],
+    Microbiología: [
+      "Cultivo de secreción + antibiograma (especificar zona)",
+      "Hemocultivo (x2)",
+      "Cultivo de esputo + antibiograma",
+    ],
+    "Inmunología / Serología": [
+      "PCR (Proteína C Reactiva)",
+      "ANA (anticuerpos antinucleares)",
+      "Factor reumatoide",
+      "VDRL / RPR (sífilis)",
+      "Prueba rápida VIH",
+      "HBsAg (hepatitis B superficie)",
+      "Anti-HCV (hepatitis C)",
+      "Antígeno NS1 dengue",
+      "IgM dengue / IgG dengue",
+    ],
+    Hormonas: [
+      "TSH (hormona estimulante del tiroides)",
+      "T3 libre / T4 libre",
+      "FSH / LH",
+      "Prolactina",
+      "Testosterona total",
+      "Cortisol basal",
+      "Insulina basal",
+      "PSA (antígeno prostático específico)",
+    ],
   },
-  Radiología: {
-    Imágenes:     ["Radiografía de tórax PA y Lateral", "Radiografía de abdomen", "Ecografía abdominal", "Ecografía pélvica", "Ecografía de tiroides", "Mamografía"],
-    Avanzado:     ["Tomografía computarizada (especificar)", "Resonancia magnética (especificar)"],
-  },
-  Especializado: {
-    Procedimientos: ["Electrocardiograma (ECG 12 derivaciones)", "Ecocardiograma transtorácico", "Espirometría", "Prueba de esfuerzo", "Electroencefalograma"],
-    Endoscopia:     ["Colonoscopia", "Endoscopia digestiva alta"],
+  "Diagnóstico por Imágenes": {
+    "Radiología Convencional": [
+      "Radiografía de tórax (PA y lateral)",
+      "Radiografía de abdomen simple",
+      "Radiografía de columna lumbosacra",
+      "Radiografía de columna cervical",
+      "Radiografía de manos / muñecas",
+      "Radiografía de rodillas",
+      "Mamografía bilateral",
+    ],
+    Ecografía: [
+      "Ecografía abdominal",
+      "Ecografía pélvica / transvaginal",
+      "Ecografía de tiroides",
+      "Ecografía renal y vías urinarias",
+      "Ecografía de partes blandas (especificar zona)",
+      "Ecografía obstétrica",
+    ],
+    "Tomografía / Resonancia": [
+      "Tomografía computarizada (especificar región)",
+      "Resonancia magnética (especificar región)",
+    ],
+    "Electrofisiología y Procedimientos": [
+      "Electrocardiograma (ECG 12 derivaciones)",
+      "Ecocardiograma transtorácico",
+      "Espirometría / Prueba de función pulmonar",
+      "Prueba de esfuerzo (ergometría)",
+      "Electroencefalograma (EEG)",
+      "Colonoscopia",
+      "Endoscopia digestiva alta (EDA)",
+    ],
   },
 };
 
-export default function ModalSolicitudExamen({ cita, onClose, onAdd }: Props) {
-  const [tab, setTab]           = useState<"Laboratorio" | "Radiología" | "Especializado">("Laboratorio");
-  const [selected, setSelected] = useState<{ nombre: string; tipo: "Laboratorio" | "Radiología" | "Especializado" }[]>([]);
+export default function ModalSolicitudExamen({ cita, onClose, onAdd, diagnosticoPrefill }: Props) {
+  const [tab, setTab]     = useState<TabMINSA>("Patología Clínica");
+  const [selected, setSelected] = useState<{ nombre: string; tipo: TabMINSA }[]>([]);
   const [urgente, setUrgente]   = useState(false);
   const [otroExamen, setOtro]   = useState("");
   const [instrucciones, setInstr] = useState("");
+  const [diagnosticoPresuntivo, setDx] = useState(diagnosticoPrefill ?? "");
 
-  const pac = cita.pacienteId;
+  const pac    = cita.pacienteId;
   const nombre = `${pac.nombres} ${pac.apellidos}`;
 
   const toggle = (name: string) =>
@@ -47,7 +125,10 @@ export default function ModalSolicitudExamen({ cita, onClose, onAdd }: Props) {
 
   const handleAdd = () => {
     if (selected.length === 0) return;
-    selected.forEach(e => onAdd({ ...e, urgente }));
+    const dx = diagnosticoPresuntivo.trim();
+    selected.forEach(e =>
+      onAdd({ nombre: e.nombre, tipo: e.tipo, urgente, diagnosticoPresuntivo: dx || undefined })
+    );
   };
 
   const addOtro = () => {
@@ -57,42 +138,74 @@ export default function ModalSolicitudExamen({ cita, onClose, onAdd }: Props) {
     setOtro("");
   };
 
+  const dxVacio    = !diagnosticoPresuntivo.trim();
+  const sinExamenes = selected.length === 0;
+  const disabled   = sinExamenes || dxVacio;
+
   return (
     <div className="modal-overlay" onClick={e => { if (e.target === e.currentTarget) onClose(); }}>
-      <div className="modal-box" style={{ maxWidth: 700 }}>
+      <div className="modal-box" style={{ maxWidth: 720 }}>
         {/* Header */}
         <div className="modal-header">
           <div>
             <div className="modal-title">Solicitud de Exámenes Diagnósticos</div>
-            <div className="modal-subtitle">Seleccione los exámenes y establezca la prioridad</div>
+            <div className="modal-subtitle">Categorías según NTS 139-MINSA · Patología Clínica y Diagnóstico por Imágenes</div>
           </div>
           <button className="modal-close" onClick={onClose}><X size={18} /></button>
         </div>
 
         {/* Body */}
         <div className="modal-body">
-          {/* Patient band */}
+          {/* Banda paciente */}
           <div className="modal-pac-band">
             <span className="modal-pac-name">{nombre}</span>
             <span className="modal-pac-meta">DNI: {pac.dni}</span>
           </div>
 
-          {/* Tabs */}
+          {/* Diagnóstico presuntivo — campo obligatorio NTS 139 */}
+          <div style={{ marginBottom: 16 }}>
+            <label className="soap-section-label">
+              Diagnóstico presuntivo <span style={{ color: "var(--error, #dc2626)" }}>*</span>
+            </label>
+            <input
+              className="soap-input"
+              placeholder="Ej: Diabetes mellitus tipo 2 (E11), Anemia ferropénica (D50)…"
+              value={diagnosticoPresuntivo}
+              onChange={e => setDx(e.target.value)}
+            />
+            {dxVacio && (
+              <span style={{ fontSize: 11, color: "var(--error, #dc2626)", marginTop: 3, display: "block" }}>
+                Requerido por el MINSA (NTS 139) para toda solicitud de exámenes.
+              </span>
+            )}
+          </div>
+
+          {/* Tabs MINSA */}
           <div className="modal-tabs">
-            {(["Laboratorio", "Radiología", "Especializado"] as const).map(t => (
-              <button key={t} className={`modal-tab ${tab === t ? "active" : ""}`} onClick={() => setTab(t)}>{t}</button>
+            {(["Patología Clínica", "Diagnóstico por Imágenes"] as const).map(t => (
+              <button
+                key={t}
+                className={`modal-tab ${tab === t ? "active" : ""}`}
+                onClick={() => setTab(t)}
+              >
+                {t}
+              </button>
             ))}
           </div>
 
-          {/* Exam groups */}
-          {Object.entries(EXAMENES[tab] || {}).map(([group, exams]) => (
+          {/* Grupos de exámenes */}
+          {Object.entries(EXAMENES[tab]).map(([group, exams]) => (
             <div key={group} style={{ marginBottom: 16 }}>
               <div className="modal-group-label">{group}</div>
               <div style={{ display: "flex", flexDirection: "column", gap: 5 }}>
                 {exams.map(ex => (
                   <label key={ex} className={`soap-check-item ${isChecked(ex) ? "checked" : ""}`} style={{ padding: "7px 10px" }}>
-                    <input type="checkbox" checked={isChecked(ex)} onChange={() => toggle(ex)}
-                      style={{ accentColor: "var(--primary)", flexShrink: 0 }} />
+                    <input
+                      type="checkbox"
+                      checked={isChecked(ex)}
+                      onChange={() => toggle(ex)}
+                      style={{ accentColor: "var(--primary)", flexShrink: 0 }}
+                    />
                     <span style={{ fontSize: 13 }}>{ex}</span>
                   </label>
                 ))}
@@ -100,31 +213,47 @@ export default function ModalSolicitudExamen({ cita, onClose, onAdd }: Props) {
             </div>
           ))}
 
-          {/* Otro examen */}
+          {/* Examen libre */}
           <div style={{ marginBottom: 16 }}>
             <label className="soap-section-label">Otro examen (campo libre)</label>
             <div style={{ display: "flex", gap: 8 }}>
-              <input className="soap-input" style={{ flex: 1 }} placeholder=""
-                value={otroExamen} onChange={e => setOtro(e.target.value)}
-                onKeyDown={e => e.key === "Enter" && addOtro()} />
+              <input
+                className="soap-input"
+                style={{ flex: 1 }}
+                placeholder="Escriba el nombre y presione Agregar"
+                value={otroExamen}
+                onChange={e => setOtro(e.target.value)}
+                onKeyDown={e => e.key === "Enter" && addOtro()}
+              />
               <button className="soap-btn-secondary" onClick={addOtro}>Agregar</button>
             </div>
           </div>
 
-          {/* Instructions + Priority */}
+          {/* Indicaciones + Prioridad */}
           <div style={{ display: "grid", gridTemplateColumns: "1fr auto", gap: 16, alignItems: "flex-start" }}>
             <div>
-              <label className="soap-section-label">Instrucciones para el paciente</label>
-              <textarea className="soap-input soap-textarea" style={{ minHeight: 60 }}
-                placeholder=""
-                value={instrucciones} onChange={e => setInstr(e.target.value)} />
+              <label className="soap-section-label">Indicaciones para el paciente</label>
+              <textarea
+                className="soap-input soap-textarea"
+                style={{ minHeight: 60 }}
+                placeholder="Ej: Acudir en ayunas, traer muestra de primera hora…"
+                value={instrucciones}
+                onChange={e => setInstr(e.target.value)}
+              />
             </div>
             <div>
               <label className="soap-section-label">Prioridad</label>
-              {[{ val: false, label: "Normal", sub: "3–5 días" }, { val: true, label: "Urgente", sub: "24 horas" }].map(p => (
+              {([
+                { val: false, label: "Rutina",  sub: "Orden estándar" },
+                { val: true,  label: "Urgente", sub: "Resultado prioritario" },
+              ] as const).map(p => (
                 <label key={p.label} style={{ display: "flex", alignItems: "flex-start", gap: 7, marginBottom: 10, cursor: "pointer" }}>
-                  <input type="radio" checked={urgente === p.val} onChange={() => setUrgente(p.val)}
-                    style={{ accentColor: "var(--primary)", marginTop: 2 }} />
+                  <input
+                    type="radio"
+                    checked={urgente === p.val}
+                    onChange={() => setUrgente(p.val)}
+                    style={{ accentColor: "var(--primary)", marginTop: 2 }}
+                  />
                   <span>
                     <div style={{ fontSize: 13, fontWeight: 600, color: "var(--text-primary)" }}>{p.label}</div>
                     <div style={{ fontSize: 11, color: "var(--text-muted)" }}>{p.sub}</div>
@@ -134,15 +263,18 @@ export default function ModalSolicitudExamen({ cita, onClose, onAdd }: Props) {
             </div>
           </div>
 
-          {/* Selected summary */}
+          {/* Resumen seleccionados */}
           {selected.length > 0 && (
             <div style={{ marginTop: 16, background: "var(--bg-muted)", borderRadius: 8, padding: 12, border: "1px solid var(--border)" }}>
               <div style={{ fontSize: 12, fontWeight: 700, color: "var(--text-muted)", marginBottom: 6 }}>
                 EXÁMENES SELECCIONADOS ({selected.length})
               </div>
               <div style={{ display: "flex", flexWrap: "wrap", gap: 6 }}>
-                {selected.map((e) => (
-                  <span key={e._id ?? e.nombre} style={{ fontSize: 12, background: "var(--primary-lighter)", color: "var(--primary)", padding: "3px 10px", borderRadius: 12, fontWeight: 500 }}>
+                {selected.map(e => (
+                  <span
+                    key={e.nombre}
+                    style={{ fontSize: 12, background: "var(--primary-lighter)", color: "var(--primary)", padding: "3px 10px", borderRadius: 12, fontWeight: 500 }}
+                  >
                     {e.nombre}
                   </span>
                 ))}
@@ -154,8 +286,13 @@ export default function ModalSolicitudExamen({ cita, onClose, onAdd }: Props) {
         {/* Footer */}
         <div className="modal-footer">
           <button className="soap-btn-secondary" onClick={onClose}>Cancelar</button>
-          <button className="soap-btn-next" onClick={handleAdd} disabled={selected.length === 0}
-            style={{ opacity: selected.length === 0 ? 0.5 : 1, cursor: selected.length === 0 ? "not-allowed" : "pointer" }}>
+          <button
+            className="soap-btn-next"
+            onClick={handleAdd}
+            disabled={disabled}
+            style={{ opacity: disabled ? 0.5 : 1, cursor: disabled ? "not-allowed" : "pointer" }}
+            title={dxVacio ? "Complete el diagnóstico presuntivo" : sinExamenes ? "Seleccione al menos un examen" : ""}
+          >
             Agregar {selected.length > 0 ? `${selected.length} examen${selected.length !== 1 ? "es" : ""}` : "exámenes"}
           </button>
         </div>

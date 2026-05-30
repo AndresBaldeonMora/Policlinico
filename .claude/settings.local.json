@@ -11,7 +11,20 @@
       "Bash(git rm *)",
       "PowerShell(Get-ChildItem D:\\\\Github\\\\Tesis\\\\Policlinico-Backend\\\\src -Recurse | Where-Object { $_.Name -match \"cita|paciente\" } | Select-Object FullName)",
       "Bash(dir D:\\\\Github\\\\Tesis\\\\ *)",
-      "PowerShell(Get-ChildItem \"D:\\\\Github\\\\Tesis\\\\Policlinico-Backend\\\\src\" -Recurse | Where-Object { $_.Name -match \"schedule|cron|job|app\\\\.\" } | Select-Object FullName)"
+      "PowerShell(Get-ChildItem \"D:\\\\Github\\\\Tesis\\\\Policlinico-Backend\\\\src\" -Recurse | Where-Object { $_.Name -match \"schedule|cron|job|app\\\\.\" } | Select-Object FullName)",
+      "WebSearch",
+      "WebFetch(domain:www.digemid.minsa.gob.pe)",
+      "WebFetch(domain:www.diresalima.gob.pe)",
+      "WebFetch(domain:cdn.www.gob.pe)",
+      "WebFetch(domain:www.studocu.com)",
+      "WebFetch(domain:8uit.minsa.gob.pe)",
+      "WebFetch(domain:www.essalud.gob.pe)",
+      "WebFetch(domain:bvcenadim.digemid.minsa.gob.pe)",
+      "WebFetch(domain:site.hsr.gob.pe)",
+      "WebFetch(domain:img.lpderecho.pe)",
+      "WebFetch(domain:www.gob.pe)",
+      "Bash(node -e \"require\\('qrcode'\\); console.log\\('qrcode OK'\\)\")",
+      "Bash(echo \"EXIT:$?\")"
     ]
   }
 }

@@ -67,8 +67,10 @@ export default function SectionP({
   const removeMed    = (i: number) => setMedicamentos(prev => prev.filter((_, idx) => idx !== i));
 
   const tipoIcon = (tipo: string) => {
+    if (tipo === "Patología Clínica") return <FlaskConical size={14} color="var(--info)" />;
+    if (tipo === "Diagnóstico por Imágenes") return <FileText size={14} color="var(--warning)" />;
+    // compatibilidad con borradores guardados con categorías anteriores
     if (tipo === "Laboratorio") return <FlaskConical size={14} color="var(--info)" />;
-    if (tipo === "Radiología")  return <FileText size={14} color="var(--warning)" />;
     return <FileText size={14} color="var(--primary)" />;
   };
 
