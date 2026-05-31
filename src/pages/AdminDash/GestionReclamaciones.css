@@ -1,0 +1,317 @@
+/* tags */
+.rec-tag {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0.15rem 0.5rem;
+  border-radius: var(--radius-sm);
+  font-size: 0.72rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.02em;
+}
+
+.rec-tag--queja {
+  background: var(--warning-bg);
+  color: var(--warning);
+}
+
+.rec-tag--reclamo {
+  background: var(--error-bg);
+  color: var(--error);
+}
+
+/* truncate description */
+.rec-desc-preview {
+  display: block;
+  max-width: 320px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  font-size: 0.84rem;
+  color: var(--text-secondary);
+}
+
+/* modal overlay */
+.rec-modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(15, 23, 42, 0.45);
+  backdrop-filter: blur(4px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+  animation: rec-fade-in 0.2s var(--ease);
+}
+
+/* modal card */
+.rec-modal-card {
+  width: 90%;
+  max-width: 600px;
+  background: var(--bg-card);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-lg);
+  border: 1px solid var(--border);
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  animation: rec-slide-up 0.2s var(--ease);
+}
+
+.rec-modal-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 1.25rem 1.5rem;
+  border-bottom: 1px solid var(--border);
+}
+
+.rec-modal-header h2 {
+  font-size: 1.1rem;
+  font-weight: 700;
+  color: var(--text-primary);
+  margin: 0;
+}
+
+.rec-modal-icon {
+  color: var(--primary);
+}
+
+.rec-modal-close {
+  background: none;
+  border: none;
+  color: var(--text-muted);
+  cursor: pointer;
+  padding: 0.25rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: var(--radius-sm);
+  transition: all 0.15s var(--ease);
+}
+
+.rec-modal-close:hover {
+  background: var(--bg-muted);
+  color: var(--text-primary);
+}
+
+.rec-modal-body {
+  padding: 1.5rem;
+  overflow-y: auto;
+  max-height: 70vh;
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+}
+
+.rec-modal-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1rem;
+}
+
+.rec-modal-info-item {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.rec-modal-info-label {
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+  font-size: 0.72rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  color: var(--text-muted);
+}
+
+.rec-modal-info-value {
+  font-size: 0.88rem;
+  font-weight: 500;
+  color: var(--text-primary);
+}
+
+/* Patient Card */
+.rec-modal-paciente-card {
+  background: var(--bg-body);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  padding: 1.25rem;
+}
+
+.rec-modal-paciente-card h3 {
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+  font-size: 0.8rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  color: var(--text-primary);
+  margin: 0 0 0.75rem;
+}
+
+.rec-modal-paciente-nombre {
+  font-size: 0.95rem;
+  font-weight: 600;
+  color: var(--text-primary);
+  margin-bottom: 0.75rem;
+  border-bottom: 1px dashed var(--border);
+  padding-bottom: 0.5rem;
+}
+
+.rec-modal-paciente-info-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.75rem 1rem;
+  font-size: 0.84rem;
+  color: var(--text-secondary);
+}
+
+/* Description Section */
+.rec-modal-desc-section h3 {
+  font-size: 0.8rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  color: var(--text-primary);
+  margin: 0 0 0.5rem;
+}
+
+.rec-modal-desc-text {
+  font-size: 0.88rem;
+  line-height: 1.6;
+  color: var(--text-primary);
+  white-space: pre-wrap;
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  padding: 0.85rem 1.1rem;
+  min-height: 80px;
+  max-height: 200px;
+  overflow-y: auto;
+  margin-top: 0.5rem;
+}
+
+.rec-modal-footer {
+  padding: 1rem 1.5rem;
+  border-top: 1px solid var(--border);
+  display: flex;
+  justify-content: flex-end;
+}
+
+@keyframes rec-fade-in {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes rec-slide-up {
+  from { opacity: 0; transform: translateY(12px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@media (max-width: 480px) {
+  .rec-modal-grid,
+  .rec-modal-paciente-info-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+.td-mono,
+.av-fecha {
+  white-space: nowrap;
+}
+
+/* ========================================================
+   CORRECCIONES DE ALINEACIÓN, FILTROS Y BOTONES
+   ======================================================== */
+
+.av-filters {
+  display: flex;
+  gap: 0.75rem;
+  align-items: center !important; /* Alinear verticalmente al centro */
+  flex-wrap: wrap;
+  margin-bottom: 1.5rem;
+}
+
+/* Remover margen inferior del buscador y forzar alto consistente */
+.av-filters .lista-search-bar {
+  margin-bottom: 0 !important;
+  height: 42px !important;
+  box-sizing: border-box !important;
+}
+
+.av-filters .lista-search-input {
+  line-height: normal;
+}
+
+/* Forzar estilos del select */
+.av-filters .av-select {
+  background: var(--bg-card) !important;
+  color: var(--text-primary) !important;
+  border: 1px solid var(--border) !important;
+  border-radius: var(--radius-md) !important;
+  height: 42px !important;
+  box-sizing: border-box !important;
+  transition: border-color 0.15s var(--ease);
+}
+
+.av-filters .av-select:focus {
+  border-color: var(--primary) !important;
+}
+
+/* Estilos limpios y adaptados del botón de Limpiar filtros */
+.av-filters .av-clear-btn {
+  background: var(--bg-card) !important;
+  color: var(--text-secondary) !important;
+  border: 1px solid var(--border) !important;
+  border-radius: var(--radius-md) !important;
+  height: 42px !important;
+  box-sizing: border-box !important;
+  font-weight: 600 !important;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.15s var(--ease) !important;
+}
+
+.av-filters .av-clear-btn:hover {
+  background: var(--bg-hover) !important;
+  border-color: #ef4444 !important;
+  color: #ef4444 !important;
+}
+
+/* Estilo simétrico para el bloque de información general en el modal */
+.rec-modal-meta-card {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background: var(--bg-body);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  padding: 0.85rem 1.25rem;
+  gap: 1.5rem;
+}
+
+.rec-modal-meta-item {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.rec-modal-meta-label {
+  font-size: 0.78rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  color: var(--text-muted);
+  display: flex;
+  align-items: center;
+  gap: 0.3rem;
+}
+
+.rec-modal-meta-value {
+  font-size: 0.88rem;
+  font-weight: 600;
+  color: var(--text-primary);
+}

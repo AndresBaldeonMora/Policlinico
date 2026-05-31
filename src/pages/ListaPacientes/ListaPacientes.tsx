@@ -63,10 +63,10 @@ const ListaPacientes = ({ puedeEliminar = false }: Props) => {
   }, [highlightId, pacientes]);
 
   useEffect(() => {
-    if (searchParams.get("nuevo") === "1") {
+    if (searchParams.get("nuevo") === "1" && !esMedico) {
       abrirNuevo();
     }
-  }, []);
+  }, [esMedico, searchParams]);
 
   const pacientesFiltrados = pacientes.filter((p) => {
     const filtro = normalizeString(busqueda);
@@ -134,9 +134,11 @@ const ListaPacientes = ({ puedeEliminar = false }: Props) => {
           <h1>Pacientes</h1>
           <p className="lista-page-subtitle">{pacientes.length} pacientes registrados</p>
         </div>
-        <button className="btn-page-action" onClick={abrirNuevo}>
-          <UserPlus size={16} /> Nuevo Paciente
-        </button>
+        {!esMedico && (
+          <button className="btn-page-action" onClick={abrirNuevo}>
+            <UserPlus size={16} /> Nuevo Paciente
+          </button>
+        )}
       </div>
 
       <div className="lista-search-bar">
@@ -246,7 +248,7 @@ const ListaPacientes = ({ puedeEliminar = false }: Props) => {
         </div>
       )}
 
-      {modalAbierto && (
+      {modalAbierto && !esMedico && (
         <PacienteModal paciente={pacienteEditando} onGuardado={handleGuardado} onCancelar={() => setModalAbierto(false)} />
       )}
 

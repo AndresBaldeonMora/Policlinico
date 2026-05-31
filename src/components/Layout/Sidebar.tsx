@@ -19,6 +19,7 @@ import {
   UserCog,
   Pill,
   ScrollText,
+  MessageSquare,
 } from "lucide-react";
 import "./Sidebar.css";
 const Sidebar = () => {
@@ -51,6 +52,7 @@ const Sidebar = () => {
     { path: "/admin/pacientes", label: "Pacientes", icon: Users, description: "CRUD pacientes" },
     { path: "/admin/medicamentos", label: "Medicamentos", icon: Pill, description: "Catálogo de medicamentos" },
     { path: "/admin/auditoria", label: "Auditoría", icon: ScrollText, description: "Registro de acciones del sistema" },
+    { path: "/admin/reclamaciones", label: "Reclamaciones", icon: MessageSquare, description: "Libro de reclamaciones virtual" },
   ];
 
   const pacienteMenu = [
@@ -78,8 +80,8 @@ const Sidebar = () => {
   };
   const subtitle = subtitleMap[user?.rol ?? ""] ?? "Sistema";
 
-  const avatarLetter = user?.nombres?.trim() ? user.nombres.trim().charAt(0).toUpperCase() : "U";
-  const nombreCompleto = `${user?.nombres ?? ""} ${user?.apellidos ?? ""}`.trim();
+  // const avatarLetter = user?.nombres?.trim() ? user.nombres.trim().charAt(0).toUpperCase() : "U";
+  // const nombreCompleto = `${user?.nombres ?? ""} ${user?.apellidos ?? ""}`.trim();
 
   return (
     <>
