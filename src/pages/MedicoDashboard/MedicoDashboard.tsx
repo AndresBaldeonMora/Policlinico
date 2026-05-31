@@ -298,29 +298,22 @@ export default function MedicoDashboard() {
           <div className="dash-card-header">
             <span className="dash-card-title">Agenda de hoy</span>
             <div className="dash-card-header-right">
-              <span className="dash-agenda-total">{citas.length} citas</span>
+              <span className="dash-agenda-total">{asistio.length} en sala</span>
               <button className="dash-link" onClick={() => navigate("/medico/citas")}>Ver todas →</button>
             </div>
           </div>
 
-          {asistio.length > 0 && (
-            <div className="dash-en-sala-banner">
-              <span className="dash-dot-pulse" />
-              {asistio.length} paciente{asistio.length > 1 ? "s" : ""} en sala — esperando atención
-            </div>
-          )}
-
-          {citas.length === 0 ? (
+          {asistio.length === 0 ? (
             <div className="dash-empty">
               <User size={32} />
-              <p>No hay citas para hoy</p>
+              <p>No hay pacientes en sala</p>
               <button className="dash-link-secondary" onClick={() => navigate("/medico/citas")}>
-                Ver mis citas
+                Ver agenda completa
               </button>
             </div>
           ) : (
             <div className="dash-agenda-list">
-              {citas.map((c, i) => {
+              {asistio.map((c, i) => {
                 const pac           = c.pacienteId;
                 const isAsistio     = c.estado === "ASISTIO";
                 const isAtendida    = c.estado === "ATENDIDA";
@@ -337,7 +330,7 @@ export default function MedicoDashboard() {
                     key={c._id}
                     className={`dash-agenda-row${isAsistio ? " dash-agenda-row--active" : ""}${isAtendida ? " dash-agenda-row--done" : ""}`}
                     onClick={() => navigate(`/medico/citas/${c._id}/consulta`)}
-                    style={{ borderBottom: i === citas.length - 1 ? "none" : undefined }}
+                    style={{ borderBottom: i === asistio.length - 1 ? "none" : undefined }}
                   >
                     {/* Hora + dot */}
                     <div className="dash-agenda-hora-col">
