@@ -52,6 +52,7 @@ export default function MedicoDashboard() {
   const navigate = useNavigate();
   const [perfil,        setPerfil]        = useState<MedicoPerfil | null>(null);
   const [citasHoy,      setCitasHoy]      = useState<CitaMedico[]>([]);
+  const [turno,         setTurno]         = useState<{ inicio: string; fin: string } | null>(null);
   const [interconsultas, setInterconsultas] = useState<Interconsulta[]>([]);
   const [respondidas,   setRespondidas]   = useState<Interconsulta[]>([]);
   const [enviadas,      setEnviadas]      = useState<Interconsulta[]>([]);
@@ -78,8 +79,9 @@ export default function MedicoDashboard() {
     Promise.all([
       MedicoApiService.obtenerMiPerfil(),
       MedicoApiService.obtenerCitasHoy(),
+      MedicoApiService.obtenerTurnoHoy(),
     ])
-      .then(([p, c]) => { setPerfil(p); setCitasHoy(c); })
+      .then(([p, c, t]) => { setPerfil(p); setCitasHoy(c); setTurno(t); })
       .catch(console.error)
       .finally(() => setLoading(false));
     cargarBandeja();
@@ -113,14 +115,14 @@ export default function MedicoDashboard() {
   const canceladas = citas.filter(c => c.estado === "CANCELADA" || c.estado === "REPROGRAMADA");
   const total      = citas.length;
   const pct        = total > 0 ? Math.round((atendidas.length / total) * 100) : 0;
-  const proxima    = asistio[0] ?? pendientes[0];
+  const proxima    = asistio[0];
   const firstActId = proxima?._id;
 
   const nombreDoctor = perfil ? `${perfil.nombres} ${perfil.apellidos}` : "Doctor";
   const especialidad = perfil?.especialidadId?.nombre ?? "Medicina General";
   const horaActual   = new Date().getHours();
   const saludo       = horaActual < 12 ? "Buenos días" : horaActual < 18 ? "Buenas tardes" : "Buenas noches";
-  const turno        = citas.length > 0 ? `${citas[0].hora} – ${citas[citas.length - 1].hora}` : null;
+  const turnoLabel   = turno ? `${turno.inicio} – ${turno.fin}` : null;
 
   type AlertaTipo = "danger" | "warning" | "info" | "primary";
   const alertas: { tipo: AlertaTipo; msg: string }[] = [
@@ -151,12 +153,12 @@ export default function MedicoDashboard() {
           <p className="dash-greeting-sub">{formatHoy()} · {especialidad}</p>
         </div>
         <div className="dash-header-chips">
-          {turno && (
+          {turnoLabel && (
             <div className="dash-header-chip">
               <Clock size={15} className="dash-chip-icon" />
               <div>
                 <div className="dash-chip-label">Turno</div>
-                <div className="dash-chip-value">{turno}</div>
+                <div className="dash-chip-value">{turnoLabel}</div>
               </div>
             </div>
           )}

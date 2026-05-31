@@ -130,6 +130,11 @@ export class MedicoApiService {
     return response.data.data;
   }
 
+  static async obtenerTurnoHoy(): Promise<{ inicio: string; fin: string } | null> {
+    const response = await api.get("/medico/turno-hoy");
+    return response.data.data;
+  }
+
   static async obtenerDetalleCita(citaId: string): Promise<CitaMedico> {
     const response = await api.get(`/medico/citas/${citaId}`);
     return response.data.data;
