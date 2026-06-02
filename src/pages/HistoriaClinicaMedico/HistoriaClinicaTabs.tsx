@@ -183,10 +183,10 @@ function FormAnamMedico({ datos, onGuardar, guardando }: FormProps) {
         </div>
       </div>
 
-      <h3 className="hc-section-title">QUEJA PRINCIPAL Y ENFERMEDAD ACTUAL</h3>
+      <h3 className="hc-section-title">ENFERMEDAD ACTUAL</h3>
 
       <div className="hc-field">
-        <label>Motivo de consulta / Queja principal</label>
+        <label>Motivo de consulta</label>
         <textarea value={form.motivoConsulta || ""} onChange={(e) => handleChange("motivoConsulta", e.target.value)} />
       </div>
 
@@ -378,7 +378,7 @@ function FormAnamMedico({ datos, onGuardar, guardando }: FormProps) {
       </div>
 
       <div className="hc-field">
-        <label>Exámenes auxiliares solicitados</label>
+        <label>Estudios complementarios solicitados</label>
         <textarea value={form.examenesAuxiliares || ""} onChange={(e) => handleChange("examenesAuxiliares", e.target.value)} />
       </div>
 
@@ -448,7 +448,7 @@ function FormMedicinaGeneral({ datos, onGuardar, guardando }: FormProps) {
       <h3 className="hc-section-title">REVISIÓN POR SISTEMAS</h3>
 
       <div className="hc-field">
-        <label>Marque los sistemas afectados</label>
+        <label>Sistemas afectados (seleccione según corresponda)</label>
         <div className="hc-checklist">
           {sistemas.map(s => (
             <label key={s.id} className="hc-checkbox-item">
@@ -888,7 +888,7 @@ function FormOdontologia({ datos, onGuardar, guardando }: FormProps) {
       <h3 className="hc-section-title">ANAMNESIS ODONTOLÓGICA</h3>
 
       <div className="hc-field">
-        <label>Problema actual</label>
+        <label>Motivo de consulta</label>
         <textarea value={form.problemaActual || ""} onChange={(e) => handleChange("problemaActual", e.target.value)} />
       </div>
 
@@ -929,7 +929,7 @@ function FormOdontologia({ datos, onGuardar, guardando }: FormProps) {
 
       <div className="hc-field-row hc-field-row--2col">
         <div className="hc-field">
-          <label>¿Bruxismo?</label>
+          <label>Bruxismo</label>
           <select value={form.bruxismo || ""} onChange={(e) => handleChange("bruxismo", e.target.value)}>
             <option value="">Seleccionar...</option>
             <option value="si">Sí</option>
@@ -1173,10 +1173,10 @@ function FormReumatologia({ datos, onGuardar, guardando }: FormProps) {
 
       <div className="hc-field-row hc-field-row--2col">
         <div className="hc-field">
-          <label>¿Simetría?</label>
+          <label>Afectación bilateral</label>
           <select value={form.simetria || ""} onChange={(e) => handleChange("simetria", e.target.value)}>
             <option value="">Seleccionar...</option>
-            <option value="si">Sí (bilateral)</option>
+            <option value="si">Sí</option>
             <option value="no">No</option>
           </select>
         </div>
@@ -1191,7 +1191,7 @@ function FormReumatologia({ datos, onGuardar, guardando }: FormProps) {
 
       <div className="hc-field-row hc-field-row--2col">
         <div className="hc-field">
-          <label>¿Inflamación articular?</label>
+          <label>Inflamación articular</label>
           <select value={form.inflamacion || ""} onChange={(e) => handleChange("inflamacion", e.target.value)}>
             <option value="">Seleccionar...</option>
             <option value="presente">Presente</option>
@@ -1378,12 +1378,12 @@ function FormGinecologia({ datos, onGuardar, guardando }: FormProps) {
       </div>
 
       <div className="hc-field">
-        <label>FUR (Fecha de Última Regla)</label>
+        <label>FUR (Fecha de última menstruación)</label>
         <input type="date" value={form.fur || ""} onChange={(e) => handleChange("fur", e.target.value)} />
       </div>
 
       <div className="hc-field">
-        <label>¿Menopausia? (si aplica)</label>
+        <label>Estado menopaúsico</label>
         <select value={form.menopausia || ""} onChange={(e) => handleChange("menopausia", e.target.value)}>
           <option value="">Seleccionar...</option>
           <option value="no">No</option>
@@ -1723,7 +1723,7 @@ function FormCardiologia({ datos, onGuardar, guardando }: FormProps) {
       <h3 className="hc-section-title">SÍNTOMAS CARDIOVASCULARES</h3>
 
       <div className="hc-field">
-        <label>Síntomas (palpitaciones, disnea, angina, fatiga, síncope)</label>
+        <label>Síntomas cardiovasculares</label>
         <textarea value={form.sintomas || ""} onChange={(e) => handleChange("sintomas", e.target.value)} />
       </div>
 
@@ -1957,7 +1957,7 @@ function FormEndocrinologia({ datos, onGuardar, guardando }: FormProps) {
       <h3 className="hc-section-title">SÍNTOMAS ENDOCRINOLÓGICOS</h3>
 
       <div className="hc-field">
-        <label>Síntomas actuales (polidipsia, polifagia, poliuria, cambios de peso)</label>
+        <label>Síntomas endocrinológicos actuales</label>
         <textarea value={form.sintomas || ""} onChange={(e) => handleChange("sintomas", e.target.value)} />
       </div>
 
@@ -2723,12 +2723,12 @@ function FormPsiquiatria({ datos, onGuardar, guardando }: FormProps) {
       <h3 className="hc-section-title">ENFERMEDAD ACTUAL</h3>
 
       <div className="hc-field">
-        <label>Queja principal / Motivo de consulta</label>
+        <label>Motivo de consulta</label>
         <textarea value={form.quejaActual || ""} onChange={(e) => handleChange("quejaActual", e.target.value)} />
       </div>
 
       <div className="hc-field">
-        <label>Síntomas actuales (depresión, ansiedad, alucinaciones, delirios)</label>
+        <label>Síntomas psiquiátricos actuales</label>
         <textarea value={form.sintomas || ""} onChange={(e) => handleChange("sintomas", e.target.value)} />
       </div>
 
@@ -2750,27 +2750,27 @@ function FormPsiquiatria({ datos, onGuardar, guardando }: FormProps) {
       </div>
 
       <div className="hc-field">
-        <label>Ánimo (estado emocional autoreportado)</label>
+        <label>Estado del ánimo</label>
         <textarea value={form.animo || ""} onChange={(e) => handleChange("animo", e.target.value)} />
       </div>
 
       <div className="hc-field">
-        <label>Afecto (expresión emocional observada - apropiado, labile, embotado)</label>
+        <label>Afecto (congruencia con ánimo)</label>
         <textarea value={form.afecto || ""} onChange={(e) => handleChange("afecto", e.target.value)} />
       </div>
 
       <div className="hc-field">
-        <label>Lenguaje (velocidad, cantidad, coherencia, pressione di parola)</label>
+        <label>Lenguaje (velocidad, cantidad, coherencia, presión del habla)</label>
         <textarea value={form.lenguaje || ""} onChange={(e) => handleChange("lenguaje", e.target.value)} />
       </div>
 
       <div className="hc-field">
-        <label>Pensamiento (forma, contenido, asociaciones)</label>
+        <label>Contenido y forma del pensamiento</label>
         <textarea value={form.pensamiento || ""} onChange={(e) => handleChange("pensamiento", e.target.value)} />
       </div>
 
       <div className="hc-field">
-        <label>Percepciones (alucinaciones visuales, auditivas, táctiles)</label>
+        <label>Alucinaciones (visuales, auditivas, táctiles)</label>
         <textarea value={form.percepciones || ""} onChange={(e) => handleChange("percepciones", e.target.value)} />
       </div>
 
@@ -2780,7 +2780,7 @@ function FormPsiquiatria({ datos, onGuardar, guardando }: FormProps) {
       </div>
 
       <div className="hc-field">
-        <label>Insight (conocimiento de enfermedad) / Juicio (capacidad de decisión)</label>
+        <label>Insight y juicio crítico</label>
         <textarea value={form.insightJuicio || ""} onChange={(e) => handleChange("insightJuicio", e.target.value)} />
       </div>
 
@@ -2807,7 +2807,7 @@ function FormPsiquiatria({ datos, onGuardar, guardando }: FormProps) {
       </div>
 
       <div className="hc-field">
-        <label>Plan suicida / Plan de agresión (si aplica)</label>
+        <label>Ideación suicida / Ideación homicida</label>
         <textarea value={form.planes || ""} onChange={(e) => handleChange("planes", e.target.value)} />
       </div>
 

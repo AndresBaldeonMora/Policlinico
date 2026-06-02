@@ -122,28 +122,55 @@
 }
 
 /* ── Tabs ── */
+.hcm-tabs-wrapper {
+  display: flex;
+  align-items: center;
+  gap: 0;
+  position: relative;
+}
+
+.hcm-tab-arrow {
+  background: none;
+  border: none;
+  color: var(--text-muted);
+  cursor: pointer;
+  padding: 8px 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: color 0.15s, background-color 0.15s;
+  flex-shrink: 0;
+  border-radius: var(--radius-md);
+}
+
+.hcm-tab-arrow:hover:not(.disabled) {
+  color: var(--primary);
+  background-color: var(--bg-hover);
+}
+
+.hcm-tab-arrow.disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+  pointer-events: none;
+}
+
 .hcm-tabs {
   display: flex;
   overflow-x: auto;
+  overflow-y: hidden;
   white-space: nowrap;
   border-bottom: 2px solid var(--border);
   gap: 0;
-  scrollbar-width: thin;
-  scrollbar-color: var(--border) transparent;
+  scrollbar-width: none;
+  scroll-behavior: smooth;
+  flex: 1;
+  -ms-overflow-style: none;
 }
 
 .hcm-tabs::-webkit-scrollbar {
-  height: 4px;
+  display: none;
 }
 
-.hcm-tabs::-webkit-scrollbar-track {
-  background: transparent;
-}
-
-.hcm-tabs::-webkit-scrollbar-thumb {
-  background: var(--border);
-  border-radius: 2px;
-}
 .hcm-tab {
   background: none;
   border: none;

@@ -1,10 +1,11 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import {
   ArrowLeft, Phone, Mail, BookOpen,
   FlaskConical, Pill, Stethoscope, Calendar,
   ChevronDown, ChevronRight, FileText,
   AlertTriangle, Activity, Scissors, Users,
+  ChevronLeft,
 } from "lucide-react";
 import { MedicoApiService } from "../../services/medico.service";
 import { useAuth } from "../../hooks/userAuth";
@@ -58,6 +59,9 @@ export default function HistoriaClinicaMedico() {
   const [citas,    setCitas]    = useState<any[]>([]);
   const [ordenes,  setOrdenes]  = useState<any[]>([]);
   const [expanded, setExpanded] = useState<Set<string>>(new Set());
+  const [canScrollLeft, setCanScrollLeft] = useState(false);
+  const [canScrollRight, setCanScrollRight] = useState(true);
+  const tabsContainerRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     if (!pacienteId) return;
@@ -77,6 +81,36 @@ export default function HistoriaClinicaMedico() {
       if (next.has(id)) next.delete(id); else next.add(id);
       return next;
     });
+
+  const checkScroll = () => {
+    if (tabsContainerRef.current) {
+      const { scrollLeft, scrollWidth, clientWidth } = tabsContainerRef.current;
+      setCanScrollLeft(scrollLeft > 0);
+      setCanScrollRight(scrollLeft < scrollWidth - clientWidth - 10);
+    }
+  };
+
+  const scroll = (direction: 'left' | 'right') => {
+    if (tabsContainerRef.current) {
+      const scrollAmount = 300;
+      const newScroll = tabsContainerRef.current.scrollLeft + (direction === 'left' ? -scrollAmount : scrollAmount);
+      tabsContainerRef.current.scrollTo({ left: newScroll, behavior: 'smooth' });
+      setTimeout(checkScroll, 400);
+    }
+  };
+
+  useEffect(() => {
+    checkScroll();
+    const container = tabsContainerRef.current;
+    if (container) {
+      container.addEventListener('scroll', checkScroll);
+      window.addEventListener('resize', checkScroll);
+      return () => {
+        container.removeEventListener('scroll', checkScroll);
+        window.removeEventListener('resize', checkScroll);
+      };
+    }
+  }, []);
 
   if (loading) return <div className="hcm-loading">Cargando historia clínica…</div>;
   if (!paciente) return <div className="hcm-loading">Paciente no encontrado.</div>;
@@ -141,28 +175,48 @@ export default function HistoriaClinicaMedico() {
       </div>
 
       {/* Tabs - Historia Clínica por Especialidad */}
-      <div className="hcm-tabs">
-        {([
-          { id: "anamMedico", label: "Anam. médico" },
-          { id: "medicinaGeneral", label: "Medicina General" },
-          { id: "pediatria", label: "Pediatría" },
-          { id: "odontologia", label: "Odontología" },
-          { id: "reumatologia", label: "Reumatología" },
-          { id: "ginecologia", label: "Ginecología y Obstetricia" },
-          { id: "cardiologia", label: "Cardiología" },
-          { id: "endocrinologia", label: "Endocrinología" },
-          { id: "neumologia", label: "Neumología" },
-          { id: "gastroenterologia", label: "Gastroenterología" },
-          { id: "psiquiatria", label: "Psiquiatría" },
-        ] as const).map(t => (
-          <button
-            key={t.id}
-            className={`hcm-tab ${tab === t.id ? "active" : ""}`}
-            onClick={() => setTab(t.id)}
-          >
-            {t.label}
-          </button>
-        ))}
+      <div className="hcm-tabs-wrapper">
+        <button
+          className={`hcm-tab-arrow hcm-tab-arrow--left ${!canScrollLeft ? 'disabled' : ''}`}
+          onClick={() => scroll('left')}
+          disabled={!canScrollLeft}
+          title="Desplazar izquierda"
+        >
+          <ChevronLeft size={18} />
+        </button>
+
+        <div className="hcm-tabs" ref={tabsContainerRef}>
+          {([
+            { id: "anamMedico", label: "Anam. médico" },
+            { id: "medicinaGeneral", label: "Medicina General" },
+            { id: "pediatria", label: "Pediatría" },
+            { id: "odontologia", label: "Odontología" },
+            { id: "reumatologia", label: "Reumatología" },
+            { id: "ginecologia", label: "Ginecología y Obstetricia" },
+            { id: "cardiologia", label: "Cardiología" },
+            { id: "endocrinologia", label: "Endocrinología" },
+            { id: "neumologia", label: "Neumología" },
+            { id: "gastroenterologia", label: "Gastroenterología" },
+            { id: "psiquiatria", label: "Psiquiatría" },
+          ] as const).map(t => (
+            <button
+              key={t.id}
+              className={`hcm-tab ${tab === t.id ? "active" : ""}`}
+              onClick={() => setTab(t.id)}
+            >
+              {t.label}
+            </button>
+          ))}
+        </div>
+
+        <button
+          className={`hcm-tab-arrow hcm-tab-arrow--right ${!canScrollRight ? 'disabled' : ''}`}
+          onClick={() => scroll('right')}
+          disabled={!canScrollRight}
+          title="Desplazar derecha"
+        >
+          <ChevronRight size={18} />
+        </button>
       </div>
 
       {/* ─── HISTORIA CLÍNICA POR ESPECIALIDAD ─── */}
