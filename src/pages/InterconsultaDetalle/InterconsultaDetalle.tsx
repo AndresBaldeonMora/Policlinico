@@ -15,6 +15,7 @@ import {
 import { MedicoApiService } from "../../services/medico.service";
 import { DoctorApiService } from "../../services/doctor.service";
 import { toastExito } from "../../utils/toast";
+import { formatearFechaCorta, formatearTimestamp } from "../../utils/fecha.utils";
 import "./InterconsultaDetalle.css";
 
 const ESTADO_META: Record<EstadoInterconsulta, { label: string; cls: string; icon: any }> = {
@@ -47,17 +48,11 @@ function iniciales(nombres?: string, apellidos?: string): string {
   return (n + a).toUpperCase() || "·";
 }
 
-const formatFechaLarga = (iso?: string) =>
-  iso
-    ? new Date(iso).toLocaleDateString("es-PE", {
-        day: "2-digit", month: "short", year: "numeric", hour: "2-digit", minute: "2-digit",
-      })
-    : "—";
+// Timestamps (createdAt, fechaRespuesta) → fecha + hora en horario de Perú.
+const formatFechaLarga = (iso?: string) => (iso ? formatearTimestamp(iso) : "—");
 
-const formatFechaCorta = (iso?: string) =>
-  iso
-    ? new Date(iso).toLocaleDateString("es-PE", { day: "2-digit", month: "short", year: "numeric" })
-    : "—";
+// Campos de día (cita.fecha, fechaNacimiento) → fecha corta en UTC.
+const formatFechaCorta = (iso?: string) => (iso ? formatearFechaCorta(iso) : "—");
 
 const hoyISO = () => {
   const d = new Date();

@@ -22,13 +22,13 @@ const PasoHora = ({ horariosPorDia, horaSeleccionada, onSeleccionar }: Props) =>
         {horariosPorDia.map((dia) => {
           const esDiaHoy = esHoy(dia.fechaISO);
 
-          const horasFiltradas = dia.horarios.filter((h) => {
-            if (!h.disponible) return false;
+          // Filtrar solo horas pasadas del día de hoy; las reservadas se muestran bloqueadas
+          const horasVisibles = dia.horarios.filter((h) => {
             if (esDiaHoy && horaAMinutos(h.hora) <= minutosAhora) return false;
             return true;
           });
 
-          if (horasFiltradas.length === 0) return (
+          if (horasVisibles.length === 0) return (
             <div key={dia.fechaISO} className="dia-grupo">
               <p className="no-horarios-msg">
                 No hay horarios disponibles para este día. Selecciona otro.
@@ -39,21 +39,36 @@ const PasoHora = ({ horariosPorDia, horaSeleccionada, onSeleccionar }: Props) =>
           return (
             <div key={dia.fechaISO} className="dia-grupo">
               <div className="horarios-horizontal">
-                {horasFiltradas.map((h) => (
-                  <label
-                    key={h.hora}
-                    className={`horario-radio ${h.hora === horaSeleccionada ? "seleccionado" : ""}`}
-                  >
-                    <input
-                      type="radio"
-                      name="horario"
-                      value={h.hora}
-                      checked={h.hora === horaSeleccionada}
-                      onChange={() => onSeleccionar(h.hora, dia.fechaISO)}
-                    />
-                    <span>{h.hora} hs</span>
-                  </label>
-                ))}
+                {horasVisibles.map((h) => {
+                  const reservado = !h.disponible;
+                  if (reservado) {
+                    return (
+                      <div
+                        key={h.hora}
+                        className="horario-radio reservado"
+                        title="Horario ya reservado"
+                      >
+                        <span>{h.hora} hs</span>
+                        <span className="horario-reservado-badge">Reservado</span>
+                      </div>
+                    );
+                  }
+                  return (
+                    <label
+                      key={h.hora}
+                      className={`horario-radio ${h.hora === horaSeleccionada ? "seleccionado" : ""}`}
+                    >
+                      <input
+                        type="radio"
+                        name="horario"
+                        value={h.hora}
+                        checked={h.hora === horaSeleccionada}
+                        onChange={() => onSeleccionar(h.hora, dia.fechaISO)}
+                      />
+                      <span>{h.hora} hs</span>
+                    </label>
+                  );
+                })}
               </div>
             </div>
           );

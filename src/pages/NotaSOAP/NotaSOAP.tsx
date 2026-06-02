@@ -3,7 +3,7 @@ import { useParams, useNavigate } from "react-router-dom";
 import Swal from "sweetalert2";
 import { AlertTriangle, Pill, FileText, Plus, ChevronDown, ChevronUp, Scissors, Users, Activity } from "lucide-react";
 import "./NotaSOAP.css";
-import { fmtEstado } from "../../utils/fecha.utils";
+import { fmtEstado, formatearFechaDMY, formatearFechaCorta } from "../../utils/fecha.utils";
 
 import type { SOAPData, ExamenOrdenado, MedicamentoSOAP } from "./types";
 import { INITIAL_SOAP } from "./types";
@@ -69,6 +69,8 @@ export default function NotaSOAP() {
   const [historialCitas,       setHistorialCitas]       = useState<CitaHistorial[]>([]);
   const [historialCitasExp,    setHistorialCitasExp]    = useState(true);
   const [citaExpandidaId,      setCitaExpandidaId]      = useState<string | null>(null);
+  const [modalCitas,           setModalCitas]           = useState(false);
+  const [citaExpandidaModal,   setCitaExpandidaModal]   = useState<string | null>(null);
   const [savingHistorial,      setSavingHistorial]      = useState(false);
   const [modalHistorial,       setModalHistorial]       = useState<"alergia" | "medicamento" | "problema" | "cirugia" | "antFamiliar" | null>(null);
   const [nuevoItem,         setNuevoItem]         = useState<Record<string, string>>({});
@@ -407,7 +409,7 @@ export default function NotaSOAP() {
             </div>
           </div>
           <div className="sp-cita-fecha">
-            {new Date(cita.fecha).toLocaleDateString("es-PE", { day: "2-digit", month: "long", year: "numeric" })} — {cita.hora}
+            {new Date(cita.fecha).toLocaleDateString("es-PE", { day: "2-digit", month: "long", year: "numeric", timeZone: "UTC" })} — {cita.hora}
           </div>
           {cita.notas && (
             <div className="sp-cita-nota">"{cita.notas.substring(0, 70)}{cita.notas.length > 70 ? "…" : ""}"</div>
@@ -513,7 +515,7 @@ export default function NotaSOAP() {
                     <span className="sp-hist-item-name" style={{ textDecoration: "line-through" }}>{m.nombre}</span>
                     {m.dosis && <span className="sp-hist-item-sub">{m.dosis}</span>}
                     {m.fechaSuspension && (
-                      <span className="sp-hist-item-sub"> · {new Date(m.fechaSuspension).toLocaleDateString("es-PE")}</span>
+                      <span className="sp-hist-item-sub"> · {formatearFechaDMY(m.fechaSuspension)}</span>
                     )}
                   </div>
                 ))}
@@ -588,6 +590,9 @@ export default function NotaSOAP() {
           )}
         </div>
 
+        {/* ── Órdenes y resultados del paciente (solo lectura) ── */}
+        <PanelOrdenesPaciente pacienteId={pac._id} />
+
         {/* ── Citas Anteriores ── */}
         <div className="sp-section-container">
           <button className="sp-section-toggle" onClick={() => setHistorialCitasExp(v => !v)}>
@@ -604,62 +609,74 @@ export default function NotaSOAP() {
             <div className="sp-section-body">
               {historialCitas.filter(c => c.estado === "ATENDIDA").length === 0 ? (
                 <p className="sp-hist-empty">Sin consultas previas registradas</p>
-              ) : historialCitas.filter(c => c.estado === "ATENDIDA").map(c => {
-                const esExpandida = citaExpandidaId === c._id;
-                const especialidad = (c.doctorId as any)?.especialidadId?.nombre ?? "—";
-                const doctor = c.doctorId ? `${c.doctorId.nombres} ${c.doctorId.apellidos}` : "—";
-                let motivoConsulta = "";
-                if (c.notasClinicas) {
-                  try {
-                    const parsed = JSON.parse(c.notasClinicas);
-                    motivoConsulta = parsed.soap?.S?.motivoConsulta ?? "";
-                  } catch { /* ignorar */ }
-                }
-                return (
-                  <div key={c._id} className={`sp-cita-card${esExpandida ? " sp-cita-card--open" : ""}`}>
-                    <div className="sp-cita-card-header" onClick={() => setCitaExpandidaId(esExpandida ? null : c._id)}>
-                      <div className="sp-cita-card-left">
-                        <span className="sp-cita-card-fecha">
-                          {new Date(c.fecha).toLocaleDateString("es-PE", { day: "2-digit", month: "short", year: "numeric" })}
-                        </span>
-                        <span className="sp-cita-card-esp">{especialidad}</span>
-                        <span className="sp-cita-card-dr">Dr. {doctor}</span>
+              ) : (
+                <>
+                  {historialCitas.filter(c => c.estado === "ATENDIDA").slice(0, 3).map(c => {
+                    const esExpandida = citaExpandidaId === c._id;
+                    const especialidad = (c.doctorId as any)?.especialidadId?.nombre ?? "—";
+                    const doctor = c.doctorId ? `${c.doctorId.nombres} ${c.doctorId.apellidos}` : "—";
+                    let motivoConsulta = "";
+                    if (c.notasClinicas) {
+                      try {
+                        const parsed = JSON.parse(c.notasClinicas);
+                        motivoConsulta = parsed.soap?.S?.motivoConsulta ?? "";
+                      } catch { /* ignorar */ }
+                    }
+                    return (
+                      <div key={c._id} className={`sp-cita-card${esExpandida ? " sp-cita-card--open" : ""}`}>
+                        <div className="sp-cita-card-header" onClick={() => setCitaExpandidaId(esExpandida ? null : c._id)}>
+                          <div className="sp-cita-card-left">
+                            <span className="sp-cita-card-fecha">{formatearFechaCorta(c.fecha)}</span>
+                            <span className="sp-cita-card-esp">{especialidad}</span>
+                            <span className="sp-cita-card-dr">Dr. {doctor}</span>
+                          </div>
+                          <span className="sp-badge sp-badge--atendida">ATENDIDA</span>
+                        </div>
+                        {esExpandida && (
+                          <div className="sp-cita-card-body">
+                            {motivoConsulta && (
+                              <div className="sp-cita-detail-row">
+                                <span className="sp-cita-detail-lbl">Motivo</span>
+                                <span>{motivoConsulta}</span>
+                              </div>
+                            )}
+                            {c.diagnostico ? (
+                              <div className="sp-cita-detail-row">
+                                <span className="sp-cita-detail-lbl">Dx</span>
+                                <span>{c.diagnostico}</span>
+                              </div>
+                            ) : (
+                              <span className="sp-hist-empty" style={{ fontStyle: "italic" }}>Sin diagnóstico registrado</span>
+                            )}
+                            {c.tratamiento && (
+                              <div className="sp-cita-detail-row">
+                                <span className="sp-cita-detail-lbl">Tx</span>
+                                <span>{c.tratamiento}</span>
+                              </div>
+                            )}
+                          </div>
+                        )}
                       </div>
-                      <span className="sp-badge sp-badge--atendida">ATENDIDA</span>
-                    </div>
-                    {esExpandida && (
-                      <div className="sp-cita-card-body">
-                        {motivoConsulta && (
-                          <div className="sp-cita-detail-row">
-                            <span className="sp-cita-detail-lbl">Motivo</span>
-                            <span>{motivoConsulta}</span>
-                          </div>
-                        )}
-                        {c.diagnostico ? (
-                          <div className="sp-cita-detail-row">
-                            <span className="sp-cita-detail-lbl">Dx</span>
-                            <span>{c.diagnostico}</span>
-                          </div>
-                        ) : (
-                          <span className="sp-hist-empty" style={{ fontStyle: "italic" }}>Sin diagnóstico registrado</span>
-                        )}
-                        {c.tratamiento && (
-                          <div className="sp-cita-detail-row">
-                            <span className="sp-cita-detail-lbl">Tx</span>
-                            <span>{c.tratamiento}</span>
-                          </div>
-                        )}
-                      </div>
-                    )}
-                  </div>
-                );
-              })}
+                    );
+                  })}
+                  {historialCitas.filter(c => c.estado === "ATENDIDA").length > 3 && (
+                    <button
+                      onClick={() => setModalCitas(true)}
+                      style={{
+                        width: "100%", marginTop: 6, padding: "6px 0",
+                        border: "1px dashed var(--border)", borderRadius: 8,
+                        background: "none", color: "var(--primary)", cursor: "pointer",
+                        fontSize: 11, fontWeight: 600,
+                      }}
+                    >
+                      Ver todas ({historialCitas.filter(c => c.estado === "ATENDIDA").length})
+                    </button>
+                  )}
+                </>
+              )}
             </div>
           )}
         </div>
-
-        {/* ── Órdenes y resultados del paciente (solo lectura) ── */}
-        <PanelOrdenesPaciente pacienteId={pac._id} />
       </aside>
 
       {/* ── Main area ── */}
@@ -854,6 +871,84 @@ export default function NotaSOAP() {
               >
                 Confirmar suspensión
               </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ── Modal todas las citas anteriores ── */}
+      {modalCitas && (
+        <div
+          style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.45)", zIndex: 1000, display: "flex", alignItems: "center", justifyContent: "center" }}
+          onClick={() => { setModalCitas(false); setCitaExpandidaModal(null); }}
+        >
+          <div
+            style={{ background: "var(--bg-card)", borderRadius: 12, width: 520, maxWidth: "92vw", maxHeight: "80vh", display: "flex", flexDirection: "column", boxShadow: "var(--shadow-xl)", border: "1px solid var(--border)" }}
+            onClick={e => e.stopPropagation()}
+          >
+            <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "16px 20px", borderBottom: "1px solid var(--border)" }}>
+              <div>
+                <h3 style={{ margin: 0, fontSize: 15, fontWeight: 700, color: "var(--text-primary)" }}>Citas Anteriores</h3>
+                <p style={{ margin: "2px 0 0", fontSize: 11, color: "var(--text-muted)" }}>
+                  {historialCitas.filter(c => c.estado === "ATENDIDA").length} consultas atendidas
+                </p>
+              </div>
+              <button
+                onClick={() => { setModalCitas(false); setCitaExpandidaModal(null); }}
+                style={{ background: "none", border: "none", cursor: "pointer", fontSize: 18, color: "var(--text-muted)", lineHeight: 1, padding: "4px 8px" }}
+              >
+                ×
+              </button>
+            </div>
+            <div style={{ overflowY: "auto", padding: "14px 20px", display: "flex", flexDirection: "column", gap: 6 }}>
+              {historialCitas.filter(c => c.estado === "ATENDIDA").map(c => {
+                const esExpandida = citaExpandidaModal === c._id;
+                const especialidad = (c.doctorId as any)?.especialidadId?.nombre ?? "—";
+                const doctor = c.doctorId ? `${c.doctorId.nombres} ${c.doctorId.apellidos}` : "—";
+                let motivoConsulta = "";
+                if (c.notasClinicas) {
+                  try {
+                    const parsed = JSON.parse(c.notasClinicas);
+                    motivoConsulta = parsed.soap?.S?.motivoConsulta ?? "";
+                  } catch { /* ignorar */ }
+                }
+                return (
+                  <div key={c._id} className={`sp-cita-card${esExpandida ? " sp-cita-card--open" : ""}`}>
+                    <div className="sp-cita-card-header" onClick={() => setCitaExpandidaModal(esExpandida ? null : c._id)}>
+                      <div className="sp-cita-card-left">
+                        <span className="sp-cita-card-fecha">{formatearFechaCorta(c.fecha)}</span>
+                        <span className="sp-cita-card-esp">{especialidad}</span>
+                        <span className="sp-cita-card-dr">Dr. {doctor}</span>
+                      </div>
+                      <span className="sp-badge sp-badge--atendida">ATENDIDA</span>
+                    </div>
+                    {esExpandida && (
+                      <div className="sp-cita-card-body">
+                        {motivoConsulta && (
+                          <div className="sp-cita-detail-row">
+                            <span className="sp-cita-detail-lbl">Motivo</span>
+                            <span>{motivoConsulta}</span>
+                          </div>
+                        )}
+                        {c.diagnostico ? (
+                          <div className="sp-cita-detail-row">
+                            <span className="sp-cita-detail-lbl">Dx</span>
+                            <span>{c.diagnostico}</span>
+                          </div>
+                        ) : (
+                          <span className="sp-hist-empty" style={{ fontStyle: "italic" }}>Sin diagnóstico registrado</span>
+                        )}
+                        {c.tratamiento && (
+                          <div className="sp-cita-detail-row">
+                            <span className="sp-cita-detail-lbl">Tx</span>
+                            <span>{c.tratamiento}</span>
+                          </div>
+                        )}
+                      </div>
+                    )}
+                  </div>
+                );
+              })}
             </div>
           </div>
         </div>

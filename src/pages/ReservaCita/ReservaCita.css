@@ -553,6 +553,31 @@ select:focus {
   color: #ffffff !important;
 }
 
+.horario-radio.reservado {
+  cursor: not-allowed;
+  background: var(--bg-body);
+  border-color: var(--border);
+  opacity: 0.65;
+  flex-direction: column;
+  gap: 2px;
+}
+.horario-radio.reservado:hover {
+  border-color: var(--border);
+  background: var(--bg-body);
+}
+.horario-radio.reservado span {
+  color: var(--text-secondary);
+  text-decoration: line-through;
+}
+.horario-reservado-badge {
+  font-size: 0.65rem;
+  font-weight: 600;
+  color: #b91c1c !important;
+  text-decoration: none !important;
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+}
+
 /* ── Patient Search ── */
 .search-input-wrapper { position: relative; display: flex; align-items: center; }
 .search-input-wrapper input { width: 100%; padding-right: 40px; }
@@ -855,6 +880,11 @@ select:focus {
 
 [data-theme="dark"] .horario-radio {
   background: var(--bg-card);
+  border-color: var(--border);
+}
+
+[data-theme="dark"] .horario-radio.reservado {
+  background: var(--bg-body);
   border-color: var(--border);
 }
 

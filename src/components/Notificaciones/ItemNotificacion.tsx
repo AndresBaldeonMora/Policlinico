@@ -39,6 +39,7 @@ function tiempoRelativo(fechaISO: string): string {
   return new Date(fechaISO).toLocaleDateString("es-PE", {
     day: "numeric",
     month: "short",
+    timeZone: "UTC",
   });
 }
 

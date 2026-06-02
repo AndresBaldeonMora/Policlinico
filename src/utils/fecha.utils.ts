@@ -64,6 +64,38 @@ export const formatearFechaDMY = (isoBackend: string): string =>
     timeZone: "UTC",
   });
 
+// "YYYY-MM-DDT..." del backend → "19 abr 2026" (mes corto, con timeZone UTC)
+export const formatearFechaCorta = (isoBackend: string): string =>
+  new Date(isoBackend).toLocaleDateString("es-PE", {
+    day: "2-digit",
+    month: "short",
+    year: "numeric",
+    timeZone: "UTC",
+  });
+
+// "YYYY-MM-DDTHH:mm..." del backend → "14:30" (hora UTC, que es la hora guardada)
+export const formatearHora = (isoBackend: string): string =>
+  new Date(isoBackend).toLocaleTimeString("es-PE", {
+    hour: "2-digit",
+    minute: "2-digit",
+    timeZone: "UTC",
+  });
+
+// ── TIMESTAMPS (instante UTC real: createdAt, fechaRespuesta, fechaLectura…) ──
+// Se muestran en hora de Perú (America/Lima), NO en UTC. Usar SOLO para campos
+// que guardan un momento exacto, nunca para campos de "día" (cita.fecha, etc.).
+
+// timestamp → "19/04/2026, 14:30"
+export const formatearTimestamp = (isoBackend: string): string =>
+  new Date(isoBackend).toLocaleString("es-PE", {
+    day: "2-digit",
+    month: "2-digit",
+    year: "numeric",
+    hour: "2-digit",
+    minute: "2-digit",
+    timeZone: "America/Lima",
+  });
+
 // "EN_PROCESO" → "En Proceso" (reemplaza _ y capitaliza cada palabra)
 export const fmtEstado = (estado?: string): string =>
   (estado ?? "")

@@ -56,7 +56,9 @@ const TABS_MEDICO: { id: TabPrincipal; label: string }[] = [
 // UTILS
 // ============================================================================
 
-const FECHA_CORTA_FMT = new Intl.DateTimeFormat("es-PE");
+// Campos de día (cita.fecha, fechaNacimiento) se guardan como medianoche UTC:
+// timeZone "UTC" evita que el navegador peruano muestre el día anterior.
+const FECHA_CORTA_FMT = new Intl.DateTimeFormat("es-PE", { timeZone: "UTC" });
 
 const formatearFechaCorta = (fechaISO?: string) => {
   if (!fechaISO) return "-";

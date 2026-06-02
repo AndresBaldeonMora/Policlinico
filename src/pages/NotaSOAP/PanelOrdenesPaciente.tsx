@@ -44,6 +44,9 @@ export default function PanelOrdenesPaciente({ pacienteId }: Props) {
   const [expandido, setExpandido] = useState(true);
   const [ordenAbierta, setOrdenAbierta] = useState<string | null>(null);
   const [filtro, setFiltro] = useState<"todas" | "FINALIZADO" | "EN_PROCESO" | "PENDIENTE">("todas");
+  const [modalOrdenes, setModalOrdenes] = useState(false);
+  const [ordenAbiertaModal, setOrdenAbiertaModal] = useState<string | null>(null);
+  const [filtroModal, setFiltroModal] = useState<"todas" | "FINALIZADO" | "EN_PROCESO" | "PENDIENTE">("todas");
 
   useEffect(() => {
     if (!pacienteId) return;
@@ -66,6 +69,14 @@ export default function PanelOrdenesPaciente({ pacienteId }: Props) {
     if (filtro === "EN_PROCESO") return ordenes.filter(o => o.estado === "EN_PROCESO" || o.estado === "ASISTIDO");
     return ordenes.filter(o => o.estado === filtro);
   }, [ordenes, filtro]);
+
+  const ordenesFiltradas3 = ordenesFiltradas.slice(0, 3);
+
+  const ordenesFiltradasModal = useMemo(() => {
+    if (filtroModal === "todas") return ordenes;
+    if (filtroModal === "EN_PROCESO") return ordenes.filter(o => o.estado === "EN_PROCESO" || o.estado === "ASISTIDO");
+    return ordenes.filter(o => o.estado === filtroModal);
+  }, [ordenes, filtroModal]);
 
   return (
     <div className="sp-section-container pop-wrap">
@@ -145,7 +156,7 @@ export default function PanelOrdenesPaciente({ pacienteId }: Props) {
             </div>
           ) : (
             <div className="pop-list">
-              {ordenesFiltradas.map(o => {
+              {ordenesFiltradas3.map(o => {
                 const meta = ESTADO_META[o.estado] ?? ESTADO_META.PENDIENTE;
                 const tipo = TIPO_META[o.tipoOrden ?? ""] ?? TIPO_META.LABORATORIO;
                 const TipoIcon = tipo.icon;
@@ -256,8 +267,145 @@ export default function PanelOrdenesPaciente({ pacienteId }: Props) {
                   </div>
                 );
               })}
+              {ordenesFiltradas.length > 3 && (
+                <button
+                  onClick={() => setModalOrdenes(true)}
+                  style={{
+                    width: "100%", marginTop: 6, padding: "6px 0",
+                    border: "1px dashed var(--border)", borderRadius: 8,
+                    background: "none", color: "var(--primary)", cursor: "pointer",
+                    fontSize: 11, fontWeight: 600,
+                  }}
+                >
+                  Ver todas ({ordenesFiltradas.length})
+                </button>
+              )}
             </div>
           )}
+        </div>
+      )}
+
+      {/* ── Modal todas las órdenes ── */}
+      {modalOrdenes && (
+        <div
+          style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.45)", zIndex: 1000, display: "flex", alignItems: "center", justifyContent: "center" }}
+          onClick={() => { setModalOrdenes(false); setOrdenAbiertaModal(null); setFiltroModal("todas"); }}
+        >
+          <div
+            style={{ background: "var(--bg-card)", borderRadius: 12, width: 580, maxWidth: "92vw", maxHeight: "82vh", display: "flex", flexDirection: "column", boxShadow: "var(--shadow-xl)", border: "1px solid var(--border)" }}
+            onClick={e => e.stopPropagation()}
+          >
+            <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "16px 20px", borderBottom: "1px solid var(--border)" }}>
+              <div>
+                <h3 style={{ margin: 0, fontSize: 15, fontWeight: 700, color: "var(--text-primary)", display: "flex", alignItems: "center", gap: 6 }}>
+                  <FlaskConical size={15} /> Órdenes y resultados
+                </h3>
+                <p style={{ margin: "2px 0 0", fontSize: 11, color: "var(--text-muted)" }}>{ordenes.length} órdenes en total</p>
+              </div>
+              <button
+                onClick={() => { setModalOrdenes(false); setOrdenAbiertaModal(null); setFiltroModal("todas"); }}
+                style={{ background: "none", border: "none", cursor: "pointer", fontSize: 18, color: "var(--text-muted)", lineHeight: 1, padding: "4px 8px" }}
+              >
+                ×
+              </button>
+            </div>
+
+            {/* Filtros */}
+            <div className="pop-stats" style={{ margin: "12px 20px 0" }}>
+              <button className={`pop-stat ${filtroModal === "todas" ? "pop-stat--active" : ""}`} onClick={() => setFiltroModal("todas")}>
+                <span className="pop-stat-value">{stats.total}</span>
+                <span className="pop-stat-label">Total</span>
+              </button>
+              <button className={`pop-stat pop-stat--success ${filtroModal === "FINALIZADO" ? "pop-stat--active" : ""}`} onClick={() => setFiltroModal(filtroModal === "FINALIZADO" ? "todas" : "FINALIZADO")} disabled={stats.finalizadas === 0}>
+                <span className="pop-stat-value">{stats.finalizadas}</span>
+                <span className="pop-stat-label">Con resultados</span>
+              </button>
+              <button className={`pop-stat pop-stat--info ${filtroModal === "EN_PROCESO" ? "pop-stat--active" : ""}`} onClick={() => setFiltroModal(filtroModal === "EN_PROCESO" ? "todas" : "EN_PROCESO")} disabled={stats.enProceso === 0}>
+                <span className="pop-stat-value">{stats.enProceso}</span>
+                <span className="pop-stat-label">En curso</span>
+              </button>
+              <button className={`pop-stat pop-stat--warn ${filtroModal === "PENDIENTE" ? "pop-stat--active" : ""}`} onClick={() => setFiltroModal(filtroModal === "PENDIENTE" ? "todas" : "PENDIENTE")} disabled={stats.pendientes === 0}>
+                <span className="pop-stat-value">{stats.pendientes}</span>
+                <span className="pop-stat-label">Por autorizar</span>
+              </button>
+            </div>
+
+            <div className="pop-list" style={{ overflowY: "auto", padding: "12px 20px" }}>
+              {ordenesFiltradasModal.length === 0 ? (
+                <div className="pop-empty pop-empty--soft">
+                  <Search size={18} />
+                  <p className="pop-empty-sub">Sin órdenes con ese filtro</p>
+                </div>
+              ) : ordenesFiltradasModal.map(o => {
+                const meta = ESTADO_META[o.estado] ?? ESTADO_META.PENDIENTE;
+                const tipo = TIPO_META[o.tipoOrden ?? ""] ?? TIPO_META.LABORATORIO;
+                const TipoIcon = tipo.icon;
+                const EstadoIcon = meta.icon;
+                const codigo = o.codigoOrden || `#${o._id.slice(-6).toUpperCase()}`;
+                const esExpandida = ordenAbiertaModal === o._id;
+                const itemsConResultado = o.items?.filter(it => it.valorResultado || it.archivoUrl) ?? [];
+                const totalItems = o.items?.length ?? 0;
+                return (
+                  <div key={o._id} className={`pop-orden pop-orden--${meta.cls}${esExpandida ? " pop-orden--open" : ""}`}>
+                    <div className="pop-orden-rail" />
+                    <button className="pop-orden-head" onClick={() => setOrdenAbiertaModal(esExpandida ? null : o._id)}>
+                      <div className="pop-orden-tipo-wrap">
+                        <div className={`pop-orden-tipo pop-orden-tipo--${tipo.cls}`}><TipoIcon size={13} /></div>
+                      </div>
+                      <div className="pop-orden-main">
+                        <div className="pop-orden-top">
+                          <span className="pop-orden-cod">{codigo}</span>
+                          <span className="pop-orden-tipo-label">{tipo.label}</span>
+                          {totalItems > 0 && <span className="pop-orden-items">{totalItems} {totalItems === 1 ? "examen" : "exámenes"}</span>}
+                        </div>
+                        <div className="pop-orden-sub">
+                          <span>{formatFecha(o.fecha)}</span>
+                          {o.especialidadId?.nombre && <span>· {o.especialidadId.nombre}</span>}
+                        </div>
+                      </div>
+                      <div className="pop-orden-right">
+                        <span className={`pop-badge pop-badge--${meta.cls}`}><EstadoIcon size={10} />{meta.label}</span>
+                        {esExpandida ? <ChevronUp size={12} /> : <ChevronDown size={12} />}
+                      </div>
+                    </button>
+                    {esExpandida && (
+                      <div className="pop-orden-body">
+                        {o.estado === "FINALIZADO" && o.archivoResultadoUrl && (
+                          <a className="pop-pdf" href={o.archivoResultadoUrl} target="_blank" rel="noreferrer">
+                            <FileText size={12} /><span>Ver PDF de resultados</span><ExternalLink size={10} />
+                          </a>
+                        )}
+                        {itemsConResultado.length > 0 ? (
+                          <div className="pop-tabla">
+                            <div className="pop-tabla-head"><span>Examen</span><span>Resultado</span><span>Unidad</span></div>
+                            {itemsConResultado.map((it, idx) => {
+                              const ex = typeof it.examenId === "object" ? it.examenId : null;
+                              const nombre = ex?.nombre || "Examen";
+                              const tipoEx = ex?.tipo ? TIPO_EXAMEN_LABEL[ex.tipo] ?? ex.tipo : "";
+                              return (
+                                <div key={idx} className="pop-tabla-row">
+                                  <span className="pop-tabla-nombre">{nombre}{tipoEx && <span className="pop-tabla-tipo"> · {tipoEx}</span>}</span>
+                                  <span className="pop-tabla-valor">{it.valorResultado || "—"}</span>
+                                  <span className="pop-tabla-unidad">{it.unidadResultado || ""}</span>
+                                </div>
+                              );
+                            })}
+                          </div>
+                        ) : o.observacionesGenerales ? (
+                          <div className="pop-indic">
+                            <span className="pop-indic-label">Indicaciones</span>
+                            <span className="pop-indic-text">{o.observacionesGenerales}</span>
+                          </div>
+                        ) : (
+                          <div className="pop-sin-result"><Hourglass size={12} /><span>Sin resultados cargados aún</span></div>
+                        )}
+                      </div>
+                    )}
+                  </div>
+                );
+              })}
+            </div>
+          </div>
         </div>
       )}
     </div>
