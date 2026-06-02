@@ -34,8 +34,8 @@
 .cita-modal-datos-container {
   display: grid;
   grid-template-columns: 1fr 1px 1fr;
-  gap: 2rem;
-  padding: 1.5rem 0;
+  gap: 3rem;
+  padding: 2rem 0;
 }
 
 .cita-modal-divider {
@@ -46,7 +46,7 @@
 .cita-modal-datos-col-right {
   display: flex;
   flex-direction: column;
-  gap: 1.5rem;
+  gap: 2rem;
 }
 
 /* Field rows */
@@ -121,12 +121,12 @@
 }
 
 .cita-modal-input-row-wrapper input {
-  padding-right: 2.5rem;
+  padding-right: 2.75rem;
 }
 
 .cita-modal-input-icon {
   position: absolute;
-  right: 0.75rem;
+  right: 0.9rem;
   top: 50%;
   transform: translateY(-50%);
   color: var(--text-muted);
