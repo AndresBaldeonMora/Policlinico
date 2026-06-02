@@ -248,6 +248,18 @@ export class PacienteApiService {
     return response.data.data;
   }
 
+  static async guardarHistoriaClinicaEspecialidad(
+    id: string,
+    especialidad: string,
+    campos: Record<string, string>
+  ): Promise<Record<string, Record<string, string>>> {
+    const response = await api.patch<{ success: boolean; data: Record<string, Record<string, string>> }>(
+      `/pacientes/${id}/historia-clinica-especialidad`,
+      { especialidad, campos }
+    );
+    return response.data.data;
+  }
+
   static async buscarPorDni(dni: string): Promise<PacienteTransformado | null> {
     try {
       const response = await api.get<{ success: boolean; data: Paciente }>(

@@ -8,10 +8,11 @@ import {
 } from "lucide-react";
 import { MedicoApiService } from "../../services/medico.service";
 import { useAuth } from "../../hooks/userAuth";
+import HistoriaClinicaTabs from "./HistoriaClinicaTabs";
 import "./HistoriaClinicaMedico.css";
 import { fmtEstado } from "../../utils/fecha.utils";
 
-type Tab = "resumen" | "consultas" | "estudios";
+type Tab = "anamMedico" | "medicinaGeneral" | "pediatria" | "odontologia" | "reumatologia" | "ginecologia" | "cardiologia" | "endocrinologia" | "neumologia" | "gastroenterologia" | "psiquiatria";
 
 const formatFecha = (iso: string) =>
   new Date(iso).toLocaleDateString("es-PE", {
@@ -51,7 +52,7 @@ export default function HistoriaClinicaMedico() {
   const { user } = useAuth();
   const rutaPacientes = user?.rol === "administrador" ? "/admin/pacientes" : "/pacientes";
 
-  const [tab,      setTab]      = useState<Tab>("resumen");
+  const [tab,      setTab]      = useState<Tab>("anamMedico");
   const [loading,  setLoading]  = useState(true);
   const [paciente, setPaciente] = useState<any>(null);
   const [citas,    setCitas]    = useState<any[]>([]);
@@ -139,12 +140,20 @@ export default function HistoriaClinicaMedico() {
         </div>
       </div>
 
-      {/* Tabs */}
+      {/* Tabs - Historia Clínica por Especialidad */}
       <div className="hcm-tabs">
         {([
-          { id: "resumen",   label: "Resumen" },
-          { id: "consultas", label: `Consultas (${citasAtendidas.length})` },
-          { id: "estudios",  label: `Estudios (${ordenes.length})` },
+          { id: "anamMedico", label: "Anam. médico" },
+          { id: "medicinaGeneral", label: "Medicina General" },
+          { id: "pediatria", label: "Pediatría" },
+          { id: "odontologia", label: "Odontología" },
+          { id: "reumatologia", label: "Reumatología" },
+          { id: "ginecologia", label: "Ginecología y Obstetricia" },
+          { id: "cardiologia", label: "Cardiología" },
+          { id: "endocrinologia", label: "Endocrinología" },
+          { id: "neumologia", label: "Neumología" },
+          { id: "gastroenterologia", label: "Gastroenterología" },
+          { id: "psiquiatria", label: "Psiquiatría" },
         ] as const).map(t => (
           <button
             key={t.id}
@@ -156,8 +165,21 @@ export default function HistoriaClinicaMedico() {
         ))}
       </div>
 
-      {/* ─── TAB: RESUMEN ─── */}
-      {tab === "resumen" && (
+      {/* ─── HISTORIA CLÍNICA POR ESPECIALIDAD ─── */}
+      <HistoriaClinicaTabs
+        pacienteId={pacienteId!}
+        historiaClinica={paciente.historiaClinicaEspecialidad || {}}
+        tabActivo={tab}
+        onActualizar={async () => {
+          const data = await MedicoApiService.obtenerHistorialPaciente(pacienteId!);
+          setPaciente(data.paciente);
+          setCitas(data.citas.data);
+          setOrdenes(data.ordenes.data);
+        }}
+      />
+
+      {/* ─── TAB: RESUMEN [OBSOLETO] ─── */}
+      {false && (
         <div className="hcm-resumen-layout">
 
           {/* Columna izquierda: Datos clínicos derivados */}

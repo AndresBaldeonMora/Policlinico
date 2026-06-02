@@ -124,8 +124,25 @@
 /* ── Tabs ── */
 .hcm-tabs {
   display: flex;
+  overflow-x: auto;
+  white-space: nowrap;
   border-bottom: 2px solid var(--border);
   gap: 0;
+  scrollbar-width: thin;
+  scrollbar-color: var(--border) transparent;
+}
+
+.hcm-tabs::-webkit-scrollbar {
+  height: 4px;
+}
+
+.hcm-tabs::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.hcm-tabs::-webkit-scrollbar-thumb {
+  background: var(--border);
+  border-radius: 2px;
 }
 .hcm-tab {
   background: none;
@@ -138,6 +155,8 @@
   color: var(--text-muted);
   cursor: pointer;
   transition: color 0.15s, border-color 0.15s;
+  flex-shrink: 0;
+  white-space: nowrap;
 }
 .hcm-tab:hover { color: var(--text-primary); }
 .hcm-tab.active {
@@ -431,4 +450,215 @@
   display: flex;
   flex-direction: column;
   gap: 16px;
+}
+
+/* ─────────────────────────────────────────────────────────── */
+/* HISTORIA CLÍNICA TABS — Formularios por especialidad */
+/* ─────────────────────────────────────────────────────────── */
+
+.hc-tabs-wrapper {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+}
+
+.hc-subtabs {
+  display: flex;
+  overflow-x: auto;
+  white-space: nowrap;
+  gap: 0;
+  border-bottom: 1px solid var(--border);
+  background: var(--bg-body);
+  scrollbar-width: thin;
+  scrollbar-color: var(--border) transparent;
+}
+
+.hc-subtabs::-webkit-scrollbar {
+  height: 4px;
+}
+
+.hc-subtabs::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.hc-subtabs::-webkit-scrollbar-thumb {
+  background: var(--border);
+  border-radius: 2px;
+}
+
+.hc-subtab {
+  background: none;
+  border: none;
+  border-bottom: 2px solid transparent;
+  padding: 10px 16px;
+  font-size: 0.83rem;
+  font-weight: 600;
+  color: var(--text-muted);
+  cursor: pointer;
+  transition: color 0.15s, border-color 0.15s;
+  flex-shrink: 0;
+}
+
+.hc-subtab:hover {
+  color: var(--text-primary);
+}
+
+.hc-subtab.active {
+  color: var(--primary);
+  border-bottom-color: var(--primary);
+  margin-bottom: -1px;
+}
+
+.hc-form-panel {
+  padding: 20px 0;
+  animation: fadeIn 0.2s ease-in;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+.hc-form-grid {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.hc-field-row {
+  display: grid;
+  gap: 16px;
+}
+
+.hc-field-row--2col {
+  grid-template-columns: 1fr 1fr;
+}
+
+@media (max-width: 768px) {
+  .hc-field-row--2col {
+    grid-template-columns: 1fr;
+  }
+}
+
+.hc-field {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.hc-field label {
+  font-size: 0.82rem;
+  font-weight: 600;
+  color: var(--text-secondary);
+}
+
+.hc-field input,
+.hc-field textarea,
+.hc-field select {
+  width: 100%;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  padding: 8px 10px;
+  font-size: 0.85rem;
+  font-family: inherit;
+  background: var(--bg-card);
+  color: var(--text-primary);
+  transition: border-color 0.15s;
+}
+
+.hc-field input:focus,
+.hc-field textarea:focus,
+.hc-field select:focus {
+  outline: none;
+  border-color: var(--primary);
+  box-shadow: 0 0 0 2px var(--primary-lighter);
+}
+
+.hc-field textarea {
+  min-height: 80px;
+  resize: vertical;
+  font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+}
+
+.hc-field--unit {
+  flex-direction: row;
+  align-items: flex-end;
+  gap: 8px;
+}
+
+.hc-field--unit > div {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.hc-unit {
+  font-size: 0.78rem;
+  color: var(--text-muted);
+  padding: 8px 10px;
+  background: var(--bg-muted);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  white-space: nowrap;
+  min-width: 50px;
+  text-align: center;
+}
+
+.hc-checklist {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.hc-checkbox-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  cursor: pointer;
+  font-size: 0.85rem;
+  user-select: none;
+}
+
+.hc-checkbox-item input[type="checkbox"] {
+  width: auto;
+  margin: 0;
+  cursor: pointer;
+  accent-color: var(--primary);
+}
+
+.hc-checkbox-item:hover {
+  color: var(--primary);
+}
+
+.hc-form-actions {
+  display: flex;
+  gap: 10px;
+  justify-content: flex-start;
+  padding-top: 10px;
+  border-top: 1px solid var(--border);
+}
+
+.hc-save-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  background: var(--primary);
+  color: white;
+  border: none;
+  border-radius: var(--radius-md);
+  padding: 10px 28px;
+  font-size: 0.85rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.15s, opacity 0.15s;
+}
+
+.hc-save-btn:hover:not(:disabled) {
+  background: var(--primary-dark);
+}
+
+.hc-save-btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
 }
