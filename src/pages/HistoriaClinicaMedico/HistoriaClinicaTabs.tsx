@@ -193,7 +193,7 @@ function FormAnamMedico({ datos, onGuardar, guardando }: FormProps) {
       <div className="hc-field-row hc-field-row--2col">
         <div className="hc-field">
           <label>Tiempo de evolución</label>
-          <input type="text" placeholder="Ej: 3 días, 2 semanas" value={form.tiempoEnfermedad || ""} onChange={(e) => handleChange("tiempoEnfermedad", e.target.value)} />
+          <input type="text" placeholder="" value={form.tiempoEnfermedad || ""} onChange={(e) => handleChange("tiempoEnfermedad", e.target.value)} />
         </div>
         <div className="hc-field">
           <label>Síntomas acompañantes</label>
@@ -208,34 +208,31 @@ function FormAnamMedico({ datos, onGuardar, guardando }: FormProps) {
 
       <h3 className="hc-section-title">DATOS VITALES</h3>
 
-      <div className="hc-field-row hc-field-row--2col">
+      <div className="hc-field-row hc-field-row--4col">
         <div className="hc-field hc-field--unit">
           <div>
-            <label>Presión Arterial (PA)</label>
-            <input type="text" placeholder="Ej: 120/80" value={form.presionArterial || ""} onChange={(e) => handleChange("presionArterial", e.target.value)} />
+            <label>Presión Arterial</label>
+            <input type="text" placeholder="" value={form.presionArterial || ""} onChange={(e) => handleChange("presionArterial", e.target.value)} />
           </div>
           <span className="hc-unit">mmHg</span>
         </div>
         <div className="hc-field hc-field--unit">
           <div>
-            <label>Frecuencia Cardíaca (FC)</label>
+            <label>Frecuencia Cardíaca</label>
             <input type="number" value={form.frecuenciaCardiaca || ""} onChange={(e) => handleChange("frecuenciaCardiaca", e.target.value)} />
           </div>
           <span className="hc-unit">lpm</span>
         </div>
-      </div>
-
-      <div className="hc-field-row hc-field-row--2col">
         <div className="hc-field hc-field--unit">
           <div>
-            <label>Frecuencia Respiratoria (FR)</label>
+            <label>Frecuencia Respiratoria</label>
             <input type="number" value={form.frecuenciaRespiratoria || ""} onChange={(e) => handleChange("frecuenciaRespiratoria", e.target.value)} />
           </div>
           <span className="hc-unit">x/min</span>
         </div>
         <div className="hc-field hc-field--unit">
           <div>
-            <label>Temperatura (°C)</label>
+            <label>Temperatura</label>
             <input type="number" step="0.1" value={form.temperatura || ""} onChange={(e) => handleChange("temperatura", e.target.value)} />
           </div>
           <span className="hc-unit">°C</span>
@@ -245,7 +242,7 @@ function FormAnamMedico({ datos, onGuardar, guardando }: FormProps) {
       <div className="hc-field-row hc-field-row--2col">
         <div className="hc-field hc-field--unit">
           <div>
-            <label>Saturación de Oxígeno (SpO2)</label>
+            <label>Saturación de Oxígeno</label>
             <input type="number" step="0.1" value={form.satO2 || ""} onChange={(e) => handleChange("satO2", e.target.value)} />
           </div>
           <span className="hc-unit">%</span>
@@ -254,7 +251,7 @@ function FormAnamMedico({ datos, onGuardar, guardando }: FormProps) {
 
       <h3 className="hc-section-title">ANTROPOMETRÍA</h3>
 
-      <div className="hc-field-row hc-field-row--2col">
+      <div className="hc-field-row hc-field-row--3col">
         <div className="hc-field hc-field--unit">
           <div>
             <label>Peso</label>
@@ -269,11 +266,10 @@ function FormAnamMedico({ datos, onGuardar, guardando }: FormProps) {
           </div>
           <span className="hc-unit">cm</span>
         </div>
-      </div>
-
-      <div className="hc-field">
-        <label>IMC (Índice de Masa Corporal)</label>
-        <input type="number" step="0.1" value={form.imc || ""} onChange={(e) => handleChange("imc", e.target.value)} />
+        <div className="hc-field">
+          <label>IMC</label>
+          <input type="number" step="0.1" value={form.imc || ""} onChange={(e) => handleChange("imc", e.target.value)} />
+        </div>
       </div>
 
       <h3 className="hc-section-title">ANTECEDENTES</h3>
@@ -470,7 +466,7 @@ function FormMedicinaGeneral({ datos, onGuardar, guardando }: FormProps) {
 
       <h3 className="hc-section-title">ANTROPOMETRÍA Y MEDIDAS</h3>
 
-      <div className="hc-field-row hc-field-row--2col">
+      <div className="hc-field-row hc-field-row--4col">
         <div className="hc-field hc-field--unit">
           <div>
             <label>Peso</label>
@@ -485,24 +481,27 @@ function FormMedicinaGeneral({ datos, onGuardar, guardando }: FormProps) {
           </div>
           <span className="hc-unit">cm</span>
         </div>
-      </div>
-
-      <div className="hc-field">
-        <label>Índice de Masa Corporal (IMC)</label>
-        <input type="number" step="0.1" value={form.imc || ""} onChange={(e) => handleChange("imc", e.target.value)} />
+        <div className="hc-field">
+          <label>IMC</label>
+          <input type="number" step="0.1" value={form.imc || ""} onChange={(e) => handleChange("imc", e.target.value)} />
+        </div>
+        <div className="hc-field">
+          <label>Relación cintura-cadera</label>
+          <input type="number" step="0.01" value={form.relCinturaCadera || ""} onChange={(e) => handleChange("relCinturaCadera", e.target.value)} />
+        </div>
       </div>
 
       <div className="hc-field-row hc-field-row--2col">
         <div className="hc-field hc-field--unit">
           <div>
-            <label>Circunferencia de cintura</label>
+            <label>Circunferencia cintura</label>
             <input type="number" step="0.1" value={form.circuncintura || ""} onChange={(e) => handleChange("circuncintura", e.target.value)} />
           </div>
           <span className="hc-unit">cm</span>
         </div>
         <div className="hc-field hc-field--unit">
           <div>
-            <label>Circunferencia de cadera</label>
+            <label>Circunferencia cadera</label>
             <input type="number" step="0.1" value={form.circuncadera || ""} onChange={(e) => handleChange("circuncadera", e.target.value)} />
           </div>
           <span className="hc-unit">cm</span>
@@ -534,7 +533,7 @@ function FormMedicinaGeneral({ datos, onGuardar, guardando }: FormProps) {
 
       <div className="hc-field">
         <label>Actividad física</label>
-        <input type="text" placeholder="Ej: Sedentario, 30 min/día" value={form.actividadFisica || ""} onChange={(e) => handleChange("actividadFisica", e.target.value)} />
+        <input type="text" placeholder="" value={form.actividadFisica || ""} onChange={(e) => handleChange("actividadFisica", e.target.value)} />
       </div>
 
       <div className="hc-field">
@@ -546,17 +545,17 @@ function FormMedicinaGeneral({ datos, onGuardar, guardando }: FormProps) {
 
       <div className="hc-field">
         <label>Screening preventivo realizado</label>
-        <textarea placeholder="Mamografía, PSA, Colonoscopia, Papanicolaou, etc." value={form.screeningPreventivo || ""} onChange={(e) => handleChange("screeningPreventivo", e.target.value)} />
+        <textarea placeholder="" value={form.screeningPreventivo || ""} onChange={(e) => handleChange("screeningPreventivo", e.target.value)} />
       </div>
 
       <div className="hc-field">
         <label>Vacunas actualizadas</label>
-        <textarea placeholder="Influenza, Neumococo, COVID-19, Td, etc." value={form.vacunas || ""} onChange={(e) => handleChange("vacunas", e.target.value)} />
+        <textarea placeholder="" value={form.vacunas || ""} onChange={(e) => handleChange("vacunas", e.target.value)} />
       </div>
 
       <h3 className="hc-section-title">LABORATORIOS (si aplica)</h3>
 
-      <div className="hc-field-row hc-field-row--2col">
+      <div className="hc-field-row hc-field-row--4col">
         <div className="hc-field">
           <label>Glucosa basal</label>
           <input type="number" step="0.1" value={form.glucosa || ""} onChange={(e) => handleChange("glucosa", e.target.value)} />
@@ -565,9 +564,6 @@ function FormMedicinaGeneral({ datos, onGuardar, guardando }: FormProps) {
           <label>Colesterol total</label>
           <input type="number" step="0.1" value={form.colesterolTotal || ""} onChange={(e) => handleChange("colesterolTotal", e.target.value)} />
         </div>
-      </div>
-
-      <div className="hc-field-row hc-field-row--2col">
         <div className="hc-field">
           <label>HDL</label>
           <input type="number" step="0.1" value={form.hdl || ""} onChange={(e) => handleChange("hdl", e.target.value)} />
@@ -575,13 +571,6 @@ function FormMedicinaGeneral({ datos, onGuardar, guardando }: FormProps) {
         <div className="hc-field">
           <label>LDL</label>
           <input type="number" step="0.1" value={form.ldl || ""} onChange={(e) => handleChange("ldl", e.target.value)} />
-        </div>
-      </div>
-
-      <div className="hc-field-row hc-field-row--2col">
-        <div className="hc-field">
-          <label>Triglicéridos</label>
-          <input type="number" step="0.1" value={form.trigliceridos || ""} onChange={(e) => handleChange("trigliceridos", e.target.value)} />
         </div>
       </div>
 
@@ -621,14 +610,18 @@ function FormPediatria({ datos, onGuardar, guardando }: FormProps) {
     <form className="hc-form-grid" onSubmit={(e) => { e.preventDefault(); handleSubmit(); }}>
       <h3 className="hc-section-title">ANTECEDENTES OBSTÉTRICOS</h3>
 
-      <div className="hc-field-row hc-field-row--2col">
+      <div className="hc-field-row hc-field-row--3col">
         <div className="hc-field">
           <label>Edad materna</label>
           <input type="number" value={form.edadMaterna || ""} onChange={(e) => handleChange("edadMaterna", e.target.value)} />
         </div>
         <div className="hc-field">
-          <label>Gestas, Partos, Abortos (G_P_A)</label>
-          <input type="text" placeholder="Ej: G2P1A1" value={form.gpa || ""} onChange={(e) => handleChange("gpa", e.target.value)} />
+          <label>Gestas/Partos/Abortos</label>
+          <input type="text" placeholder="" value={form.gpa || ""} onChange={(e) => handleChange("gpa", e.target.value)} />
+        </div>
+        <div className="hc-field">
+          <label>Controles prenatales</label>
+          <input type="number" value={form.controlPrenatal || ""} onChange={(e) => handleChange("controlPrenatal", e.target.value)} />
         </div>
       </div>
 
@@ -659,31 +652,28 @@ function FormPediatria({ datos, onGuardar, guardando }: FormProps) {
 
       <h3 className="hc-section-title">DATOS DEL RECIÉN NACIDO</h3>
 
-      <div className="hc-field-row hc-field-row--2col">
+      <div className="hc-field-row hc-field-row--4col">
         <div className="hc-field">
-          <label>Edad gestacional</label>
+          <label>Edad gestacional (sem)</label>
           <input type="number" value={form.edadGestacional || ""} onChange={(e) => handleChange("edadGestacional", e.target.value)} />
         </div>
         <div className="hc-field hc-field--unit">
           <div>
-            <label>Peso al nacer</label>
+            <label>Peso</label>
             <input type="number" step="0.1" value={form.pesoNacimiento || ""} onChange={(e) => handleChange("pesoNacimiento", e.target.value)} />
           </div>
           <span className="hc-unit">gr</span>
         </div>
-      </div>
-
-      <div className="hc-field-row hc-field-row--2col">
         <div className="hc-field hc-field--unit">
           <div>
-            <label>Talla al nacer</label>
+            <label>Talla</label>
             <input type="number" step="0.1" value={form.tallaNacimiento || ""} onChange={(e) => handleChange("tallaNacimiento", e.target.value)} />
           </div>
           <span className="hc-unit">cm</span>
         </div>
         <div className="hc-field hc-field--unit">
           <div>
-            <label>Perímetro cefálico</label>
+            <label>PC</label>
             <input type="number" step="0.1" value={form.perimetroCefalico || ""} onChange={(e) => handleChange("perimetroCefalico", e.target.value)} />
           </div>
           <span className="hc-unit">cm</span>
@@ -729,31 +719,23 @@ function FormPediatria({ datos, onGuardar, guardando }: FormProps) {
         <textarea value={form.alimentosTolerados || ""} onChange={(e) => handleChange("alimentosTolerados", e.target.value)} />
       </div>
 
-      <h3 className="hc-section-title">DESARROLLO PSICOMOTOR</h3>
+      <h3 className="hc-section-title">DESARROLLO PSICOMOTOR (MESES)</h3>
 
-      <div className="hc-field">
-        <label>Control cefálico (meses)</label>
-        <input type="number" value={form.controlCefalico || ""} onChange={(e) => handleChange("controlCefalico", e.target.value)} />
-      </div>
-
-      <div className="hc-field-row hc-field-row--2col">
+      <div className="hc-field-row hc-field-row--4col">
         <div className="hc-field">
-          <label>Sedente con apoyo (meses)</label>
+          <label>Control cefálico</label>
+          <input type="number" value={form.controlCefalico || ""} onChange={(e) => handleChange("controlCefalico", e.target.value)} />
+        </div>
+        <div className="hc-field">
+          <label>Sedente con apoyo</label>
           <input type="number" value={form.sedenteCon || ""} onChange={(e) => handleChange("sedenteCon", e.target.value)} />
         </div>
         <div className="hc-field">
-          <label>Sedente sin apoyo (meses)</label>
-          <input type="number" value={form.sedenteSin || ""} onChange={(e) => handleChange("sedenteSin", e.target.value)} />
-        </div>
-      </div>
-
-      <div className="hc-field-row hc-field-row--2col">
-        <div className="hc-field">
-          <label>Bipedestación (meses)</label>
+          <label>Bipedestación</label>
           <input type="number" value={form.bipedestacion || ""} onChange={(e) => handleChange("bipedestacion", e.target.value)} />
         </div>
         <div className="hc-field">
-          <label>Deambulación (meses)</label>
+          <label>Deambulación</label>
           <input type="number" value={form.deambulacion || ""} onChange={(e) => handleChange("deambulacion", e.target.value)} />
         </div>
       </div>
@@ -773,27 +755,24 @@ function FormPediatria({ datos, onGuardar, guardando }: FormProps) {
         <textarea value={form.socioAdaptativa || ""} onChange={(e) => handleChange("socioAdaptativa", e.target.value)} />
       </div>
 
-      <h3 className="hc-section-title">CRECIMIENTO</h3>
+      <h3 className="hc-section-title">CRECIMIENTO (PERCENTILES)</h3>
 
-      <div className="hc-field-row hc-field-row--2col">
+      <div className="hc-field-row hc-field-row--4col">
         <div className="hc-field">
-          <label>Peso actual (percentil)</label>
-          <input type="text" placeholder="Ej: P50" value={form.pesoPercentil || ""} onChange={(e) => handleChange("pesoPercentil", e.target.value)} />
+          <label>Peso/edad</label>
+          <input type="text" placeholder="P50" value={form.pesoPercentil || ""} onChange={(e) => handleChange("pesoPercentil", e.target.value)} />
         </div>
         <div className="hc-field">
-          <label>Talla actual (percentil)</label>
-          <input type="text" placeholder="Ej: P50" value={form.tallaPercentil || ""} onChange={(e) => handleChange("tallaPercentil", e.target.value)} />
-        </div>
-      </div>
-
-      <div className="hc-field-row hc-field-row--2col">
-        <div className="hc-field">
-          <label>Peso para talla (percentil)</label>
-          <input type="text" placeholder="Ej: P50" value={form.pesoTallaPercentil || ""} onChange={(e) => handleChange("pesoTallaPercentil", e.target.value)} />
+          <label>Talla/edad</label>
+          <input type="text" placeholder="P50" value={form.tallaPercentil || ""} onChange={(e) => handleChange("tallaPercentil", e.target.value)} />
         </div>
         <div className="hc-field">
-          <label>Perímetro cefálico (percentil)</label>
-          <input type="text" placeholder="Ej: P50" value={form.cefalPercentil || ""} onChange={(e) => handleChange("cefalPercentil", e.target.value)} />
+          <label>Peso/talla</label>
+          <input type="text" placeholder="P50" value={form.pesoTallaPercentil || ""} onChange={(e) => handleChange("pesoTallaPercentil", e.target.value)} />
+        </div>
+        <div className="hc-field">
+          <label>PC</label>
+          <input type="text" placeholder="P50" value={form.cefalPercentil || ""} onChange={(e) => handleChange("cefalPercentil", e.target.value)} />
         </div>
       </div>
 
@@ -811,13 +790,13 @@ function FormPediatria({ datos, onGuardar, guardando }: FormProps) {
         </div>
         <div className="hc-field">
           <label>Hepatitis B (esquema)</label>
-          <input type="text" placeholder="Fechas" value={form.hepatitisB2 || ""} onChange={(e) => handleChange("hepatitisB2", e.target.value)} />
+          <input type="text" placeholder="" value={form.hepatitisB2 || ""} onChange={(e) => handleChange("hepatitisB2", e.target.value)} />
         </div>
       </div>
 
       <div className="hc-field">
         <label>Pentavalente acellular (dosis)</label>
-        <textarea placeholder="Dosis 1, 2, 3, refuerzo" value={form.pentavalente || ""} onChange={(e) => handleChange("pentavalente", e.target.value)} />
+        <textarea placeholder="" value={form.pentavalente || ""} onChange={(e) => handleChange("pentavalente", e.target.value)} />
       </div>
 
       <div className="hc-field">
@@ -827,7 +806,7 @@ function FormPediatria({ datos, onGuardar, guardando }: FormProps) {
 
       <div className="hc-field">
         <label>Neumococo (dosis)</label>
-        <textarea placeholder="Dosis 1, 2, 3, refuerzo" value={form.neumococo || ""} onChange={(e) => handleChange("neumococo", e.target.value)} />
+        <textarea placeholder="" value={form.neumococo || ""} onChange={(e) => handleChange("neumococo", e.target.value)} />
       </div>
 
       <div className="hc-field">
@@ -899,7 +878,7 @@ function FormOdontologia({ datos, onGuardar, guardando }: FormProps) {
         </div>
         <div className="hc-field">
           <label>Diente afectado (notación FDI)</label>
-          <input type="text" placeholder="Ej: 1.1, 1.2" value={form.dienteAfectado || ""} onChange={(e) => handleChange("dienteAfectado", e.target.value)} />
+          <input type="text" placeholder="" value={form.dienteAfectado || ""} onChange={(e) => handleChange("dienteAfectado", e.target.value)} />
         </div>
       </div>
 
@@ -990,13 +969,13 @@ function FormOdontologia({ datos, onGuardar, guardando }: FormProps) {
 
       <div className="hc-field">
         <label>Odontograma (estado por pieza 1-32, FDI)</label>
-        <textarea placeholder="Ej: 1.1=Sano, 1.2=Caries, 1.3=Obturado" value={form.odontograma || ""} onChange={(e) => handleChange("odontograma", e.target.value)} />
+        <textarea placeholder="" value={form.odontograma || ""} onChange={(e) => handleChange("odontograma", e.target.value)} />
       </div>
 
       <div className="hc-field-row hc-field-row--2col">
         <div className="hc-field">
           <label>Índice de higiene oral (IHO-S)</label>
-          <input type="text" placeholder="Ej: Bueno, Regular, Malo" value={form.indiceHigiene || ""} onChange={(e) => handleChange("indiceHigiene", e.target.value)} />
+          <input type="text" placeholder="" value={form.indiceHigiene || ""} onChange={(e) => handleChange("indiceHigiene", e.target.value)} />
         </div>
         <div className="hc-field">
           <label>Índice CPOD/ceod</label>
@@ -1095,7 +1074,7 @@ function FormOdontologia({ datos, onGuardar, guardando }: FormProps) {
 
       <div className="hc-field">
         <label>Medicamentos prescritos</label>
-        <textarea placeholder="Nombre genérico, dosis, vía, frecuencia, duración" value={form.medicamentos || ""} onChange={(e) => handleChange("medicamentos", e.target.value)} />
+        <textarea placeholder="" value={form.medicamentos || ""} onChange={(e) => handleChange("medicamentos", e.target.value)} />
       </div>
 
       <div className="hc-field">
@@ -1157,7 +1136,7 @@ function FormReumatologia({ datos, onGuardar, guardando }: FormProps) {
 
       <div className="hc-field">
         <label>Articulaciones afectadas (especificar lateralidad)</label>
-        <textarea placeholder="Ej: Mano D, rodilla I, tobillo B" value={form.articulacionesAfectadas || ""} onChange={(e) => handleChange("articulacionesAfectadas", e.target.value)} />
+        <textarea placeholder="" value={form.articulacionesAfectadas || ""} onChange={(e) => handleChange("articulacionesAfectadas", e.target.value)} />
       </div>
 
       <div className="hc-field-row hc-field-row--2col">
@@ -1167,7 +1146,7 @@ function FormReumatologia({ datos, onGuardar, guardando }: FormProps) {
         </div>
         <div className="hc-field">
           <label>Tiempo de evolución</label>
-          <input type="text" placeholder="Ej: 3 meses, 2 años" value={form.tiempoEvolucion || ""} onChange={(e) => handleChange("tiempoEvolucion", e.target.value)} />
+          <input type="text" placeholder="" value={form.tiempoEvolucion || ""} onChange={(e) => handleChange("tiempoEvolucion", e.target.value)} />
         </div>
       </div>
 
@@ -1225,7 +1204,7 @@ function FormReumatologia({ datos, onGuardar, guardando }: FormProps) {
 
       <div className="hc-field">
         <label>Amplitud de movimiento (grados)</label>
-        <textarea placeholder="Flexión, extensión, abducción, etc." value={form.amplitudMovimiento || ""} onChange={(e) => handleChange("amplitudMovimiento", e.target.value)} />
+        <textarea placeholder="" value={form.amplitudMovimiento || ""} onChange={(e) => handleChange("amplitudMovimiento", e.target.value)} />
       </div>
 
       <div className="hc-field">
@@ -1265,7 +1244,7 @@ function FormReumatologia({ datos, onGuardar, guardando }: FormProps) {
 
       <div className="hc-field">
         <label>ANA (Anticuerpos Anti-Nucleares)</label>
-        <input type="text" placeholder="Patrón de fluorescencia" value={form.ana || ""} onChange={(e) => handleChange("ana", e.target.value)} />
+        <input type="text" placeholder="" value={form.ana || ""} onChange={(e) => handleChange("ana", e.target.value)} />
       </div>
 
       <div className="hc-field">
@@ -1352,7 +1331,7 @@ function FormGinecologia({ datos, onGuardar, guardando }: FormProps) {
 
       <div className="hc-field">
         <label>Fórmula menstrual (XX/XX - días duración/periodicidad)</label>
-        <input type="text" placeholder="Ej: 28/4 (ciclo cada 28 días, dura 4 días)" value={form.formulaMenstrual || ""} onChange={(e) => handleChange("formulaMenstrual", e.target.value)} />
+        <input type="text" placeholder="" value={form.formulaMenstrual || ""} onChange={(e) => handleChange("formulaMenstrual", e.target.value)} />
       </div>
 
       <div className="hc-field-row hc-field-row--2col">
@@ -1396,7 +1375,7 @@ function FormGinecologia({ datos, onGuardar, guardando }: FormProps) {
 
       <div className="hc-field">
         <label>Fórmula GAPV (G_P_A_V) - Gestaciones/Partos/Abortos/Hijos vivos</label>
-        <input type="text" placeholder="Ej: G3P2A1V2" value={form.formulaGapv || ""} onChange={(e) => handleChange("formulaGapv", e.target.value)} />
+        <input type="text" placeholder="" value={form.formulaGapv || ""} onChange={(e) => handleChange("formulaGapv", e.target.value)} />
       </div>
 
       <div className="hc-field">
@@ -1592,7 +1571,7 @@ function FormGinecologia({ datos, onGuardar, guardando }: FormProps) {
 
       <div className="hc-field">
         <label>Grupo sanguíneo y factor RH</label>
-        <input type="text" placeholder="Ej: O RH+" value={form.grupoSanguineo || ""} onChange={(e) => handleChange("grupoSanguineo", e.target.value)} />
+        <input type="text" placeholder="" value={form.grupoSanguineo || ""} onChange={(e) => handleChange("grupoSanguineo", e.target.value)} />
       </div>
 
       <div className="hc-field">
@@ -2326,7 +2305,7 @@ function FormNeumologia({ datos, onGuardar, guardando }: FormProps) {
 
       <div className="hc-field">
         <label>Espirometría (FVC, FEV1, FEV1/FVC, FEF25-75%)</label>
-        <textarea placeholder="Valores en L y % predicho" value={form.espirometria || ""} onChange={(e) => handleChange("espirometria", e.target.value)} />
+        <textarea placeholder="" value={form.espirometria || ""} onChange={(e) => handleChange("espirometria", e.target.value)} />
       </div>
 
       <div className="hc-field">
@@ -2745,7 +2724,7 @@ function FormPsiquiatria({ datos, onGuardar, guardando }: FormProps) {
       </div>
 
       <div className="hc-field">
-        <label>Nivel de conciencia y orientación (persona, lugar, tiempo)</label>
+        <label>Orientación</label>
         <textarea value={form.conciencia || ""} onChange={(e) => handleChange("conciencia", e.target.value)} />
       </div>
 
@@ -2755,17 +2734,17 @@ function FormPsiquiatria({ datos, onGuardar, guardando }: FormProps) {
       </div>
 
       <div className="hc-field">
-        <label>Afecto (congruencia con ánimo)</label>
+        <label>Afecto</label>
         <textarea value={form.afecto || ""} onChange={(e) => handleChange("afecto", e.target.value)} />
       </div>
 
       <div className="hc-field">
-        <label>Lenguaje (velocidad, cantidad, coherencia, presión del habla)</label>
+        <label>Lenguaje</label>
         <textarea value={form.lenguaje || ""} onChange={(e) => handleChange("lenguaje", e.target.value)} />
       </div>
 
       <div className="hc-field">
-        <label>Contenido y forma del pensamiento</label>
+        <label>Pensamiento</label>
         <textarea value={form.pensamiento || ""} onChange={(e) => handleChange("pensamiento", e.target.value)} />
       </div>
 
@@ -2775,12 +2754,12 @@ function FormPsiquiatria({ datos, onGuardar, guardando }: FormProps) {
       </div>
 
       <div className="hc-field">
-        <label>Memoria (inmediata, reciente, remota)</label>
+        <label>Memoria</label>
         <textarea value={form.memoria || ""} onChange={(e) => handleChange("memoria", e.target.value)} />
       </div>
 
       <div className="hc-field">
-        <label>Insight y juicio crítico</label>
+        <label>Insight y Juicio</label>
         <textarea value={form.insightJuicio || ""} onChange={(e) => handleChange("insightJuicio", e.target.value)} />
       </div>
 

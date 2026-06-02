@@ -63,6 +63,18 @@ export interface CitaTransformada {
   estado: EstadoCita;
   pacienteId: PacienteDTO;
   doctorId?: DoctorDTO | string;
+  notasClinicas?: string;
+  createdAt?: string;
+}
+
+export interface AuditoriaCita {
+  _id: string;
+  accion: string;
+  estadoAnterior?: string;
+  estadoNuevo?: string;
+  descripcion?: string;
+  usuarioNombre?: string;
+  timestamp: string;
 }
 
 // ── Tipo para el historial del paciente ──────────────────────────────────────
@@ -222,5 +234,25 @@ export class CitaApiService {
         examenes: [],                           // el historial no devuelve examenes aún
       };
     });
-}
+  }
+
+  // ── Obtener auditoría de una cita ──────────────────────────────────────────
+  static async obtenerAuditoria(id: string): Promise<AuditoriaCita[]> {
+    const response = await api.get<{ success: boolean; data: AuditoriaCita[] }>(
+      `/citas/${id}/auditoria`
+    );
+    return response.data.data ?? [];
+  }
+
+  // ── Actualizar cita (doctor, notas) ────────────────────────────────────────
+  static async actualizarCita(id: string, datos: { doctorId?: string; notasClinicas?: string }): Promise<CitaTransformada> {
+    const response = await api.patch<{ success: boolean; data: CitaTransformada; message?: string }>(
+      `/citas/${id}`,
+      datos
+    );
+    if (!response.data.success || !response.data.data) {
+      throw new Error(response.data.message || "Error al actualizar la cita");
+    }
+    return response.data.data;
+  }
 }

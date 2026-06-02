@@ -1,0 +1,137 @@
+/* Tabs */
+.cita-modal-tabs {
+  display: flex;
+  border-bottom: 1px solid var(--border);
+  padding: 0;
+  margin: 0;
+  background: var(--bg-tertiary);
+}
+
+.cita-modal-tab {
+  flex: 1;
+  padding: 0.875rem 1.25rem;
+  cursor: pointer;
+  border: none;
+  background: none;
+  color: var(--text-muted);
+  font-size: 0.875rem;
+  font-weight: 500;
+  border-bottom: 2px solid transparent;
+  transition: all 0.2s ease;
+  white-space: nowrap;
+}
+
+.cita-modal-tab:hover {
+  color: var(--text-primary);
+  background: var(--bg-secondary);
+}
+
+.cita-modal-tab--activo {
+  color: var(--primary);
+  border-bottom-color: var(--primary);
+  background: none;
+}
+
+/* Grid de datos (dos columnas) */
+.cita-modal-datos-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 2rem;
+  padding: 1.5rem 0;
+}
+
+.cita-modal-datos-col {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+/* Input fields */
+.cita-modal-input {
+  padding: 0.625rem 0.875rem;
+  border: 1px solid var(--border);
+  border-radius: 0.375rem;
+  font-size: 0.875rem;
+  font-family: inherit;
+  background: var(--bg-secondary);
+  color: var(--text-primary);
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.cita-modal-input:focus {
+  outline: none;
+  border-color: var(--primary);
+  box-shadow: 0 0 0 3px rgba(22, 163, 74, 0.1);
+}
+
+.cita-modal-input:disabled {
+  background: var(--bg-tertiary);
+  color: var(--text-muted);
+  cursor: not-allowed;
+}
+
+textarea.cita-modal-input {
+  resize: vertical;
+  line-height: 1.5;
+}
+
+/* Historial */
+.cita-modal-historial {
+  padding: 1.5rem 0;
+}
+
+.cita-modal-historial-header {
+  font-size: 0.875rem;
+  color: var(--text-muted);
+  margin-bottom: 1.5rem;
+  padding-bottom: 1rem;
+  border-bottom: 1px solid var(--border);
+}
+
+.cita-modal-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.875rem;
+}
+
+.cita-modal-table thead {
+  background: var(--bg-tertiary);
+}
+
+.cita-modal-table th {
+  padding: 0.75rem;
+  text-align: left;
+  font-weight: 600;
+  color: var(--text-primary);
+  border-bottom: 2px solid var(--border);
+}
+
+.cita-modal-table td {
+  padding: 0.75rem;
+  border-bottom: 1px solid var(--border);
+  color: var(--text-primary);
+}
+
+.cita-modal-table tbody tr:hover {
+  background: var(--bg-secondary);
+}
+
+@media (max-width: 768px) {
+  .cita-modal-datos-grid {
+    grid-template-columns: 1fr;
+    gap: 1.5rem;
+  }
+
+  .cita-modal-datos-col {
+    gap: 1rem;
+  }
+
+  .cita-modal-table {
+    font-size: 0.75rem;
+  }
+
+  .cita-modal-table th,
+  .cita-modal-table td {
+    padding: 0.5rem;
+  }
+}

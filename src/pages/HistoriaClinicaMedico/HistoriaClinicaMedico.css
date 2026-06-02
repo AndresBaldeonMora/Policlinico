@@ -561,8 +561,25 @@
   grid-template-columns: 1fr 1fr;
 }
 
+.hc-field-row--3col {
+  grid-template-columns: 1fr 1fr 1fr;
+}
+
+.hc-field-row--4col {
+  grid-template-columns: 1fr 1fr 1fr 1fr;
+}
+
+@media (max-width: 1024px) {
+  .hc-field-row--3col,
+  .hc-field-row--4col {
+    grid-template-columns: 1fr 1fr;
+  }
+}
+
 @media (max-width: 768px) {
-  .hc-field-row--2col {
+  .hc-field-row--2col,
+  .hc-field-row--3col,
+  .hc-field-row--4col {
     grid-template-columns: 1fr;
   }
 }
