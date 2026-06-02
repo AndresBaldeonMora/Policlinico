@@ -2,7 +2,7 @@ import { useEffect, useState, useCallback, useRef } from "react";
 import { CitaApiService } from "../../services/cita.service";
 import type { CitaTransformada, EstadoCita, AuditoriaCita } from "../../services/cita.service";
 import type { DoctorTransformado } from "../../services/doctor.service";
-import { X, MapPin } from "lucide-react";
+import { X, MapPin, Calendar } from "lucide-react";
 import Swal from "sweetalert2";
 import { DoctorApiService } from "../../services/doctor.service";
 import "../../pages/MedicoDashboard/CitaModal.css";
@@ -16,6 +16,9 @@ interface Props {
   onIrADetalle?: (citaId: string) => void;
   modo?: "recepcionista" | "medico";
 }
+
+const MOTIVOS = ["Consulta", "Evaluación gratuita", "Procedimiento", "Sesión de terapia", "Tratamiento en curso"];
+const CONSULTORIOS = Array.from({ length: 10 }, (_, i) => i + 1);
 
 
 const CitaQuickModal = ({ citaId, onCerrar, onCitaActualizada }: Props) => {
@@ -35,6 +38,8 @@ const CitaQuickModal = ({ citaId, onCerrar, onCitaActualizada }: Props) => {
     fecha: "",
     hora: "",
     notasClinicas: "",
+    motivo: "",
+    consultorio: "",
   });
 
   const [originalValues, setOriginalValues] = useState({
@@ -43,6 +48,8 @@ const CitaQuickModal = ({ citaId, onCerrar, onCitaActualizada }: Props) => {
     fecha: "",
     hora: "",
     notasClinicas: "",
+    motivo: "",
+    consultorio: "",
   });
 
   const submittingRef = useRef(false);
@@ -64,6 +71,8 @@ const CitaQuickModal = ({ citaId, onCerrar, onCitaActualizada }: Props) => {
         fecha,
         hora: detalle.hora || "",
         notasClinicas: detalle.notasClinicas || "",
+        motivo: "",
+        consultorio: "",
       });
 
       setOriginalValues({
@@ -72,6 +81,8 @@ const CitaQuickModal = ({ citaId, onCerrar, onCitaActualizada }: Props) => {
         fecha,
         hora: detalle.hora || "",
         notasClinicas: detalle.notasClinicas || "",
+        motivo: "",
+        consultorio: "",
       });
     } catch (err) {
       const message = err instanceof Error ? err.message : "Error al cargar la cita";
@@ -291,26 +302,30 @@ const CitaQuickModal = ({ citaId, onCerrar, onCitaActualizada }: Props) => {
           {error && <div className="cita-modal-error-msg">{error}</div>}
 
           {tabActiva === "datos" ? (
-            <div className="cita-modal-datos-grid">
-              <div className="cita-modal-datos-col">
-                <div className="cita-modal-field">
-                  <div style={{ display: "flex", alignItems: "center", gap: "0.5rem", marginBottom: "0.5rem" }}>
-                    <MapPin size={14} style={{ color: "var(--text-muted)" }} />
-                    <span className="cita-modal-label">Sucursal</span>
+            <div className="cita-modal-datos-container">
+              <div className="cita-modal-datos-col-left">
+                {/* Sucursal */}
+                <div className="cita-modal-field-row">
+                  <label className="cita-modal-field-label">Sucursal</label>
+                  <div className="cita-modal-field-value">
+                    <MapPin size={16} style={{ marginRight: "0.5rem" }} />
+                    San Jose
                   </div>
-                  <span className="cita-modal-value">Policlinico</span>
                 </div>
 
-                <div className="cita-modal-field">
-                  <span className="cita-modal-label">Paciente</span>
-                  <span className="cita-modal-value">{paciente ? `${paciente.nombres} ${paciente.apellidos}` : "—"}</span>
-                  {paciente?.dni && <span className="cita-modal-sub">DNI: {paciente.dni}</span>}
+                {/* Paciente */}
+                <div className="cita-modal-field-row">
+                  <label className="cita-modal-field-label">Paciente</label>
+                  <div className="cita-modal-field-value">
+                    {paciente ? `${paciente.nombres} ${paciente.apellidos}` : "—"}
+                  </div>
                 </div>
 
-                <div className="cita-modal-field">
-                  <span className="cita-modal-label">Doctor</span>
+                {/* Doctor */}
+                <div className="cita-modal-field-row">
+                  <label className="cita-modal-field-label">Doctor</label>
                   <select
-                    className="cita-modal-input"
+                    className="cita-modal-input-row"
                     value={editForm.doctorId}
                     onChange={(e) => setEditForm({ ...editForm, doctorId: e.target.value })}
                     disabled={guardando}
@@ -324,15 +339,37 @@ const CitaQuickModal = ({ citaId, onCerrar, onCitaActualizada }: Props) => {
                   </select>
                 </div>
 
-                <div className="cita-modal-field">
-                  <span className="cita-modal-label">Especialidad</span>
-                  <span className="cita-modal-value">{especialidadTexto}</span>
+                {/* Especialidad */}
+                <div className="cita-modal-field-row">
+                  <label className="cita-modal-field-label">Especialidad</label>
+                  <div className="cita-modal-field-value">
+                    {especialidadTexto}
+                  </div>
                 </div>
 
-                <div className="cita-modal-field">
-                  <span className="cita-modal-label">Estado</span>
+                {/* Motivo */}
+                <div className="cita-modal-field-row">
+                  <label className="cita-modal-field-label">Motivo</label>
                   <select
-                    className="cita-modal-input"
+                    className="cita-modal-input-row"
+                    value={editForm.motivo}
+                    onChange={(e) => setEditForm({ ...editForm, motivo: e.target.value })}
+                    disabled={guardando}
+                  >
+                    <option value="">Seleccionar</option>
+                    {MOTIVOS.map((m) => (
+                      <option key={m} value={m}>
+                        {m}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+
+                {/* Estado */}
+                <div className="cita-modal-field-row">
+                  <label className="cita-modal-field-label">Estado:</label>
+                  <select
+                    className="cita-modal-input-row cita-modal-estado-dropdown"
                     value={editForm.estadoLocal}
                     onChange={(e) => setEditForm({ ...editForm, estadoLocal: e.target.value as EstadoCita })}
                     disabled={guardando}
@@ -346,38 +383,73 @@ const CitaQuickModal = ({ citaId, onCerrar, onCitaActualizada }: Props) => {
                 </div>
               </div>
 
-              <div className="cita-modal-datos-col">
-                <div className="cita-modal-field">
-                  <span className="cita-modal-label">Fecha</span>
-                  <input
-                    type="date"
-                    className="cita-modal-input"
-                    value={editForm.fecha}
-                    onChange={(e) => setEditForm({ ...editForm, fecha: e.target.value })}
-                    disabled={guardando}
-                  />
+              <div className="cita-modal-divider" />
+
+              <div className="cita-modal-datos-col-right">
+                {/* Fecha */}
+                <div className="cita-modal-field-row">
+                  <label className="cita-modal-field-label">Fecha</label>
+                  <div className="cita-modal-input-row-wrapper">
+                    <input
+                      type="date"
+                      className="cita-modal-input-row"
+                      value={editForm.fecha}
+                      onChange={(e) => setEditForm({ ...editForm, fecha: e.target.value })}
+                      disabled={guardando}
+                    />
+                    <Calendar size={18} className="cita-modal-input-icon" />
+                  </div>
                 </div>
 
-                <div className="cita-modal-field">
-                  <span className="cita-modal-label">Hora inicio</span>
+                {/* Hora inicio */}
+                <div className="cita-modal-field-row">
+                  <label className="cita-modal-field-label">Hora inicio</label>
                   <input
                     type="time"
-                    className="cita-modal-input"
+                    className="cita-modal-input-row"
                     value={editForm.hora}
                     onChange={(e) => setEditForm({ ...editForm, hora: e.target.value })}
                     disabled={guardando}
                   />
                 </div>
 
-                <div className="cita-modal-field" style={{ gridColumn: "1 / -1" }}>
-                  <span className="cita-modal-label">Nota de la cita</span>
+                {/* Opcional */}
+                <div className="cita-modal-field-row">
+                  <label className="cita-modal-field-label">Opcional</label>
+                  <div style={{ minHeight: "2.25rem" }} />
+                </div>
+
+                {/* Consultorio */}
+                <div className="cita-modal-field-row">
+                  <label className="cita-modal-field-label-with-icon">
+                    Consultorio
+                    <span className="cita-modal-info-icon" title="Consultorio asignado">ⓘ</span>
+                  </label>
+                  <select
+                    className="cita-modal-input-row"
+                    value={editForm.consultorio}
+                    onChange={(e) => setEditForm({ ...editForm, consultorio: e.target.value })}
+                    disabled={guardando}
+                  >
+                    <option value="">Seleccionar</option>
+                    {CONSULTORIOS.map((c) => (
+                      <option key={c} value={c}>
+                        Consultorio {c}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+
+                {/* Nota de la cita */}
+                <div className="cita-modal-field-row" style={{ alignItems: "flex-start" }}>
+                  <label className="cita-modal-field-label">Nota de la cita</label>
                   <textarea
-                    className="cita-modal-input"
+                    className="cita-modal-input-row"
                     value={editForm.notasClinicas}
                     onChange={(e) => setEditForm({ ...editForm, notasClinicas: e.target.value })}
                     disabled={guardando}
-                    rows={4}
-                    placeholder="Escriba aquí..."
+                    rows={3}
+                    placeholder="Escriba aquí ..."
                   />
                 </div>
               </div>
