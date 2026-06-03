@@ -539,56 +539,105 @@
   background: var(--bg-muted);
 }
 
-/* CIE-10 autocomplete */
-.soap-cie-wrapper { position: relative; }
+/* Botón para abrir modal CIE-10 */
+.cie10-open-btn {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  width: 100%;
+  padding: 10px 14px;
+  border: 1.5px dashed var(--primary);
+  border-radius: var(--radius-md);
+  background: var(--primary-lighter);
+  color: var(--primary);
+  font-size: 0.855rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.15s;
+  font-family: inherit;
+}
+.cie10-open-btn:hover {
+  background: var(--primary);
+  color: #fff;
+  border-style: solid;
+}
 
-.soap-cie-dropdown {
-  position: absolute;
-  top: 100%;
-  left: 0;
-  right: 0;
-  background: var(--bg-card);
+/* Modal CIE-10 — resultados */
+.cie10-modal-results {
+  min-height: 200px;
+  max-height: 320px;
+  overflow-y: auto;
   border: 1px solid var(--border);
   border-radius: var(--radius-md);
-  box-shadow: var(--shadow-lg);
-  z-index: 200;
-  max-height: 220px;
-  overflow-y: auto;
+  background: var(--bg-muted);
 }
 
-.soap-cie-item {
-  padding: 10px 14px;
-  cursor: pointer;
-  border-bottom: 1px solid var(--border-light);
-  font-size: 13px;
+.cie10-modal-hint {
+  padding: 20px 16px;
+  font-size: 0.84rem;
+  color: var(--text-muted);
+  text-align: center;
+  margin: 0;
+}
+
+.cie10-modal-item {
   display: flex;
-  gap: 10px;
   align-items: baseline;
+  gap: 10px;
+  width: 100%;
+  padding: 10px 14px;
+  background: none;
+  border: none;
+  border-bottom: 1px solid var(--border-light);
+  cursor: pointer;
+  text-align: left;
   transition: background 0.1s;
+  font-family: inherit;
+}
+.cie10-modal-item:last-child { border-bottom: none; }
+.cie10-modal-item:hover:not(:disabled) { background: var(--primary-lighter); }
+.cie10-modal-item--ya { opacity: 0.5; cursor: default; }
+
+.cie10-modal-code {
+  font-weight: 700;
+  color: var(--primary);
+  font-size: 0.8rem;
+  min-width: 52px;
+  flex-shrink: 0;
+}
+.cie10-modal-name {
+  font-size: 0.855rem;
+  color: var(--text-primary);
+  flex: 1;
+  text-align: left;
+}
+.cie10-modal-ya {
+  font-size: 0.72rem;
+  color: var(--text-muted);
+  font-style: italic;
+  flex-shrink: 0;
 }
 
-.soap-cie-item:hover { background: var(--bg-hover); }
-.soap-cie-item:last-child { border-bottom: none; }
-
+/* Legacy dropdown (ya no se usa, pero se mantiene por compatibilidad) */
+.soap-cie-wrapper { position: relative; }
 .soap-cie-code {
   font-weight: 700;
   color: var(--primary);
   min-width: 50px;
   font-size: 12px;
 }
-
 .soap-cie-name { color: var(--text-primary); }
 
 /* Diagnosis chip */
 .soap-dx-chip {
   background: var(--primary-lighter);
-  border: 1px solid rgba(5, 150, 105, 0.25);
-  border-radius: 8px;
-  padding: 10px 14px;
+  border: none;
+  border-radius: 6px;
+  padding: 6px 10px;
   display: flex;
   align-items: center;
-  gap: 12px;
-  margin-bottom: 8px;
+  gap: 10px;
+  margin-bottom: 6px;
 }
 
 .soap-dx-chip-info { flex: 1; }
@@ -620,6 +669,7 @@
 }
 
 .soap-dx-remove:hover { color: var(--error); }
+
 
 /* Checkboxes grid */
 .soap-check-grid {
@@ -1397,7 +1447,6 @@
 
 /* Cards de citas anteriores */
 .sp-cita-card {
-  margin-bottom: 7px;
   border: 1px solid var(--border);
   border-radius: 8px;
   overflow: hidden;
@@ -1408,23 +1457,51 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 8px;
-  padding: 9px 11px;
+  gap: 12px;
+  padding: 10px 12px;
   cursor: pointer;
   background: var(--bg-card);
   transition: background 0.1s;
+  min-height: 52px;
 }
 .sp-cita-card-header:hover { background: var(--bg-hover); }
 .sp-cita-card--open .sp-cita-card-header { background: var(--bg-body); }
 .sp-cita-card-left {
   display: flex;
   flex-direction: column;
-  gap: 2px;
+  gap: 3px;
+  flex: 1;
   min-width: 0;
 }
-.sp-cita-card-fecha { font-size: 11px; font-weight: 700; color: var(--text-primary); }
-.sp-cita-card-esp   { font-size: 11px; color: var(--primary); font-weight: 500; }
-.sp-cita-card-dr    { font-size: 10px; color: var(--text-muted); }
+/* Fila superior: fecha + especialidad en la misma línea */
+.sp-cita-card-top-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+.sp-cita-card-fecha {
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--text-primary);
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+.sp-cita-card-esp {
+  font-size: 11.5px;
+  color: var(--primary);
+  font-weight: 600;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.sp-cita-card-dr {
+  font-size: 11px;
+  color: var(--text-muted);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
 .sp-cita-card-body {
   padding: 9px 11px;
   background: var(--bg-body);
@@ -1449,6 +1526,49 @@
   flex-shrink: 0;
   padding-top: 1px;
   min-width: 30px;
+}
+
+/* Paginación del modal de citas anteriores */
+.sp-modal-pag {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 10px 16px;
+  border-top: 1px solid var(--border);
+  flex-shrink: 0;
+  gap: 8px;
+}
+.sp-pag-btn {
+  padding: 0.3rem 0.85rem;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  background: var(--bg-card);
+  color: var(--text-secondary);
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  font-family: inherit;
+  transition: all 0.15s;
+  white-space: nowrap;
+}
+.sp-pag-btn:hover:not(:disabled) {
+  border-color: var(--primary);
+  color: var(--primary);
+}
+.sp-pag-btn:disabled {
+  opacity: 0.35;
+  cursor: default;
+}
+.sp-pag-info {
+  font-size: 12px;
+  color: var(--text-secondary);
+  font-weight: 500;
+  text-align: center;
+  flex: 1;
+}
+.sp-pag-rango {
+  color: var(--text-muted);
+  font-weight: 400;
 }
 
 /* ── Panel de órdenes/resultados del paciente (F-2) ─────────── */

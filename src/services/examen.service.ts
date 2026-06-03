@@ -39,6 +39,7 @@ export interface ExamenLaboratorioImagen {
   instrucciones?: string;
   preguntasProtocolares: PreguntaProtocolar[];
   validezDias?: number;
+  precio?: number;
   activo: boolean;
 }
 

@@ -436,7 +436,14 @@ export default function InterconsultaDetalle() {
               </div>
               <div className="icd-kv">
                 <span className="icd-kv-label">Médico solicitante</span>
-                <span className="icd-kv-value">{ic.solicitanteNombre}</span>
+                <span className="icd-kv-value">
+                  {ic.solicitanteNombre}
+                  {ic.solicitanteEspecialidad && (
+                    <span style={{ fontSize: 11, color: "var(--text-muted)", marginLeft: 6 }}>
+                      ({ic.solicitanteEspecialidad})
+                    </span>
+                  )}
+                </span>
               </div>
               {ic.medicoSolicitado && (
                 <div className="icd-kv">
@@ -451,6 +458,14 @@ export default function InterconsultaDetalle() {
                 </span>
               </div>
             </div>
+            {ic.diagnosticoPresuntivo && (
+              <div className="icd-block" style={{ marginTop: 12 }}>
+                <div className="icd-block-label">
+                  <FileText size={11} /> Diagnóstico presuntivo del solicitante
+                </div>
+                <div className="icd-block-text">{ic.diagnosticoPresuntivo}</div>
+              </div>
+            )}
           </div>
 
           {/* Motivo y contexto */}
@@ -509,6 +524,9 @@ export default function InterconsultaDetalle() {
                 {ic.respondidoPorNombre && (
                   <span className="icd-meta-chip">
                     <User size={10} /> {ic.respondidoPorNombre}
+                    {ic.respondidoPorCMP && (
+                      <span style={{ marginLeft: 4, opacity: 0.7 }}>CMP {ic.respondidoPorCMP}</span>
+                    )}
                   </span>
                 )}
                 {ic.fechaRespuesta && (
@@ -712,7 +730,9 @@ export default function InterconsultaDetalle() {
                 {ic.estado === "RESPONDIDA" && "El solicitante ya cuenta con la recomendación clínica."}
                 {ic.estado === "CITADA"     && "El paciente fue citado para evaluación presencial."}
                 {ic.estado === "ATENDIDA"   && "La cita derivada de esta interconsulta ya fue atendida."}
-                {ic.estado === "CANCELADA"  && "Esta interconsulta fue cancelada."}
+                {ic.estado === "CANCELADA"  && (
+                <>Esta interconsulta fue cancelada.{ic.motivoCancelacion && ` Motivo: ${ic.motivoCancelacion}`}</>
+              )}
               </div>
               {cita && (ic.estado === "CITADA" || ic.estado === "ATENDIDA") && (
                 <button className="icd-btn icd-btn--ghost icd-btn--block" onClick={() => navigate(`/medico/citas/${cita._id}/consulta`)}>

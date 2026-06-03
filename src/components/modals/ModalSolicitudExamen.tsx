@@ -1,5 +1,5 @@
-import { useState } from "react";
-import { X } from "lucide-react";
+import { useState, useEffect } from "react";
+import { X, ChevronDown, ChevronRight } from "lucide-react";
 import type { ExamenOrdenado } from "../../pages/NotaSOAP/types";
 import type { CitaMedico } from "../../services/medico.service";
 
@@ -110,6 +110,16 @@ export default function ModalSolicitudExamen({ cita, onClose, onAdd, diagnostico
   const [otroExamen, setOtro]   = useState("");
   const [instrucciones, setInstr] = useState("");
   const [diagnosticoPresuntivo, setDx] = useState(diagnosticoPrefill ?? "");
+  const [openGroups, setOpenGroups] = useState<Set<string>>(new Set());
+
+  useEffect(() => { setOpenGroups(new Set()); }, [tab]);
+
+  const toggleGroup = (g: string) =>
+    setOpenGroups(prev => {
+      const next = new Set(prev);
+      next.has(g) ? next.delete(g) : next.add(g);
+      return next;
+    });
 
   const pac    = cita.pacienteId;
   const nombre = `${pac.nombres} ${pac.apellidos}`;
@@ -149,7 +159,6 @@ export default function ModalSolicitudExamen({ cita, onClose, onAdd, diagnostico
         <div className="modal-header">
           <div>
             <div className="modal-title">Solicitud de Exámenes Diagnósticos</div>
-            <div className="modal-subtitle">Categorías según NTS 139-MINSA · Patología Clínica y Diagnóstico por Imágenes</div>
           </div>
           <button className="modal-close" onClick={onClose}><X size={18} /></button>
         </div>
@@ -175,7 +184,7 @@ export default function ModalSolicitudExamen({ cita, onClose, onAdd, diagnostico
             />
             {dxVacio && (
               <span style={{ fontSize: 11, color: "var(--error, #dc2626)", marginTop: 3, display: "block" }}>
-                Requerido por el MINSA (NTS 139) para toda solicitud de exámenes.
+                Campo obligatorio.
               </span>
             )}
           </div>
@@ -194,24 +203,48 @@ export default function ModalSolicitudExamen({ cita, onClose, onAdd, diagnostico
           </div>
 
           {/* Grupos de exámenes */}
-          {Object.entries(EXAMENES[tab]).map(([group, exams]) => (
-            <div key={group} style={{ marginBottom: 16 }}>
-              <div className="modal-group-label">{group}</div>
-              <div style={{ display: "flex", flexDirection: "column", gap: 5 }}>
-                {exams.map(ex => (
-                  <label key={ex} className={`soap-check-item ${isChecked(ex) ? "checked" : ""}`} style={{ padding: "7px 10px" }}>
-                    <input
-                      type="checkbox"
-                      checked={isChecked(ex)}
-                      onChange={() => toggle(ex)}
-                      style={{ accentColor: "var(--primary)", flexShrink: 0 }}
-                    />
-                    <span style={{ fontSize: 13 }}>{ex}</span>
-                  </label>
-                ))}
+          {Object.entries(EXAMENES[tab]).map(([group, exams]) => {
+            const isOpen = openGroups.has(group);
+            const checkedCount = exams.filter(ex => isChecked(ex)).length;
+            return (
+              <div key={group} style={{ marginBottom: 8, border: "1px solid var(--border)", borderRadius: 8, overflow: "hidden" }}>
+                <button
+                  type="button"
+                  onClick={() => toggleGroup(group)}
+                  style={{
+                    width: "100%", display: "flex", alignItems: "center", justifyContent: "space-between",
+                    padding: "10px 14px", background: isOpen ? "var(--bg-muted)" : "var(--bg-card)",
+                    border: "none", cursor: "pointer", gap: 8,
+                  }}
+                >
+                  <span style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                    {isOpen ? <ChevronDown size={15} color="var(--text-muted)" /> : <ChevronRight size={15} color="var(--text-muted)" />}
+                    <span style={{ fontSize: 13, fontWeight: 600, color: "var(--text-primary)" }}>{group}</span>
+                  </span>
+                  {checkedCount > 0 && (
+                    <span style={{ fontSize: 11, fontWeight: 700, background: "var(--primary-lighter)", color: "var(--primary)", padding: "2px 8px", borderRadius: 10 }}>
+                      {checkedCount} seleccionado{checkedCount !== 1 ? "s" : ""}
+                    </span>
+                  )}
+                </button>
+                {isOpen && (
+                  <div style={{ display: "flex", flexDirection: "column", gap: 4, padding: "8px 12px 10px" }}>
+                    {exams.map(ex => (
+                      <label key={ex} className={`soap-check-item ${isChecked(ex) ? "checked" : ""}`} style={{ padding: "7px 10px" }}>
+                        <input
+                          type="checkbox"
+                          checked={isChecked(ex)}
+                          onChange={() => toggle(ex)}
+                          style={{ accentColor: "var(--primary)", flexShrink: 0 }}
+                        />
+                        <span style={{ fontSize: 13 }}>{ex}</span>
+                      </label>
+                    ))}
+                  </div>
+                )}
               </div>
-            </div>
-          ))}
+            );
+          })}
 
           {/* Examen libre */}
           <div style={{ marginBottom: 16 }}>

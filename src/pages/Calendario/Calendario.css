@@ -202,7 +202,6 @@
   border-right: 1px solid var(--border-light);
   padding: 2px 3px;
   min-height: 40px;
-  min-width: 180px;
   cursor: default;
   transition: background 0.1s var(--ease);
 }
@@ -229,6 +228,7 @@
   border: 1px solid var(--border);
   border-radius: var(--radius-lg);
   overflow: hidden;
+  overflow-x: auto;
   flex-shrink: 0;
 }
 
@@ -596,6 +596,23 @@
 
 .doctores-panel__titulo {
   padding: 0.25rem 0;
+}
+
+.doctores-panel__filtro {
+  width: 100%;
+  margin-bottom: 0.5rem;
+  padding: 0.35rem 0.5rem;
+  font-size: 0.75rem;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  background: var(--bg-base);
+  color: var(--text-primary);
+  cursor: pointer;
+  outline: none;
+}
+
+.doctores-panel__filtro:focus {
+  border-color: var(--primary);
 }
 
 .doctores-lista {

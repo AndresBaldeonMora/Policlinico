@@ -142,12 +142,12 @@ export default function ModalReceta({ cita, alergias = EMPTY_ALERGIAS, onClose, 
   const validar = (): boolean => {
     const e: Errores = {};
     if (!form.nombre.trim())      e.nombre      = "Nombre obligatorio.";
-    if (!form.dci?.trim())        e.dci         = "DCI obligatorio — Ley 29459 exige prescripción por principio activo.";
-    if (!concValor.trim())        e.concentracion = "Concentración obligatoria — DS 014-2011-SA Art. 23.";
+    if (!form.dci?.trim())        e.dci         = "DCI obligatorio.";
+    if (!concValor.trim())        e.concentracion = "Concentración obligatoria.";
     if (!form.dosis?.trim())      e.dosis       = "Dosis por toma obligatoria.";
     if (!form.frecuencia?.trim()) e.frecuencia  = "Frecuencia obligatoria.";
     if (!form.duracion?.trim())   e.duracion    = "Duración del tratamiento obligatoria.";
-    if (!form.cantidad?.trim())   e.cantidad    = "Cantidad a dispensar obligatoria — necesaria para la farmacia.";
+    if (!form.cantidad?.trim())   e.cantidad    = "Cantidad a dispensar obligatoria.";
     setErrores(e);
     return Object.keys(e).length === 0;
   };
@@ -184,7 +184,6 @@ export default function ModalReceta({ cita, alergias = EMPTY_ALERGIAS, onClose, 
         <div className="modal-header">
           <div>
             <div className="modal-title">Nueva Prescripción Médica</div>
-            <div className="modal-subtitle">Receta Única Estandarizada — NTS 057-MINSA/DIGEMID · DS 014-2011-SA</div>
           </div>
           <button className="modal-close" onClick={onClose}><X size={18} /></button>
         </div>
@@ -210,7 +209,6 @@ export default function ModalReceta({ cita, alergias = EMPTY_ALERGIAS, onClose, 
           <div style={{ background: "var(--bg-muted)", borderRadius: 10, padding: 16, marginBottom: 16, border: "1px solid var(--border)" }}>
             <div style={{ fontSize: 13, fontWeight: 700, color: "var(--text-primary)", marginBottom: 14 }}>
               Agregar medicamento
-              <span style={{ fontSize: 11, fontWeight: 400, color: "var(--text-muted)", marginLeft: 8 }}>Los campos con * son obligatorios</span>
             </div>
 
             {/* Alerta de alergia */}
@@ -272,7 +270,6 @@ export default function ModalReceta({ cita, alergias = EMPTY_ALERGIAS, onClose, 
             <div style={{ marginBottom: 10 }}>
               <label style={labelStyle}>
                 DCI — Denominación Común Internacional (principio activo){requiredMark}
-                <span style={{ fontWeight: 400, color: "var(--text-muted)", marginLeft: 6 }}>Ley 29459 — obligatorio prescribir por DCI</span>
               </label>
               <input
                 style={{ ...inputStyle, borderColor: errores.dci ? "var(--error)" : "var(--border)" }}
@@ -361,7 +358,6 @@ export default function ModalReceta({ cita, alergias = EMPTY_ALERGIAS, onClose, 
               <div>
                 <label style={labelStyle}>
                   Cantidad a dispensar{requiredMark}
-                  <span style={{ fontWeight: 400, marginLeft: 4 }}>(farmacia)</span>
                 </label>
                 <input
                   style={{ ...inputStyle, borderColor: errores.cantidad ? "var(--error)" : "var(--border)" }}

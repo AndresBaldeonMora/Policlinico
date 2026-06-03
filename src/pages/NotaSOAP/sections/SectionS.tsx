@@ -62,11 +62,9 @@ export default function SectionS({ data, setData, onNext }: Props) {
         <textarea
           className="soap-input soap-textarea"
           style={{ minHeight: 90 }}
-          placeholder=""
           value={data.motivoConsulta}
           onChange={e => up("motivoConsulta", e.target.value)}
         />
-        <p className="soap-field-hint">Registre en primera persona cuando sea posible</p>
       </div>
 
       {/* Tiempo de enfermedad + Forma de inicio + Curso */}
@@ -135,14 +133,9 @@ export default function SectionS({ data, setData, onNext }: Props) {
         <textarea
           className="soap-input soap-textarea"
           style={{ minHeight: 110 }}
-          placeholder="Narre cronológicamente: inicio, localización, duración, carácter del dolor/síntoma, factores que lo agravan o alivian, irradiación, patrón temporal y severidad."
           value={data.enfermedadActual}
           onChange={e => up("enfermedadActual", e.target.value)}
         />
-        <p className="soap-field-hint">
-          Guía OLD CARTS: <strong>O</strong>nset · <strong>L</strong>ocation · <strong>D</strong>uration · <strong>C</strong>haracter ·
-          <strong> A</strong>ggravating/Alleviating · <strong>R</strong>adiation · <strong>T</strong>emporal · <strong>S</strong>everity
-        </p>
       </div>
 
       {/*
@@ -154,9 +147,6 @@ export default function SectionS({ data, setData, onNext }: Props) {
       <div className="soap-section-divider" />
       <p style={{ fontWeight: 700, fontSize: 13, color: "var(--text-primary)", marginBottom: 4 }}>
         Revisión por Sistemas (ROS)
-      </p>
-      <p className="soap-field-hint" style={{ marginBottom: 12 }}>
-        Interrogatorio dirigido — marque Sí/No para cada síntoma según refiera el paciente.
       </p>
 
       <div className="soap-check-grid" style={{ marginBottom: 16 }}>

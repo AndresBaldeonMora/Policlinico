@@ -7,7 +7,7 @@ interface Props {
   onClose: () => void;
 }
 
-const ESPECIALIDADES = ["Cardiología", "Neumología", "Nefrología", "Neurología", "Oncología", "Traumatología", "Ginecología", "Endocrinología", "Psiquiatría", "Reumatología", "Otro"];
+const ESPECIALIDADES = ["Medicina General", "Pediatría", "Odontología", "Reumatología", "Ginecología y Obstetricia", "Cardiología", "Endocrinología", "Neumología", "Gastroenterología", "Psiquiatría"];
 const DOCS_OPCIONES  = ["Resumen de historia clínica", "Resultados de laboratorio", "Resultados de imágenes", "Medicamentos actuales (lista)", "EKG / trazados"];
 
 export default function ModalReferencia({ cita, onClose }: Props) {
@@ -29,7 +29,6 @@ export default function ModalReferencia({ cita, onClose }: Props) {
         <div className="modal-header">
           <div>
             <div className="modal-title">Documento de Referencia</div>
-            <div className="modal-subtitle">NTS N°018-MINSA - Derivación a otro establecimiento de salud</div>
           </div>
           <button className="modal-close" onClick={onClose}><X size={18} /></button>
         </div>

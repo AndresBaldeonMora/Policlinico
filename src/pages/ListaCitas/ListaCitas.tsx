@@ -24,12 +24,13 @@ const formatearFechaCompleta = (fecha: Date): string =>
   FECHA_COMPLETA_FMT.format(fecha);
 
 // Regla de negocio: solo se puede reprogramar hasta 24h antes de la cita.
-// `fecha` es medianoche UTC del día; `hora` es hora local de Perú (UTC-5).
+// `fecha` llega del backend en formato "DD/MM/YYYY" (es-PE); `hora` es hora local Perú (UTC-5).
 const horasHastaCita = (fecha: string, hora: string): number => {
   const [h, m] = (hora ?? "23:59").split(":").map(Number);
-  const momento = new Date(fecha);
-  momento.setUTCHours(h + 5, m, 0, 0);
-  return (momento.getTime() - Date.now()) / (1000 * 60 * 60);
+  const [d, mo, y] = fecha.split("/").map(Number);
+  if (!d || !mo || !y) return -Infinity; // fecha inválida → siempre bloquear
+  const momentoUTC = Date.UTC(y, mo - 1, d, h + 5, m, 0, 0);
+  return (momentoUTC - Date.now()) / (1000 * 60 * 60);
 };
 
 const obtenerNombreDia = (fecha: Date): string => {
@@ -62,14 +63,21 @@ const ESTADO_CONFIG: Record<string, { class: string; label: string }> = {
 };
 
 const TABS_ESTADO = [
-  { estado: "TODOS",       label: "Todos" },
-  { estado: "PENDIENTE",   label: "Pendiente" },
-  { estado: "REPROGRAMADA",label: "Reprogramada" },
-  { estado: "ASISTIO",     label: "Asistió" },
-  { estado: "ATENDIDA",    label: "Atendida" },
-  { estado: "CANCELADA",   label: "Cancelada" },
-  { estado: "VENCIDA",     label: "Vencida" },
+  { estado: "TODOS",     label: "Todos" },
+  { estado: "PENDIENTE", label: "Pendiente" },
+  { estado: "EN_SALA",   label: "En sala" },
+  { estado: "ATENDIDA",  label: "Atendida" },
+  { estado: "CANCELADA", label: "Cancelada" },
 ];
+
+// Mapea cada tab a los estados reales que agrupa
+const TAB_GRUPOS: Record<string, string[]> = {
+  TODOS:     [],
+  PENDIENTE: ["PENDIENTE", "REPROGRAMADA"],
+  EN_SALA:   ["ASISTIO"],
+  ATENDIDA:  ["ATENDIDA"],
+  CANCELADA: ["CANCELADA", "VENCIDA"],
+};
 
 const ListaCitas = () => {
   const [searchParams] = useSearchParams();
@@ -81,6 +89,8 @@ const ListaCitas = () => {
   const [citaParaCancelar, setCitaParaCancelar] = useState<CitaProcesada | null>(null);
   const [citaParaEliminar, setCitaParaEliminar] = useState<CitaProcesada | null>(null);
   const { notification, editando, pasoModal, mesesDisponibles, horariosPorDia, cargandoHorarios } = state;
+
+  const reprogramarId = searchParams.get("reprogramar");
 
   const [citasData, setCitasData] = useState<CitaProcesada[]>([]);
   const [busqueda, setBusqueda] = useState("");
@@ -104,6 +114,13 @@ const ListaCitas = () => {
       highlightRef.current.scrollIntoView({ behavior: "smooth", block: "center" });
     }
   }, [highlightId, citasData]);
+
+  // Abrir ReprogramarModal automáticamente cuando viene desde el calendario
+  useEffect(() => {
+    if (!reprogramarId || citasData.length === 0) return;
+    const cita = citasData.find((c) => c._id === reprogramarId);
+    if (cita) onReprogramar(cita);
+  }, [reprogramarId, citasData]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const cargarCitas = async () => {
     try {
@@ -207,10 +224,18 @@ const ListaCitas = () => {
     [citasData]
   );
 
-  const especialidades = useMemo(
-    () => ["TODAS", ...Array.from(new Set(citasMedicas.map((c) => c.especialidad))).sort()],
-    [citasMedicas]
-  );
+  const especialidades = [
+    "Medicina General",
+    "Pediatría",
+    "Odontología",
+    "Reumatología",
+    "Ginecología y Obstetricia",
+    "Cardiología",
+    "Endocrinología",
+    "Neumología",
+    "Gastroenterología",
+    "Psiquiatría",
+  ];
 
   const fechaDMY = fechaFiltro ? isoADMY(fechaFiltro) : null;
 
@@ -225,16 +250,20 @@ const ListaCitas = () => {
   }, [citasMedicas, fechaDMY, filtroEspecialidad, busqueda]);
 
   const conteosPorEstado = useMemo(() => {
-    const m: Record<string, number> = { TODOS: citasPorFechaEspecialidad.length };
-    for (const c of citasPorFechaEspecialidad) m[c.estado] = (m[c.estado] ?? 0) + 1;
+    const m: Record<string, number> = {};
+    for (const [key, estados] of Object.entries(TAB_GRUPOS)) {
+      m[key] = estados.length
+        ? citasPorFechaEspecialidad.filter((c) => estados.includes(c.estado)).length
+        : citasPorFechaEspecialidad.length;
+    }
     return m;
   }, [citasPorFechaEspecialidad]);
 
   const filtrarCitas = useMemo(() => {
-    const ESTADOS_VIGENTES = ["PENDIENTE", "REPROGRAMADA", "ASISTIO", "ATENDIDA"];
-    const base = filtroEstado === "TODOS"
-      ? citasPorFechaEspecialidad.filter((c) => ESTADOS_VIGENTES.includes(c.estado))
-      : citasPorFechaEspecialidad.filter((c) => c.estado === filtroEstado);
+    const estados = TAB_GRUPOS[filtroEstado];
+    const base = estados?.length
+      ? citasPorFechaEspecialidad.filter((c) => estados.includes(c.estado))
+      : citasPorFechaEspecialidad;
     return base.toSorted((a, b) => (a.hora ?? "").localeCompare(b.hora ?? ""));
   }, [citasPorFechaEspecialidad, filtroEstado]);
 
@@ -260,19 +289,20 @@ const ListaCitas = () => {
             onChange={(e) => setFechaFiltro(e.target.value)}
           />
         </div>
-        <div className="lab-filtro-campo">
+        <div className="lab-filtro-campo" style={{ flex: 2, minWidth: 220 }}>
           <label className="lab-filtro-label">Especialidad</label>
           <select
             className="lab-filtro-select"
             value={filtroEspecialidad}
             onChange={(e) => setFiltroEspecialidad(e.target.value)}
           >
+            <option value="TODAS">Todas</option>
             {especialidades.map((esp) => (
-              <option key={esp} value={esp}>{esp === "TODAS" ? "Todas" : esp}</option>
+              <option key={esp} value={esp}>{esp}</option>
             ))}
           </select>
         </div>
-        <div className="lab-filtro-campo" style={{ flex: 1, minWidth: 200 }}>
+        <div className="lab-filtro-campo" style={{ flex: 1, minWidth: 140 }}>
           <label className="lab-filtro-label">Buscar</label>
           <div style={{ position: "relative", width: "100%" }}>
             <Search
@@ -301,7 +331,6 @@ const ListaCitas = () => {
       <div className="lab-filtros" style={{ marginBottom: "1rem" }} role="tablist">
         {TABS_ESTADO.map((tab) => {
           const count = conteosPorEstado[tab.estado] ?? 0;
-          if (tab.estado !== "TODOS" && count === 0) return null;
           return (
             <button
               key={tab.estado}
@@ -383,15 +412,18 @@ const ListaCitas = () => {
                           <div style={{ display: "flex", gap: "0.25rem" }}>
                             {(() => {
                               const fueraDePlazo = horasHastaCita(cita.fecha, cita.hora) < 24;
+                              const puedeReprogramar = (cita.estado === "PENDIENTE" || cita.estado === "REPROGRAMADA") && !fueraDePlazo;
                               return (
                                 <button
                                   className="btn-action"
                                   title={
                                     fueraDePlazo
                                       ? "No se puede reprogramar dentro de las 24h previas a la cita"
-                                      : "Reprogramar cita"
+                                      : puedeReprogramar
+                                      ? "Reprogramar cita"
+                                      : "Solo se pueden reprogramar citas pendientes o reprogramadas"
                                   }
-                                  disabled={cita.estado !== "PENDIENTE" || fueraDePlazo}
+                                  disabled={!puedeReprogramar}
                                   onClick={() => onReprogramar(cita)}
                                 >
                                   <CalendarClock size={16} />
@@ -477,6 +509,28 @@ const ListaCitas = () => {
           onCerrar={() => setCitaSeleccionadaId(null)}
           onCitaActualizada={cargarCitas}
           onIrADetalle={(id) => { setCitaSeleccionadaId(null); navigate(`/citas/${id}`); }}
+          onReprogramar={(cita) => {
+            setCitaSeleccionadaId(null);
+            const pac = cita.pacienteId && typeof cita.pacienteId === "object" ? cita.pacienteId : null;
+            const doc = cita.doctorId   && typeof cita.doctorId   === "object" ? cita.doctorId   : null;
+            const esp = doc?.especialidadId && typeof doc.especialidadId === "object"
+              ? (doc.especialidadId as any).nombre : "—";
+            dispatch({
+              type: "OPEN_MODAL",
+              payload: {
+                id:            cita._id,
+                dni:           pac?.dni ?? "",
+                paciente:      pac ? `${pac.nombres} ${pac.apellidos}` : "—",
+                especialidad:  esp,
+                doctor:        doc ? `${(doc as any).nombres} ${(doc as any).apellidos}` : "—",
+                doctorId:      (doc as any)?._id ?? "",
+                fecha:         "",
+                hora:          "",
+                fechaOriginal: new Date(cita.fecha + "T00:00:00").toLocaleDateString("es-PE"),
+                horaOriginal:  cita.hora,
+              },
+            });
+          }}
         />
       )}
     </div>

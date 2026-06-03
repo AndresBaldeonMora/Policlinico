@@ -36,26 +36,24 @@ export interface Interconsulta {
   citaId?: string;
   solicitanteId: DoctorRef;
   solicitanteNombre: string;
+  solicitanteEspecialidad?: string;
   especialidadSolicitada: string;
   medicoSolicitado?: string;
   destinatarioId?: string;
   prioridad: PrioridadInterconsulta;
+  diagnosticoPresuntivo?: string;
   motivoConsulta: string;
   preguntaClinica?: string;
   informacionRelevante?: string;
   estado: EstadoInterconsulta;
+  motivoCancelacion?: string;
   respuesta?: string;
   respondidoPorId?: DoctorRef;
   respondidoPorNombre?: string;
+  respondidoPorCMP?: string;
   fechaRespuesta?: string;
   citaGeneradaId?: CitaGeneradaRef | string;
   createdAt?: string;
-}
-
-export interface AgendarCitaPayload {
-  fecha: string;        // "YYYY-MM-DD"
-  hora: string;         // "HH:MM"
-  respuesta?: string;
 }
 
 export interface CrearInterconsultaPayload {
@@ -64,9 +62,22 @@ export interface CrearInterconsultaPayload {
   especialidadSolicitada: string;
   medicoSolicitado?: string;
   prioridad: PrioridadInterconsulta;
+  diagnosticoPresuntivo?: string;
   motivoConsulta: string;
   preguntaClinica?: string;
   informacionRelevante?: string;
+}
+
+export interface AgendarCitaPayload {
+  fecha: string;
+  hora: string;
+  respuesta?: string;
+}
+
+export interface AgendarRecepcionPayload {
+  doctorId: string;
+  fecha: string;
+  hora: string;
 }
 
 export class InterconsultaApiService {
@@ -91,6 +102,16 @@ export class InterconsultaApiService {
     return res.data.data ?? [];
   }
 
+  static async listarPendientesRecepcion(): Promise<Interconsulta[]> {
+    const res = await api.get<{ success: boolean; data: Interconsulta[] }>("/interconsultas/pendientes-recepcion");
+    return res.data.data ?? [];
+  }
+
+  static async obtenerPorId(id: string): Promise<Interconsulta> {
+    const res = await api.get<{ success: boolean; data: Interconsulta }>(`/interconsultas/${id}`);
+    return res.data.data;
+  }
+
   static async responder(id: string, respuesta: string): Promise<Interconsulta> {
     const res = await api.patch<{ success: boolean; data: Interconsulta }>(
       `/interconsultas/${id}/responder`,
@@ -99,17 +120,26 @@ export class InterconsultaApiService {
     return res.data.data;
   }
 
-  static async obtenerPorId(id: string): Promise<Interconsulta> {
-    const res = await api.get<{ success: boolean; data: Interconsulta }>(
-      `/interconsultas/${id}`
-    );
-    return res.data.data;
-  }
-
   static async agendarCita(id: string, payload: AgendarCitaPayload): Promise<Interconsulta> {
     const res = await api.post<{ success: boolean; data: Interconsulta }>(
       `/interconsultas/${id}/agendar`,
       payload
+    );
+    return res.data.data;
+  }
+
+  static async agendarDesdeRecepcion(id: string, payload: AgendarRecepcionPayload): Promise<Interconsulta> {
+    const res = await api.post<{ success: boolean; data: Interconsulta }>(
+      `/interconsultas/${id}/agendar-recepcion`,
+      payload
+    );
+    return res.data.data;
+  }
+
+  static async cancelar(id: string, motivoCancelacion?: string): Promise<Interconsulta> {
+    const res = await api.patch<{ success: boolean; data: Interconsulta }>(
+      `/interconsultas/${id}/cancelar`,
+      { motivoCancelacion }
     );
     return res.data.data;
   }

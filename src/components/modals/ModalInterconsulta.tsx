@@ -11,12 +11,12 @@ interface Props {
   onGuardada?: () => void;
 }
 
-const ESPECIALIDADES_INT = ["Cardiología", "Neumología", "Nefrología", "Neurología", "Traumatología", "Ginecología", "Endocrinología", "Psiquiatría", "Dermatología", "Gastroenterología", "Oftalmología", "Otorrinolaringología", "Urología", "Otro"];
+const ESPECIALIDADES_INT = ["Medicina General", "Pediatría", "Odontología", "Reumatología", "Ginecología y Obstetricia", "Cardiología", "Endocrinología", "Neumología", "Gastroenterología", "Psiquiatría"];
 
 export default function ModalInterconsulta({ cita, onClose, onGuardada }: Props) {
   const [form, setForm] = useState({
     especialidad: "", medicoSolicitado: "", prioridad: "electiva",
-    motivoConsulta: "", preguntaClinica: "", informacionRelevante: "",
+    diagnosticoPresuntivo: "", motivoConsulta: "", preguntaClinica: "", informacionRelevante: "",
   });
   const [guardando, setGuardando] = useState(false);
 
@@ -25,11 +25,11 @@ export default function ModalInterconsulta({ cita, onClose, onGuardada }: Props)
   const upF = (key: string, val: string) => setForm(p => ({ ...p, [key]: val }));
 
   const handleGuardar = async () => {
-    if (!form.especialidad.trim() || !form.motivoConsulta.trim()) {
+    if (!form.especialidad.trim() || !form.diagnosticoPresuntivo.trim() || !form.motivoConsulta.trim()) {
       Swal.fire({
         icon: "warning",
         title: "Campos obligatorios",
-        text: "Indica la especialidad solicitada y el motivo de la interconsulta.",
+        text: "Indica la especialidad, el diagnóstico presuntivo y el motivo de la interconsulta.",
         confirmButtonColor: "var(--primary)",
       });
       return;
@@ -42,6 +42,7 @@ export default function ModalInterconsulta({ cita, onClose, onGuardada }: Props)
         especialidadSolicitada: form.especialidad,
         medicoSolicitado: form.medicoSolicitado || undefined,
         prioridad: form.prioridad as PrioridadInterconsulta,
+        diagnosticoPresuntivo: form.diagnosticoPresuntivo || undefined,
         motivoConsulta: form.motivoConsulta,
         preguntaClinica: form.preguntaClinica || undefined,
         informacionRelevante: form.informacionRelevante || undefined,
@@ -109,6 +110,16 @@ export default function ModalInterconsulta({ cita, onClose, onGuardada }: Props)
                 </label>
               ))}
             </div>
+          </div>
+
+          <div style={{ marginBottom: 12 }}>
+            <label className="soap-section-label">Diagnóstico presuntivo <span className="soap-required">*</span></label>
+            <input
+              className="soap-input"
+              placeholder="Ej. Insuficiencia renal crónica estadio 3"
+              value={form.diagnosticoPresuntivo}
+              onChange={e => upF("diagnosticoPresuntivo", e.target.value)}
+            />
           </div>
 
           <div style={{ marginBottom: 12 }}>

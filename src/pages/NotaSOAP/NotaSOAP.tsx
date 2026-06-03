@@ -71,6 +71,7 @@ export default function NotaSOAP() {
   const [citaExpandidaId,      setCitaExpandidaId]      = useState<string | null>(null);
   const [modalCitas,           setModalCitas]           = useState(false);
   const [citaExpandidaModal,   setCitaExpandidaModal]   = useState<string | null>(null);
+  const [paginaCitas,          setPaginaCitas]          = useState(0);
   const [savingHistorial,      setSavingHistorial]      = useState(false);
   const [modalHistorial,       setModalHistorial]       = useState<"alergia" | "medicamento" | "problema" | "cirugia" | "antFamiliar" | null>(null);
   const [nuevoItem,         setNuevoItem]         = useState<Record<string, string>>({});
@@ -661,7 +662,7 @@ export default function NotaSOAP() {
                   })}
                   {historialCitas.filter(c => c.estado === "ATENDIDA").length > 3 && (
                     <button
-                      onClick={() => setModalCitas(true)}
+                      onClick={() => { setModalCitas(true); setPaginaCitas(0); }}
                       style={{
                         width: "100%", marginTop: 6, padding: "6px 0",
                         border: "1px dashed var(--border)", borderRadius: 8,
@@ -877,82 +878,114 @@ export default function NotaSOAP() {
       )}
 
       {/* ── Modal todas las citas anteriores ── */}
-      {modalCitas && (
-        <div
-          style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.45)", zIndex: 1000, display: "flex", alignItems: "center", justifyContent: "center" }}
-          onClick={() => { setModalCitas(false); setCitaExpandidaModal(null); }}
-        >
+      {modalCitas && (() => {
+        const ITEMS_PAG = 10;
+        const citasAtendidas = historialCitas.filter(c => c.estado === "ATENDIDA");
+        const totalPags = Math.ceil(citasAtendidas.length / ITEMS_PAG);
+        const pagina = Math.min(paginaCitas, totalPags - 1);
+        const citasPag = citasAtendidas.slice(pagina * ITEMS_PAG, (pagina + 1) * ITEMS_PAG);
+        return (
           <div
-            style={{ background: "var(--bg-card)", borderRadius: 12, width: 520, maxWidth: "92vw", maxHeight: "80vh", display: "flex", flexDirection: "column", boxShadow: "var(--shadow-xl)", border: "1px solid var(--border)" }}
-            onClick={e => e.stopPropagation()}
+            style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.45)", zIndex: 1000, display: "flex", alignItems: "center", justifyContent: "center" }}
+            onClick={() => { setModalCitas(false); setCitaExpandidaModal(null); }}
           >
-            <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "16px 20px", borderBottom: "1px solid var(--border)" }}>
-              <div>
-                <h3 style={{ margin: 0, fontSize: 15, fontWeight: 700, color: "var(--text-primary)" }}>Citas Anteriores</h3>
-                <p style={{ margin: "2px 0 0", fontSize: 11, color: "var(--text-muted)" }}>
-                  {historialCitas.filter(c => c.estado === "ATENDIDA").length} consultas atendidas
-                </p>
+            <div
+              style={{ background: "var(--bg-card)", borderRadius: 12, width: 560, maxWidth: "94vw", maxHeight: "82vh", display: "flex", flexDirection: "column", boxShadow: "var(--shadow-xl)", border: "1px solid var(--border)" }}
+              onClick={e => e.stopPropagation()}
+            >
+              {/* Header */}
+              <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "16px 20px", borderBottom: "1px solid var(--border)", flexShrink: 0 }}>
+                <div>
+                  <h3 style={{ margin: 0, fontSize: 15, fontWeight: 700, color: "var(--text-primary)" }}>Citas Anteriores</h3>
+                  <p style={{ margin: "2px 0 0", fontSize: 11, color: "var(--text-muted)" }}>
+                    {citasAtendidas.length} consulta{citasAtendidas.length !== 1 ? "s" : ""} atendida{citasAtendidas.length !== 1 ? "s" : ""}
+                  </p>
+                </div>
+                <button
+                  onClick={() => { setModalCitas(false); setCitaExpandidaModal(null); }}
+                  style={{ background: "none", border: "none", cursor: "pointer", fontSize: 20, color: "var(--text-muted)", lineHeight: 1, padding: "4px 8px" }}
+                >×</button>
               </div>
-              <button
-                onClick={() => { setModalCitas(false); setCitaExpandidaModal(null); }}
-                style={{ background: "none", border: "none", cursor: "pointer", fontSize: 18, color: "var(--text-muted)", lineHeight: 1, padding: "4px 8px" }}
-              >
-                ×
-              </button>
-            </div>
-            <div style={{ overflowY: "auto", padding: "14px 20px", display: "flex", flexDirection: "column", gap: 6 }}>
-              {historialCitas.filter(c => c.estado === "ATENDIDA").map(c => {
-                const esExpandida = citaExpandidaModal === c._id;
-                const especialidad = (c.doctorId as any)?.especialidadId?.nombre ?? "—";
-                const doctor = c.doctorId ? `${c.doctorId.nombres} ${c.doctorId.apellidos}` : "—";
-                let motivoConsulta = "";
-                if (c.notasClinicas) {
-                  try {
-                    const parsed = JSON.parse(c.notasClinicas);
-                    motivoConsulta = parsed.soap?.S?.motivoConsulta ?? "";
-                  } catch { /* ignorar */ }
-                }
-                return (
-                  <div key={c._id} className={`sp-cita-card${esExpandida ? " sp-cita-card--open" : ""}`}>
-                    <div className="sp-cita-card-header" onClick={() => setCitaExpandidaModal(esExpandida ? null : c._id)}>
-                      <div className="sp-cita-card-left">
-                        <span className="sp-cita-card-fecha">{formatearFechaCorta(c.fecha)}</span>
-                        <span className="sp-cita-card-esp">{especialidad}</span>
-                        <span className="sp-cita-card-dr">Dr. {doctor}</span>
+
+              {/* Lista */}
+              <div style={{ overflowY: "auto", padding: "12px 16px", display: "flex", flexDirection: "column", gap: 6, flex: 1 }}>
+                {citasPag.map(c => {
+                  const esExpandida = citaExpandidaModal === c._id;
+                  const especialidad = (c.doctorId as any)?.especialidadId?.nombre ?? "—";
+                  const doctor = c.doctorId ? `${c.doctorId.nombres} ${c.doctorId.apellidos}` : "—";
+                  let motivoConsulta = "";
+                  if (c.notasClinicas) {
+                    try {
+                      const parsed = JSON.parse(c.notasClinicas);
+                      motivoConsulta = parsed.soap?.S?.motivoConsulta ?? "";
+                    } catch { /* ignorar */ }
+                  }
+                  return (
+                    <div key={c._id} className={`sp-cita-card${esExpandida ? " sp-cita-card--open" : ""}`}>
+                      <div className="sp-cita-card-header" onClick={() => setCitaExpandidaModal(esExpandida ? null : c._id)}>
+                        <div className="sp-cita-card-left">
+                          <div className="sp-cita-card-top-row">
+                            <span className="sp-cita-card-fecha">{formatearFechaCorta(c.fecha)}</span>
+                            <span className="sp-cita-card-esp">{especialidad}</span>
+                          </div>
+                          <span className="sp-cita-card-dr">Dr. {doctor}</span>
+                        </div>
+                        <span className="sp-badge sp-badge--atendida">ATENDIDA</span>
                       </div>
-                      <span className="sp-badge sp-badge--atendida">ATENDIDA</span>
+                      {esExpandida && (
+                        <div className="sp-cita-card-body">
+                          {motivoConsulta && (
+                            <div className="sp-cita-detail-row">
+                              <span className="sp-cita-detail-lbl">Motivo</span>
+                              <span>{motivoConsulta}</span>
+                            </div>
+                          )}
+                          {c.diagnostico ? (
+                            <div className="sp-cita-detail-row">
+                              <span className="sp-cita-detail-lbl">Dx</span>
+                              <span>{c.diagnostico}</span>
+                            </div>
+                          ) : (
+                            <span className="sp-hist-empty" style={{ fontStyle: "italic" }}>Sin diagnóstico registrado</span>
+                          )}
+                          {c.tratamiento && (
+                            <div className="sp-cita-detail-row">
+                              <span className="sp-cita-detail-lbl">Tx</span>
+                              <span>{c.tratamiento}</span>
+                            </div>
+                          )}
+                        </div>
+                      )}
                     </div>
-                    {esExpandida && (
-                      <div className="sp-cita-card-body">
-                        {motivoConsulta && (
-                          <div className="sp-cita-detail-row">
-                            <span className="sp-cita-detail-lbl">Motivo</span>
-                            <span>{motivoConsulta}</span>
-                          </div>
-                        )}
-                        {c.diagnostico ? (
-                          <div className="sp-cita-detail-row">
-                            <span className="sp-cita-detail-lbl">Dx</span>
-                            <span>{c.diagnostico}</span>
-                          </div>
-                        ) : (
-                          <span className="sp-hist-empty" style={{ fontStyle: "italic" }}>Sin diagnóstico registrado</span>
-                        )}
-                        {c.tratamiento && (
-                          <div className="sp-cita-detail-row">
-                            <span className="sp-cita-detail-lbl">Tx</span>
-                            <span>{c.tratamiento}</span>
-                          </div>
-                        )}
-                      </div>
-                    )}
-                  </div>
-                );
-              })}
+                  );
+                })}
+              </div>
+
+              {/* Paginación */}
+              {totalPags > 1 && (
+                <div className="sp-modal-pag">
+                  <button
+                    className="sp-pag-btn"
+                    disabled={pagina === 0}
+                    onClick={() => { setPaginaCitas(pagina - 1); setCitaExpandidaModal(null); }}
+                  >← Anterior</button>
+                  <span className="sp-pag-info">
+                    Página {pagina + 1} de {totalPags}
+                    <span className="sp-pag-rango">
+                      &nbsp;({pagina * ITEMS_PAG + 1}–{Math.min((pagina + 1) * ITEMS_PAG, citasAtendidas.length)} de {citasAtendidas.length})
+                    </span>
+                  </span>
+                  <button
+                    className="sp-pag-btn"
+                    disabled={pagina >= totalPags - 1}
+                    onClick={() => { setPaginaCitas(pagina + 1); setCitaExpandidaModal(null); }}
+                  >Siguiente →</button>
+                </div>
+              )}
             </div>
           </div>
-        </div>
-      )}
+        );
+      })()}
 
       {/* ── Modales de historial clínico ── */}
       {modalHistorial && (

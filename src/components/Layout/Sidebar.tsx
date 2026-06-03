@@ -19,6 +19,7 @@ import {
   UserCog,
   Pill,
   ScrollText,
+  ArrowLeftRight,
 } from "lucide-react";
 import "./Sidebar.css";
 const Sidebar = () => {
@@ -34,12 +35,14 @@ const Sidebar = () => {
     { path: "/medicos", label: "Medicos", icon: Stethoscope, description: "Directorio de doctores" },
     { path: "/pacientes", label: "Pacientes", icon: Users, description: "Listado de pacientes" },
     { path: "/laboratorio-imagen", label: "Laboratorio / Imagen", icon: FlaskConical, description: "Órdenes de exámenes e imagen" },
+    { path: "/interconsultas", label: "Interconsultas", icon: ArrowLeftRight, description: "Gestionar interconsultas pendientes" },
   ];
 
   const medicoMenu = [
-    { path: "/medico",       label: "Inicio",    icon: LayoutDashboard, description: "Panel principal del médico" },
-    { path: "/medico/citas", label: "Mis Citas", icon: ClipboardList,   description: "Listado de mis citas" },
-    { path: "/pacientes",    label: "Pacientes", icon: Users,           description: "Historias clínicas de pacientes" },
+    { path: "/medico",             label: "Inicio",      icon: LayoutDashboard, description: "Panel principal del médico" },
+    { path: "/medico/citas",       label: "Mis Citas",   icon: ClipboardList,   description: "Listado de mis citas" },
+    { path: "/medico/calendario",  label: "Calendario",  icon: Calendar,        description: "Mi agenda" },
+    { path: "/pacientes",          label: "Pacientes",   icon: Users,           description: "Historias clínicas de pacientes" },
   ];
 
   // Menú ADMINISTRADOR

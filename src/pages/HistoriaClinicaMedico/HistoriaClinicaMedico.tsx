@@ -13,7 +13,7 @@ import HistoriaClinicaTabs from "./HistoriaClinicaTabs";
 import "./HistoriaClinicaMedico.css";
 import { fmtEstado } from "../../utils/fecha.utils";
 
-type Tab = "anamMedico" | "medicinaGeneral" | "pediatria" | "odontologia" | "reumatologia" | "ginecologia" | "cardiologia" | "endocrinologia" | "neumologia" | "gastroenterologia" | "psiquiatria";
+type Tab = "consultas" | "antecedentes" | "fisiologicos" | "familiares" | "habitos";
 
 const formatFecha = (iso: string) =>
   new Date(iso).toLocaleDateString("es-PE", {
@@ -27,21 +27,40 @@ const calcAge = (fechaNac?: string): string => {
 };
 
 interface SOAPParsed {
-  diagnoses:       { code: string; name: string; tipo: "presuntivo" | "confirmado" }[];
-  medicamentos:    { nombre: string; concentracion: string; forma: string; via: string; frecuencia: string; duracion: string }[];
-  motivoConsulta:  string;
-  evaluacion:      string;
+  motivoConsulta: string; tiempoEnfermedad: string; formaInicio: string;
+  curso: string; enfermedadActual: string;
+  temp: string; pa_s: string; pa_d: string; fc: string; fr: string;
+  spo2: string; peso: string; talla: string;
+  estadoGeneral: string; cardiovascular: string; respiratorio: string;
+  abdomen: string; neurologico: string; musculoesqueletico: string; otrosAp: string;
+  diagnoses: { code: string; name: string; tipo: "presuntivo" | "confirmado" }[];
+  evaluacion: string; severidad: string;
+  otrosDx: { riesgo: string; nutricional: string; saludMental: string; causaExterna: string; estadoFuncional: string };
+  medidas: string[]; otrasIndicaciones: string; criteriosAlarma: string; proximaCita: string;
+  medicamentos: { nombre: string; concentracion: string; forma: string; via: string; dosis: string; frecuencia: string; duracion: string; cantidad?: string }[];
 }
 
 const parsearSOAP = (notasClinicas?: string): SOAPParsed | null => {
   if (!notasClinicas) return null;
   try {
-    const parsed = JSON.parse(notasClinicas);
+    const p = JSON.parse(notasClinicas);
+    const S = p.soap?.S ?? {}; const O = p.soap?.O ?? {};
+    const A = p.soap?.A ?? {}; const P = p.soap?.P ?? {};
+    const ox = A.otrosDiagnosticos ?? {};
     return {
-      diagnoses:      parsed.soap?.A?.diagnoses   ?? [],
-      medicamentos:   parsed.medicamentos          ?? [],
-      motivoConsulta: parsed.soap?.S?.motivoConsulta ?? "",
-      evaluacion:     parsed.soap?.A?.evaluacion    ?? "",
+      motivoConsulta: S.motivoConsulta ?? "", tiempoEnfermedad: S.tiempoEnfermedad ?? "",
+      formaInicio: S.formaInicio ?? "", curso: S.curso ?? "", enfermedadActual: S.enfermedadActual ?? "",
+      temp: O.temp ?? "", pa_s: O.pa_s ?? "", pa_d: O.pa_d ?? "",
+      fc: O.fc ?? "", fr: O.fr ?? "", spo2: O.spo2 ?? "",
+      peso: O.peso ?? "", talla: O.talla ?? "",
+      estadoGeneral: O.estadoGeneral ?? "", cardiovascular: O.cardiovascular ?? "",
+      respiratorio: O.respiratorio ?? "", abdomen: O.abdomen ?? "",
+      neurologico: O.neurologico ?? "", musculoesqueletico: O.musculoesqueletico ?? "", otrosAp: O.otrosAp ?? "",
+      diagnoses: A.diagnoses ?? [], evaluacion: A.evaluacion ?? "", severidad: A.severidad ?? "",
+      otrosDx: { riesgo: ox.riesgo ?? "", nutricional: ox.nutricional ?? "", saludMental: ox.saludMental ?? "", causaExterna: ox.causaExterna ?? "", estadoFuncional: ox.estadoFuncional ?? "" },
+      medidas: P.medidas ?? [], otrasIndicaciones: P.otrasIndicaciones ?? "",
+      criteriosAlarma: P.criteriosAlarma ?? "", proximaCita: P.proximaCita ?? "",
+      medicamentos: p.medicamentos ?? [],
     };
   } catch { return null; }
 };
@@ -53,7 +72,7 @@ export default function HistoriaClinicaMedico() {
   const { user } = useAuth();
   const rutaPacientes = user?.rol === "administrador" ? "/admin/pacientes" : "/pacientes";
 
-  const [tab,      setTab]      = useState<Tab>("anamMedico");
+  const [tab,      setTab]      = useState<Tab>("consultas");
   const [loading,  setLoading]  = useState(true);
   const [paciente, setPaciente] = useState<any>(null);
   const [citas,    setCitas]    = useState<any[]>([]);
@@ -187,17 +206,11 @@ export default function HistoriaClinicaMedico() {
 
         <div className="hcm-tabs" ref={tabsContainerRef}>
           {([
-            { id: "anamMedico", label: "Anam. médico" },
-            { id: "medicinaGeneral", label: "Medicina General" },
-            { id: "pediatria", label: "Pediatría" },
-            { id: "odontologia", label: "Odontología" },
-            { id: "reumatologia", label: "Reumatología" },
-            { id: "ginecologia", label: "Ginecología y Obstetricia" },
-            { id: "cardiologia", label: "Cardiología" },
-            { id: "endocrinologia", label: "Endocrinología" },
-            { id: "neumologia", label: "Neumología" },
-            { id: "gastroenterologia", label: "Gastroenterología" },
-            { id: "psiquiatria", label: "Psiquiatría" },
+            { id: "consultas",    label: "Consultas" },
+            { id: "antecedentes", label: "Antecedentes" },
+            { id: "fisiologicos", label: "Fisiológicos / Vacunas" },
+            { id: "familiares",   label: "Ant. Familiares" },
+            { id: "habitos",      label: "Hábitos / Estilo de vida" },
           ] as const).map(t => (
             <button
               key={t.id}
@@ -219,18 +232,21 @@ export default function HistoriaClinicaMedico() {
         </button>
       </div>
 
-      {/* ─── HISTORIA CLÍNICA POR ESPECIALIDAD ─── */}
-      <HistoriaClinicaTabs
-        pacienteId={pacienteId!}
-        historiaClinica={paciente.historiaClinicaEspecialidad || {}}
-        tabActivo={tab}
-        onActualizar={async () => {
-          const data = await MedicoApiService.obtenerHistorialPaciente(pacienteId!);
-          setPaciente(data.paciente);
-          setCitas(data.citas.data);
-          setOrdenes(data.ordenes.data);
-        }}
-      />
+      {/* ─── HISTORIA CLÍNICA UNIFICADA (NTS N°139-MINSA/2018) ─── */}
+      {tab !== "consultas" && (
+        <HistoriaClinicaTabs
+          pacienteId={pacienteId!}
+          historiaClinica={paciente.historiaClinicaEspecialidad || {}}
+          tabActivo={tab as any}
+          sexoPaciente={paciente.sexo}
+          onActualizar={async () => {
+            const data = await MedicoApiService.obtenerHistorialPaciente(pacienteId!);
+            setPaciente(data.paciente);
+            setCitas(data.citas.data);
+            setOrdenes(data.ordenes.data);
+          }}
+        />
+      )}
 
       {/* ─── TAB: RESUMEN [OBSOLETO] ─── */}
       {false && (
@@ -412,92 +428,245 @@ export default function HistoriaClinicaMedico() {
         </div>
       )}
 
-      {/* ─── TAB: CONSULTAS ─── */}
+      {/* ─── TAB: CONSULTAS — Notas de Evolución (NTS-139 MINSA) ─── */}
       {tab === "consultas" && (
         <div className="hcm-consultas-list">
           {citasAtendidas.length === 0 ? (
             <div className="hcm-empty">
               <BookOpen size={28} color="var(--text-muted)" />
-              <p>Sin consultas atendidas registradas.</p>
+              <h3>Sin consultas registradas</h3>
+              <p>Las consultas atendidas aparecerán aquí como notas de evolución.</p>
             </div>
           ) : (
             citasAtendidas.map((c: any) => {
               const isOpen = expanded.has(c._id);
               const soap   = parsearSOAP(c.notasClinicas);
+              const doctor = c.doctorId;
+              const esp    = doctor?.especialidadId?.nombre ?? "";
+              const cmp    = c.firma?.numeroCMP ?? "";
+
+              // Funciones vitales con valor
+              const vitales = soap ? [
+                { lbl: "T°", val: soap.temp, unit: "°C" },
+                { lbl: "PA", val: soap.pa_s && soap.pa_d ? `${soap.pa_s}/${soap.pa_d}` : "", unit: "mmHg" },
+                { lbl: "FC", val: soap.fc,   unit: "lpm" },
+                { lbl: "FR", val: soap.fr,   unit: "rpm" },
+                { lbl: "SpO₂", val: soap.spo2, unit: "%" },
+                { lbl: "Peso", val: soap.peso, unit: "kg" },
+                { lbl: "Talla", val: soap.talla, unit: "cm" },
+              ].filter(v => v.val) : [];
+
+              const tieneO = vitales.length > 0 || !!(soap?.estadoGeneral || soap?.cardiovascular || soap?.respiratorio || soap?.abdomen || soap?.neurologico || soap?.musculoesqueletico || soap?.otrosAp);
+              const tieneOtrosDx = soap && (soap.otrosDx.riesgo || soap.otrosDx.nutricional || soap.otrosDx.saludMental || soap.otrosDx.causaExterna || soap.otrosDx.estadoFuncional);
+              const tieneP = soap && (soap.medidas.length > 0 || soap.otrasIndicaciones || soap.criteriosAlarma || soap.proximaCita || soap.medicamentos.length > 0);
+
               return (
                 <div key={c._id} className="hcm-consulta-card">
-                  <button
-                    className="hcm-consulta-header"
-                    onClick={() => toggleCita(c._id)}
-                  >
+                  {/* ── Cabecera ── */}
+                  <button className="hcm-consulta-header" onClick={() => toggleCita(c._id)}>
                     <div className="hcm-consulta-header-left">
                       <Calendar size={13} color="var(--primary)" />
-                      <span className="hcm-consulta-fecha">
-                        {formatFecha(c.fecha)} - {c.hora}
-                      </span>
-                      {c.diagnostico && (
-                        <span className="hcm-dx-tag-small">
-                          {c.diagnostico.length > 50 ? c.diagnostico.substring(0, 50) + "…" : c.diagnostico}
+                      <span className="hcm-consulta-fecha">{formatFecha(c.fecha)}{c.hora ? ` · ${c.hora}` : ""}</span>
+                      {esp && <span className="hcm-consulta-esp">{esp}</span>}
+                      {soap?.motivoConsulta && (
+                        <span className="hcm-consulta-motivo-preview">
+                          {soap.motivoConsulta.length > 60 ? soap.motivoConsulta.slice(0, 60) + "…" : soap.motivoConsulta}
                         </span>
                       )}
                     </div>
-                    {isOpen
-                      ? <ChevronDown size={15} color="var(--text-muted)" />
-                      : <ChevronRight size={15} color="var(--text-muted)" />}
+                    <div className="hcm-consulta-header-right">
+                      {soap?.diagnoses?.length > 0 && (
+                        <span className="hcm-dx-tag-small">{soap.diagnoses[0].code}</span>
+                      )}
+                      {isOpen ? <ChevronDown size={15} color="var(--text-muted)" /> : <ChevronRight size={15} color="var(--text-muted)" />}
+                    </div>
                   </button>
 
+                  {/* ── Cuerpo expandido: Nota de Evolución completa ── */}
                   {isOpen && (
-                    <div className="hcm-consulta-body">
+                    <div className="hcm-nota-body">
+
+                      {/* Firma del médico */}
+                      {doctor && (
+                        <div className="hcm-nota-firma">
+                          <Stethoscope size={12} />
+                          <span>
+                            Dr. {doctor.nombres} {doctor.apellidos}
+                            {esp && ` · ${esp}`}
+                            {cmp && ` · CMP ${cmp}`}
+                          </span>
+                          <span className="hcm-nota-firma-fecha">{formatFecha(c.fecha)}{c.hora ? ` ${c.hora}` : ""}</span>
+                        </div>
+                      )}
+
                       {soap ? (
                         <>
-                          {soap.motivoConsulta && (
-                            <div className="hcm-soap-row">
-                              <span className="hcm-soap-lbl">Motivo</span>
-                              <span className="hcm-soap-val">{soap.motivoConsulta}</span>
+                          {/* ── S: SUBJETIVO ── */}
+                          {(soap.motivoConsulta || soap.enfermedadActual) && (
+                            <div className="hcm-soap-section">
+                              <div className="hcm-soap-section-title hcm-soap-s">S — Subjetivo</div>
+                              {soap.motivoConsulta && (
+                                <div className="hcm-soap-row">
+                                  <span className="hcm-soap-lbl">Motivo de consulta</span>
+                                  <span className="hcm-soap-val">{soap.motivoConsulta}</span>
+                                </div>
+                              )}
+                              {soap.tiempoEnfermedad && (
+                                <div className="hcm-soap-row">
+                                  <span className="hcm-soap-lbl">Tiempo de enfermedad</span>
+                                  <span className="hcm-soap-val">{soap.tiempoEnfermedad}{soap.formaInicio && ` · Inicio ${soap.formaInicio.toLowerCase()}`}{soap.curso && ` · Curso ${soap.curso.toLowerCase()}`}</span>
+                                </div>
+                              )}
+                              {soap.enfermedadActual && (
+                                <div className="hcm-soap-row">
+                                  <span className="hcm-soap-lbl">Enfermedad actual</span>
+                                  <span className="hcm-soap-val">{soap.enfermedadActual}</span>
+                                </div>
+                              )}
                             </div>
                           )}
-                          {soap.diagnoses?.length > 0 && (
-                            <div className="hcm-soap-row">
-                              <span className="hcm-soap-lbl">Diagnósticos</span>
-                              <div style={{ display: "flex", flexWrap: "wrap", gap: 6 }}>
-                                {soap.diagnoses.map((d) => (
-                                  <span key={d.code} className="hcm-dx-tag-small">
-                                    {d.code} - {d.name}
-                                  </span>
-                                ))}
-                              </div>
+
+                          {/* ── O: OBJETIVO ── */}
+                          {tieneO && (
+                            <div className="hcm-soap-section">
+                              <div className="hcm-soap-section-title hcm-soap-o">O — Objetivo</div>
+                              {vitales.length > 0 && (
+                                <div className="hcm-soap-row">
+                                  <span className="hcm-soap-lbl">Funciones vitales</span>
+                                  <div className="hcm-vitales-grid">
+                                    {vitales.map(v => (
+                                      <div key={v.lbl} className="hcm-vital-chip">
+                                        <span className="hcm-vital-lbl">{v.lbl}</span>
+                                        <span className="hcm-vital-val">{v.val} <span className="hcm-vital-unit">{v.unit}</span></span>
+                                      </div>
+                                    ))}
+                                  </div>
+                                </div>
+                              )}
+                              {soap.estadoGeneral && (
+                                <div className="hcm-soap-row">
+                                  <span className="hcm-soap-lbl">Estado general</span>
+                                  <span className="hcm-soap-val">{soap.estadoGeneral}</span>
+                                </div>
+                              )}
+                              {[
+                                { lbl: "Cardiovascular",    val: soap.cardiovascular },
+                                { lbl: "Respiratorio",      val: soap.respiratorio },
+                                { lbl: "Abdomen",           val: soap.abdomen },
+                                { lbl: "Neurológico",       val: soap.neurologico },
+                                { lbl: "Músculo-esquelético", val: soap.musculoesqueletico },
+                                { lbl: "Otros aparatos",    val: soap.otrosAp },
+                              ].filter(r => r.val).map(r => (
+                                <div key={r.lbl} className="hcm-soap-row">
+                                  <span className="hcm-soap-lbl">{r.lbl}</span>
+                                  <span className="hcm-soap-val">{r.val}</span>
+                                </div>
+                              ))}
                             </div>
                           )}
-                          {soap.evaluacion && (
-                            <div className="hcm-soap-row">
-                              <span className="hcm-soap-lbl">Evaluación clínica</span>
-                              <span className="hcm-soap-val">{soap.evaluacion}</span>
+
+                          {/* ── A: ANÁLISIS/DIAGNÓSTICO ── */}
+                          {(soap.diagnoses.length > 0 || soap.evaluacion) && (
+                            <div className="hcm-soap-section">
+                              <div className="hcm-soap-section-title hcm-soap-a">A — Análisis / Diagnóstico</div>
+                              {soap.diagnoses.length > 0 && (
+                                <div className="hcm-soap-row">
+                                  <span className="hcm-soap-lbl">Diagnósticos CIE-10</span>
+                                  <div className="hcm-dx-list">
+                                    {soap.diagnoses.map((d, i) => (
+                                      <div key={`${d.code}-${i}`} className="hcm-dx-full">
+                                        <span className="hcm-dx-code">{d.code}</span>
+                                        <span className="hcm-dx-name">{d.name}</span>
+                                        <span className={`hcm-dx-tipo hcm-dx-tipo--${d.tipo}`}>{d.tipo === "confirmado" ? "Confirmado" : "Presuntivo"}</span>
+                                      </div>
+                                    ))}
+                                  </div>
+                                </div>
+                              )}
+                              {soap.severidad && (
+                                <div className="hcm-soap-row">
+                                  <span className="hcm-soap-lbl">Severidad</span>
+                                  <span className="hcm-soap-val">{soap.severidad}</span>
+                                </div>
+                              )}
+                              {soap.evaluacion && (
+                                <div className="hcm-soap-row">
+                                  <span className="hcm-soap-lbl">Evaluación clínica</span>
+                                  <span className="hcm-soap-val">{soap.evaluacion}</span>
+                                </div>
+                              )}
+                              {tieneOtrosDx && (
+                                <div className="hcm-soap-row">
+                                  <span className="hcm-soap-lbl">Otros diagnósticos</span>
+                                  <div style={{ display: "flex", flexDirection: "column", gap: 3 }}>
+                                    {[
+                                      { lbl: "Riesgo",          val: soap.otrosDx.riesgo },
+                                      { lbl: "Nutricional",     val: soap.otrosDx.nutricional },
+                                      { lbl: "Salud mental",    val: soap.otrosDx.saludMental },
+                                      { lbl: "Causa externa",   val: soap.otrosDx.causaExterna },
+                                      { lbl: "Estado funcional",val: soap.otrosDx.estadoFuncional },
+                                    ].filter(r => r.val).map(r => (
+                                      <span key={r.lbl} className="hcm-soap-val" style={{ fontSize: "0.82rem" }}>
+                                        <strong>{r.lbl}:</strong> {r.val}
+                                      </span>
+                                    ))}
+                                  </div>
+                                </div>
+                              )}
                             </div>
                           )}
-                          {soap.medicamentos?.length > 0 && (
-                            <div className="hcm-soap-row">
-                              <span className="hcm-soap-lbl">Medicamentos prescritos</span>
-                              <div style={{ display: "flex", flexDirection: "column", gap: 4 }}>
-                                {soap.medicamentos.map((m) => (
-                                  <span key={`${m.nombre}-${m.concentracion}-${m.frecuencia}`} className="hcm-med-item-small">
-                                    {m.nombre} {m.concentracion} - {m.frecuencia} · {m.duracion}
-                                  </span>
-                                ))}
-                              </div>
+
+                          {/* ── P: PLAN ── */}
+                          {tieneP && (
+                            <div className="hcm-soap-section">
+                              <div className="hcm-soap-section-title hcm-soap-p">P — Plan</div>
+                              {soap.medicamentos.length > 0 && (
+                                <div className="hcm-soap-row">
+                                  <span className="hcm-soap-lbl">Medicamentos</span>
+                                  <div className="hcm-med-list">
+                                    {soap.medicamentos.map((m, i) => (
+                                      <div key={i} className="hcm-med-full">
+                                        <span className="hcm-med-nombre">{m.nombre} {m.concentracion}</span>
+                                        <span className="hcm-med-detalle">
+                                          {[m.forma, m.via, m.dosis, m.frecuencia, m.duracion].filter(Boolean).join(" · ")}
+                                          {m.cantidad && ` — ${m.cantidad} unid.`}
+                                        </span>
+                                      </div>
+                                    ))}
+                                  </div>
+                                </div>
+                              )}
+                              {soap.medidas.length > 0 && (
+                                <div className="hcm-soap-row">
+                                  <span className="hcm-soap-lbl">Plan de trabajo</span>
+                                  <ul className="hcm-medidas-list">
+                                    {soap.medidas.map((m, i) => <li key={i}>{m}</li>)}
+                                  </ul>
+                                </div>
+                              )}
+                              {soap.otrasIndicaciones && (
+                                <div className="hcm-soap-row">
+                                  <span className="hcm-soap-lbl">Indicaciones</span>
+                                  <span className="hcm-soap-val">{soap.otrasIndicaciones}</span>
+                                </div>
+                              )}
+                              {soap.criteriosAlarma && (
+                                <div className="hcm-soap-row">
+                                  <span className="hcm-soap-lbl">Criterios de alarma</span>
+                                  <span className="hcm-soap-val">{soap.criteriosAlarma}</span>
+                                </div>
+                              )}
+                              {soap.proximaCita && (
+                                <div className="hcm-soap-row">
+                                  <span className="hcm-soap-lbl">Próxima cita</span>
+                                  <span className="hcm-soap-val">{soap.proximaCita}</span>
+                                </div>
+                              )}
                             </div>
                           )}
                         </>
                       ) : (
-                        <p className="hcm-empty-hint">Sin nota SOAP registrada para esta consulta.</p>
-                      )}
-                      {c.doctorId && (
-                        <div className="hcm-soap-row" style={{ marginTop: 8, borderTop: "1px solid var(--border)", paddingTop: 8 }}>
-                          <span className="hcm-soap-lbl">Médico</span>
-                          <span className="hcm-soap-val">
-                            {c.doctorId.nombres} {c.doctorId.apellidos}
-                            {c.doctorId.especialidadId?.nombre && ` · ${c.doctorId.especialidadId.nombre}`}
-                          </span>
-                        </div>
+                        <p className="hcm-empty-hint" style={{ padding: "12px 0" }}>Sin nota clínica registrada para esta consulta.</p>
                       )}
                     </div>
                   )}

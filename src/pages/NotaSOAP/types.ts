@@ -56,6 +56,7 @@ export interface OtrosDiagnosticos {
 
 export interface SectionAData {
   diagnoses: Diagnostico[];
+  diagnosisManual: string;
   diferenciales: string;
   severidad: 'Leve' | 'Moderada' | 'Severa' | '';
   evaluacion: string;
@@ -105,6 +106,6 @@ export interface MedicamentoSOAP {
 export const INITIAL_SOAP: SOAPData = {
   S: { motivoConsulta: '', tiempoEnfermedad: '', formaInicio: '', curso: '', enfermedadActual: '', sintomas: {}, sinoDetalle: {}, otrosSintomas: '' },
   O: { temp: '', pa_s: '', pa_d: '', fc: '', fr: '', peso: '', talla: '', spo2: '', estadoGeneral: '', piel: '', edema: 'no', edemaLoc: '', edemaGrado: '', edemaDetalle: '', cardiovascular: '', respiratorio: '', abdomen: '', neurologico: '', musculoesqueletico: '', otrosAp: '' },
-  A: { diagnoses: [], diferenciales: '', severidad: '', evaluacion: '', otrosDiagnosticos: { riesgo: '', nutricional: '', saludMental: '', causaExterna: '', estadoFuncional: '' } },
+  A: { diagnoses: [], diagnosisManual: '', diferenciales: '', severidad: '', evaluacion: '', otrosDiagnosticos: { riesgo: '', nutricional: '', saludMental: '', causaExterna: '', estadoFuncional: '' } },
   P: { medidas: [], otrasIndicaciones: '', proximaCita: '', tiempoSeguimiento: '', criteriosAlarma: '' },
 };

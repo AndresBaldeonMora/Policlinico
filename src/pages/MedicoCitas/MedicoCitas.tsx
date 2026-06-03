@@ -1,10 +1,15 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
 import { MedicoApiService } from "../../services/medico.service";
-import type { CitaMedico } from "../../services/medico.service";
-import { Search, Calendar, User, Play, FileText } from "lucide-react";
+import type { CitaMedico, MedicoPerfil } from "../../services/medico.service";
+import {
+  Search, User, Play, FileText,
+} from "lucide-react";
+import { toISODateLocal } from "../../utils/fecha.utils";
 import "../ListaCitas/ListaCitas.css";
 import "./MedicoCitas.css";
+
+// ─── Constantes ────────────────────────────────────────────────────────────────
 
 const ESTADO_CONFIG: Record<string, { class: string; label: string }> = {
   PENDIENTE:    { class: "badge-info",         label: "Pendiente" },
@@ -15,8 +20,19 @@ const ESTADO_CONFIG: Record<string, { class: string; label: string }> = {
   VENCIDA:      { class: "badge-vencida",      label: "Vencida" },
 };
 
-const normalize = (str: string) =>
-  (str || "").toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g, "");
+const TIPO_CONFIG: Record<string, { label: string; cls: string }> = {
+  NUEVA:       { label: "1ª Consulta", cls: "mc-tipo-nueva" },
+  SEGUIMIENTO: { label: "Seguimiento", cls: "mc-tipo-seguim" },
+  CONSULTA:    { label: "Consulta",    cls: "mc-tipo-nueva" },
+  LABORATORIO: { label: "Laboratorio", cls: "mc-tipo-lab" },
+  REMOTA:      { label: "Remota",      cls: "mc-tipo-nueva" },
+  DOMICILIO:   { label: "Domicilio",   cls: "mc-tipo-nueva" },
+};
+
+const ESTADOS_FILTER = ["ASISTIO", "PENDIENTE", "ATENDIDA", "CANCELADA"];
+
+const normalize = (s: string) =>
+  (s || "").toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g, "");
 
 const calcAge = (fechaNac?: string) => {
   if (!fechaNac) return "";
@@ -24,30 +40,34 @@ const calcAge = (fechaNac?: string) => {
   return `${Math.floor(diff / (365.25 * 24 * 3600 * 1000))} a.`;
 };
 
-const ESTADOS_FILTER = ["ASISTIO", "PENDIENTE", "ATENDIDA", "CANCELADA"];
-
-const TIPO_CONFIG: Record<string, { label: string; cls: string }> = {
-  NUEVA:        { label: "1ª Consulta", cls: "mc-tipo-nueva" },
-  SEGUIMIENTO:  { label: "Seguimiento", cls: "mc-tipo-seguim" },
-  CONSULTA:     { label: "Consulta",    cls: "mc-tipo-nueva" },
-  LABORATORIO:  { label: "Laboratorio", cls: "mc-tipo-lab" },
-  REMOTA:       { label: "Remota",      cls: "mc-tipo-nueva" },
-  DOMICILIO:    { label: "Domicilio",   cls: "mc-tipo-nueva" },
-};
+// ─── Componente ───────────────────────────────────────────────────────────────
 
 export default function MedicoCitas() {
   const navigate = useNavigate();
-  const [citas,        setCitas]       = useState<CitaMedico[]>([]);
-  const [filtroEstado, setFiltro]      = useState("PENDIENTE");
-  const [busqueda,     setBusqueda]    = useState("");
-  const [cargando,     setCargando]    = useState(true);
+
+  const [perfil, setPerfil]               = useState<MedicoPerfil | null>(null);
+  const [cargandoPerfil, setCargandoPerfil] = useState(true);
+  const [todasCitas, setTodasCitas]       = useState<CitaMedico[]>([]);
+  const [filtroEstado, setFiltro]         = useState("PENDIENTE");
+  const [busqueda, setBusqueda]           = useState("");
+  const [cargandoLista, setCargandoLista] = useState(true);
 
   useEffect(() => {
-    MedicoApiService.obtenerMisCitas()
-      .then(setCitas)
+    MedicoApiService.obtenerMiPerfil()
+      .then(setPerfil)
       .catch(console.error)
-      .finally(() => setCargando(false));
+      .finally(() => setCargandoPerfil(false));
   }, []);
+
+  useEffect(() => {
+    setCargandoLista(true);
+    MedicoApiService.obtenerMisCitas()
+      .then(setTodasCitas)
+      .catch(console.error)
+      .finally(() => setCargandoLista(false));
+  }, []);
+
+  const hoyISO = toISODateLocal(new Date());
 
   const toMin = (hora: string) => {
     const [h, m] = (hora || "00:00").split(":").map(Number);
@@ -55,34 +75,52 @@ export default function MedicoCitas() {
   };
   const ahoraMin = new Date().getHours() * 60 + new Date().getMinutes();
 
-  const filtradas = citas
-    .filter(c => {
-      const pasaEstado =
-        filtroEstado === "PENDIENTE"
-          ? c.estado === "PENDIENTE" || c.estado === "REPROGRAMADA"
-          : c.estado === filtroEstado;
-      const term         = normalize(busqueda);
-      const pasaBusqueda = !term ||
-        normalize(`${c.pacienteId.nombres} ${c.pacienteId.apellidos}`).includes(term) ||
-        normalize(c.pacienteId.dni).includes(term) ||
-        (c.notas && normalize(c.notas).includes(term));
-      return pasaEstado && pasaBusqueda;
-    })
-    .sort((a, b) => toMin(a.hora) - toMin(b.hora) || Math.abs(toMin(a.hora) - ahoraMin) - Math.abs(toMin(b.hora) - ahoraMin));
+  const citasFiltradas = useMemo(() => {
+    return todasCitas
+      .filter(c => c.fecha.slice(0, 10) === hoyISO)
+      .filter(c => {
+        const pasaEstado =
+          filtroEstado === "PENDIENTE"
+            ? c.estado === "PENDIENTE" || c.estado === "REPROGRAMADA"
+            : c.estado === filtroEstado;
+        const term = normalize(busqueda);
+        const pasaBusqueda = !term ||
+          normalize(`${c.pacienteId.nombres} ${c.pacienteId.apellidos}`).includes(term) ||
+          normalize(c.pacienteId.dni).includes(term) ||
+          (c.notas && normalize(c.notas).includes(term));
+        return pasaEstado && pasaBusqueda;
+      })
+      .sort((a, b) =>
+        toMin(a.hora) - toMin(b.hora) ||
+        Math.abs(toMin(a.hora) - ahoraMin) - Math.abs(toMin(b.hora) - ahoraMin)
+      );
+  }, [todasCitas, hoyISO, filtroEstado, busqueda, ahoraMin]);
+
+  const fechaHoyLabel = new Date().toLocaleDateString("es-PE", {
+    weekday: "long", day: "numeric", month: "long",
+  });
+
+  if (cargandoPerfil) {
+    return (
+      <div className="lista-page">
+        <div className="lista-loading">
+          <div className="lista-loading-spinner" />
+          <p>Cargando…</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="lista-page">
-      {/* Header */}
-      <div className="lista-page-header">
+
+      <div className="lista-page-header" style={{ marginBottom: 0 }}>
         <div>
           <h1>Mis Citas</h1>
-          <p className="lista-page-subtitle">
-            {filtradas.length} resultado{filtradas.length !== 1 ? "s" : ""}
-          </p>
+          <p className="lista-page-subtitle mc-fecha-subtitle">{fechaHoyLabel}</p>
         </div>
       </div>
 
-      {/* Toolbar */}
       <div className="mc-toolbar">
         <div className="lista-search-bar">
           <Search size={16} className="lista-search-icon" />
@@ -94,7 +132,6 @@ export default function MedicoCitas() {
             className="lista-search-input"
           />
         </div>
-
         <div className="mc-filters">
           {ESTADOS_FILTER.map(e => (
             <button
@@ -108,8 +145,7 @@ export default function MedicoCitas() {
         </div>
       </div>
 
-      {/* Table */}
-      {cargando ? (
+      {cargandoLista ? (
         <div className="lista-loading">
           <div className="lista-loading-spinner" />
           <p>Cargando citas…</p>
@@ -120,102 +156,85 @@ export default function MedicoCitas() {
             <table className="modern-table">
               <thead>
                 <tr>
-                  <th style={{ width: 90 }}>Hora</th>
+                  <th style={{ width: 80 }}>Hora</th>
                   <th style={{ width: 230 }}>Paciente</th>
-                  <th style={{ width: 55 }}>Edad</th>
-                  <th style={{ width: 120 }}>Fecha</th>
+                  <th style={{ width: 50 }}>Edad</th>
                   <th style={{ width: 100 }}>Tipo</th>
-                  <th style={{ width: 190 }}>Acciones</th>
+                  <th style={{ width: 100 }}>Estado</th>
+                  <th>Acciones</th>
                 </tr>
               </thead>
               <tbody>
-                {filtradas.length > 0 ? (
-                  filtradas.map(c => {
-                    const pac       = c.pacienteId;
-                    const iniciales  = `${pac.nombres[0] ?? ""}${pac.apellidos[0] ?? ""}`.toUpperCase();
-                    const edad       = calcAge(pac.fechaNacimiento);
-                    const puedeConsultar = c.estado === "PENDIENTE" || c.estado === "ASISTIO";
-
-                    return (
-                      <tr key={c._id}>
-                        {/* Hora */}
-                        <td>
-                          <span className="mc-hora-badge">{c.hora || "—"}</span>
-                        </td>
-
-                        {/* Paciente */}
-                        <td>
-                          <div className="td-person">
-                            <div className="td-avatar">{iniciales}</div>
-                            <div className="td-person-info">
-                              <span className="td-person-name">
-                                {pac.nombres} {pac.apellidos}
-                              </span>
-                              <span className="td-person-sub">{pac.dni}</span>
-                            </div>
+                {citasFiltradas.length > 0 ? citasFiltradas.map(c => {
+                  const pac       = c.pacienteId;
+                  const iniciales = `${pac.nombres[0] ?? ""}${pac.apellidos[0] ?? ""}`.toUpperCase();
+                  const edad      = calcAge(pac.fechaNacimiento);
+                  const puedeConsultar = c.estado === "PENDIENTE" || c.estado === "ASISTIO";
+                  return (
+                    <tr key={c._id}>
+                      <td>
+                        <span className="mc-hora-badge">{c.hora || "—"}</span>
+                      </td>
+                      <td>
+                        <div className="td-person">
+                          <div className="td-avatar">{iniciales}</div>
+                          <div className="td-person-info">
+                            <span className="td-person-name">{pac.nombres} {pac.apellidos}</span>
+                            <span className="td-person-sub">{pac.dni}</span>
                           </div>
-                        </td>
-
-                        {/* Edad */}
-                        <td style={{ color: "var(--text-muted)", fontSize: "0.82rem" }}>
-                          {edad}
-                        </td>
-
-                        {/* Fecha */}
-                        <td>
-                          <span className="td-date">
-                            <Calendar size={12} />
-                            {new Date(c.fecha).toLocaleDateString("es-PE", { timeZone: "UTC" })}
-                          </span>
-                        </td>
-
-                        {/* Tipo — muestra NUEVA/SEGUIMIENTO para consultas, tipo original para laboratorio */}
-                        <td>
-                          {(() => {
-                            const key = c.subtipoCita ?? c.tipo?.toUpperCase() ?? "";
-                            const t = TIPO_CONFIG[key] ?? { label: key || "-", cls: "mc-tipo-nueva" };
-                            return key
-                              ? <span className={`mc-tipo-badge ${t.cls}`}>{t.label}</span>
-                              : <span style={{ color: "var(--text-muted)", fontSize: "0.8rem" }}>-</span>;
-                          })()}
-                        </td>
-
-                        {/* Acciones */}
-                        <td>
-                          <div style={{ display: "flex", gap: 6, alignItems: "center" }}>
+                        </div>
+                      </td>
+                      <td style={{ color: "var(--text-muted)", fontSize: "0.82rem" }}>{edad}</td>
+                      <td>
+                        {(() => {
+                          const key = c.subtipoCita ?? c.tipo?.toUpperCase() ?? "";
+                          const t = TIPO_CONFIG[key] ?? { label: key || "-", cls: "mc-tipo-nueva" };
+                          return key
+                            ? <span className={`mc-tipo-badge ${t.cls}`}>{t.label}</span>
+                            : <span style={{ color: "var(--text-muted)", fontSize: "0.8rem" }}>—</span>;
+                        })()}
+                      </td>
+                      <td>
+                        <span className={`badge ${ESTADO_CONFIG[c.estado]?.class ?? ""}`}>
+                          {ESTADO_CONFIG[c.estado]?.label ?? c.estado}
+                        </span>
+                      </td>
+                      <td>
+                        <div style={{ display: "flex", gap: 6, alignItems: "center" }}>
+                          <button
+                            className="btn btn-secondary btn-sm"
+                            onClick={() => navigate(`/pacientes/${pac._id}`)}
+                            title="Ver historia clínica"
+                          >
+                            <FileText size={12} /> HC
+                          </button>
+                          <button
+                            className="btn btn-secondary btn-sm"
+                            onClick={() => navigate(`/citas/${c._id}`)}
+                          >
+                            Perfil
+                          </button>
+                          {puedeConsultar && (
                             <button
-                              className="btn btn-secondary btn-sm"
-                              onClick={() => navigate(`/pacientes/${pac._id}`)}
-                              title="Ver historia clínica del paciente"
+                              className="btn btn-primary btn-sm"
+                              onClick={() => navigate(`/medico/citas/${c._id}/consulta`)}
                             >
-                              <FileText size={12} /> Ver HC
+                              <Play size={12} /> Iniciar
                             </button>
-                            <button
-                              className="btn btn-secondary btn-sm"
-                              onClick={() => navigate(`/citas/${c._id}`)}
-                              title="Ver perfil de cita"
-                            >
-                              Ver perfil
-                            </button>
-                            {puedeConsultar && (
-                              <button
-                                className="btn btn-primary btn-sm"
-                                onClick={() => navigate(`/medico/citas/${c._id}/consulta`)}
-                                title="Iniciar nota SOAP"
-                              >
-                                <Play size={12} /> Iniciar
-                              </button>
-                            )}
-                          </div>
-                        </td>
-                      </tr>
-                    );
-                  })
-                ) : (
+                          )}
+                        </div>
+                      </td>
+                    </tr>
+                  );
+                }) : (
                   <tr>
                     <td colSpan={6} className="td-empty">
                       <User size={28} className="td-empty-icon" />
-                      <p>No hay citas que coincidan con los filtros.</p>
+                      <p>
+                        {filtroEstado === "PENDIENTE"
+                          ? "No hay citas pendientes para hoy."
+                          : `No hay citas con estado "${ESTADO_CONFIG[filtroEstado]?.label}" para hoy.`}
+                      </p>
                     </td>
                   </tr>
                 )}
@@ -224,6 +243,7 @@ export default function MedicoCitas() {
           </div>
         </div>
       )}
+
     </div>
   );
 }

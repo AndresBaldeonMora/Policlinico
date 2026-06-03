@@ -103,7 +103,7 @@ const VistaMes = ({ diasDelMes, citas, doctores, doctorId, bloqueos = EMPTY_BLOQ
                         }
                       }}
                     >
-                      {cita.hora} · {cita.pacienteId?.nombres ?? "Sin paciente"}
+                      {cita.pacienteId ? `${cita.pacienteId.nombres} ${cita.pacienteId.apellidos}` : "Sin paciente"}
                     </div>
                   ))}
                 </div>

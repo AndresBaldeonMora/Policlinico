@@ -17,6 +17,8 @@ import {
   CalendarClock,
   ChevronLeft,
   ChevronRight,
+  Trash2,
+  Receipt,
 } from "lucide-react";
 import type { OrdenExamen, EstadoOrden } from "../../services/examen.service";
 import { ExamenService, TIPO_EXAMEN_LABEL } from "../../services/examen.service";
@@ -617,6 +619,370 @@ const ModalCargarResultados = ({ orden, onCerrar, onGuardado }: ModalResultadosP
   );
 };
 
+// ─── Modal: Pago / Nuevo Ingreso (previo al registro de asistencia) ──────────
+type TipoComprobante = "BOLETA" | "FACTURA" | "OTRO" | "RECIBO";
+type MedioPago = "EFECTIVO" | "TARJETA_DEBITO" | "TARJETA_CREDITO" | "TRANSFERENCIA" | "YAPE_PLIN";
+
+interface LineaPago {
+  nombre: string;
+  cantidad: number;
+  precioUnit: number;
+  costoLab: number;
+}
+
+interface ModalPagoIngresoProps {
+  orden: OrdenExamen;
+  onCerrar: () => void;
+  onConfirmado: () => void;
+}
+
+const MEDIOS_PAGO: { value: MedioPago; label: string }[] = [
+  { value: "EFECTIVO",         label: "Efectivo" },
+  { value: "TARJETA_DEBITO",   label: "Tarjeta de débito" },
+  { value: "TARJETA_CREDITO",  label: "Tarjeta de crédito" },
+  { value: "TRANSFERENCIA",    label: "Transferencia" },
+  { value: "YAPE_PLIN",        label: "Yape / Plin" },
+];
+
+const ModalPagoIngreso = ({ orden, onCerrar, onConfirmado }: ModalPagoIngresoProps) => {
+  const [lineas, setLineas] = useState<LineaPago[]>(() =>
+    orden.items.map((item) => {
+      const ex = typeof item.examenId === "object" ? item.examenId : null;
+      return {
+        nombre: ex?.nombre ?? "—",
+        cantidad: 1,
+        precioUnit: ex?.precio ?? 0,
+        costoLab: 0,
+      };
+    })
+  );
+  const [comprobante, setComprobante] = useState<TipoComprobante>("BOLETA");
+  const [medioPago, setMedioPago] = useState<MedioPago>("EFECTIVO");
+  const [nota, setNota] = useState("");
+  const [confirmando, setConfirmando] = useState(false);
+
+  const paciente = orden.pacienteId;
+  const doctor = orden.doctorId;
+
+  const total = lineas.reduce(
+    (sum, l) => sum + l.cantidad * l.precioUnit + l.costoLab,
+    0
+  );
+
+  const updateLinea = (idx: number, campo: keyof LineaPago, valor: number) => {
+    setLineas((prev) =>
+      prev.map((l, i) => (i === idx ? { ...l, [campo]: valor } : l))
+    );
+  };
+
+  const removeLinea = (idx: number) => {
+    setLineas((prev) => prev.filter((_, i) => i !== idx));
+  };
+
+  const handleConfirmar = () => {
+    setConfirmando(true);
+    setTimeout(() => {
+      setConfirmando(false);
+      onConfirmado();
+    }, 300);
+  };
+
+  const labelStyle: React.CSSProperties = {
+    fontSize: "0.78rem",
+    color: "var(--text-muted)",
+    marginBottom: "0.3rem",
+    display: "block",
+  };
+
+  const campoReadonlyStyle: React.CSSProperties = {
+    border: "1px solid var(--border)",
+    borderRadius: "var(--radius-sm)",
+    padding: "0.5rem 0.75rem",
+    fontSize: "0.88rem",
+    background: "var(--bg-hover)",
+    color: "var(--text-primary)",
+    width: "100%",
+    boxSizing: "border-box" as const,
+  };
+
+  const inputNumStyle: React.CSSProperties = {
+    border: "1px solid var(--border)",
+    borderRadius: "var(--radius-sm)",
+    padding: "0.3rem 0.4rem",
+    fontSize: "0.83rem",
+    width: "80px",
+    textAlign: "right" as const,
+    background: "var(--bg-body)",
+  };
+
+  return (
+    <div className="lab-modal-overlay" onClick={onCerrar}>
+      <div
+        className="lab-modal-card"
+        style={{ maxWidth: 720, position: "relative" }}
+        onClick={(e) => e.stopPropagation()}
+      >
+        {/* Botón cerrar */}
+        <button
+          onClick={onCerrar}
+          style={{
+            position: "absolute",
+            top: 12,
+            right: 14,
+            background: "none",
+            border: "none",
+            cursor: "pointer",
+            color: "var(--text-muted)",
+            padding: 4,
+          }}
+          title="Cerrar"
+        >
+          <X size={18} />
+        </button>
+
+        {/* Header */}
+        <div className="lab-modal-header" style={{ paddingRight: "2rem" }}>
+          <h3>Nuevo ingreso</h3>
+        </div>
+
+        {/* Body */}
+        <div
+          className="lab-modal-body"
+          style={{ padding: "1.25rem 1.5rem", maxHeight: "72vh", overflowY: "auto" }}
+        >
+          {/* Paciente + Doctor */}
+          <div
+            style={{
+              display: "grid",
+              gridTemplateColumns: "1fr 1fr",
+              gap: "1rem",
+              marginBottom: "1rem",
+            }}
+          >
+            <div>
+              <label style={labelStyle}>Paciente</label>
+              <div style={campoReadonlyStyle}>
+                {paciente.nombres} {paciente.apellidos}
+              </div>
+            </div>
+            <div>
+              <label style={labelStyle}>Doctor relacionado a la venta</label>
+              <div style={campoReadonlyStyle}>
+                {doctor.nombres} {doctor.apellidos}
+              </div>
+            </div>
+          </div>
+
+          {/* Tabla de ítems */}
+          <div style={{ overflowX: "auto", marginBottom: "1rem" }}>
+            <table className="lab-tabla" style={{ width: "100%" }}>
+              <thead>
+                <tr>
+                  <th style={{ textAlign: "left" }}>Ítem</th>
+                  <th style={{ textAlign: "center", width: 70 }}>Cantidad</th>
+                  <th style={{ textAlign: "right", width: 110 }}>Precio Unit.</th>
+                  <th style={{ textAlign: "right", width: 110 }}>Laboratorio</th>
+                  <th style={{ textAlign: "right", width: 110 }}>Subtotal</th>
+                  <th style={{ width: 36 }} />
+                </tr>
+              </thead>
+              <tbody>
+                {lineas.length === 0 ? (
+                  <tr>
+                    <td colSpan={6} style={{ textAlign: "center", color: "var(--text-muted)", fontSize: "0.82rem", padding: "0.75rem" }}>
+                      Sin ítems
+                    </td>
+                  </tr>
+                ) : (
+                  lineas.map((linea, idx) => {
+                    const subtotal = linea.cantidad * linea.precioUnit + linea.costoLab;
+                    return (
+                      <tr key={idx}>
+                        <td style={{ fontSize: "0.88rem" }}>{linea.nombre}</td>
+                        <td style={{ textAlign: "center" }}>
+                          <input
+                            type="number"
+                            min={1}
+                            value={linea.cantidad}
+                            onChange={(e) => updateLinea(idx, "cantidad", Math.max(1, Number(e.target.value)))}
+                            style={{ ...inputNumStyle, width: 60, textAlign: "center" }}
+                          />
+                        </td>
+                        <td style={{ textAlign: "right" }}>
+                          <input
+                            type="number"
+                            min={0}
+                            step="0.01"
+                            value={linea.precioUnit}
+                            onChange={(e) => updateLinea(idx, "precioUnit", Math.max(0, Number(e.target.value)))}
+                            style={inputNumStyle}
+                          />
+                        </td>
+                        <td style={{ textAlign: "right" }}>
+                          <input
+                            type="number"
+                            min={0}
+                            step="0.01"
+                            value={linea.costoLab}
+                            onChange={(e) => updateLinea(idx, "costoLab", Math.max(0, Number(e.target.value)))}
+                            style={inputNumStyle}
+                          />
+                        </td>
+                        <td style={{ textAlign: "right", fontWeight: 500, fontSize: "0.88rem" }}>
+                          {subtotal.toFixed(2)}
+                        </td>
+                        <td>
+                          <button
+                            onClick={() => removeLinea(idx)}
+                            style={{
+                              background: "none",
+                              border: "none",
+                              cursor: "pointer",
+                              color: "#dc2626",
+                              padding: "0.2rem",
+                            }}
+                            title="Eliminar ítem"
+                          >
+                            <Trash2 size={14} />
+                          </button>
+                        </td>
+                      </tr>
+                    );
+                  })
+                )}
+              </tbody>
+              <tfoot>
+                <tr>
+                  <td
+                    colSpan={4}
+                    style={{
+                      textAlign: "right",
+                      fontWeight: 600,
+                      fontSize: "0.88rem",
+                      paddingTop: "0.5rem",
+                      borderTop: "1px solid var(--border)",
+                    }}
+                  >
+                    Total:
+                  </td>
+                  <td
+                    style={{
+                      textAlign: "right",
+                      fontWeight: 700,
+                      fontSize: "0.95rem",
+                      color: "var(--primary)",
+                      borderTop: "1px solid var(--border)",
+                    }}
+                  >
+                    S/ {total.toFixed(2)}
+                  </td>
+                  <td style={{ borderTop: "1px solid var(--border)" }} />
+                </tr>
+              </tfoot>
+            </table>
+          </div>
+
+          {/* Comprobante + Medio de pago */}
+          <div
+            style={{
+              display: "grid",
+              gridTemplateColumns: "1fr 1fr",
+              gap: "1.25rem",
+              marginBottom: "1rem",
+              alignItems: "start",
+            }}
+          >
+            {/* Comprobante */}
+            <div>
+              <label style={labelStyle}>Comprobante</label>
+              <div style={{ display: "flex", gap: "1rem", flexWrap: "wrap" }}>
+                {(["BOLETA", "FACTURA", "OTRO", "RECIBO"] as TipoComprobante[]).map((c) => (
+                  <label
+                    key={c}
+                    style={{
+                      display: "flex",
+                      alignItems: "center",
+                      gap: "0.3rem",
+                      fontSize: "0.86rem",
+                      cursor: "pointer",
+                    }}
+                  >
+                    <input
+                      type="radio"
+                      name="comprobante"
+                      value={c}
+                      checked={comprobante === c}
+                      onChange={() => setComprobante(c)}
+                      style={{ accentColor: "var(--primary)" }}
+                    />
+                    {c.charAt(0) + c.slice(1).toLowerCase()}
+                  </label>
+                ))}
+              </div>
+            </div>
+
+            {/* Medio de pago */}
+            <div>
+              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                <label style={labelStyle}>Medio de pago</label>
+              </div>
+              <select
+                className="lab-filtro-input"
+                value={medioPago}
+                onChange={(e) => setMedioPago(e.target.value as MedioPago)}
+                style={{ width: "100%" }}
+              >
+                {MEDIOS_PAGO.map((m) => (
+                  <option key={m.value} value={m.value}>
+                    {m.label}
+                  </option>
+                ))}
+              </select>
+            </div>
+          </div>
+
+          {/* Nota administrativa */}
+          <div>
+            <label style={labelStyle}>Nota administrativa</label>
+            <textarea
+              className="lab-filtro-input"
+              placeholder="Escribe aquí..."
+              value={nota}
+              onChange={(e) => setNota(e.target.value)}
+              rows={3}
+              style={{ width: "100%", resize: "vertical", boxSizing: "border-box" }}
+            />
+          </div>
+        </div>
+
+        {/* Footer */}
+        <div className="lab-modal-footer">
+          <button className="lab-btn lab-btn--cancel" onClick={onCerrar} disabled={confirmando}>
+            Cancelar
+          </button>
+          <button
+            className="lab-btn lab-btn--primary"
+            onClick={handleConfirmar}
+            disabled={confirmando || lineas.length === 0}
+          >
+            {confirmando ? (
+              <>
+                <RefreshCw size={14} style={{ marginRight: 6, animation: "spin 1s linear infinite" }} />
+                Procesando…
+              </>
+            ) : (
+              <>
+                <Receipt size={14} style={{ marginRight: 6 }} />
+                Confirmar
+              </>
+            )}
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+};
+
 // ─── Modal: Preguntas Protocolares + Registrar Asistencia ────
 interface ModalAsistenciaProps {
   orden: OrdenExamen;
@@ -843,6 +1209,7 @@ const FilaOrden = ({ orden, tabActivo, onRefresh }: FilaOrdenProps) => {
   const [cargando] = useState(false);
   const [modalResultados, setModalResultados] = useState(false);
   const [modalGenerarOrden, setModalGenerarOrden] = useState(false);
+  const [modalPago, setModalPago] = useState(false);
   const [modalAsistencia, setModalAsistencia] = useState(false);
 
   const paciente = orden.pacienteId;
@@ -852,7 +1219,18 @@ const FilaOrden = ({ orden, tabActivo, onRefresh }: FilaOrdenProps) => {
   const iniciales =
     (paciente.nombres[0] ?? "") + (paciente.apellidos[0] ?? "");
 
-  // ── Acción: Registrar asistencia → abre modal de preguntas protocolares ──
+  // ── Acción: Generar Orden → primero abre modal de pago ──
+  const handleGenerarOrden = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    setModalPago(true);
+  };
+
+  const handlePagoConfirmado = () => {
+    setModalPago(false);
+    setModalGenerarOrden(true);
+  };
+
+  // ── Acción: Registrar asistencia → abre preguntas protocolares ──
   const handleRegistrarAsistencia = (e: React.MouseEvent) => {
     e.stopPropagation();
     setModalAsistencia(true);
@@ -946,7 +1324,7 @@ const FilaOrden = ({ orden, tabActivo, onRefresh }: FilaOrdenProps) => {
             {tabActivo === "PENDIENTE" && (
               <button
                 className="lab-btn lab-btn--primary lab-btn--sm"
-                onClick={(e) => { e.stopPropagation(); setModalGenerarOrden(true); }}
+                onClick={handleGenerarOrden}
                 title="Seleccionar fecha y generar la orden de laboratorio"
               >
                 <ShieldCheck size={13} style={{ marginRight: 4 }} />
@@ -1126,6 +1504,15 @@ const FilaOrden = ({ orden, tabActivo, onRefresh }: FilaOrdenProps) => {
           orden={orden}
           onCerrar={() => setModalGenerarOrden(false)}
           onGuardado={onRefresh}
+        />
+      )}
+
+      {/* Modal pago / nuevo ingreso (previo a registrar asistencia) */}
+      {modalPago && (
+        <ModalPagoIngreso
+          orden={orden}
+          onCerrar={() => setModalPago(false)}
+          onConfirmado={handlePagoConfirmado}
         />
       )}
 

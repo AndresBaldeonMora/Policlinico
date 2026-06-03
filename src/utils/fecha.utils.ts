@@ -96,6 +96,16 @@ export const formatearTimestamp = (isoBackend: string): string =>
     timeZone: "America/Lima",
   });
 
+// "YYYY-MM-DDT00:00:00.000Z" (fecha UTC del backend) + "HH:mm" (hora Perú, UTC-5)
+// → horas que restan hasta la cita (negativo si ya pasó). Usa -Infinity si la fecha es inválida.
+export const horasHastaCitaISO = (fechaISO: string, hora: string): number => {
+  const [h, m] = (hora ?? "23:59").split(":").map(Number);
+  const momento = new Date(fechaISO);
+  if (isNaN(momento.getTime())) return -Infinity;
+  momento.setUTCHours(h + 5, m, 0, 0);
+  return (momento.getTime() - Date.now()) / (1000 * 60 * 60);
+};
+
 // "EN_PROCESO" → "En Proceso" (reemplaza _ y capitaliza cada palabra)
 export const fmtEstado = (estado?: string): string =>
   (estado ?? "")

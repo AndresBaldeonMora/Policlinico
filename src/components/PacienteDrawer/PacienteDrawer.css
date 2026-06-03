@@ -1,0 +1,426 @@
+/* ── Overlay ── */
+.pd-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.3);
+  z-index: 1100;
+  backdrop-filter: blur(1px);
+}
+
+/* ── Drawer ── */
+.pd-drawer {
+  position: fixed;
+  top: 0;
+  right: 0;
+  height: 100vh;
+  width: 560px;
+  max-width: 95vw;
+  background: var(--bg-card);
+  border-left: 1px solid var(--border);
+  box-shadow: -12px 0 48px rgba(0, 0, 0, 0.15);
+  z-index: 1101;
+  display: flex;
+  flex-direction: column;
+  animation: pd-slide-in 0.22s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+@keyframes pd-slide-in {
+  from { transform: translateX(100%); opacity: 0; }
+  to   { transform: translateX(0);    opacity: 1; }
+}
+
+/* ── Header ── */
+.pd-header {
+  display: flex;
+  align-items: flex-start;
+  gap: 1rem;
+  padding: 1.5rem 1.5rem 1.25rem;
+  border-bottom: 1px solid var(--border);
+  flex-shrink: 0;
+  background: var(--bg-card);
+}
+
+.pd-avatar {
+  width: 56px;
+  height: 56px;
+  min-width: 56px;
+  border-radius: 50%;
+  background: var(--primary-gradient);
+  color: #fff;
+  font-weight: 700;
+  font-size: 1.15rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  box-shadow: 0 2px 8px rgba(20, 184, 166, 0.35);
+}
+
+.pd-header-info {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.3rem;
+}
+
+.pd-header-top {
+  display: flex;
+  align-items: center;
+  gap: 0.625rem;
+  flex-wrap: wrap;
+}
+
+.pd-nombre {
+  font-size: 1.1rem;
+  font-weight: 700;
+  color: var(--text-primary);
+  margin: 0;
+  line-height: 1.2;
+}
+
+.pd-abrir-historia {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: var(--primary);
+  background: var(--primary-lighter);
+  border: none;
+  border-radius: 999px;
+  padding: 0.22rem 0.65rem;
+  cursor: pointer;
+  transition: background 0.15s;
+  white-space: nowrap;
+}
+
+.pd-abrir-historia:hover {
+  background: rgba(20, 184, 166, 0.2);
+}
+
+.pd-meta {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.82rem;
+  color: var(--text-muted);
+  flex-wrap: wrap;
+}
+
+.pd-meta-sep {
+  color: var(--border);
+  font-size: 1rem;
+}
+
+.pd-close {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  border: none;
+  background: transparent;
+  color: var(--text-muted);
+  border-radius: 8px;
+  cursor: pointer;
+  transition: background 0.15s, color 0.15s;
+  flex-shrink: 0;
+}
+
+.pd-close:hover {
+  background: var(--bg-muted);
+  color: var(--text-primary);
+}
+
+/* ── Nota general ── */
+.pd-nota-section {
+  padding: 1rem 1.5rem;
+  border-bottom: 1px solid var(--border);
+  flex-shrink: 0;
+}
+
+.pd-nota-label {
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  margin-bottom: 0.5rem;
+  display: block;
+}
+
+.pd-nota-textarea {
+  width: 100%;
+  min-height: 60px;
+  padding: 0.5rem 0.75rem;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  font-size: 0.85rem;
+  font-family: inherit;
+  color: var(--text-primary);
+  background: var(--bg-body);
+  resize: vertical;
+  outline: none;
+  transition: border-color 0.15s;
+  box-sizing: border-box;
+}
+
+.pd-nota-textarea::placeholder {
+  color: var(--text-muted);
+}
+
+.pd-nota-textarea:focus {
+  border-color: var(--primary);
+  box-shadow: 0 0 0 2px rgba(20, 184, 166, 0.1);
+}
+
+/* ── Tabs ── */
+.pd-tabs {
+  display: flex;
+  border-bottom: 2px solid var(--border);
+  padding: 0 1.25rem;
+  flex-shrink: 0;
+  background: var(--bg-card);
+  gap: 0.5rem;
+}
+
+.pd-tab {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.875rem 1.125rem;
+  border: none;
+  background: transparent;
+  color: var(--text-muted);
+  font-size: 0.875rem;
+  font-weight: 500;
+  border-bottom: 2px solid transparent;
+  margin-bottom: -2px;
+  cursor: pointer;
+  transition: color 0.15s, border-color 0.15s;
+  font-family: inherit;
+  white-space: nowrap;
+}
+
+.pd-tab:hover {
+  color: var(--text-primary);
+}
+
+.pd-tab--active {
+  color: var(--primary);
+  border-bottom-color: var(--primary);
+  font-weight: 600;
+}
+
+/* ── Body scrollable ── */
+.pd-body {
+  flex: 1;
+  overflow-y: auto;
+  min-height: 0;
+}
+
+.pd-loading {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0.75rem;
+  height: 200px;
+  color: var(--text-muted);
+  font-size: 0.875rem;
+}
+
+.pd-empty {
+  text-align: center;
+  color: var(--text-muted);
+  font-size: 0.875rem;
+  padding: 3rem 2rem;
+}
+
+/* ── Tab Citas: tabla ── */
+.pd-table-wrap {
+  overflow-x: auto;
+}
+
+.pd-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.84rem;
+  table-layout: fixed;
+}
+
+.pd-table thead tr {
+  position: sticky;
+  top: 0;
+  z-index: 1;
+}
+
+.pd-table th {
+  background: var(--primary);
+  color: #fff;
+  font-weight: 600;
+  padding: 0.75rem 1rem;
+  text-align: left;
+  white-space: nowrap;
+  font-size: 0.82rem;
+}
+
+.pd-table td {
+  padding: 0.75rem 1rem;
+  border-bottom: 1px solid var(--border-light);
+  vertical-align: middle;
+  color: var(--text-secondary);
+  line-height: 1.4;
+}
+
+.pd-table tbody tr:hover {
+  background: var(--bg-muted);
+}
+
+/* Anchos de columna fijos para 4 columnas sin scroll */
+.pd-table th:nth-child(1),
+.pd-table td:nth-child(1) { width: 26%; }  /* Fecha */
+.pd-table th:nth-child(2),
+.pd-table td:nth-child(2) { width: 30%; }  /* Doctor */
+.pd-table th:nth-child(3),
+.pd-table td:nth-child(3) { width: 22%; }  /* Motivo */
+.pd-table th:nth-child(4),
+.pd-table td:nth-child(4) { width: 22%; }  /* Estado */
+
+.pd-td-fecha {
+  white-space: nowrap;
+}
+
+.pd-td-hora {
+  display: block;
+  font-size: 0.76rem;
+  color: var(--text-muted);
+  margin-top: 0.15rem;
+}
+
+/* Truncar texto largo en Doctor y Motivo */
+.pd-table td:nth-child(2),
+.pd-table td:nth-child(3) {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* Estado badges */
+.pd-estado {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  font-size: 0.75rem;
+  font-weight: 600;
+  padding: 0.22rem 0.6rem;
+  border-radius: 999px;
+  white-space: nowrap;
+}
+
+.pd-estado--pendiente    { background: #e0f2fe; color: #0369a1; }
+.pd-estado--asistio      { background: #dcfce7; color: #15803d; }
+.pd-estado--atendida::before { content: "✓ "; }
+.pd-estado--atendida     { background: #f0fdf4; color: #166534; }
+.pd-estado--cancelada    { background: #fee2e2; color: #dc2626; }
+.pd-estado--reprogramada { background: #fef9c3; color: #854d0e; }
+
+/* ── Tab Presupuestos / Órdenes ── */
+.pd-ordenes {
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+  padding: 1.25rem 1.5rem;
+}
+
+.pd-orden-card {
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  overflow: hidden;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.05);
+}
+
+.pd-orden-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0.75rem 1rem;
+  background: var(--bg-muted);
+  border-bottom: 1px solid var(--border);
+}
+
+.pd-orden-titulo {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.pd-orden-badge {
+  font-size: 0.68rem;
+  font-weight: 700;
+  padding: 0.18rem 0.5rem;
+  border-radius: 4px;
+  background: var(--primary);
+  color: #fff;
+  text-transform: uppercase;
+  letter-spacing: 0.3px;
+}
+
+.pd-orden-codigo {
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.pd-orden-estado {
+  font-size: 0.78rem;
+  color: var(--text-muted);
+  font-weight: 500;
+}
+
+.pd-orden-tabla {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.82rem;
+}
+
+.pd-orden-tabla th {
+  background: var(--bg-body);
+  color: var(--text-muted);
+  font-weight: 600;
+  font-size: 0.73rem;
+  text-transform: uppercase;
+  letter-spacing: 0.4px;
+  padding: 0.5rem 1rem;
+  text-align: left;
+  border-bottom: 1px solid var(--border-light);
+}
+
+.pd-orden-tabla td {
+  padding: 0.6rem 1rem;
+  border-bottom: 1px solid var(--border-light);
+  color: var(--text-secondary);
+}
+
+.pd-orden-tabla tbody tr:last-child td {
+  border-bottom: none;
+}
+
+.pd-orden-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0.625rem 1rem;
+  font-size: 0.76rem;
+  color: var(--text-muted);
+  background: var(--bg-body);
+  border-top: 1px solid var(--border-light);
+}
+
+/* Dark mode */
+[data-theme="dark"] .pd-estado--pendiente    { background: rgba(3,105,161,0.2);  color: #7dd3fc; }
+[data-theme="dark"] .pd-estado--asistio      { background: rgba(21,128,61,0.2);  color: #86efac; }
+[data-theme="dark"] .pd-estado--atendida     { background: rgba(22,101,52,0.2);  color: #bbf7d0; }
+[data-theme="dark"] .pd-estado--cancelada    { background: rgba(220,38,38,0.2);  color: #fca5a5; }
+[data-theme="dark"] .pd-estado--reprogramada { background: rgba(133,77,14,0.2);  color: #fde68a; }

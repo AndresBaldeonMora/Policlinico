@@ -212,17 +212,8 @@ export default function SectionP({
             >
               Interconsulta interna
             </button>
-            <button
-              style={{ padding: "5px 12px", borderRadius: "var(--radius-md)", border: "1px solid var(--primary)", background: "transparent", color: "var(--primary)", cursor: "pointer", fontSize: 12, fontWeight: 600 }}
-              onClick={() => onOpenModal("referencia")}
-            >
-              Referencia a EESS
-            </button>
           </div>
         </div>
-        <p style={{ fontSize: 13, color: "var(--text-muted)" }}>
-          Use los botones para generar el documento formal.
-        </p>
       </div>
 
       <div className="soap-nav-row">

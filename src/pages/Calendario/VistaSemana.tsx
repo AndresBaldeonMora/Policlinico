@@ -5,7 +5,7 @@ import { getDoctorIdString } from "../../services/cita.service";
 import { toISODateLocal, fechaISO } from "../../utils/fecha.utils";
 
 
-const DIAS_SEMANA = ["Lun", "Mar", "Mié", "Jue", "Vie", "Sáb", "Dom"] as const;
+const DIAS_SEMANA = ["Lun", "Mar", "Mié", "Jue", "Vie", "Sáb"] as const;
 
 const ESTADO_COLOR: Record<string, string> = {
   PENDIENTE:    "agenda-cita--pendiente",
@@ -29,7 +29,7 @@ const VistaSemana = ({ inicioSemana, horas, citas, doctores, doctorId, onVerCita
     ? doctores
     : doctores.filter((d) => d.id === doctorId);
 
-  const diasSemana = Array.from({ length: 7 }, (_, i) => {
+  const diasSemana = Array.from({ length: 6 }, (_, i) => {
     const dia = new Date(inicioSemana);
     dia.setDate(inicioSemana.getDate() + i);
     return dia;
@@ -57,7 +57,7 @@ const VistaSemana = ({ inicioSemana, horas, citas, doctores, doctorId, onVerCita
           {/* Grilla semana */}
           <div
             className="multi-semana-grid"
-            style={{ gridTemplateColumns: `80px repeat(7, 1fr)` }}
+            style={{ gridTemplateColumns: `80px repeat(6, 1fr)` }}
           >
             {/* Header días */}
             <div className="multi-hora-cell" />
@@ -99,8 +99,7 @@ const VistaSemana = ({ inicioSemana, horas, citas, doctores, doctorId, onVerCita
                             }
                           }}
                         >
-                          <span className="agenda-cita-nombre">{cita.pacienteId.nombres}</span>
-                          <span className="agenda-cita-hora">{cita.hora}</span>
+                          <span className="agenda-cita-nombre">{cita.pacienteId.nombres} {cita.pacienteId.apellidos}</span>
                         </div>
                       )}
                     </div>
