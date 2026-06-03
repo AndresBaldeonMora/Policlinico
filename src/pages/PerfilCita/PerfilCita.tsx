@@ -30,8 +30,9 @@ const BADGE_ESTADO: Record<string, { cls: string; label: string }> = {
   REPROGRAMADA: { cls: "badge-reprogramada", label: "Reprogramada" },
   ATENDIDA:     { cls: "badge-success",      label: "Atendida" },
   CANCELADA:    { cls: "badge-danger",       label: "Cancelada" },
-  ASISTIO:      { cls: "badge-asistio",      label: "Asistió" },
-  VENCIDA:      { cls: "badge-vencida",      label: "Vencida" },
+  ASISTIO:      { cls: "badge-asistio",      label: "En sala" },
+  // Alias defensivo para datos heredados sin migrar (VENCIDA → Cancelada)
+  VENCIDA:      { cls: "badge-danger",       label: "Cancelada" },
 };
 
 // ============================================================================

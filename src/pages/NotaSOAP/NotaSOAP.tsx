@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import Swal from "sweetalert2";
-import { AlertTriangle, Pill, FileText, Plus, ChevronDown, ChevronUp, Scissors, Users, Activity } from "lucide-react";
+import { AlertTriangle, Pill, Plus, ChevronDown, ChevronUp, Scissors, Users, Activity } from "lucide-react";
 import "./NotaSOAP.css";
 import { fmtEstado, formatearFechaDMY, formatearFechaCorta } from "../../utils/fecha.utils";
 

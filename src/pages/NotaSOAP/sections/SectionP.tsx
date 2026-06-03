@@ -1,10 +1,9 @@
 import { Plus, FlaskConical, FileText, Pill } from "lucide-react";
-import type { Dispatch, SetStateAction } from "react";
 import type { SectionPData, ExamenOrdenado, MedicamentoSOAP } from "../types";
 
 interface Props {
   data: SectionPData;
-  setData: Dispatch<SetStateAction<SectionPData>>;
+  setData: (val: SectionPData) => void;
   onPrev: () => void;
   onFinalize: () => void;
   examenes: ExamenOrdenado[];

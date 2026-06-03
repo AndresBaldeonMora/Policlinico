@@ -58,8 +58,9 @@ const ESTADO_CONFIG: Record<string, { class: string; label: string }> = {
   REPROGRAMADA: { class: "badge-reprogramada",  label: "Reprogramada" },
   ATENDIDA:     { class: "badge-success",       label: "Atendida" },
   CANCELADA:    { class: "badge-danger",        label: "Cancelada" },
-  ASISTIO:      { class: "badge-asistio",       label: "Asistió" },
-  VENCIDA:      { class: "badge-vencida",       label: "Vencida" },
+  ASISTIO:      { class: "badge-asistio",       label: "En sala" },
+  // Alias defensivo para datos heredados sin migrar (VENCIDA → Cancelada)
+  VENCIDA:      { class: "badge-danger",        label: "Cancelada" },
 };
 
 const TABS_ESTADO = [
@@ -264,7 +265,7 @@ const ListaCitas = () => {
     const base = estados?.length
       ? citasPorFechaEspecialidad.filter((c) => estados.includes(c.estado))
       : citasPorFechaEspecialidad;
-    return base.toSorted((a, b) => (a.hora ?? "").localeCompare(b.hora ?? ""));
+    return [...base].sort((a, b) => (a.hora ?? "").localeCompare(b.hora ?? ""));
   }, [citasPorFechaEspecialidad, filtroEstado]);
 
   return (
@@ -412,16 +413,19 @@ const ListaCitas = () => {
                           <div style={{ display: "flex", gap: "0.25rem" }}>
                             {(() => {
                               const fueraDePlazo = horasHastaCita(cita.fecha, cita.hora) < 24;
-                              const puedeReprogramar = (cita.estado === "PENDIENTE" || cita.estado === "REPROGRAMADA") && !fueraDePlazo;
+                              // Regla de negocio: solo se puede reprogramar UNA vez (solo desde PENDIENTE).
+                              const puedeReprogramar = cita.estado === "PENDIENTE" && !fueraDePlazo;
                               return (
                                 <button
                                   className="btn-action"
                                   title={
-                                    fueraDePlazo
+                                    cita.estado === "REPROGRAMADA"
+                                      ? "Esta cita ya fue reprogramada y no admite una segunda reprogramación"
+                                      : fueraDePlazo
                                       ? "No se puede reprogramar dentro de las 24h previas a la cita"
                                       : puedeReprogramar
                                       ? "Reprogramar cita"
-                                      : "Solo se pueden reprogramar citas pendientes o reprogramadas"
+                                      : "Solo se pueden reprogramar citas pendientes"
                                   }
                                   disabled={!puedeReprogramar}
                                   onClick={() => onReprogramar(cita)}

@@ -25,34 +25,37 @@ interface StatsState {
 const ESTADO_LABELS: Record<string, string> = {
   PENDIENTE:  "Pendiente",
   EN_PROCESO: "En proceso",
-  COMPLETADO: "Completado",
+  ASISTIDO:   "En análisis",
+  FINALIZADO: "Finalizado",
   CANCELADA:  "Cancelada",
 };
- 
+
 const ESTADO_COLORS: Record<string, string> = {
   PENDIENTE:  "#3b82f6",
   EN_PROCESO: "#f59e0b",
-  COMPLETADO: "#10b981",
+  ASISTIDO:   "#8b5cf6",
+  FINALIZADO: "#10b981",
   CANCELADA:  "#ef4444",
 };
 
 // Estados propios de las CITAS (distintos a los de las órdenes)
 const CITA_ESTADO_LABELS: Record<string, string> = {
   PENDIENTE:    "Pendiente",
-  ASISTIO:      "Asistió",
+  ASISTIO:      "En sala",
   ATENDIDA:     "Atendida",
-  CANCELADA:    "Cancelada",
   REPROGRAMADA: "Reprogramada",
-  VENCIDA:      "Vencida",
+  CANCELADA:    "Cancelada",
+  // Alias defensivo para datos heredados sin migrar (VENCIDA → Cancelada)
+  VENCIDA:      "Cancelada",
 };
 
 const CITA_ESTADO_COLORS: Record<string, string> = {
   PENDIENTE:    "#3b82f6",
   ASISTIO:      "#8b5cf6",
   ATENDIDA:     "#10b981",
-  CANCELADA:    "#ef4444",
   REPROGRAMADA: "#f59e0b",
-  VENCIDA:      "#64748b",
+  CANCELADA:    "#ef4444",
+  VENCIDA:      "#ef4444",
 };
 
 const AdminDashboard = () => {

@@ -22,7 +22,6 @@ const ESTADO_META: Record<EstadoOrden, { label: string; cls: string; icon: any }
   ASISTIDO:   { label: "En análisis",   cls: "primary", icon: ClipboardCheck },
   FINALIZADO: { label: "Resultados",    cls: "success", icon: CheckCircle2 },
   CANCELADA:  { label: "Cancelada",     cls: "muted",   icon: XCircle },
-  VENCIDA:    { label: "Vencida",       cls: "danger",  icon: XCircle },
 };
 
 const TIPO_META: Record<string, { label: string; icon: any; cls: string }> = {

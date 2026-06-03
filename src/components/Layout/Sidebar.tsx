@@ -81,9 +81,6 @@ const Sidebar = () => {
   };
   const subtitle = subtitleMap[user?.rol ?? ""] ?? "Sistema";
 
-  const avatarLetter = user?.nombres?.trim() ? user.nombres.trim().charAt(0).toUpperCase() : "U";
-  const nombreCompleto = `${user?.nombres ?? ""} ${user?.apellidos ?? ""}`.trim();
-
   return (
     <>
       <div

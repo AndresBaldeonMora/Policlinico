@@ -207,6 +207,18 @@
   background: #fee2e2;
 }
 
+.cpop-menu-item--whatsapp {
+  color: #16a34a;
+}
+
+.cpop-menu-item--whatsapp .cpop-menu-icon {
+  color: #16a34a;
+}
+
+.cpop-menu-item--whatsapp:hover {
+  background: #dcfce7;
+}
+
 /* Dark mode */
 [data-theme="dark"] .cpop-badge--pendiente    { background: rgba(3,105,161,0.2);  color: #7dd3fc; }
 [data-theme="dark"] .cpop-badge--asistio      { background: rgba(21,128,61,0.2);  color: #86efac; }
@@ -214,3 +226,4 @@
 [data-theme="dark"] .cpop-badge--cancelada    { background: rgba(220,38,38,0.2);  color: #fca5a5; }
 [data-theme="dark"] .cpop-badge--reprogramada { background: rgba(133,77,14,0.2);  color: #fde68a; }
 [data-theme="dark"] .cpop-menu-item--danger:hover { background: rgba(220,38,38,0.15); }
+[data-theme="dark"] .cpop-menu-item--whatsapp:hover { background: rgba(22,163,74,0.15); }

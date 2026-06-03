@@ -12,7 +12,7 @@ import {
 } from "../../services/interconsulta.service";
 import { DoctorApiService, type DoctorTransformado } from "../../services/doctor.service";
 import { toastExito, toastError } from "../../utils/toast";
-import { formatearFechaCorta, formatearTimestamp } from "../../utils/fecha.utils";
+import { formatearTimestamp } from "../../utils/fecha.utils";
 import "./InterconsultasRecepcion.css";
 import "./InterconsultasRecepcion.css";
 
@@ -38,8 +38,7 @@ const hoyISO = () => {
 const fechaToISO = (d: Date) =>
   `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,"0")}-${String(d.getDate()).padStart(2,"0")}`;
 
-const formatFecha = (iso?: string) => (iso ? formatearFechaCorta(iso) : "—");
-const formatTS    = (iso?: string) => (iso ? formatearTimestamp(iso) : "—");
+const formatTS = (iso?: string) => (iso ? formatearTimestamp(iso) : "—");
 
 // ─── Mini-calendario (igual al de InterconsultaDetalle) ────────────────────────
 

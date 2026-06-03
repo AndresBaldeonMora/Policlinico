@@ -1,10 +1,9 @@
 import { useState } from "react";
-import type { Dispatch, SetStateAction } from "react";
 import type { SectionSData } from "../types";
 
 interface Props {
   data: SectionSData;
-  setData: Dispatch<SetStateAction<SectionSData>>;
+  setData: (val: SectionSData) => void;
   onNext: () => void;
 }
 

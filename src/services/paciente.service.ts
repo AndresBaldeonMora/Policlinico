@@ -336,4 +336,12 @@ export class PacienteApiService {
       fechaActualizacion: new Date(response.data.data.fechaActualizacion)
     };
   }
+
+  static async enviarRecordatorioEmail(pacienteId: string): Promise<void> {
+    await api.post(`/pacientes/${pacienteId}/recordatorio-email`);
+  }
+
+  static async enviarRecordatorioWsp(pacienteId: string): Promise<void> {
+    await api.post(`/pacientes/${pacienteId}/recordatorio-wsp`);
+  }
 }

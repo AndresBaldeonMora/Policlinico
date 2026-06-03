@@ -7,21 +7,22 @@ import "./ResumenOrden.css";
 /* ── Helpers estáticos (fuera del componente) ── */
 
 const ESTADO_CLASS: Record<string, string> = {
-  PENDIENTE:  "resumen-orden__badge--pendiente",
-  EN_PROCESO: "resumen-orden__badge--en_proceso",
-  ASISTIDO:   "resumen-orden__badge--asistido",
-  FINALIZADO: "resumen-orden__badge--finalizado",
-  CANCELADA:  "resumen-orden__badge--cancelada",
-  VENCIDA:    "resumen-orden__badge--vencida",
+  PENDIENTE:    "resumen-orden__badge--pendiente",
+  EN_PROCESO:   "resumen-orden__badge--en_proceso",
+  ASISTIDO:     "resumen-orden__badge--asistido",
+  FINALIZADO:   "resumen-orden__badge--finalizado",
+  CANCELADA:    "resumen-orden__badge--cancelada",
+  // Alias defensivo para datos heredados sin migrar (VENCIDA → Cancelada)
+  VENCIDA:      "resumen-orden__badge--cancelada",
 };
 
 const ESTADO_LABEL: Record<string, string> = {
-  PENDIENTE:  "Pendiente",
-  EN_PROCESO: "En proceso",
-  ASISTIDO:   "Asistido",
-  FINALIZADO: "Finalizado",
-  CANCELADA:  "Cancelada",
-  VENCIDA:    "Vencida",
+  PENDIENTE:    "Pendiente",
+  EN_PROCESO:   "En proceso",
+  ASISTIDO:     "Asistido",
+  FINALIZADO:   "Finalizado",
+  CANCELADA:    "Cancelada",
+  VENCIDA:      "Cancelada",
 };
 
 const TIPO_CLASS: Record<string, string> = {

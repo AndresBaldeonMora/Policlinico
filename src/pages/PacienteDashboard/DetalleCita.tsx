@@ -41,11 +41,12 @@ interface Props {
 // Actualizar configuración de estados incluyendo ASISTIO
 const ESTADO_CONFIG: Record<string, { label: string; clase: string }> = {
   PENDIENTE:    { label: "Programada",   clase: "dc-badge--pending" },
-  ASISTIO:      { label: "Asistió",      clase: "dc-badge--warning" },
+  ASISTIO:      { label: "En sala",      clase: "dc-badge--warning" },
   ATENDIDA:     { label: "Atendida",     clase: "dc-badge--done" },
   CANCELADA:    { label: "Cancelada",    clase: "dc-badge--cancel" },
   REPROGRAMADA: { label: "Reprogramada", clase: "dc-badge--reprogramada" },
-  VENCIDA:      { label: "Vencida",      clase: "dc-badge--vencida" },
+  // Alias defensivo para datos heredados sin migrar (VENCIDA → Cancelada)
+  VENCIDA:      { label: "Cancelada",    clase: "dc-badge--cancel" },
 };
 
 const formatFecha = (iso: string) =>

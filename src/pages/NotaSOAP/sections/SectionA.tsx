@@ -1,5 +1,4 @@
 import { useState, useRef, useEffect } from "react";
-import type { Dispatch, SetStateAction } from "react";
 import { X, Search, Plus } from "lucide-react";
 import type { SectionAData, Diagnostico } from "../types";
 import { CIE10ApiService } from "../../../services/cie10.service";
@@ -7,7 +6,7 @@ import type { CIE10Item } from "../../../services/cie10.service";
 
 interface Props {
   data: SectionAData;
-  setData: Dispatch<SetStateAction<SectionAData>>;
+  setData: (val: SectionAData) => void;
   onPrev: () => void;
   onNext: () => void;
 }

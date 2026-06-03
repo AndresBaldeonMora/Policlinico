@@ -117,10 +117,10 @@ const TABS: TabConfig[] = [
     color: "#059669",
   },
   {
-    estado: "VENCIDA",
-    label: "Vencidas",
+    estado: "CANCELADA",
+    label: "Canceladas",
     icon: AlertTriangle,
-    badgeClass: "lab-badge--vencida",
+    badgeClass: "lab-badge--cancel",
     color: "#dc2626",
   },
 ];
@@ -1556,7 +1556,7 @@ export default function LaboratorioImagen() {
         "EN_PROCESO",
         "ASISTIDO",
         "FINALIZADO",
-        "VENCIDA",
+        "CANCELADA",
       ];
       const resultados = await Promise.all(
         estados.map((e) => ExamenService.listarPorEstado(e))

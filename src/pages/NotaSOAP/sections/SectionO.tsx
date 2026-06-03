@@ -1,11 +1,10 @@
 import { useState } from "react";
-import type { Dispatch, SetStateAction } from "react";
 import { ChevronRight, ChevronDown } from "lucide-react";
 import type { SectionOData } from "../types";
 
 interface Props {
   data: SectionOData;
-  setData: Dispatch<SetStateAction<SectionOData>>;
+  setData: (val: SectionOData) => void;
   onPrev: () => void;
   onNext: () => void;
 }

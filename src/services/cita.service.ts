@@ -61,6 +61,7 @@ export interface CitaTransformada {
   fecha: string;
   hora: string;
   estado: EstadoCita;
+  tipo?: string;
   pacienteId: PacienteDTO;
   doctorId?: DoctorDTO | string;
   notasClinicas?: string;

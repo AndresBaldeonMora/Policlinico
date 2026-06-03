@@ -48,12 +48,11 @@ export type ExamenLaboratorio = ExamenLaboratorioImagen;
 
 // ── Estados del ciclo de vida de una orden ──────────────────
 export type EstadoOrden =
-  | "PENDIENTE"   // Emitida por el médico, pendiente de autorización
-  | "EN_PROCESO"  // Autorizada por recepción, en período de vigencia (7 días)
-  | "ASISTIDO"    // El paciente se presentó al laboratorio
+  | "PENDIENTE"   // Emitida por el médico, pendiente de autorización/pago
+  | "EN_PROCESO"  // Autorizada/pagada por recepción, en período de vigencia
+  | "ASISTIDO"    // El paciente se presentó al laboratorio (en sala / análisis)
   | "FINALIZADO"  // Resultados cargados y notificación enviada al paciente
-  | "CANCELADA"   // Anulada
-  | "VENCIDA";    // Expiró el período de vigencia sin asistencia
+  | "CANCELADA";  // Anulada (manual) o vencida por tiempo — el motivo distingue ambas
 
 export type EstadoItem = "PENDIENTE" | "COMPLETADO";
 

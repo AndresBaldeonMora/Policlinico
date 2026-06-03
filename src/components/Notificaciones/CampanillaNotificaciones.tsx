@@ -33,7 +33,7 @@ const CampanillaNotificaciones = ({
   const ultimas = useMemo(
     () =>
       notificaciones
-        .toSorted((a, b) => new Date(b.fecha).getTime() - new Date(a.fecha).getTime())
+        .slice().sort((a, b) => new Date(b.fecha).getTime() - new Date(a.fecha).getTime())
         .slice(0, 5),
     [notificaciones],
   );

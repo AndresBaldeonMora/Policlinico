@@ -12,7 +12,8 @@ const ESTADO_CLASS: Record<string, string> = {
   ATENDIDA:     "resumen-cita__badge--atendida",
   CANCELADA:    "resumen-cita__badge--cancelada",
   REPROGRAMADA: "resumen-cita__badge--reprogramada",
-  VENCIDA:      "resumen-cita__badge--vencida",
+  // Alias defensivo para datos heredados sin migrar (VENCIDA → Cancelada)
+  VENCIDA:      "resumen-cita__badge--cancelada",
 };
 
 const TIPO_CLASS: Record<string, string> = {

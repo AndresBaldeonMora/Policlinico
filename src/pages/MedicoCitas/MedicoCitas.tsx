@@ -1,4 +1,4 @@
-import { useEffect, useState, useCallback, useMemo } from "react";
+import { useEffect, useState, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
 import { MedicoApiService } from "../../services/medico.service";
 import type { CitaMedico, MedicoPerfil } from "../../services/medico.service";
@@ -17,16 +17,20 @@ const ESTADO_CONFIG: Record<string, { class: string; label: string }> = {
   ATENDIDA:     { class: "badge-success",      label: "Atendida" },
   CANCELADA:    { class: "badge-danger",       label: "Cancelada" },
   ASISTIO:      { class: "badge-asistio",      label: "En sala" },
-  VENCIDA:      { class: "badge-vencida",      label: "Vencida" },
+  // Alias defensivo para datos heredados sin migrar (VENCIDA → Cancelada)
+  VENCIDA:      { class: "badge-danger",       label: "Cancelada" },
 };
 
 const TIPO_CONFIG: Record<string, { label: string; cls: string }> = {
-  NUEVA:       { label: "1ª Consulta", cls: "mc-tipo-nueva" },
-  SEGUIMIENTO: { label: "Seguimiento", cls: "mc-tipo-seguim" },
-  CONSULTA:    { label: "Consulta",    cls: "mc-tipo-nueva" },
-  LABORATORIO: { label: "Laboratorio", cls: "mc-tipo-lab" },
-  REMOTA:      { label: "Remota",      cls: "mc-tipo-nueva" },
-  DOMICILIO:   { label: "Domicilio",   cls: "mc-tipo-nueva" },
+  // Valores del backend (tipo canónico)
+  CONSULTA:       { label: "1ª Consulta",  cls: "mc-tipo-nueva" },
+  LABORATORIO:    { label: "Laboratorio",  cls: "mc-tipo-lab" },
+  REMOTA:         { label: "Remota",       cls: "mc-tipo-nueva" },
+  DOMICILIO:      { label: "Domicilio",    cls: "mc-tipo-nueva" },
+  INTERCONSULTA:  { label: "Interconsulta",cls: "mc-tipo-seguim" },
+  // Aliases de subtipoCita (cuando el booking flow los envía)
+  NUEVA:          { label: "1ª Consulta",  cls: "mc-tipo-nueva" },
+  SEGUIMIENTO:    { label: "Seguimiento",  cls: "mc-tipo-seguim" },
 };
 
 const ESTADOS_FILTER = ["ASISTIO", "PENDIENTE", "ATENDIDA", "CANCELADA"];
@@ -45,7 +49,7 @@ const calcAge = (fechaNac?: string) => {
 export default function MedicoCitas() {
   const navigate = useNavigate();
 
-  const [perfil, setPerfil]               = useState<MedicoPerfil | null>(null);
+  const [, setPerfil]                     = useState<MedicoPerfil | null>(null);
   const [cargandoPerfil, setCargandoPerfil] = useState(true);
   const [todasCitas, setTodasCitas]       = useState<CitaMedico[]>([]);
   const [filtroEstado, setFiltro]         = useState("PENDIENTE");
@@ -102,7 +106,7 @@ export default function MedicoCitas() {
 
   if (cargandoPerfil) {
     return (
-      <div className="lista-page">
+      <div className="lista-page mc-lista-page">
         <div className="lista-loading">
           <div className="lista-loading-spinner" />
           <p>Cargando…</p>
@@ -112,9 +116,9 @@ export default function MedicoCitas() {
   }
 
   return (
-    <div className="lista-page">
+    <div className="lista-page mc-lista-page">
 
-      <div className="lista-page-header" style={{ marginBottom: 0 }}>
+      <div className="lista-page-header">
         <div>
           <h1>Mis Citas</h1>
           <p className="lista-page-subtitle mc-fecha-subtitle">{fechaHoyLabel}</p>
@@ -156,12 +160,12 @@ export default function MedicoCitas() {
             <table className="modern-table">
               <thead>
                 <tr>
-                  <th style={{ width: 80 }}>Hora</th>
-                  <th style={{ width: 230 }}>Paciente</th>
-                  <th style={{ width: 50 }}>Edad</th>
-                  <th style={{ width: 100 }}>Tipo</th>
-                  <th style={{ width: 100 }}>Estado</th>
-                  <th>Acciones</th>
+                  <th style={{ width: 90 }}>Hora</th>
+                  <th>Paciente</th>
+                  <th style={{ width: 70 }}>Edad</th>
+                  <th style={{ width: 130 }}>Tipo</th>
+                  <th style={{ width: 120 }}>Estado</th>
+                  <th style={{ width: 240 }}>Acciones</th>
                 </tr>
               </thead>
               <tbody>

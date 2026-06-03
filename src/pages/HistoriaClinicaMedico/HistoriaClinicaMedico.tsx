@@ -5,15 +5,17 @@ import {
   FlaskConical, Pill, Stethoscope, Calendar,
   ChevronDown, ChevronRight, FileText,
   AlertTriangle, Activity, Scissors, Users,
-  ChevronLeft,
+  ChevronLeft, MessageCircle, MoreVertical,
+  Camera, Download, GitMerge, PowerOff, Trash2,
 } from "lucide-react";
 import { MedicoApiService } from "../../services/medico.service";
+import { PacienteApiService } from "../../services/paciente.service";
 import { useAuth } from "../../hooks/userAuth";
 import HistoriaClinicaTabs from "./HistoriaClinicaTabs";
 import "./HistoriaClinicaMedico.css";
 import { fmtEstado } from "../../utils/fecha.utils";
 
-type Tab = "consultas" | "antecedentes" | "fisiologicos" | "familiares" | "habitos";
+type Tab = "consultas" | "antecedentes" | "fisiologicos" | "familiares" | "habitos" | "estudios";
 
 const formatFecha = (iso: string) =>
   new Date(iso).toLocaleDateString("es-PE", {
@@ -80,7 +82,12 @@ export default function HistoriaClinicaMedico() {
   const [expanded, setExpanded] = useState<Set<string>>(new Set());
   const [canScrollLeft, setCanScrollLeft] = useState(false);
   const [canScrollRight, setCanScrollRight] = useState(true);
+  const [menuAbierto, setMenuAbierto] = useState(false);
+  const [notif, setNotif] = useState<{ msg: string; tipo: "success" | "error" } | null>(null);
+  const [enviandoEmail, setEnviandoEmail] = useState(false);
+  const [enviandoWsp, setEnviandoWsp]   = useState(false);
   const tabsContainerRef = useRef<HTMLDivElement>(null);
+  const menuRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     if (!pacienteId) return;
@@ -131,6 +138,45 @@ export default function HistoriaClinicaMedico() {
     }
   }, []);
 
+  useEffect(() => {
+    const handler = (e: MouseEvent) => {
+      if (menuRef.current && !menuRef.current.contains(e.target as Node)) setMenuAbierto(false);
+    };
+    document.addEventListener("mousedown", handler);
+    return () => document.removeEventListener("mousedown", handler);
+  }, []);
+
+  const mostrarNotif = (msg: string, tipo: "success" | "error") => {
+    setNotif({ msg, tipo });
+    setTimeout(() => setNotif(null), 3500);
+  };
+
+  const handleWspRecordatorio = async () => {
+    if (!pacienteId) return;
+    setEnviandoWsp(true);
+    try {
+      await PacienteApiService.enviarRecordatorioWsp(pacienteId);
+      mostrarNotif("Recordatorio enviado por WhatsApp", "success");
+    } catch (e: any) {
+      mostrarNotif(e?.response?.data?.message ?? "Error al enviar WhatsApp", "error");
+    } finally {
+      setEnviandoWsp(false);
+    }
+  };
+
+  const handleEmailRecordatorio = async () => {
+    if (!pacienteId) return;
+    setEnviandoEmail(true);
+    try {
+      await PacienteApiService.enviarRecordatorioEmail(pacienteId);
+      mostrarNotif("Recordatorio enviado por correo", "success");
+    } catch (e: any) {
+      mostrarNotif(e?.response?.data?.message ?? "Error al enviar correo", "error");
+    } finally {
+      setEnviandoEmail(false);
+    }
+  };
+
   if (loading) return <div className="hcm-loading">Cargando historia clínica…</div>;
   if (!paciente) return <div className="hcm-loading">Paciente no encontrado.</div>;
 
@@ -142,6 +188,10 @@ export default function HistoriaClinicaMedico() {
 
   return (
     <div className="hcm-page">
+
+      {notif && (
+        <div className={`notification ${notif.tipo}`}>{notif.msg}</div>
+      )}
 
       {/* Breadcrumb */}
       <div className="hcm-breadcrumb">
@@ -177,18 +227,68 @@ export default function HistoriaClinicaMedico() {
             </div>
           </div>
         </div>
-        <div className="hcm-header-stats">
-          <div className="hcm-stat">
-            <span className="hcm-stat-num">{citas.length}</span>
-            <span className="hcm-stat-label">Citas totales</span>
+        <div className="hcm-header-right">
+          <div className="hcm-header-stats">
+            <div className="hcm-stat">
+              <span className="hcm-stat-num">{citas.length}</span>
+              <span className="hcm-stat-label">Citas totales</span>
+            </div>
+            <div className="hcm-stat">
+              <span className="hcm-stat-num">{citasAtendidas.length}</span>
+              <span className="hcm-stat-label">Atendidas</span>
+            </div>
+            <div className="hcm-stat">
+              <span className="hcm-stat-num">{ordenes.length}</span>
+              <span className="hcm-stat-label">Exámenes</span>
+            </div>
           </div>
-          <div className="hcm-stat">
-            <span className="hcm-stat-num">{citasAtendidas.length}</span>
-            <span className="hcm-stat-label">Atendidas</span>
-          </div>
-          <div className="hcm-stat">
-            <span className="hcm-stat-num">{ordenes.length}</span>
-            <span className="hcm-stat-label">Exámenes</span>
+
+          <div className="hcm-header-actions">
+            <button
+              className="hcm-action-btn hcm-action-btn--wsp"
+              onClick={handleWspRecordatorio}
+              title="Enviar recordatorio por WhatsApp"
+              disabled={!paciente.telefono || enviandoWsp}
+            >
+              <MessageCircle size={18} className={enviandoWsp ? "hcm-spin" : ""} />
+            </button>
+            <button
+              className="hcm-action-btn hcm-action-btn--email"
+              onClick={handleEmailRecordatorio}
+              title="Enviar recordatorio por email"
+              disabled={!paciente.correo || enviandoEmail}
+            >
+              <Mail size={18} className={enviandoEmail ? "hcm-spin" : ""} />
+            </button>
+            <div className="hcm-action-menu-wrapper" ref={menuRef}>
+              <button
+                className="hcm-action-btn"
+                onClick={() => setMenuAbierto(v => !v)}
+                title="Más opciones"
+              >
+                <MoreVertical size={18} />
+              </button>
+              {menuAbierto && (
+                <div className="hcm-action-dropdown">
+                  <button className="hcm-dropdown-item" onClick={() => setMenuAbierto(false)}>
+                    <Camera size={15} /> Subir foto
+                  </button>
+                  <button className="hcm-dropdown-item" onClick={() => setMenuAbierto(false)}>
+                    <Download size={15} /> Descargar
+                  </button>
+                  <button className="hcm-dropdown-item" onClick={() => setMenuAbierto(false)}>
+                    <GitMerge size={15} /> Fusionar paciente
+                  </button>
+                  <div className="hcm-dropdown-divider" />
+                  <button className="hcm-dropdown-item" onClick={() => setMenuAbierto(false)}>
+                    <PowerOff size={15} /> Desactivar
+                  </button>
+                  <button className="hcm-dropdown-item hcm-dropdown-item--danger" onClick={() => setMenuAbierto(false)}>
+                    <Trash2 size={15} /> Eliminar
+                  </button>
+                </div>
+              )}
+            </div>
           </div>
         </div>
       </div>
@@ -261,7 +361,7 @@ export default function HistoriaClinicaMedico() {
                 <Stethoscope size={13} /> Diagnósticos Activos
               </div>
               {datosActuales?.diagnoses?.length ? (
-                datosActuales.diagnoses.map((dx) => (
+                datosActuales!.diagnoses!.map((dx) => (
                   <div key={dx.code} className="hcm-dx-item">
                     <span className="hcm-dx-code">{dx.code}</span>
                     <span className="hcm-dx-name">{dx.name}</span>
@@ -282,7 +382,7 @@ export default function HistoriaClinicaMedico() {
               </div>
               {datosActuales?.medicamentos?.length ? (
                 <>
-                  {datosActuales.medicamentos.map((m) => (
+                  {datosActuales!.medicamentos!.map((m) => (
                     <div key={`${m.nombre}-${m.concentracion}-${m.frecuencia}`} className="hcm-med-item">
                       <div className="hcm-med-nombre">{m.nombre} {m.concentracion}</div>
                       <div className="hcm-med-detalle">
@@ -475,8 +575,8 @@ export default function HistoriaClinicaMedico() {
                       )}
                     </div>
                     <div className="hcm-consulta-header-right">
-                      {soap?.diagnoses?.length > 0 && (
-                        <span className="hcm-dx-tag-small">{soap.diagnoses[0].code}</span>
+                      {(soap?.diagnoses?.length ?? 0) > 0 && (
+                        <span className="hcm-dx-tag-small">{soap!.diagnoses![0].code}</span>
                       )}
                       {isOpen ? <ChevronDown size={15} color="var(--text-muted)" /> : <ChevronRight size={15} color="var(--text-muted)" />}
                     </div>

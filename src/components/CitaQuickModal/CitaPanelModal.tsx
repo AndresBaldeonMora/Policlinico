@@ -2,7 +2,7 @@ import { useEffect, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import {
   ChevronRight, CalendarCheck, ClipboardList, User, Trash2, ChevronDown,
-  CalendarClock, ArmchairIcon,
+  CalendarClock, ArmchairIcon, MessageCircle,
 } from "lucide-react";
 import type { CitaTransformada } from "../../services/cita.service";
 import "./CitaPanelModal.css";
@@ -91,6 +91,12 @@ const CitaPanelModal = ({
     if (paciente?._id) { onCerrar(); onDatosPaciente(paciente._id); }
   };
 
+  const handleWhatsApp = () => {
+    if (!paciente?.telefono) return;
+    const numero = paciente.telefono.replace(/\D/g, "");
+    window.open(`https://wa.me/51${numero}`, "_blank", "noopener,noreferrer");
+  };
+
   return (
     <div
       className="cpop-card"
@@ -163,6 +169,14 @@ const CitaPanelModal = ({
         <span>Ficha médica</span>
         <ChevronRight size={14} className="cpop-menu-arrow" />
       </button>
+
+      {paciente?.telefono && (
+        <button className="cpop-menu-item cpop-menu-item--whatsapp" onClick={handleWhatsApp}>
+          <MessageCircle size={16} className="cpop-menu-icon" />
+          <span>WhatsApp</span>
+          <ChevronRight size={14} className="cpop-menu-arrow" />
+        </button>
+      )}
 
       <div className="cpop-divider" />
 

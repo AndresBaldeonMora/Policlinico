@@ -1,15 +1,23 @@
+/* ── Page override ────────────────────────────── */
+.mc-lista-page {
+  padding: 2rem 2.5rem;
+}
+
 /* ── Toolbar ──────────────────────────────────── */
 .mc-toolbar {
   display: flex;
-  flex-direction: column;
-  align-items: flex-start;
-  gap: 0.75rem;
-  margin-bottom: 1.25rem;
+  flex-direction: row;
+  align-items: center;
+  justify-content: flex-start;
+  gap: 1rem;
+  margin-bottom: 1.5rem;
 }
 
 .mc-toolbar .lista-search-bar {
+  flex: 0 0 auto;
+  max-width: 400px;
   width: 100%;
-  max-width: 480px;
+  margin-bottom: 0;
 }
 
 /* ── Filter pills ─────────────────────────────── */
@@ -88,10 +96,11 @@
 /* ── Tipo badge ───────────────────────────────── */
 .mc-tipo-badge {
   display: inline-block;
-  padding: 0.22rem 0.6rem;
+  padding: 0.22rem 0.7rem;
   border-radius: 20px;
   font-size: 0.72rem;
   font-weight: 600;
+  white-space: nowrap;
 }
 
 .mc-tipo-nueva {

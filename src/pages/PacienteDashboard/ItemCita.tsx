@@ -22,11 +22,12 @@ const puedeReprogramar = (cita: CitaHistorial): boolean => {
 
 const ESTADO_CONFIG: Record<string, { label: string; clase: string }> = {
   PENDIENTE:    { label: "Pendiente",    clase: "ic-badge--pending" },
-  ASISTIO:      { label: "Asistió",      clase: "ic-badge--warning" },
+  ASISTIO:      { label: "En sala",      clase: "ic-badge--warning" },
   ATENDIDA:     { label: "Atendida",     clase: "ic-badge--done" },
   CANCELADA:    { label: "Cancelada",    clase: "ic-badge--cancel" },
   REPROGRAMADA: { label: "Reprogramada", clase: "ic-badge--reprogramada" },
-  VENCIDA:      { label: "Vencida",      clase: "ic-badge--vencida" },
+  // Alias defensivo para datos heredados sin migrar (VENCIDA → Cancelada)
+  VENCIDA:      { label: "Cancelada",    clase: "ic-badge--cancel" },
 };
 
 const formatFecha = (iso: string) =>

@@ -15,12 +15,13 @@ const ESTADO_CITA: Record<string, { label: string; cls: string }> = {
 };
 
 const ESTADO_ORDEN: Record<string, string> = {
-  PENDIENTE:   "Pendiente",
-  EN_PROCESO:  "En proceso",
-  ASISTIDO:    "Asistido",
-  FINALIZADO:  "Finalizado",
-  CANCELADA:   "Cancelada",
-  VENCIDA:     "Vencida",
+  PENDIENTE:    "Pendiente",
+  EN_PROCESO:   "En proceso",
+  ASISTIDO:     "Asistido",
+  FINALIZADO:   "Finalizado",
+  CANCELADA:    "Cancelada",
+  // Alias defensivo para datos heredados sin migrar (VENCIDA → Cancelada)
+  VENCIDA:      "Cancelada",
 };
 
 const fmtFecha = (iso: string) =>

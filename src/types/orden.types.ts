@@ -17,7 +17,7 @@ export interface OrdenDetalle {
   id: string;
   codigoOrden: string;
   tipoOrden: "LABORATORIO" | "IMAGEN" | "MIXTA";
-  estado: "PENDIENTE" | "EN_PROCESO" | "ASISTIDO" | "FINALIZADO" | "CANCELADA" | "VENCIDA";
+  estado: "PENDIENTE" | "EN_PROCESO" | "ASISTIDO" | "FINALIZADO" | "CANCELADA";
   especialidad: string;
   medicoId: string;
   medicoNombre: string;
