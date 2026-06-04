@@ -70,7 +70,7 @@ export interface CrearInterconsultaPayload {
 
 export interface AgendarCitaPayload {
   fecha: string;
-  hora: string;
+  hora?: string;
   respuesta?: string;
 }
 

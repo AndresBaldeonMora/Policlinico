@@ -94,9 +94,14 @@
   font-family: inherit;
 }
 
-.cpop-estado-item:hover {
+.cpop-estado-item:hover:not(:disabled) {
   background: var(--primary-lighter);
   color: var(--primary);
+}
+
+.cpop-estado-item:disabled {
+  opacity: 0.42;
+  cursor: not-allowed;
 }
 
 .cpop-estado-item-icon {

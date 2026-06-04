@@ -147,7 +147,8 @@ export default function ModalReceta({ cita, alergias = EMPTY_ALERGIAS, onClose, 
     if (!form.dosis?.trim())      e.dosis       = "Dosis por toma obligatoria.";
     if (!form.frecuencia?.trim()) e.frecuencia  = "Frecuencia obligatoria.";
     if (!form.duracion?.trim())   e.duracion    = "Duración del tratamiento obligatoria.";
-    if (!form.cantidad?.trim())   e.cantidad    = "Cantidad a dispensar obligatoria.";
+    if (!form.cantidad?.trim())      e.cantidad      = "Cantidad a dispensar obligatoria.";
+    if (!form.instrucciones?.trim()) e.instrucciones = "Instrucciones para el paciente obligatorias.";
     setErrores(e);
     return Object.keys(e).length === 0;
   };
@@ -273,7 +274,7 @@ export default function ModalReceta({ cita, alergias = EMPTY_ALERGIAS, onClose, 
               </label>
               <input
                 style={{ ...inputStyle, borderColor: errores.dci ? "var(--error)" : "var(--border)" }}
-                placeholder="ej. Paracetamol, Amoxicilina, Metformina…"
+                placeholder=""
                 value={form.dci}
                 onChange={e => upF("dci", e.target.value)}
               />
@@ -288,7 +289,7 @@ export default function ModalReceta({ cita, alergias = EMPTY_ALERGIAS, onClose, 
                 <div style={{ display: "flex", gap: 4 }}>
                   <input
                     style={{ ...inputStyle, flex: 1, borderColor: errores.concentracion ? "var(--error)" : "var(--border)" }}
-                    placeholder="ej. 500"
+                    placeholder=""
                     value={concValor}
                     onChange={e => { setConcValor(e.target.value); if (errores.concentracion) setErrores(p => ({ ...p, concentracion: "" })); }}
                   />
@@ -324,7 +325,7 @@ export default function ModalReceta({ cita, alergias = EMPTY_ALERGIAS, onClose, 
                 <label style={labelStyle}>Dosis por toma{requiredMark}</label>
                 <input
                   style={{ ...inputStyle, borderColor: errores.dosis ? "var(--error)" : "var(--border)" }}
-                  placeholder="ej. 1 tableta"
+                  placeholder=""
                   value={form.dosis}
                   onChange={e => upF("dosis", e.target.value)}
                 />
@@ -361,7 +362,7 @@ export default function ModalReceta({ cita, alergias = EMPTY_ALERGIAS, onClose, 
                 </label>
                 <input
                   style={{ ...inputStyle, borderColor: errores.cantidad ? "var(--error)" : "var(--border)" }}
-                  placeholder="ej. 14 tabletas"
+                  placeholder=""
                   value={form.cantidad}
                   onChange={e => upF("cantidad", e.target.value)}
                 />
@@ -369,15 +370,16 @@ export default function ModalReceta({ cita, alergias = EMPTY_ALERGIAS, onClose, 
               </div>
             </div>
 
-            {/* ── Fila 5: Instrucciones al paciente (opcional) ── */}
+            {/* ── Fila 5: Instrucciones al paciente ── */}
             <div style={{ marginBottom: 14 }}>
-              <label style={labelStyle}>Instrucciones para el paciente (opcional)</label>
+              <label style={labelStyle}>Instrucciones para el paciente{requiredMark}</label>
               <input
-                style={inputStyle}
-                placeholder="ej. Tomar con alimentos. Evitar alcohol durante el tratamiento."
+                style={{ ...inputStyle, borderColor: errores.instrucciones ? "var(--error)" : "var(--border)" }}
+                placeholder=""
                 value={form.instrucciones}
                 onChange={e => upF("instrucciones", e.target.value)}
               />
+              {errores.instrucciones && <p style={errStyle}>{errores.instrucciones}</p>}
             </div>
 
             <button

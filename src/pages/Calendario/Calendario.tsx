@@ -12,7 +12,7 @@ import {
   type EditandoState, type MesOption, type HorarioPorDia,
 } from "../ListaCitas/ListaCitasReducer";
 import ReprogramarModal from "../ListaCitas/ReprogramarModal";
-import { toISODateLocal, obtenerInicioSemana } from "../../utils/fecha.utils";
+import { toISODateLocal, obtenerInicioSemana, horasHastaCitaISO } from "../../utils/fecha.utils";
 import MiniCalendario from "./MiniCalendario";
 import CalendarioTopbar from "./CalendarioTopBar";
 import DoctoresPanel from "./DoctoresPanel";
@@ -229,6 +229,11 @@ const Calendario = () => {
   // ── Acción: Reprogramar ──
   const handleAbrirReprogramar = useCallback((cita: CitaTransformada) => {
     cerrarPanel();
+    // Guardia defensiva: el botón en CitaPanelModal ya está deshabilitado,
+    // pero si se llega aquí por otra vía también se bloquea.
+    const fueraDePlazo = horasHastaCitaISO(cita.fecha, cita.hora) < 24;
+    if (cita.estado !== "PENDIENTE" || fueraDePlazo) return;
+
     const pac = cita.pacienteId && typeof cita.pacienteId === "object" ? cita.pacienteId : null;
     const doc = cita.doctorId   && typeof cita.doctorId   === "object" ? cita.doctorId   : null;
     // eslint-disable-next-line @typescript-eslint/no-explicit-any

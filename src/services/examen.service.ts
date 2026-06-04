@@ -165,12 +165,35 @@ export class ExamenService {
   }
 
   // ─── Flujo clínico: Autorizar orden (recepción) ────────────
-  // PENDIENTE → EN_PROCESO (vigencia 7 días)
-  // fechaCitaLab: "YYYY-MM-DD" - día agendado para la toma de muestra
-  static async autorizarOrden(ordenId: string, fechaCitaLab?: string): Promise<OrdenExamen> {
+  // PENDIENTE → EN_PROCESO
+  // LAB:    fechaCitaLab    "YYYY-MM-DD" → backend recibe "DD/MM/YYYY"
+  // IMAGEN: citaImagenFecha "YYYY-MM-DD HH:mm" → backend recibe "DD/MM/YYYY HH:mm"
+  static async autorizarOrden(
+    ordenId: string,
+    payload: {
+      fechaCitaLab?: string;          // "YYYY-MM-DD"
+      citaImagenFecha?: string;       // "YYYY-MM-DD HH:mm"
+      salaEquipo?: string;
+      duracionEstimadaMin?: number;
+    }
+  ): Promise<OrdenExamen> {
+    const body: Record<string, unknown> = {};
+
+    if (payload.fechaCitaLab) {
+      const [y, m, d] = payload.fechaCitaLab.split("-");
+      body.fechaCitaLab = `${d}/${m}/${y}`;
+    }
+    if (payload.citaImagenFecha) {
+      const [datePart, timePart] = payload.citaImagenFecha.split(" ");
+      const [y, m, d] = datePart.split("-");
+      body.citaImagenFecha = `${d}/${m}/${y} ${timePart ?? "08:00"}`;
+    }
+    if (payload.salaEquipo)          body.salaEquipo          = payload.salaEquipo;
+    if (payload.duracionEstimadaMin) body.duracionEstimadaMin = payload.duracionEstimadaMin;
+
     const res = await api.patch<{ success: boolean; data: OrdenExamen }>(
       `/ordenes/${ordenId}/autorizar`,
-      fechaCitaLab ? { fechaCitaLab } : {}
+      body
     );
     return res.data.data;
   }

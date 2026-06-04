@@ -7,6 +7,7 @@ interface AuthContextType {
   login: (correo: string, password: string) => Promise<void>;
   logout: () => Promise<void>;
   hasRole: (...roles: UserRole[]) => boolean;
+  onPasswordChanged: () => void;
 }
 
 export const AuthContext = createContext<AuthContextType | undefined>(undefined);

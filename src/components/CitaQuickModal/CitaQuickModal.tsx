@@ -126,7 +126,7 @@ const CitaQuickModal = ({ citaId, onCerrar, onCitaActualizada, onReprogramar }: 
   const consultorio = CONSULTORIO_POR_ESPECIALIDAD[especialidad] ?? "—";
 
   const fechaDisplay = cita.fecha
-    ? new Date(cita.fecha).toLocaleDateString("es-PE", { day: "2-digit", month: "2-digit", year: "numeric" })
+    ? new Date(cita.fecha).toLocaleDateString("es-PE", { day: "2-digit", month: "2-digit", year: "numeric", timeZone: "UTC" })
     : "—";
 
   const fueraDePlazo = cita.fecha && cita.hora
@@ -225,12 +225,6 @@ const CitaQuickModal = ({ citaId, onCerrar, onCitaActualizada, onReprogramar }: 
                   </div>
                 </div>
 
-                {cita.notasClinicas && (
-                  <div className="cita-modal-field-row" style={{ alignItems: "flex-start" }}>
-                    <label className="cita-modal-field-label">Nota</label>
-                    <div className="cita-modal-field-value">{cita.notasClinicas}</div>
-                  </div>
-                )}
               </div>
             </div>
           ) : (

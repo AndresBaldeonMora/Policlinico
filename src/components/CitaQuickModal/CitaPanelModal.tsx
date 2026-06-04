@@ -5,6 +5,7 @@ import {
   CalendarClock, ArmchairIcon, MessageCircle,
 } from "lucide-react";
 import type { CitaTransformada } from "../../services/cita.service";
+import { horasHastaCitaISO } from "../../utils/fecha.utils";
 import "./CitaPanelModal.css";
 
 interface Posicion { x: number; y: number }
@@ -57,6 +58,19 @@ const CitaPanelModal = ({
   const citaAny   = cita as any;
   const tipo      = citaAny.subtipoCita ?? citaAny.tipo ?? "Consulta";
   const horaFin   = sumarMinutos(cita.hora, 30);
+
+  // Reglas de reprogramación: solo PENDIENTE y con al menos 24 h de anticipación.
+  const fueraDePlazo    = horasHastaCitaISO(cita.fecha, cita.hora) < 24;
+  const puedeReprogramar =
+    cita.estado === "PENDIENTE" && !fueraDePlazo;
+  const motivoDeshabilitado =
+    cita.estado === "REPROGRAMADA"
+      ? "Esta cita ya fue reprogramada y no admite una segunda reprogramación"
+      : cita.estado !== "PENDIENTE"
+      ? "Solo se pueden reprogramar citas en estado Pendiente"
+      : fueraDePlazo
+      ? "No se puede reprogramar: quedan menos de 24 h para la cita"
+      : undefined;
 
   /* ── Calcular posición inteligente ── */
   const left = posicion.x + POPOVER_W > window.innerWidth
@@ -133,6 +147,8 @@ const CitaPanelModal = ({
           </button>
           <button
             className="cpop-estado-item"
+            disabled={!puedeReprogramar}
+            title={motivoDeshabilitado}
             onClick={() => { setEstadoAbierto(false); onReprogramar(cita); }}
           >
             <CalendarClock size={15} className="cpop-estado-item-icon" />

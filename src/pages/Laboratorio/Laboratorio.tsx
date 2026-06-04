@@ -31,10 +31,29 @@ import "../ListaCitas/ListaCitas.css";
 const formatFecha = (iso: string) =>
   new Date(iso).toLocaleDateString("es-PE", {
     day: "2-digit",
-    month: "short",
+    month: "2-digit",
     year: "numeric",
     timeZone: "UTC",
   });
+
+// "YYYY-MM-DD" → "DD/MM/YYYY"
+const isoADMY = (iso: string): string => {
+  const [y, m, d] = iso.split("-");
+  return `${d}/${m}/${y}`;
+};
+
+// Today in local timezone as "YYYY-MM-DD"
+const hoyISO = (): string => {
+  const d = new Date();
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+};
+
+// Navigate a "YYYY-MM-DD" string by ±N days
+const sumarDias = (iso: string, dias: number): string => {
+  const d = new Date(`${iso}T12:00:00`);
+  d.setDate(d.getDate() + dias);
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+};
 
 // "YYYY-MM-DD" → fecha larga en español (fecha local, sin desfase)
 const formatFechaLocalLarga = (dateStr: string): string => {
@@ -145,14 +164,33 @@ const ModalGenerarOrden = ({ orden, onCerrar, onGuardado }: ModalGenerarOrdenPro
     return d;
   }, []);
 
-  const [calAño, setCalAño]   = useState(() => hoy.getFullYear());
-  const [calMes, setCalMes]   = useState(() => hoy.getMonth());
-  const [fechaSel, setFechaSel] = useState<string | null>(null);
+  const tipoOrden   = orden.tipoOrden ?? "LABORATORIO";
+  const esMixta     = tipoOrden === "MIXTA";
+  const soloLab     = tipoOrden === "LABORATORIO";
+  const soloImagen  = tipoOrden === "IMAGEN";
+
+  // Paso 1 = LAB (para LABORATORIO o MIXTA) o IMAGEN (para solo IMAGEN)
+  // Paso 2 = IMAGEN (solo para MIXTA, después de confirmar LAB)
+  const [paso, setPaso] = useState<1 | 2>(1);
+  const enPasoLab    = paso === 1 && !soloImagen;
+  const enPasoImagen = soloImagen || (esMixta && paso === 2);
+
+  // ── Estado LAB ──
+  const [calAño, setCalAño]     = useState(() => hoy.getFullYear());
+  const [calMes, setCalMes]     = useState(() => hoy.getMonth());
+  const [fechaLabSel, setFechaLabSel] = useState<string | null>(null);
   const [disponibilidad, setDisponibilidad] = useState<Record<string, number>>({});
-  const [capacidad, setCapacidad] = useState(15);
+  const [capacidad, setCapacidad]   = useState(15);
   const [cargandoDisp, setCargandoDisp] = useState(true);
+
+  // ── Estado IMAGEN ──
+  const [imgFecha, setImgFecha] = useState("");
+  const [imgHora, setImgHora]   = useState("08:00");
+  const [salaEquipo, setSala]   = useState("");
+  const [duracion, setDuracion] = useState(30);
+
   const [enviando, setEnviando] = useState(false);
-  const [error, setError] = useState("");
+  const [error, setError]       = useState("");
 
   // Cargar disponibilidad del mes visible
   useEffect(() => {
@@ -205,13 +243,13 @@ const ModalGenerarOrden = ({ orden, onCerrar, onGuardado }: ModalGenerarOrdenPro
 
   const irMesAnterior = () => {
     if (!puedeRetroceder) return;
-    setFechaSel(null);
+    setFechaLabSel(null);
     if (calMes === 0) { setCalMes(11); setCalAño((a) => a - 1); }
     else setCalMes((m) => m - 1);
   };
 
   const irMesSiguiente = () => {
-    setFechaSel(null);
+    setFechaLabSel(null);
     if (calMes === 11) { setCalMes(0); setCalAño((a) => a + 1); }
     else setCalMes((m) => m + 1);
   };
@@ -219,27 +257,42 @@ const ModalGenerarOrden = ({ orden, onCerrar, onGuardado }: ModalGenerarOrdenPro
   const handleSelDia = (dia: number) => {
     if (esBloqueado(dia)) return;
     const key = getFechaKey(dia);
-    setFechaSel((prev) => (prev === key ? null : key));
+    setFechaLabSel((prev) => (prev === key ? null : key));
     setError("");
   };
 
-  const handleConfirmar = async () => {
-    if (!fechaSel) {
+  // Avanzar al paso IMAGEN (solo para MIXTA)
+  const handleSiguientePaso = () => {
+    if (!fechaLabSel) {
       setError("Debe seleccionar una fecha para la toma de muestra.");
+      return;
+    }
+    setError("");
+    setPaso(2);
+  };
+
+  const handleConfirmar = async () => {
+    if (enPasoImagen && !imgFecha) {
+      setError("Debe seleccionar fecha y hora para el examen de imagenología.");
       return;
     }
     setEnviando(true);
     setError("");
     try {
-      await ExamenService.autorizarOrden(orden._id, fechaSel);
+      await ExamenService.autorizarOrden(orden._id, {
+        fechaCitaLab:        !soloImagen ? (fechaLabSel ?? undefined) : undefined,
+        citaImagenFecha:     enPasoImagen ? `${imgFecha} ${imgHora}` : undefined,
+        salaEquipo:          salaEquipo || undefined,
+        duracionEstimadaMin: enPasoImagen ? duracion : undefined,
+      });
       onGuardado();
       onCerrar();
       Swal.fire({
         icon: "success",
         title: "Orden generada",
-        html: `Orden <strong>${orden.codigoOrden ?? ""}</strong> en vigencia.<br>
-          Cita programada: <strong>${formatFechaLocalLarga(fechaSel)}</strong><br>
-          <span style="font-size:0.88em;color:#6b7280">Toma de muestras a las 7:00 a.m.</span>`,
+        html: `Orden <strong>${orden.codigoOrden ?? ""}</strong> en vigencia.
+          ${!soloImagen && fechaLabSel ? `<br>Toma de muestras: <strong>${formatFechaLocalLarga(fechaLabSel)}</strong> · 7:00 a.m.` : ""}
+          ${enPasoImagen && imgFecha ? `<br>Imagen: <strong>${imgFecha.split("-").reverse().join("/")} ${imgHora}</strong>${salaEquipo ? ` · ${salaEquipo}` : ""}` : ""}`,
         confirmButtonColor: "var(--primary)",
       });
     } catch (err: any) {
@@ -251,9 +304,14 @@ const ModalGenerarOrden = ({ orden, onCerrar, onGuardado }: ModalGenerarOrdenPro
 
   const paciente = orden.pacienteId;
   const nombrePaciente = `${paciente.nombres} ${paciente.apellidos}`;
-  const infoSel = fechaSel
-    ? { libres: capacidad - (disponibilidad[fechaSel] ?? 0) }
+  const infoSel = fechaLabSel
+    ? { libres: capacidad - (disponibilidad[fechaLabSel] ?? 0) }
     : null;
+
+  const tituloModal = enPasoImagen ? "Agendar Examen de Imagenología" : "Agendar Toma de Muestras";
+  const subtituloModal = esMixta
+    ? (paso === 1 ? "Paso 1 de 2 · Laboratorio" : "Paso 2 de 2 · Imagenología")
+    : soloImagen ? "Imagenología" : "Laboratorio";
 
   return (
     <div className="lab-modal-overlay" onClick={onCerrar}>
@@ -264,15 +322,19 @@ const ModalGenerarOrden = ({ orden, onCerrar, onGuardado }: ModalGenerarOrdenPro
       >
         {/* Header */}
         <div className="lab-modal-header">
-          <h3>Agendar Cita de Laboratorio</h3>
+          <h3>{tituloModal}</h3>
           <p className="lab-modal-paciente">
-            Orden <strong>{orden.codigoOrden}</strong> - {nombrePaciente}
+            Orden <strong>{orden.codigoOrden}</strong> · {nombrePaciente}
+            <span style={{ marginLeft: 8, fontSize: 11, color: "var(--text-muted)" }}>
+              {subtituloModal}
+            </span>
           </p>
         </div>
 
         {/* Body */}
         <div className="lab-modal-body" style={{ padding: "1.25rem 1.5rem" }}>
-          {/* Horario fijo */}
+          {/* Nota horario LAB */}
+          {enPasoLab && (
           <div className="lab-citalab-nota" style={{ marginBottom: "1.25rem" }}>
             <CalendarClock size={14} style={{ flexShrink: 0, marginTop: 1 }} />
             <span>
@@ -280,101 +342,164 @@ const ModalGenerarOrden = ({ orden, onCerrar, onGuardado }: ModalGenerarOrdenPro
               {" "}El paciente debe presentarse en ayuno de 8 a 12 horas previo a la toma.
             </span>
           </div>
+          )}
 
-          {/* Calendario */}
-          <div className="lab-cal-container">
-            {/* Navegación */}
-            <div className="lab-cal-nav">
-              <button
-                className="lab-cal-nav-btn"
-                onClick={irMesAnterior}
-                disabled={!puedeRetroceder}
-                aria-label="Mes anterior"
-                title="Mes anterior"
-              >
-                <ChevronLeft size={16} />
-              </button>
-              <span className="lab-cal-mes-label">
-                {NOMBRES_MESES[calMes]} {calAño}
-                {cargandoDisp && (
-                  <RefreshCw
-                    size={12}
-                    style={{ marginLeft: 6, animation: "spin 1s linear infinite", opacity: 0.5 }}
-                  />
-                )}
-              </span>
-              <button
-                className="lab-cal-nav-btn"
-                onClick={irMesSiguiente}
-                aria-label="Mes siguiente"
-                title="Mes siguiente"
-              >
-                <ChevronRight size={16} />
-              </button>
-            </div>
+          {/* Calendario LAB */}
+          {enPasoLab && (
+            <>
+            <div className="lab-cal-container">
+              {/* Navegación */}
+              <div className="lab-cal-nav">
+                <button
+                  className="lab-cal-nav-btn"
+                  onClick={irMesAnterior}
+                  disabled={!puedeRetroceder}
+                  aria-label="Mes anterior"
+                  title="Mes anterior"
+                >
+                  <ChevronLeft size={16} />
+                </button>
+                <span className="lab-cal-mes-label">
+                  {NOMBRES_MESES[calMes]} {calAño}
+                  {cargandoDisp && (
+                    <RefreshCw
+                      size={12}
+                      style={{ marginLeft: 6, animation: "spin 1s linear infinite", opacity: 0.5 }}
+                    />
+                  )}
+                </span>
+                <button
+                  className="lab-cal-nav-btn"
+                  onClick={irMesSiguiente}
+                  aria-label="Mes siguiente"
+                  title="Mes siguiente"
+                >
+                  <ChevronRight size={16} />
+                </button>
+              </div>
 
-            {/* Grilla */}
-            <div className="lab-cal-grid">
-              {DIAS_SEMANA_SHORT.map((d) => (
-                <div key={d} className="lab-cal-dow">{d}</div>
-              ))}
-              {diasDelMes.map((dia, idx) => {
-                if (dia === null) return <div key={`vacio-${idx}`} aria-hidden="true" />;
-                const estado = getEstadoDia(dia);
-                const clave  = getFechaKey(dia);
-                const sel    = fechaSel === clave;
-                return (
-                  <div
-                    key={clave}
-                    className={[
-                      "lab-cal-dia",
-                      `lab-cal-dia--${estado}`,
-                      sel ? "lab-cal-dia--selected" : "",
-                    ].join(" ")}
-                    onClick={() => handleSelDia(dia)}
-                    title={
-                      estado === "cerrado"    ? "Laboratorio cerrado (domingo)" :
-                      estado === "pasado"     ? "Fecha pasada" :
-                      estado === "lleno"      ? `Sin cupos (${getOcupados(dia)}/${capacidad})` :
-                      estado === "casi-lleno" ? `Solo ${capacidad - getOcupados(dia)} cupo(s) disponible(s)` :
-                      `${capacidad - getOcupados(dia)} cupo(s) disponible(s)`
-                    }
-                  >
-                    <span className="lab-cal-dia-num">{dia}</span>
-                    {estado !== "pasado" && estado !== "cerrado" && (
-                      <span className="lab-cal-dia-dot" />
-                    )}
-                  </div>
-                );
-              })}
-            </div>
+              {/* Grilla */}
+              <div className="lab-cal-grid">
+                {DIAS_SEMANA_SHORT.map((d) => (
+                  <div key={d} className="lab-cal-dow">{d}</div>
+                ))}
+                {diasDelMes.map((dia, idx) => {
+                  if (dia === null) return <div key={`vacio-${idx}`} aria-hidden="true" />;
+                  const estado = getEstadoDia(dia);
+                  const clave  = getFechaKey(dia);
+                  const sel    = fechaSel === clave;
+                  return (
+                    <div
+                      key={clave}
+                      className={[
+                        "lab-cal-dia",
+                        `lab-cal-dia--${estado}`,
+                        sel ? "lab-cal-dia--selected" : "",
+                      ].join(" ")}
+                      onClick={() => handleSelDia(dia)}
+                      title={
+                        estado === "cerrado"    ? "Laboratorio cerrado (domingo)" :
+                        estado === "pasado"     ? "Fecha pasada" :
+                        estado === "lleno"      ? `Sin cupos (${getOcupados(dia)}/${capacidad})` :
+                        estado === "casi-lleno" ? `Solo ${capacidad - getOcupados(dia)} cupo(s) disponible(s)` :
+                        `${capacidad - getOcupados(dia)} cupo(s) disponible(s)`
+                      }
+                    >
+                      <span className="lab-cal-dia-num">{dia}</span>
+                      {estado !== "pasado" && estado !== "cerrado" && (
+                        <span className="lab-cal-dia-dot" />
+                      )}
+                    </div>
+                  );
+                })}
+              </div>
 
-            {/* Leyenda */}
-            <div className="lab-cal-leyenda">
-              <span className="lab-cal-leyenda-item">
-                <span className="lab-cal-dot lab-cal-dot--disponible" /> Disponible
-              </span>
-              <span className="lab-cal-leyenda-item">
-                <span className="lab-cal-dot lab-cal-dot--casi-lleno" /> Pocos cupos
-              </span>
-              <span className="lab-cal-leyenda-item">
-                <span className="lab-cal-dot lab-cal-dot--lleno" /> Sin cupos
-              </span>
-            </div>
-          </div>
-
-          {/* Info de fecha seleccionada */}
-          {fechaSel && infoSel && (
-            <div className="lab-cal-seleccion">
-              <div className="lab-cal-seleccion-fecha">
-                <CalendarClock size={14} />
-                <strong>{formatFechaLocalLarga(fechaSel)}</strong>
-                <span style={{ color: "var(--text-muted)", fontSize: "0.82rem" }}>
-                  · 7:00 a.m.
+              {/* Leyenda */}
+              <div className="lab-cal-leyenda">
+                <span className="lab-cal-leyenda-item">
+                  <span className="lab-cal-dot lab-cal-dot--disponible" /> Disponible
+                </span>
+                <span className="lab-cal-leyenda-item">
+                  <span className="lab-cal-dot lab-cal-dot--casi-lleno" /> Pocos cupos
+                </span>
+                <span className="lab-cal-leyenda-item">
+                  <span className="lab-cal-dot lab-cal-dot--lleno" /> Sin cupos
                 </span>
               </div>
-              <div className="lab-cal-seleccion-cupos">
-                {infoSel.libres} de {capacidad} cupos disponibles para ese día
+            </div>
+
+            {/* Info de fecha seleccionada */}
+            {fechaLabSel && infoSel && (
+              <div className="lab-cal-seleccion">
+                <div className="lab-cal-seleccion-fecha">
+                  <CalendarClock size={14} />
+                  <strong>{formatFechaLocalLarga(fechaLabSel)}</strong>
+                  <span style={{ color: "var(--text-muted)", fontSize: "0.82rem" }}>
+                    · 7:00 a.m.
+                  </span>
+                </div>
+                <div className="lab-cal-seleccion-cupos">
+                  {infoSel.libres} de {capacidad} cupos disponibles para ese día
+                </div>
+              </div>
+            )}
+            </>
+          )}
+
+          {/* Sección IMAGEN */}
+          {enPasoImagen && (
+            <div>
+              <div className="lab-citalab-nota" style={{ marginBottom: "1.25rem" }}>
+                <CalendarClock size={14} style={{ flexShrink: 0, marginTop: 1 }} />
+                <span>
+                  <strong>Examen de imagen:</strong> Selecciona el día y la hora de la cita.
+                  {salaEquipo ? "" : " Sala/equipo opcional."}
+                </span>
+              </div>
+              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "0.75rem", marginBottom: "0.75rem" }}>
+                <div>
+                  <label className="soap-section-label" style={{ fontSize: 12 }}>Fecha <span style={{ color: "var(--danger)" }}>*</span></label>
+                  <input
+                    type="date"
+                    className="soap-input"
+                    min={new Date().toISOString().slice(0, 10)}
+                    value={imgFecha}
+                    onChange={e => setImgFecha(e.target.value)}
+                  />
+                </div>
+                <div>
+                  <label className="soap-section-label" style={{ fontSize: 12 }}>Hora <span style={{ color: "var(--danger)" }}>*</span></label>
+                  <input
+                    type="time"
+                    className="soap-input"
+                    value={imgHora}
+                    onChange={e => setImgHora(e.target.value)}
+                  />
+                </div>
+              </div>
+              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "0.75rem" }}>
+                <div>
+                  <label className="soap-section-label" style={{ fontSize: 12 }}>Sala / Equipo</label>
+                  <input
+                    type="text"
+                    className="soap-input"
+                    placeholder="Ej: Sala 1, Ecógrafo A…"
+                    value={salaEquipo}
+                    onChange={e => setSala(e.target.value)}
+                  />
+                </div>
+                <div>
+                  <label className="soap-section-label" style={{ fontSize: 12 }}>Duración (min)</label>
+                  <input
+                    type="number"
+                    className="soap-input"
+                    min={10}
+                    max={120}
+                    step={5}
+                    value={duracion}
+                    onChange={e => setDuracion(Number(e.target.value))}
+                  />
+                </div>
               </div>
             </div>
           )}
@@ -390,28 +515,39 @@ const ModalGenerarOrden = ({ orden, onCerrar, onGuardado }: ModalGenerarOrdenPro
         <div className="lab-modal-footer">
           <button
             className="lab-btn lab-btn--cancel"
-            onClick={onCerrar}
+            onClick={esMixta && paso === 2 ? () => setPaso(1) : onCerrar}
             disabled={enviando}
           >
-            Cancelar
+            {esMixta && paso === 2 ? "Volver" : "Cancelar"}
           </button>
-          <button
-            className="lab-btn lab-btn--primary"
-            onClick={handleConfirmar}
-            disabled={!fechaSel || enviando}
-          >
-            {enviando ? (
-              <>
-                <RefreshCw size={14} style={{ marginRight: 6, animation: "spin 1s linear infinite" }} />
-                Generando…
-              </>
-            ) : (
-              <>
-                <ShieldCheck size={14} style={{ marginRight: 6 }} />
-                Generar Orden
-              </>
-            )}
-          </button>
+          {/* MIXTA paso 1: botón Siguiente */}
+          {esMixta && paso === 1 ? (
+            <button
+              className="lab-btn lab-btn--primary"
+              onClick={handleSiguientePaso}
+              disabled={!fechaLabSel}
+            >
+              Siguiente →
+            </button>
+          ) : (
+            <button
+              className="lab-btn lab-btn--primary"
+              onClick={handleConfirmar}
+              disabled={enviando || (enPasoImagen && !imgFecha)}
+            >
+              {enviando ? (
+                <>
+                  <RefreshCw size={14} style={{ marginRight: 6, animation: "spin 1s linear infinite" }} />
+                  Generando…
+                </>
+              ) : (
+                <>
+                  <ShieldCheck size={14} style={{ marginRight: 6 }} />
+                  Generar Orden
+                </>
+              )}
+            </button>
+          )}
         </div>
       </div>
     </div>
@@ -1545,6 +1681,8 @@ export default function LaboratorioImagen() {
   const [cargando, setCargando] = useState(false);
   const [error, setError] = useState("");
   const [busqueda, setBusqueda] = useState("");
+  const [fechaFiltro, setFechaFiltro] = useState<string>(hoyISO());
+  const fechaInputRef = useRef<HTMLInputElement>(null);
   const [actualizando, setActualizando] = useState(false);
   const inicializado = useRef(false);
 
@@ -1628,8 +1766,12 @@ export default function LaboratorioImagen() {
     cargarConteos();
   };
 
-  // ── Filtrar por búsqueda local ──
+  // ── Filtrar por fecha y búsqueda local ──
   const ordenesFiltradas = ordenes.filter((o) => {
+    if (fechaFiltro) {
+      const fechaOrden = (o.fecha ?? "").slice(0, 10);
+      if (fechaOrden !== fechaFiltro) return false;
+    }
     if (!busqueda.trim()) return true;
     const q = busqueda.toLowerCase();
     const p = o.pacienteId;
@@ -1693,9 +1835,59 @@ export default function LaboratorioImagen() {
         })}
       </div>
 
-      {/* ── Buscador ── */}
+      {/* ── Filtros ── */}
       <div className="lab-filtros-avanzados">
-        <div className="lab-filtro-campo" style={{ flex: 1, minWidth: 280 }}>
+        {/* Navegador de fecha */}
+        <div className="lab-filtro-campo">
+          <label className="lab-filtro-label">Fecha</label>
+          <div style={{ display: "flex", alignItems: "center", gap: 4 }}>
+            <button
+              className="lab-cal-nav-btn"
+              onClick={() => setFechaFiltro((f) => sumarDias(f, -1))}
+              title="Día anterior"
+            >
+              <ChevronLeft size={15} />
+            </button>
+            <div
+              style={{ position: "relative", display: "inline-flex", cursor: "pointer" }}
+              onClick={() => fechaInputRef.current?.showPicker()}
+            >
+              <span style={{
+                padding: "0.38rem 0.75rem",
+                border: "1px solid var(--border)",
+                borderRadius: 8,
+                fontSize: "0.88rem",
+                fontWeight: 600,
+                color: "var(--text-primary)",
+                background: "var(--bg-body)",
+                minWidth: 112,
+                textAlign: "center",
+                pointerEvents: "none",
+                userSelect: "none",
+                display: "inline-block",
+              }}>
+                {isoADMY(fechaFiltro)}
+              </span>
+              <input
+                ref={fechaInputRef}
+                type="date"
+                value={fechaFiltro}
+                onChange={(e) => setFechaFiltro(e.target.value)}
+                style={{ position: "absolute", inset: 0, opacity: 0, pointerEvents: "none", width: "100%", height: "100%" }}
+              />
+            </div>
+            <button
+              className="lab-cal-nav-btn"
+              onClick={() => setFechaFiltro((f) => sumarDias(f, 1))}
+              title="Día siguiente"
+            >
+              <ChevronRight size={15} />
+            </button>
+          </div>
+        </div>
+
+        {/* Buscador */}
+        <div className="lab-filtro-campo" style={{ flex: 1, minWidth: 240 }}>
           <label className="lab-filtro-label">Buscar en {tabInfo.label}</label>
           <div style={{ position: "relative", width: "100%" }}>
             <Search
@@ -1718,6 +1910,7 @@ export default function LaboratorioImagen() {
             />
           </div>
         </div>
+
         {busqueda && (
           <button
             className="lab-btn-limpiar"

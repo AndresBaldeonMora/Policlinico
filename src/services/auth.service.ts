@@ -10,6 +10,7 @@ export interface AuthUser {
   rol: UserRole;
   medicoId?: string;
   pacienteId?: string;
+  debeCambiarPassword?: boolean;
 }
 
 const API_BASE_URL = import.meta.env.VITE_API_URL ?? "http://localhost:3000/api";
@@ -38,18 +39,20 @@ interface BackendLoginResponse {
     rol: string;
     medicoId?: string;
     pacienteId?: string;
+    debeCambiarPassword?: boolean;
   };
 }
 
 function toAuthUser(u: BackendLoginResponse["user"]): AuthUser {
   return {
-    id:         u.id,
-    correo:     u.correo,
-    nombres:    u.nombres ?? "",
-    apellidos:  u.apellidos ?? "",
-    rol:        normalizeRol(u.rol),
-    medicoId:   u.medicoId,
-    pacienteId: u.pacienteId,
+    id:                   u.id,
+    correo:               u.correo,
+    nombres:              u.nombres ?? "",
+    apellidos:            u.apellidos ?? "",
+    rol:                  normalizeRol(u.rol),
+    medicoId:             u.medicoId,
+    pacienteId:           u.pacienteId,
+    debeCambiarPassword:  u.debeCambiarPassword ?? false,
   };
 }
 
@@ -86,6 +89,24 @@ export const AuthService = {
       return JSON.parse(raw) as AuthUser;
     } catch {
       return null;
+    }
+  },
+
+  cambiarPassword: async (passwordActual: string, passwordNuevo: string): Promise<void> => {
+    const token = localStorage.getItem(TOKEN_KEY);
+    await axios.post(
+      `${API_BASE_URL}/auth/cambiar-password`,
+      { passwordActual, passwordNuevo },
+      { headers: { Authorization: `Bearer ${token}` } }
+    );
+    // Actualizar el usuario en localStorage para limpiar el flag
+    const raw = localStorage.getItem(USER_KEY);
+    if (raw) {
+      try {
+        const u = JSON.parse(raw) as AuthUser;
+        u.debeCambiarPassword = false;
+        localStorage.setItem(USER_KEY, JSON.stringify(u));
+      } catch { /* ignore */ }
     }
   },
 

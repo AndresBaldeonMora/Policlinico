@@ -3,7 +3,7 @@ import { useParams, useNavigate } from "react-router-dom";
 import Swal from "sweetalert2";
 import { AlertTriangle, Pill, Plus, ChevronDown, ChevronUp, Scissors, Users, Activity } from "lucide-react";
 import "./NotaSOAP.css";
-import { fmtEstado, formatearFechaDMY, formatearFechaCorta } from "../../utils/fecha.utils";
+import { formatearFechaDMY, formatearFechaCorta } from "../../utils/fecha.utils";
 
 import type { SOAPData, ExamenOrdenado, MedicamentoSOAP } from "./types";
 import { INITIAL_SOAP } from "./types";
@@ -19,8 +19,9 @@ import ModalReferencia      from "../../components/modals/ModalReferencia";
 import ModalInterconsulta   from "../../components/modals/ModalInterconsulta";
 
 import { MedicoApiService } from "../../services/medico.service";
-import type { CitaMedico, CitaHistorial, Alergia, MedicamentoHabitual, ProblemaMedico, CirugiaPevia, AntecedenteFamiliar } from "../../services/medico.service";
+import type { CitaMedico, CitaHistorial, MedicoPerfil, Alergia, MedicamentoHabitual, ProblemaMedico, CirugiaPevia, AntecedenteFamiliar } from "../../services/medico.service";
 import { PacienteApiService } from "../../services/paciente.service";
+import { ExamenService } from "../../services/examen.service";
 
 // SOAP: 4 secciones estándar según NTS-022 MINSA y CMP.
 // No existe "Sección E" — la NTS-022 no la define; variaciones por especialidad
@@ -50,14 +51,16 @@ export default function NotaSOAP() {
   const navigate   = useNavigate();
 
   const [cita,         setCita]         = useState<CitaMedico | null>(null);
+  const [perfil,       setPerfil]       = useState<MedicoPerfil | null>(null);
   const [loading,      setLoading]      = useState(true);
   const [section,      setSection]      = useState<Section>("S");
   const [soapData,     setSoapData]     = useState<SOAPData>(INITIAL_SOAP);
   const [examenes,     setExamenes]     = useState<ExamenOrdenado[]>([]);
   const [medicamentos, setMedicamentos] = useState<MedicamentoSOAP[]>([]);
   const [modalAbierto, setModalAbierto] = useState<string | null>(null);
-  const [lastSaved,    setLastSaved]    = useState<string | null>(null);
   const [saving,       setSaving]       = useState(false);
+
+  const lsKey = citaId ? `soap_draft_${citaId}` : null;
 
   // ── Historial clínico del paciente ──────────────────────────
   const [alergias,          setAlergias]          = useState<Alergia[]>([]);
@@ -85,11 +88,14 @@ export default function NotaSOAP() {
       MedicoApiService.obtenerDetalleCita(citaId),
       MedicoApiService.obtenerMiPerfil(),
     ])
-      .then(([data]) => {
+      .then(([data, perfilData]) => {
         setCita(data);
-        if (data.notasClinicas) {
+        setPerfil(perfilData);
+        // Prioridad: backend > localStorage > estado inicial
+        const rawSource = data.notasClinicas || (citaId ? localStorage.getItem(`soap_draft_${citaId}`) : null);
+        if (rawSource) {
           try {
-            const parsed = JSON.parse(data.notasClinicas);
+            const parsed = JSON.parse(rawSource);
             if (parsed.soap) {
               // Merge profundo en TODAS las secciones para que borradores antiguos o
               // parciales nunca dejen campos undefined (sintomas, diagnoses, medidas, etc.).
@@ -135,6 +141,14 @@ export default function NotaSOAP() {
       .finally(() => setLoading(false));
   }, [citaId]);
 
+  // Auto-guarda en localStorage cada vez que cambian datos clínicos
+  useEffect(() => {
+    if (!lsKey || loading) return;
+    try {
+      localStorage.setItem(lsKey, JSON.stringify({ soap: soapData, examenes, medicamentos }));
+    } catch { /* quota exceeded, ignorar */ }
+  }, [soapData, examenes, medicamentos, lsKey, loading]);
+
   const guardarHistorialClinico = async (
     nuevasAlergias: Alergia[],
     nuevosMedic: MedicamentoHabitual[],
@@ -175,9 +189,12 @@ export default function NotaSOAP() {
 
   const handleAgregarMedicamento = async () => {
     if (!nuevoItem.nombre?.trim()) return;
+    const dosisStr = nuevoItem.dosisCantidad
+      ? `${nuevoItem.dosisCantidad}${nuevoItem.dosisUnidad ? " " + nuevoItem.dosisUnidad : ""}`
+      : "";
     const nuevo: MedicamentoHabitual = {
       nombre: nuevoItem.nombre,
-      dosis: nuevoItem.dosis || "",
+      dosis: dosisStr,
       frecuencia: nuevoItem.frecuencia || "",
       activo: true,
     };
@@ -300,19 +317,7 @@ export default function NotaSOAP() {
     };
   };
 
-  const handleSaveDraft = async () => {
-    if (!citaId || saving) return;
-    setSaving(true);
-    try {
-      await MedicoApiService.guardarNotasClinicas(citaId, buildPayload());
-      const now = new Date().toLocaleTimeString("es-PE", { hour: "2-digit", minute: "2-digit" });
-      setLastSaved(now);
-    } catch {
-      Swal.fire({ icon: "error", title: "Error", text: "No se pudo guardar el borrador.", confirmButtonColor: "var(--primary)" });
-    } finally {
-      setSaving(false);
-    }
-  };
+
 
   const handleImprimirReceta = async () => {
     if (!citaId || saving) return;
@@ -351,6 +356,30 @@ export default function NotaSOAP() {
         MedicoApiService.guardarNotasClinicas(citaId, buildPayload()),
         MedicoApiService.actualizarEstadoCita(citaId, "ATENDIDA"),
       ]);
+
+      // Crear OrdenExamen si hay exámenes con ID de catálogo en el Plan
+      if (perfil?.especialidadId?._id && cita) {
+        const itemsConId = examenes
+          .filter(ex => !!ex.examenId)
+          .map(ex => ({ examenId: ex.examenId!, observaciones: ex.instrucciones ?? "" }));
+
+        if (itemsConId.length > 0) {
+          try {
+            await ExamenService.crearOrden({
+              pacienteId:            cita.pacienteId._id,
+              doctorId:              perfil._id,
+              citaId,
+              especialidadId:        perfil.especialidadId._id,
+              items:                 itemsConId,
+              diagnosticoPresuntivo: soapData.A.diagnoses?.[0]?.descripcion ?? "",
+            });
+          } catch {
+            // No bloquea el flujo principal — el médico puede crear la orden manualmente
+          }
+        }
+      }
+
+      if (lsKey) localStorage.removeItem(lsKey);
       await Swal.fire({ icon: "success", title: "Consulta finalizada", text: "La nota SOAP fue guardada correctamente.", confirmButtonColor: "var(--primary)" });
       navigate("/medico/citas");
     } catch {
@@ -404,9 +433,6 @@ export default function NotaSOAP() {
                   {cita.subtipoCita === "NUEVA" ? "1ª Consulta" : "Seguimiento"}
                 </span>
               )}
-              <span className={`sp-badge ${cita.estado === "PENDIENTE" ? "sp-badge--pendiente" : "sp-badge--atendida"}`}>
-                {fmtEstado(cita.estado)}
-              </span>
             </div>
           </div>
           <div className="sp-cita-fecha">
@@ -742,18 +768,33 @@ export default function NotaSOAP() {
         {/* Footer */}
         <div className="soap-footer">
           <div className="soap-footer-status">
-            {saving ? (
-              <span style={{ color: "var(--primary)" }}>Guardando…</span>
-            ) : lastSaved ? (
-              <span style={{ color: "var(--success)" }}>✓ Guardado a las {lastSaved}</span>
-            ) : (
-              <span>Sin cambios guardados</span>
-            )}
+            <span style={{ color: "var(--success)", fontSize: 12 }}>✓ Guardado automáticamente</span>
             <span className="soap-badge-progress">Consulta en progreso</span>
           </div>
           <div style={{ display: "flex", gap: 10 }}>
-            <button className="soap-btn-secondary" onClick={handleSaveDraft} disabled={saving}>
-              {saving ? "Guardando…" : "Guardar borrador"}
+            <button
+              className="soap-btn-secondary"
+              disabled={saving}
+              onClick={async () => {
+                const r = await Swal.fire({
+                  title: "¿Limpiar la consulta?",
+                  text: "Se borrarán todos los datos ingresados en esta sesión. Esta acción no se puede deshacer.",
+                  icon: "warning",
+                  showCancelButton: true,
+                  confirmButtonText: "Sí, limpiar",
+                  cancelButtonText: "Cancelar",
+                  confirmButtonColor: "#dc2626",
+                  cancelButtonColor: "#6b7280",
+                });
+                if (!r.isConfirmed) return;
+                setSoapData(INITIAL_SOAP);
+                setExamenes([]);
+                setMedicamentos([]);
+                setSection("S");
+                if (lsKey) localStorage.removeItem(lsKey);
+              }}
+            >
+              Limpiar
             </button>
             <button
               className="soap-btn-secondary"
@@ -777,11 +818,13 @@ export default function NotaSOAP() {
           cita={cita}
           onClose={() => setModalAbierto(null)}
           onAdd={e => { setExamenes(prev => [...prev, { ...e, _uid: crypto.randomUUID() }]); setModalAbierto(null); }}
-          diagnosticoPrefill={
-            soapData.A.diagnoses[0]
-              ? `${soapData.A.diagnoses[0].name}${soapData.A.diagnoses[0].code ? ` (${soapData.A.diagnoses[0].code})` : ""}`
-              : undefined
-          }
+          diagnosticoPrefill={(() => {
+            const partes: string[] = soapData.A.diagnoses.map(d =>
+              `${d.name}${d.code ? ` (${d.code})` : ""}`
+            );
+            if (soapData.A.diagnosisManual?.trim()) partes.push(soapData.A.diagnosisManual.trim());
+            return partes.length > 0 ? partes.join(", ") : undefined;
+          })()}
         />
       )}
       {modalAbierto === "receta" && (
@@ -994,10 +1037,10 @@ export default function NotaSOAP() {
           display: "flex", alignItems: "center", justifyContent: "center",
         }}>
           <div style={{
-            background: "var(--bg-card)", borderRadius: 12, padding: 24, width: 360, maxWidth: "90vw",
+            background: "var(--bg-card)", borderRadius: 12, padding: 24, width: 420, maxWidth: "92vw",
             boxShadow: "var(--shadow-xl)", border: "1px solid var(--border)",
           }}>
-            <h3 style={{ margin: "0 0 16px", fontSize: 15, fontWeight: 600, color: "var(--text-primary)" }}>
+            <h3 style={{ margin: "0 0 18px", fontSize: 15, fontWeight: 600, color: "var(--text-primary)" }}>
               {modalHistorial === "alergia"     && "Agregar Alergia"}
               {modalHistorial === "medicamento" && "Agregar Medicamento Habitual"}
               {modalHistorial === "problema"    && "Agregar Problema Médico"}
@@ -1006,24 +1049,24 @@ export default function NotaSOAP() {
             </h3>
 
             {modalHistorial === "alergia" && (
-              <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
-                <div style={{ display: "flex", flexDirection: "column", gap: 4 }}>
-                  <label style={{ fontSize: 12, color: "var(--text-muted)", fontWeight: 500 }}>Sustancia o alergeno *</label>
-                  <input placeholder="Ej. Penicilina, mariscos, látex" value={nuevoItem.sustancia || ""}
+              <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
+                <div style={{ display: "flex", flexDirection: "column", gap: 5 }}>
+                  <label style={{ fontSize: 12, color: "var(--text-muted)", fontWeight: 600 }}>Sustancia o alergeno <span style={{ color: "var(--error)" }}>*</span></label>
+                  <input value={nuevoItem.sustancia || ""}
                     onChange={e => setNuevoItem(p => ({ ...p, sustancia: e.target.value }))}
-                    style={{ padding: "8px 12px", border: "1px solid var(--border)", borderRadius: 8, fontSize: 13, background: "var(--bg-body)", color: "var(--text-primary)" }} />
+                    style={{ width: "100%", boxSizing: "border-box", padding: "9px 12px", border: "1px solid var(--border)", borderRadius: 8, fontSize: 13, background: "var(--bg-body)", color: "var(--text-primary)", outline: "none" }} />
                 </div>
-                <div style={{ display: "flex", flexDirection: "column", gap: 4 }}>
-                  <label style={{ fontSize: 12, color: "var(--text-muted)", fontWeight: 500 }}>Reacción presentada *</label>
-                  <input placeholder="Ej. Urticaria, anafilaxia, edema" value={nuevoItem.reaccion || ""}
+                <div style={{ display: "flex", flexDirection: "column", gap: 5 }}>
+                  <label style={{ fontSize: 12, color: "var(--text-muted)", fontWeight: 600 }}>Reacción presentada <span style={{ color: "var(--error)" }}>*</span></label>
+                  <input value={nuevoItem.reaccion || ""}
                     onChange={e => setNuevoItem(p => ({ ...p, reaccion: e.target.value }))}
-                    style={{ padding: "8px 12px", border: "1px solid var(--border)", borderRadius: 8, fontSize: 13, background: "var(--bg-body)", color: "var(--text-primary)" }} />
+                    style={{ width: "100%", boxSizing: "border-box", padding: "9px 12px", border: "1px solid var(--border)", borderRadius: 8, fontSize: 13, background: "var(--bg-body)", color: "var(--text-primary)", outline: "none" }} />
                 </div>
-                <div style={{ display: "flex", flexDirection: "column", gap: 4 }}>
-                  <label style={{ fontSize: 12, color: "var(--text-muted)", fontWeight: 500 }}>Severidad</label>
+                <div style={{ display: "flex", flexDirection: "column", gap: 5 }}>
+                  <label style={{ fontSize: 12, color: "var(--text-muted)", fontWeight: 600 }}>Severidad</label>
                   <select value={nuevoItem.severidad || "leve"}
                     onChange={e => setNuevoItem(p => ({ ...p, severidad: e.target.value }))}
-                    style={{ padding: "8px 12px", border: "1px solid var(--border)", borderRadius: 8, fontSize: 13, background: "var(--bg-body)", color: "var(--text-primary)" }}>
+                    style={{ width: "100%", boxSizing: "border-box", padding: "9px 12px", border: "1px solid var(--border)", borderRadius: 8, fontSize: 13, background: "var(--bg-body)", color: "var(--text-primary)", appearance: "auto" }}>
                     <option value="leve">Leve</option>
                     <option value="moderada">Moderada</option>
                     <option value="severa">Severa</option>
@@ -1033,98 +1076,138 @@ export default function NotaSOAP() {
             )}
 
             {modalHistorial === "medicamento" && (
-              <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
-                <div style={{ display: "flex", flexDirection: "column", gap: 4 }}>
-                  <label style={{ fontSize: 12, color: "var(--text-muted)", fontWeight: 500 }}>Nombre del medicamento *</label>
-                  <input placeholder="Ej. Metformina, Losartán, Atorvastatina" value={nuevoItem.nombre || ""}
+              <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
+                <div style={{ display: "flex", flexDirection: "column", gap: 5 }}>
+                  <label style={{ fontSize: 12, color: "var(--text-muted)", fontWeight: 600 }}>Nombre del medicamento <span style={{ color: "var(--error)" }}>*</span></label>
+                  <input value={nuevoItem.nombre || ""}
                     onChange={e => setNuevoItem(p => ({ ...p, nombre: e.target.value }))}
-                    style={{ padding: "8px 12px", border: "1px solid var(--border)", borderRadius: 8, fontSize: 13, background: "var(--bg-body)", color: "var(--text-primary)" }} />
+                    style={{ width: "100%", boxSizing: "border-box", padding: "9px 12px", border: "1px solid var(--border)", borderRadius: 8, fontSize: 13, background: "var(--bg-body)", color: "var(--text-primary)", outline: "none" }} />
                 </div>
-                <div style={{ display: "flex", flexDirection: "column", gap: 4 }}>
-                  <label style={{ fontSize: 12, color: "var(--text-muted)", fontWeight: 500 }}>Dosis</label>
-                  <input placeholder="Ej. 500 mg, 10 mg" value={nuevoItem.dosis || ""}
-                    onChange={e => setNuevoItem(p => ({ ...p, dosis: e.target.value }))}
-                    style={{ padding: "8px 12px", border: "1px solid var(--border)", borderRadius: 8, fontSize: 13, background: "var(--bg-body)", color: "var(--text-primary)" }} />
+                <div style={{ display: "flex", flexDirection: "column", gap: 5 }}>
+                  <label style={{ fontSize: 12, color: "var(--text-muted)", fontWeight: 600 }}>Dosis</label>
+                  <div style={{ display: "flex", gap: 8 }}>
+                    <input
+                      type="number"
+                      min="0"
+                      step="any"
+                      value={nuevoItem.dosisCantidad || ""}
+                      onChange={e => setNuevoItem(p => ({ ...p, dosisCantidad: e.target.value }))}
+                      style={{ flex: 1, padding: "9px 12px", border: "1px solid var(--border)", borderRadius: 8, fontSize: 13, background: "var(--bg-body)", color: "var(--text-primary)", outline: "none", boxSizing: "border-box" }}
+                    />
+                    <select
+                      value={nuevoItem.dosisUnidad || "mg"}
+                      onChange={e => setNuevoItem(p => ({ ...p, dosisUnidad: e.target.value }))}
+                      style={{ width: 110, padding: "9px 10px", border: "1px solid var(--border)", borderRadius: 8, fontSize: 13, background: "var(--bg-body)", color: "var(--text-primary)", appearance: "auto", boxSizing: "border-box" }}>
+                      <option value="mg">mg</option>
+                      <option value="g">g</option>
+                      <option value="ml">ml</option>
+                      <option value="mcg">mcg</option>
+                      <option value="UI">UI</option>
+                      <option value="gotas">gotas</option>
+                      <option value="comprimido">comprimido</option>
+                      <option value="sobre">sobre</option>
+                    </select>
+                  </div>
                 </div>
-                <div style={{ display: "flex", flexDirection: "column", gap: 4 }}>
-                  <label style={{ fontSize: 12, color: "var(--text-muted)", fontWeight: 500 }}>Frecuencia</label>
-                  <input placeholder="Ej. Cada 8 horas, 1 vez al día" value={nuevoItem.frecuencia || ""}
+                <div style={{ display: "flex", flexDirection: "column", gap: 5 }}>
+                  <label style={{ fontSize: 12, color: "var(--text-muted)", fontWeight: 600 }}>Frecuencia</label>
+                  <select
+                    value={nuevoItem.frecuencia || ""}
                     onChange={e => setNuevoItem(p => ({ ...p, frecuencia: e.target.value }))}
-                    style={{ padding: "8px 12px", border: "1px solid var(--border)", borderRadius: 8, fontSize: 13, background: "var(--bg-body)", color: "var(--text-primary)" }} />
+                    style={{ width: "100%", boxSizing: "border-box", padding: "9px 12px", border: "1px solid var(--border)", borderRadius: 8, fontSize: 13, background: "var(--bg-body)", color: "var(--text-primary)", appearance: "auto" }}>
+                    <option value="">Seleccionar frecuencia</option>
+                    <option value="Una vez al día">Una vez al día</option>
+                    <option value="Dos veces al día">Dos veces al día</option>
+                    <option value="Tres veces al día">Tres veces al día</option>
+                    <option value="Cada 6 horas">Cada 6 horas</option>
+                    <option value="Cada 8 horas">Cada 8 horas</option>
+                    <option value="Cada 12 horas">Cada 12 horas</option>
+                    <option value="Según necesidad">Según necesidad</option>
+                    <option value="En ayunas">En ayunas</option>
+                    <option value="Con las comidas">Con las comidas</option>
+                    <option value="Al acostarse">Al acostarse</option>
+                  </select>
                 </div>
               </div>
             )}
 
             {modalHistorial === "problema" && (
-              <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
-                <div style={{ display: "flex", flexDirection: "column", gap: 4 }}>
-                  <label style={{ fontSize: 12, color: "var(--text-muted)", fontWeight: 500 }}>Problema o enfermedad *</label>
-                  <input placeholder="Ej. Diabetes tipo 2, Hipertensión arterial" value={nuevoItem.descripcion || ""}
+              <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
+                <div style={{ display: "flex", flexDirection: "column", gap: 5 }}>
+                  <label style={{ fontSize: 12, color: "var(--text-muted)", fontWeight: 600 }}>Problema o enfermedad <span style={{ color: "var(--error)" }}>*</span></label>
+                  <input value={nuevoItem.descripcion || ""}
                     onChange={e => setNuevoItem(p => ({ ...p, descripcion: e.target.value }))}
-                    style={{ padding: "8px 12px", border: "1px solid var(--border)", borderRadius: 8, fontSize: 13, background: "var(--bg-body)", color: "var(--text-primary)" }} />
+                    style={{ width: "100%", boxSizing: "border-box", padding: "9px 12px", border: "1px solid var(--border)", borderRadius: 8, fontSize: 13, background: "var(--bg-body)", color: "var(--text-primary)", outline: "none" }} />
                 </div>
-                <div style={{ display: "flex", flexDirection: "column", gap: 4 }}>
-                  <label style={{ fontSize: 12, color: "var(--text-muted)", fontWeight: 500 }}>Fecha de inicio (aproximada)</label>
+                <div style={{ display: "flex", flexDirection: "column", gap: 5 }}>
+                  <label style={{ fontSize: 12, color: "var(--text-muted)", fontWeight: 600 }}>Fecha de inicio (aproximada)</label>
                   <input type="date"
                     value={nuevoItem.fechaInicio || ""}
+                    max={new Date().toISOString().slice(0, 10)}
                     onChange={e => setNuevoItem(p => ({ ...p, fechaInicio: e.target.value }))}
-                    style={{ padding: "8px 12px", border: "1px solid var(--border)", borderRadius: 8, fontSize: 13, background: "var(--bg-body)", color: "var(--text-primary)" }} />
+                    style={{ width: "100%", boxSizing: "border-box", padding: "9px 12px", border: "1px solid var(--border)", borderRadius: 8, fontSize: 13, background: "var(--bg-body)", color: "var(--text-primary)", outline: "none" }} />
                 </div>
               </div>
             )}
 
             {modalHistorial === "cirugia" && (
-              <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
-                <div style={{ display: "flex", flexDirection: "column", gap: 4 }}>
-                  <label style={{ fontSize: 12, color: "var(--text-muted)", fontWeight: 500 }}>Procedimiento quirúrgico *</label>
-                  <input placeholder="Ej. Apendicectomía, colecistectomía" value={nuevoItem.procedimiento || ""}
+              <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
+                <div style={{ display: "flex", flexDirection: "column", gap: 5 }}>
+                  <label style={{ fontSize: 12, color: "var(--text-muted)", fontWeight: 600 }}>Procedimiento quirúrgico <span style={{ color: "var(--error)" }}>*</span></label>
+                  <input value={nuevoItem.procedimiento || ""}
                     onChange={e => setNuevoItem(p => ({ ...p, procedimiento: e.target.value }))}
-                    style={{ padding: "8px 12px", border: "1px solid var(--border)", borderRadius: 8, fontSize: 13, background: "var(--bg-body)", color: "var(--text-primary)" }} />
+                    style={{ width: "100%", boxSizing: "border-box", padding: "9px 12px", border: "1px solid var(--border)", borderRadius: 8, fontSize: 13, background: "var(--bg-body)", color: "var(--text-primary)", outline: "none" }} />
                 </div>
-                <div style={{ display: "flex", flexDirection: "column", gap: 4 }}>
-                  <label style={{ fontSize: 12, color: "var(--text-muted)", fontWeight: 500 }}>Fecha de la cirugía</label>
-                  <input type="date"
-                    value={nuevoItem.fecha || ""}
-                    onChange={e => setNuevoItem(p => ({ ...p, fecha: e.target.value }))}
-                    style={{ padding: "8px 12px", border: "1px solid var(--border)", borderRadius: 8, fontSize: 13, background: "var(--bg-body)", color: "var(--text-primary)" }} />
+                <div style={{ display: "flex", gap: 12 }}>
+                  <div style={{ display: "flex", flexDirection: "column", gap: 5, flex: 1 }}>
+                    <label style={{ fontSize: 12, color: "var(--text-muted)", fontWeight: 600 }}>Fecha de la cirugía</label>
+                    <input type="date"
+                      value={nuevoItem.fecha || ""}
+                      max={new Date().toISOString().slice(0, 10)}
+                      onChange={e => setNuevoItem(p => ({ ...p, fecha: e.target.value }))}
+                      style={{ width: "100%", boxSizing: "border-box", padding: "9px 12px", border: "1px solid var(--border)", borderRadius: 8, fontSize: 13, background: "var(--bg-body)", color: "var(--text-primary)", outline: "none" }} />
+                  </div>
                 </div>
-                <div style={{ display: "flex", flexDirection: "column", gap: 4 }}>
-                  <label style={{ fontSize: 12, color: "var(--text-muted)", fontWeight: 500 }}>Hospital o clínica</label>
-                  <input placeholder="Ej. Hospital Loayza, Clínica San Pablo" value={nuevoItem.hospital || ""}
+                <div style={{ display: "flex", flexDirection: "column", gap: 5 }}>
+                  <label style={{ fontSize: 12, color: "var(--text-muted)", fontWeight: 600 }}>Hospital o clínica</label>
+                  <input value={nuevoItem.hospital || ""}
                     onChange={e => setNuevoItem(p => ({ ...p, hospital: e.target.value }))}
-                    style={{ padding: "8px 12px", border: "1px solid var(--border)", borderRadius: 8, fontSize: 13, background: "var(--bg-body)", color: "var(--text-primary)" }} />
+                    style={{ width: "100%", boxSizing: "border-box", padding: "9px 12px", border: "1px solid var(--border)", borderRadius: 8, fontSize: 13, background: "var(--bg-body)", color: "var(--text-primary)", outline: "none" }} />
                 </div>
               </div>
             )}
 
             {modalHistorial === "antFamiliar" && (
-              <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
-                <select value={nuevoItem.parentesco || ""}
-                  onChange={e => setNuevoItem(p => ({ ...p, parentesco: e.target.value }))}
-                  style={{ padding: "8px 12px", border: "1px solid var(--border)", borderRadius: 8, fontSize: 13, background: "var(--bg-body)", color: "var(--text-primary)" }}>
-                  <option value="">Parentesco *</option>
-                  <option value="Padre">Padre</option>
-                  <option value="Madre">Madre</option>
-                  <option value="Hermano/a">Hermano/a</option>
-                  <option value="Abuelo paterno">Abuelo paterno</option>
-                  <option value="Abuela paterna">Abuela paterna</option>
-                  <option value="Abuelo materno">Abuelo materno</option>
-                  <option value="Abuela materna">Abuela materna</option>
-                  <option value="Tío/a">Tío/a</option>
-                  <option value="Otro">Otro</option>
-                </select>
-                <div style={{ display: "flex", flexDirection: "column", gap: 4 }}>
-                  <label style={{ fontSize: 12, color: "var(--text-muted)", fontWeight: 500 }}>Condición médica *</label>
-                  <input placeholder="Ej. Diabetes tipo 2, cardiopatía, cáncer" value={nuevoItem.condicion || ""}
+              <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
+                <div style={{ display: "flex", flexDirection: "column", gap: 5 }}>
+                  <label style={{ fontSize: 12, color: "var(--text-muted)", fontWeight: 600 }}>Parentesco <span style={{ color: "var(--error)" }}>*</span></label>
+                  <select value={nuevoItem.parentesco || ""}
+                    onChange={e => setNuevoItem(p => ({ ...p, parentesco: e.target.value }))}
+                    style={{ width: "100%", boxSizing: "border-box", padding: "9px 12px", border: "1px solid var(--border)", borderRadius: 8, fontSize: 13, background: "var(--bg-body)", color: "var(--text-primary)", appearance: "auto" }}>
+                    <option value="">Seleccionar parentesco</option>
+                    <option value="Padre">Padre</option>
+                    <option value="Madre">Madre</option>
+                    <option value="Hermano/a">Hermano/a</option>
+                    <option value="Abuelo paterno">Abuelo paterno</option>
+                    <option value="Abuela paterna">Abuela paterna</option>
+                    <option value="Abuelo materno">Abuelo materno</option>
+                    <option value="Abuela materna">Abuela materna</option>
+                    <option value="Tío/a">Tío/a</option>
+                    <option value="Otro">Otro</option>
+                  </select>
+                </div>
+                <div style={{ display: "flex", flexDirection: "column", gap: 5 }}>
+                  <label style={{ fontSize: 12, color: "var(--text-muted)", fontWeight: 600 }}>Condición médica <span style={{ color: "var(--error)" }}>*</span></label>
+                  <input value={nuevoItem.condicion || ""}
                     onChange={e => setNuevoItem(p => ({ ...p, condicion: e.target.value }))}
-                    style={{ padding: "8px 12px", border: "1px solid var(--border)", borderRadius: 8, fontSize: 13, background: "var(--bg-body)", color: "var(--text-primary)" }} />
+                    style={{ width: "100%", boxSizing: "border-box", padding: "9px 12px", border: "1px solid var(--border)", borderRadius: 8, fontSize: 13, background: "var(--bg-body)", color: "var(--text-primary)", outline: "none" }} />
                 </div>
               </div>
             )}
 
-            <div style={{ display: "flex", gap: 10, marginTop: 18, justifyContent: "flex-end" }}>
+            <div style={{ display: "flex", gap: 10, marginTop: 20, justifyContent: "flex-end" }}>
               <button onClick={() => { setModalHistorial(null); setNuevoItem({}); }}
-                style={{ padding: "8px 16px", border: "1px solid var(--border)", borderRadius: 8, background: "var(--bg-body)", color: "var(--text-primary)", cursor: "pointer", fontSize: 13 }}>
+                style={{ padding: "9px 18px", border: "1px solid var(--border)", borderRadius: 8, background: "var(--bg-body)", color: "var(--text-primary)", cursor: "pointer", fontSize: 13 }}>
                 Cancelar
               </button>
               <button
@@ -1135,7 +1218,7 @@ export default function NotaSOAP() {
                   if (modalHistorial === "cirugia")     handleAgregarCirugia();
                   if (modalHistorial === "antFamiliar") handleAgregarAntFamiliar();
                 }}
-                style={{ padding: "8px 16px", border: "none", borderRadius: 8, background: "var(--primary)", color: "white", cursor: "pointer", fontSize: 13, fontWeight: 600 }}>
+                style={{ padding: "9px 18px", border: "none", borderRadius: 8, background: "var(--primary)", color: "white", cursor: "pointer", fontSize: 13, fontWeight: 600 }}>
                 Guardar
               </button>
             </div>

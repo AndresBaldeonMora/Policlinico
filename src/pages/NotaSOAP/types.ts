@@ -80,10 +80,12 @@ export interface SOAPData {
 
 export interface ExamenOrdenado {
   _uid?: string;
+  examenId?: string;
   nombre: string;
   tipo: 'Patología Clínica' | 'Diagnóstico por Imágenes';
   urgente: boolean;
   diagnosticoPresuntivo?: string;
+  instrucciones?: string;
 }
 
 export interface MedicamentoSOAP {

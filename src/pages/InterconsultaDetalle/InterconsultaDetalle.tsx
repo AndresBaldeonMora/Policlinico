@@ -312,13 +312,18 @@ export default function InterconsultaDetalle() {
     }
   };
 
+  const sinDisponibilidad = !cargandoHorarios && horarios.length > 0 && horarios.every(h => !h.disponible);
+  const esUrgente = ic?.prioridad === "urgente";
+  const puedeConfirmarSinHora = esUrgente && sinDisponibilidad;
+
   const handleAgendar = async () => {
-    if (!ic || !fechaSel || !horaSel) return;
+    if (!ic || !fechaSel) return;
+    if (!horaSel && !puedeConfirmarSinHora) return;
     setGuardando(true);
     try {
       const actualizada = await InterconsultaApiService.agendarCita(ic._id, {
         fecha: fechaSel,
-        hora: horaSel,
+        hora: horaSel || undefined,
         respuesta: respuestaCita.trim() || undefined,
       });
       setIc(actualizada);
@@ -675,6 +680,15 @@ export default function InterconsultaDetalle() {
                       <AlertCircle size={14} />
                       <span>Sin horarios para esta fecha</span>
                     </div>
+                  ) : sinDisponibilidad ? (
+                    <div className="icd-horarios-empty">
+                      <AlertCircle size={14} />
+                      <span>
+                        {esUrgente
+                          ? "El turno ha terminado — no quedan horarios disponibles. Al ser urgencia, puedes confirmar sin hora fija y el paciente será atendido en el primer hueco del día."
+                          : "El turno del médico ha terminado por hoy. Selecciona otro día para agendar la cita."}
+                      </span>
+                    </div>
                   ) : (
                     <div className="icd-horarios-grid">
                       {horarios.map((h) => (
@@ -709,9 +723,15 @@ export default function InterconsultaDetalle() {
                     <button className="icd-btn icd-btn--ghost" onClick={() => { setModo("ver"); setHoraSel(""); setRespuestaCita(""); }} disabled={guardando}>
                       Cancelar
                     </button>
-                    <button className="icd-btn icd-btn--primary" onClick={handleAgendar} disabled={guardando || !horaSel}>
+                    <button className="icd-btn icd-btn--primary" onClick={handleAgendar} disabled={guardando || (!horaSel && !puedeConfirmarSinHora)}>
                       <CalendarPlus size={13} />
-                      {guardando ? "Agendando…" : `Confirmar ${horaSel || ""}`}
+                      {guardando
+                        ? "Agendando…"
+                        : horaSel
+                          ? `Confirmar — ${horaSel}`
+                          : puedeConfirmarSinHora
+                            ? "Confirmar urgencia — sin hora fija"
+                            : "Selecciona un horario"}
                     </button>
                   </div>
                 </div>

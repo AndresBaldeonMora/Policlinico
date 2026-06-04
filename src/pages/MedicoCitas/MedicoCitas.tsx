@@ -1,11 +1,11 @@
-import { useEffect, useState, useMemo } from "react";
+import { useEffect, useState, useMemo, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import { MedicoApiService } from "../../services/medico.service";
 import type { CitaMedico, MedicoPerfil } from "../../services/medico.service";
 import {
-  Search, User, Play, FileText,
+  Search, User, Play, FileText, ChevronLeft, ChevronRight,
 } from "lucide-react";
-import { toISODateLocal } from "../../utils/fecha.utils";
+import { toISODateLocal, isoADMY } from "../../utils/fecha.utils";
 import "../ListaCitas/ListaCitas.css";
 import "./MedicoCitas.css";
 
@@ -55,6 +55,8 @@ export default function MedicoCitas() {
   const [filtroEstado, setFiltro]         = useState("PENDIENTE");
   const [busqueda, setBusqueda]           = useState("");
   const [cargandoLista, setCargandoLista] = useState(true);
+  const [fechaFiltro, setFechaFiltro]     = useState(() => toISODateLocal(new Date()));
+  const fechaInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     MedicoApiService.obtenerMiPerfil()
@@ -71,7 +73,11 @@ export default function MedicoCitas() {
       .finally(() => setCargandoLista(false));
   }, []);
 
-  const hoyISO = toISODateLocal(new Date());
+  const sumarDias = (iso: string, dias: number): string => {
+    const d = new Date(`${iso}T12:00:00`);
+    d.setDate(d.getDate() + dias);
+    return toISODateLocal(d);
+  };
 
   const toMin = (hora: string) => {
     const [h, m] = (hora || "00:00").split(":").map(Number);
@@ -81,7 +87,7 @@ export default function MedicoCitas() {
 
   const citasFiltradas = useMemo(() => {
     return todasCitas
-      .filter(c => c.fecha.slice(0, 10) === hoyISO)
+      .filter(c => c.fecha.slice(0, 10) === fechaFiltro)
       .filter(c => {
         const pasaEstado =
           filtroEstado === "PENDIENTE"
@@ -98,11 +104,7 @@ export default function MedicoCitas() {
         toMin(a.hora) - toMin(b.hora) ||
         Math.abs(toMin(a.hora) - ahoraMin) - Math.abs(toMin(b.hora) - ahoraMin)
       );
-  }, [todasCitas, hoyISO, filtroEstado, busqueda, ahoraMin]);
-
-  const fechaHoyLabel = new Date().toLocaleDateString("es-PE", {
-    weekday: "long", day: "numeric", month: "long",
-  });
+  }, [todasCitas, fechaFiltro, filtroEstado, busqueda, ahoraMin]);
 
   if (cargandoPerfil) {
     return (
@@ -121,32 +123,100 @@ export default function MedicoCitas() {
       <div className="lista-page-header">
         <div>
           <h1>Mis Citas</h1>
-          <p className="lista-page-subtitle mc-fecha-subtitle">{fechaHoyLabel}</p>
+          <p className="lista-page-subtitle mc-fecha-subtitle">{isoADMY(fechaFiltro)}</p>
         </div>
       </div>
 
-      <div className="mc-toolbar">
-        <div className="lista-search-bar">
-          <Search size={16} className="lista-search-icon" />
-          <input
-            type="text"
-            placeholder="Buscar por nombre, DNI o motivo..."
-            value={busqueda}
-            onChange={e => setBusqueda(e.target.value)}
-            className="lista-search-input"
-          />
-        </div>
-        <div className="mc-filters">
-          {ESTADOS_FILTER.map(e => (
+      {/* ── Filtros ── */}
+      <div className="lab-filtros-avanzados" style={{ marginBottom: "1rem" }}>
+        {/* Navegador de fecha */}
+        <div className="lab-filtro-campo">
+          <label className="lab-filtro-label">Fecha</label>
+          <div style={{ display: "flex", alignItems: "center", gap: 4 }}>
             <button
-              key={e}
-              className={`mc-filter-btn${filtroEstado === e ? " mc-filter-btn--active" : ""}`}
-              onClick={() => setFiltro(e)}
+              className="lab-cal-nav-btn"
+              onClick={() => setFechaFiltro(f => sumarDias(f, -1))}
+              title="Día anterior"
             >
-              {ESTADO_CONFIG[e]?.label ?? e}
+              <ChevronLeft size={15} />
             </button>
-          ))}
+            <div
+              style={{ position: "relative", display: "inline-flex", cursor: "pointer" }}
+              onClick={() => fechaInputRef.current?.showPicker()}
+            >
+              <span style={{
+                padding: "0.38rem 0.75rem",
+                border: "1px solid var(--border)",
+                borderRadius: 8,
+                fontSize: "0.88rem",
+                fontWeight: 600,
+                color: "var(--text-primary)",
+                background: "var(--bg-body)",
+                minWidth: 112,
+                textAlign: "center",
+                pointerEvents: "none",
+                userSelect: "none",
+                display: "inline-block",
+              }}>
+                {isoADMY(fechaFiltro)}
+              </span>
+              <input
+                ref={fechaInputRef}
+                type="date"
+                value={fechaFiltro}
+                onChange={e => setFechaFiltro(e.target.value)}
+                style={{ position: "absolute", inset: 0, opacity: 0, pointerEvents: "none", width: "100%", height: "100%" }}
+              />
+            </div>
+            <button
+              className="lab-cal-nav-btn"
+              onClick={() => setFechaFiltro(f => sumarDias(f, 1))}
+              title="Día siguiente"
+            >
+              <ChevronRight size={15} />
+            </button>
+          </div>
         </div>
+
+        {/* Buscador */}
+        <div className="lab-filtro-campo" style={{ flex: 1 }}>
+          <label className="lab-filtro-label">Buscar</label>
+          <div style={{ position: "relative", width: "100%" }}>
+            <Search
+              size={14}
+              style={{
+                position: "absolute",
+                left: "0.65rem",
+                top: "50%",
+                transform: "translateY(-50%)",
+                color: "var(--text-muted)",
+                pointerEvents: "none",
+              }}
+            />
+            <input
+              className="lab-filtro-input"
+              placeholder="Buscar por nombre o DNI..."
+              value={busqueda}
+              onChange={e => setBusqueda(e.target.value)}
+              style={{ paddingLeft: "2.2rem" }}
+            />
+          </div>
+        </div>
+      </div>
+
+      {/* ── Tabs de estado ── */}
+      <div className="lab-filtros" style={{ marginBottom: "1rem" }} role="tablist">
+        {ESTADOS_FILTER.map(e => (
+          <button
+            key={e}
+            role="tab"
+            aria-selected={filtroEstado === e}
+            className={`lab-filtro-btn${filtroEstado === e ? " active" : ""}`}
+            onClick={() => setFiltro(e)}
+          >
+            <span>{ESTADO_CONFIG[e]?.label ?? e}</span>
+          </button>
+        ))}
       </div>
 
       {cargandoLista ? (
@@ -173,7 +243,7 @@ export default function MedicoCitas() {
                   const pac       = c.pacienteId;
                   const iniciales = `${pac.nombres[0] ?? ""}${pac.apellidos[0] ?? ""}`.toUpperCase();
                   const edad      = calcAge(pac.fechaNacimiento);
-                  const puedeConsultar = c.estado === "PENDIENTE" || c.estado === "ASISTIO";
+                  const puedeConsultar = c.estado === "ASISTIO";
                   return (
                     <tr key={c._id}>
                       <td>
@@ -236,8 +306,8 @@ export default function MedicoCitas() {
                       <User size={28} className="td-empty-icon" />
                       <p>
                         {filtroEstado === "PENDIENTE"
-                          ? "No hay citas pendientes para hoy."
-                          : `No hay citas con estado "${ESTADO_CONFIG[filtroEstado]?.label}" para hoy.`}
+                          ? `No hay citas pendientes para el ${isoADMY(fechaFiltro)}.`
+                          : `No hay citas con estado "${ESTADO_CONFIG[filtroEstado]?.label}" para el ${isoADMY(fechaFiltro)}.`}
                       </p>
                     </td>
                   </tr>

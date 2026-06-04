@@ -3,7 +3,7 @@ import { useSearchParams, useNavigate } from "react-router-dom";
 import "./ListaCitas.css";
 import { CitaApiService } from "../../services/cita.service";
 import type { CitaProcesada } from "../../services/cita.service";
-import { CalendarClock, XCircle, Search, Calendar, Clock, User, Stethoscope, Trash2 } from "lucide-react";
+import { CalendarClock, XCircle, Search, Calendar, Clock, User, Stethoscope, Trash2, ChevronLeft, ChevronRight } from "lucide-react";
 import { DoctorApiService } from "../../services/doctor.service";
 import {
   listaCitasReducer,
@@ -12,7 +12,7 @@ import {
 import type { MesOption, HorarioPorDia } from "./ListaCitasReducer";
 import ReprogramarModal from "./ReprogramarModal";
 import CitaQuickModal from "../../components/CitaQuickModal/CitaQuickModal";
-import { hoyISO, isoADMY, fmtEstado } from "../../utils/fecha.utils";
+import { hoyISO, isoADMY, fmtEstado, toISODateLocal } from "../../utils/fecha.utils";
 
 const normalizeString = (str: string): string =>
   str.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
@@ -85,6 +85,7 @@ const ListaCitas = () => {
   const navigate = useNavigate();
   const highlightId = searchParams.get("highlight");
   const highlightRef = useRef<HTMLTableRowElement>(null);
+  const fechaInputRef = useRef<HTMLInputElement>(null);
   const [state, dispatch] = useReducer(listaCitasReducer, initialState);
   const [citaSeleccionadaId, setCitaSeleccionadaId] = useState<string | null>(null);
   const [citaParaCancelar, setCitaParaCancelar] = useState<CitaProcesada | null>(null);
@@ -99,6 +100,12 @@ const ListaCitas = () => {
   const [filtroEstado, setFiltroEstado] = useState("TODOS");
   const [filtroEspecialidad, setFiltroEspecialidad] = useState("TODAS");
   const [fechaFiltro, setFechaFiltro] = useState(hoyISO);
+
+  const sumarDias = (iso: string, dias: number): string => {
+    const d = new Date(`${iso}T12:00:00`);
+    d.setDate(d.getDate() + dias);
+    return toISODateLocal(d);
+  };
 
   const showNotification = (message: string, type: "success" | "error") => {
     dispatch({ type: "SHOW_NOTIFICATION", payload: { message, type } });
@@ -120,7 +127,21 @@ const ListaCitas = () => {
   useEffect(() => {
     if (!reprogramarId || citasData.length === 0) return;
     const cita = citasData.find((c) => c._id === reprogramarId);
-    if (cita) onReprogramar(cita);
+    if (!cita) return;
+    const fueraDePlazo = horasHastaCita(cita.fecha, cita.hora) < 24;
+    const puedeReprogramar = cita.estado === "PENDIENTE" && !fueraDePlazo;
+    if (!puedeReprogramar) {
+      showNotification(
+        fueraDePlazo
+          ? "No se puede reprogramar: quedan menos de 24 h para la cita."
+          : cita.estado === "REPROGRAMADA"
+          ? "Esta cita ya fue reprogramada y no admite una segunda reprogramación."
+          : "Solo se pueden reprogramar citas en estado Pendiente.",
+        "error"
+      );
+      return;
+    }
+    onReprogramar(cita);
   }, [reprogramarId, citasData]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const cargarCitas = async () => {
@@ -283,12 +304,42 @@ const ListaCitas = () => {
       <div className="lab-filtros-avanzados" style={{ marginBottom: "1rem" }}>
         <div className="lab-filtro-campo">
           <label className="lab-filtro-label">Fecha</label>
-          <input
-            type="date"
-            className="lab-filtro-date"
-            value={fechaFiltro}
-            onChange={(e) => setFechaFiltro(e.target.value)}
-          />
+          <div style={{ display: "flex", alignItems: "center", gap: 4 }}>
+            <button className="lab-cal-nav-btn" onClick={() => setFechaFiltro(f => sumarDias(f, -1))} title="Día anterior">
+              <ChevronLeft size={15} />
+            </button>
+            <div
+              style={{ position: "relative", display: "inline-flex", cursor: "pointer" }}
+              onClick={() => fechaInputRef.current?.showPicker()}
+            >
+              <span style={{
+                padding: "0.38rem 0.75rem",
+                border: "1px solid var(--border)",
+                borderRadius: 8,
+                fontSize: "0.88rem",
+                fontWeight: 600,
+                color: "var(--text-primary)",
+                background: "var(--bg-body)",
+                minWidth: 112,
+                textAlign: "center",
+                pointerEvents: "none",
+                userSelect: "none",
+                display: "inline-block",
+              }}>
+                {fechaFiltro ? isoADMY(fechaFiltro) : "—"}
+              </span>
+              <input
+                ref={fechaInputRef}
+                type="date"
+                value={fechaFiltro}
+                onChange={(e) => setFechaFiltro(e.target.value)}
+                style={{ position: "absolute", inset: 0, opacity: 0, pointerEvents: "none", width: "100%", height: "100%" }}
+              />
+            </div>
+            <button className="lab-cal-nav-btn" onClick={() => setFechaFiltro(f => sumarDias(f, 1))} title="Día siguiente">
+              <ChevronRight size={15} />
+            </button>
+          </div>
         </div>
         <div className="lab-filtro-campo" style={{ flex: 2, minWidth: 220 }}>
           <label className="lab-filtro-label">Especialidad</label>

@@ -123,6 +123,32 @@
   text-transform: capitalize;
 }
 
+/* ── Date nav button (shared with Laboratorio) ── */
+.lab-cal-nav-btn {
+  width: 28px;
+  height: 28px;
+  border-radius: 6px;
+  border: 1px solid var(--border);
+  background: var(--bg-card);
+  color: var(--text-secondary);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  padding: 0;
+  flex-shrink: 0;
+  font-family: inherit;
+}
+.lab-cal-nav-btn:hover:not(:disabled) {
+  background: var(--primary);
+  color: #fff;
+  border-color: var(--primary);
+}
+.lab-cal-nav-btn:disabled {
+  opacity: 0.3;
+  cursor: not-allowed;
+}
+
 /* ══════════════════════════════════════════════════
    TABS
 ══════════════════════════════════════════════════ */

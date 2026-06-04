@@ -128,11 +128,15 @@ const Header = () => {
                   <p className="user-name">
                     {nombreCompleto ? nombreCompleto : "Usuario"}
                   </p>
-                  <p className="user-role">
-                    {user?.rol === "MEDICO" && especialidad
-                      ? `Médico — ${especialidad}`
-                      : user?.rol || "Sin rol"}
-                  </p>
+                  {user?.rol === "MEDICO" && especialidad && (
+                    <p className="user-role">{especialidad}</p>
+                  )}
+                  {user?.rol === "RECEPCIONISTA" && (
+                    <p className="user-role">Recepcionista</p>
+                  )}
+                  {user?.rol === "ADMINISTRADOR" && (
+                    <p className="user-role">Administrador</p>
+                  )}
                 </div>
                 <div className="user-avatar">{avatarLetter}</div>
                 <ChevronDown
