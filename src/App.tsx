@@ -33,6 +33,7 @@ import GestionDoctores from "./pages/AdminDash/GestionDoctores";
 import GestionUsuarios from "./pages/AdminDash/GestionUsuarios";
 import VisorAuditoria from "./pages/AdminDash/VisorAuditoria";
 import GestionMedicamentos from "./pages/AdminDash/GestionMedicamentos";
+import GestionReclamaciones from "./pages/AdminDash/GestionReclamaciones";
 
 import { AuthProvider } from "./context/AuthProvider";
 import { ThemeProvider } from "./context/ThemeContext";
@@ -311,6 +312,14 @@ function App() {
               element={
                 <ProtectedRoute roles={["administrador"]}>
                   <VisorAuditoria />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/admin/reclamaciones"
+              element={
+                <ProtectedRoute roles={["administrador"]}>
+                  <GestionReclamaciones />
                 </ProtectedRoute>
               }
             />

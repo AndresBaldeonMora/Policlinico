@@ -20,6 +20,7 @@ import {
   Pill,
   ScrollText,
   ArrowLeftRight,
+  MessageSquare,
 } from "lucide-react";
 import "./Sidebar.css";
 const Sidebar = () => {
@@ -54,6 +55,7 @@ const Sidebar = () => {
     { path: "/admin/pacientes", label: "Pacientes", icon: Users, description: "CRUD pacientes" },
     { path: "/admin/medicamentos", label: "Medicamentos", icon: Pill, description: "Catálogo de medicamentos" },
     { path: "/admin/auditoria", label: "Auditoría", icon: ScrollText, description: "Registro de acciones del sistema" },
+    { path: "/admin/reclamaciones", label: "Reclamaciones", icon: MessageSquare, description: "Libro de reclamaciones virtual" },
   ];
 
   const pacienteMenu = [

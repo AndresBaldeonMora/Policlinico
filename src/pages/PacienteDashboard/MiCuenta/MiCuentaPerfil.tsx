@@ -5,6 +5,7 @@ import {
 } from "lucide-react";
 import { MiCuentaSeguridad } from "./MiCuentaSeguridad";
 import { MiCuentaTerminos } from "./MiCuentaTerminos";
+import { MiCuentaReclamaciones } from "./MiCuentaReclamaciones";
 import { PacienteApiService } from "../../../services/paciente.service";
 import "./MiCuenta.css";
 
@@ -39,12 +40,13 @@ const PERFIL_VACIO: PacientePerfil = {
   apoderadoTelefono: "",
 };
 
-type TabId = "perfil" | "seguridad" | "terminos";
+type TabId = "perfil" | "seguridad" | "terminos" | "reclamaciones";
 
 const TABS: { id: TabId; label: string }[] = [
   { id: "perfil", label: "Perfil" },
   { id: "seguridad", label: "Seguridad" },
   { id: "terminos", label: "Términos" },
+  { id: "reclamaciones", label: "Reclamaciones" },
 ];
 
 /* ── Props ── */
@@ -374,6 +376,9 @@ const MiCuentaPerfil = ({ pacienteId, initialData, onGuardar }: MiCuentaPerfilPr
 
       {/* ── Tab: Términos ── */}
       {tab === "terminos" && <MiCuentaTerminos />}
+
+      {/* ── Tab: Reclamaciones ── */}
+      {tab === "reclamaciones" && <MiCuentaReclamaciones />}
     </div>
   );
 };
