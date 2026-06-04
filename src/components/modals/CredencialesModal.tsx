@@ -29,8 +29,7 @@ const CredencialesModal = ({ paciente, credenciales, onCerrar }: Props) => {
     `Contraseña: ${credenciales.passwordTemporal}`;
 
   return (
-    <div className="cred-overlay" role="presentation"
-      onClick={(e) => { if (e.target === e.currentTarget) onCerrar(); }}>
+    <div className="cred-overlay" role="presentation">
       <div className="cred-modal">
         <div className="cred-header">
           <div className="cred-header-icon"><KeyRound size={20} /></div>

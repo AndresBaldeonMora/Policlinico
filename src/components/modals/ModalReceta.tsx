@@ -178,7 +178,7 @@ export default function ModalReceta({ cita, alergias = EMPTY_ALERGIAS, onClose, 
   const requiredMark = <span style={{ color: "var(--error)" }}> *</span>;
 
   return (
-    <div className="modal-overlay" onClick={e => { if (e.target === e.currentTarget) onClose(); }}>
+    <div className="modal-overlay">
       <div className="modal-box" style={{ maxWidth: 720, maxHeight: "90vh", overflowY: "auto" }}>
 
         {/* ── Header ── */}

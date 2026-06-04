@@ -176,8 +176,8 @@ const OrdenExamenModal = ({
   };
 
   return (
-    <div className="orden-modal-overlay" onClick={onCerrar}>
-      <div className="orden-modal-card" onClick={(e) => e.stopPropagation()}>
+    <div className="orden-modal-overlay">
+      <div className="orden-modal-card">
         <div className="orden-modal-header">
           <div className="orden-modal-title">
             <FlaskConical size={20} />

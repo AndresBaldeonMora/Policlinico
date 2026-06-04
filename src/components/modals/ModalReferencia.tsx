@@ -24,7 +24,7 @@ export default function ModalReferencia({ cita, onClose }: Props) {
     setForm(p => ({ ...p, docsAdjuntos: p.docsAdjuntos.includes(d) ? p.docsAdjuntos.filter(x => x !== d) : [...p.docsAdjuntos, d] }));
 
   return (
-    <div className="modal-overlay" onClick={e => { if (e.target === e.currentTarget) onClose(); }}>
+    <div className="modal-overlay">
       <div className="modal-box" style={{ maxWidth: 720 }}>
         <div className="modal-header">
           <div>

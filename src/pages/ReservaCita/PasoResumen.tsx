@@ -47,7 +47,7 @@ const PasoResumen = ({ pacienteSeleccionado, doctorSeleccionado, especialidadSel
         </div>
         <div className="resumen-item">
           <span>Fecha y Hora</span>
-          <strong>{fechaSeleccionada}</strong>
+          <strong>{fechaSeleccionada ? fechaSeleccionada.split("-").reverse().join("/") : ""}</strong>
           <span>{horaSeleccionada} hs</span>
         </div>
       </div>

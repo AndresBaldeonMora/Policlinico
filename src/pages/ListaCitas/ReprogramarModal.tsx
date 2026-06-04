@@ -280,13 +280,12 @@ const ReprogramarModal = ({
   onConfirmar,
 }: ReprogramarModalProps) => {
   return (
-    <div className="rep-overlay" role="presentation" onClick={onCerrar}>
+    <div className="rep-overlay" role="presentation">
       <div
         className="rep-card"
         role="dialog"
         aria-modal="true"
         aria-labelledby="rep-titulo"
-        onClick={(e) => e.stopPropagation()}
       >
         <header className="rep-header">
           <div className="rep-header__top">

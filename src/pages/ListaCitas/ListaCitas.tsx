@@ -211,7 +211,7 @@ const ListaCitas = () => {
       payload: {
         id: cita._id, dni: cita.dni, paciente: cita.paciente, especialidad: cita.especialidad,
         doctor: cita.doctor, doctorId: cita.doctorId, fecha: "", hora: "",
-        fechaOriginal: cita.fecha, horaOriginal: cita.hora,
+        fechaOriginal: new Date(cita.fecha + "T00:00:00").toLocaleDateString("es-PE"), horaOriginal: cita.hora,
       },
     });
   };

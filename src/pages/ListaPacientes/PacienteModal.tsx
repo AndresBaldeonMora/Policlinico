@@ -168,7 +168,6 @@ const PacienteModal = ({ paciente, onGuardado, onCancelar }: Props) => {
 
   return (
     <div className="pm-overlay" role="presentation"
-      onClick={(e) => { if (e.target === e.currentTarget) onCancelar(); }}
       onKeyDown={(e) => { if (e.key === "Escape") onCancelar(); }}>
       <div className="pm-modal">
         <div className="pm-header">

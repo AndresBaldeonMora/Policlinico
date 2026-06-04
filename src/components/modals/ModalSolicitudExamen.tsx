@@ -111,7 +111,7 @@ export default function ModalSolicitudExamen({ cita, onClose, onAdd, diagnostico
   const disabled   = selected.length === 0 || dxVacio || instrVacio;
 
   return (
-    <div className="modal-overlay" onClick={e => { if (e.target === e.currentTarget) onClose(); }}>
+    <div className="modal-overlay">
       <div className="modal-box" style={{ maxWidth: 720 }}>
         <div className="modal-header">
           <div>

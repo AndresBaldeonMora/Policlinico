@@ -63,7 +63,7 @@ export default function ModalInterconsulta({ cita, onClose, onGuardada }: Props)
   };
 
   return (
-    <div className="modal-overlay" onClick={e => { if (e.target === e.currentTarget) onClose(); }}>
+    <div className="modal-overlay">
       <div className="modal-box" style={{ maxWidth: 640 }}>
         <div className="modal-header">
           <div>
