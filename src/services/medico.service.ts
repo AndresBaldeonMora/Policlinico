@@ -91,6 +91,7 @@ export interface MedicoPerfil {
   };
   cmp?: string;
   cvUrl?: string;
+  avatar?: string;
 }
 
 export interface CitaHistorial {
@@ -117,6 +118,17 @@ export interface CitaHistorial {
 export class MedicoApiService {
   static async obtenerMiPerfil(): Promise<MedicoPerfil> {
     const response = await api.get("/medico/perfil");
+    return response.data.data;
+  }
+
+  static async subirAvatar(file: File): Promise<{ avatarUrl: string }> {
+    const formData = new FormData();
+    formData.append("avatar", file);
+    const response = await api.post<{ success: boolean; data: { avatarUrl: string } }>(
+      "/medico/perfil/avatar",
+      formData,
+      { headers: { "Content-Type": "multipart/form-data" } }
+    );
     return response.data.data;
   }
 

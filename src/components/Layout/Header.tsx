@@ -3,7 +3,10 @@ import { useNavigate } from "react-router-dom";
 import { useAuth } from "../../hooks/userAuth";
 import { useTheme } from "../../context/ThemeContext";
 import { MedicoApiService } from "../../services/medico.service";
-import { Moon, Search, Sun, LogOut, ChevronDown, Menu } from "lucide-react";
+import { Moon, Search, Sun, LogOut, ChevronDown, Menu, UserCircle } from "lucide-react";
+
+const BACKEND_URL = (import.meta.env.VITE_API_URL ?? "http://localhost:3000/api").replace(/\/api$/, "");
+const resolverAvatar = (avatar?: string) => (avatar ? `${BACKEND_URL}${avatar}` : undefined);
 import SearchPalette from "./SearchPalette";
 import { CampanillaNotificaciones } from "../Notificaciones/CampanillaNotificaciones";
 import type { Notificacion } from "../Notificaciones/types";
@@ -16,6 +19,7 @@ const Header = () => {
   const [searchOpen, setSearchOpen] = useState(false);
   const [dropdownOpen, setDropdownOpen] = useState(false);
   const [especialidad, setEspecialidad] = useState<string | null>(null);
+  const [avatarUrl, setAvatarUrl] = useState<string | undefined>(undefined);
   const dropdownRef = useRef<HTMLDivElement>(null);
   const [notificaciones, setNotificaciones] = useState<Notificacion[]>([]);
 
@@ -31,7 +35,10 @@ const Header = () => {
   useEffect(() => {
     if (user?.rol === "MEDICO") {
       MedicoApiService.obtenerMiPerfil()
-        .then((p) => setEspecialidad(p.especialidadId.nombre))
+        .then((p) => {
+          setEspecialidad(p.especialidadId.nombre);
+          setAvatarUrl(resolverAvatar(p.avatar));
+        })
         .catch(() => setEspecialidad(null));
     }
   }, [user?.rol]);
@@ -138,7 +145,11 @@ const Header = () => {
                     <p className="user-role">Administrador</p>
                   )}
                 </div>
-                <div className="user-avatar">{avatarLetter}</div>
+                <div className="user-avatar" style={avatarUrl ? { padding: 0, overflow: "hidden" } : undefined}>
+                  {avatarUrl
+                    ? <img src={avatarUrl} alt={nombreCompleto} style={{ width: "100%", height: "100%", objectFit: "cover", borderRadius: "inherit" }} />
+                    : avatarLetter}
+                </div>
                 <ChevronDown
                   size={14}
                   strokeWidth={2}
@@ -148,6 +159,15 @@ const Header = () => {
 
               {dropdownOpen && (
                 <div className="header-dropdown">
+                  {user?.rol === "MEDICO" && (
+                    <button
+                      className="header-dropdown-item header-dropdown-item--neutral"
+                      onClick={() => { setDropdownOpen(false); navigate("/medico/perfil"); }}
+                    >
+                      <UserCircle size={15} strokeWidth={2} />
+                      <span>Perfil</span>
+                    </button>
+                  )}
                   <button
                     className="header-dropdown-item"
                     onClick={handleLogout}

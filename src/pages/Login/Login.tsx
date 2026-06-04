@@ -5,6 +5,12 @@ import { useAuth } from "../../hooks/userAuth";
 import { Mail, Lock, AlertCircle, ArrowRight, Eye, EyeOff } from "lucide-react";
 import "./Login.css";
 
+import doctor1 from "../../../assets/Doctor1.jpg";
+import doctor2 from "../../../assets/Doctor2.jpg";
+import doctor3 from "../../../assets/Doctor3.jpg";
+
+const SLIDES = [doctor1, doctor2, doctor3];
+
 const Login = () => {
   const { login, user, isAuthenticated } = useAuth();
   const navigate = useNavigate();
@@ -14,6 +20,19 @@ const Login = () => {
   const [cargando, setCargando] = useState(false);
   const [error, setError] = useState("");
   const passRef = useRef<HTMLInputElement>(null);
+  const [slideIdx, setSlideIdx] = useState(() => Math.floor(Math.random() * SLIDES.length));
+  const [fadeIn, setFadeIn] = useState(true);
+
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setFadeIn(false);
+      setTimeout(() => {
+        setSlideIdx(prev => (prev + 1) % SLIDES.length);
+        setFadeIn(true);
+      }, 500);
+    }, 5000);
+    return () => clearInterval(interval);
+  }, []);
 
   const handleCorreoKey = (e: KeyboardEvent<HTMLInputElement>) => {
     if (e.key === "Enter") {
@@ -55,53 +74,19 @@ const Login = () => {
     <div className="login-page">
       {/* Left panel - visual */}
       <div className="login-panel-left">
-        <div className="login-panel-bg">
-          <div className="login-grid-pattern" />
-          <div className="login-glow login-glow--1" />
-          <div className="login-glow login-glow--2" />
-        </div>
+        {/* Imagen de fondo rotativa */}
+        <img
+          key={slideIdx}
+          src={SLIDES[slideIdx]}
+          alt="Policlínico"
+          className={`login-slide-img ${fadeIn ? "login-slide-img--in" : "login-slide-img--out"}`}
+        />
 
-        <div className="login-panel-content">
-          <div className="login-illustration">
-            <svg viewBox="0 0 200 200" className="login-svg-art">
-              {/* Cross / medical */}
-              <rect x="85" y="40" width="30" height="120" rx="15" fill="rgba(255,255,255,0.15)" />
-              <rect x="40" y="85" width="120" height="30" rx="15" fill="rgba(255,255,255,0.15)" />
-              {/* Pulse line */}
-              <polyline
-                points="20,120 60,120 72,90 84,150 96,100 108,130 120,120 180,120"
-                fill="none"
-                stroke="rgba(255,255,255,0.3)"
-                strokeWidth="3"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                className="login-pulse-line"
-              />
-              {/* Circles */}
-              <circle cx="100" cy="100" r="80" fill="none" stroke="rgba(255,255,255,0.06)" strokeWidth="1" />
-              <circle cx="100" cy="100" r="60" fill="none" stroke="rgba(255,255,255,0.04)" strokeWidth="1" />
-            </svg>
-          </div>
-
-          <h2 className="login-panel-title">Sistema de Gestion Clinica</h2>
-          <p className="login-panel-desc">
-            Administra citas, pacientes y personal medico de manera eficiente y segura.
-          </p>
-
-          <div className="login-panel-features">
-            <div className="login-feature">
-              <span className="login-feature-dot" />
-              Gestion de citas en tiempo real
-            </div>
-            <div className="login-feature">
-              <span className="login-feature-dot" />
-              Historial clinico de pacientes
-            </div>
-            <div className="login-feature">
-              <span className="login-feature-dot" />
-              Panel de control por especialidad
-            </div>
-          </div>
+        {/* Indicadores de slide */}
+        <div className="login-slide-dots">
+          {SLIDES.map((_, i) => (
+            <span key={i} className={`login-slide-dot ${i === slideIdx ? "login-slide-dot--active" : ""}`} />
+          ))}
         </div>
       </div>
 

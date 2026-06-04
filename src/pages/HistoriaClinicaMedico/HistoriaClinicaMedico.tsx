@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from "react";
+import Swal from "sweetalert2";
 import { useParams, useNavigate } from "react-router-dom";
 import {
   ArrowLeft, Phone, Mail, BookOpen,
@@ -6,10 +7,13 @@ import {
   ChevronDown, ChevronRight, FileText,
   AlertTriangle, Activity, Scissors, Users,
   ChevronLeft, MessageCircle, MoreVertical,
-  Camera, Download, GitMerge, PowerOff, Trash2,
+  Camera, PowerOff, Trash2,
 } from "lucide-react";
 import { MedicoApiService } from "../../services/medico.service";
 import { PacienteApiService } from "../../services/paciente.service";
+
+const BACKEND_URL = (import.meta.env.VITE_API_URL ?? "http://localhost:3000/api").replace(/\/api$/, "");
+const resolverAvatar = (avatar?: string) => (avatar ? `${BACKEND_URL}${avatar}` : undefined);
 import { useAuth } from "../../hooks/userAuth";
 import HistoriaClinicaTabs from "./HistoriaClinicaTabs";
 import "./HistoriaClinicaMedico.css";
@@ -88,6 +92,7 @@ export default function HistoriaClinicaMedico() {
   const [enviandoWsp, setEnviandoWsp]   = useState(false);
   const tabsContainerRef = useRef<HTMLDivElement>(null);
   const menuRef = useRef<HTMLDivElement>(null);
+  const fotoInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     if (!pacienteId) return;
@@ -177,6 +182,69 @@ export default function HistoriaClinicaMedico() {
     }
   };
 
+  const handleSubirFoto = () => {
+    setMenuAbierto(false);
+    fotoInputRef.current?.click();
+  };
+
+  const handleFotoSeleccionada = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file || !pacienteId) return;
+    e.target.value = "";
+    try {
+      const { avatarUrl } = await PacienteApiService.subirAvatarPaciente(pacienteId, file);
+      setPaciente((prev: any) => ({ ...prev, avatar: avatarUrl }));
+      mostrarNotif("Foto actualizada correctamente", "success");
+    } catch (err: any) {
+      mostrarNotif(err?.response?.data?.message ?? err?.message ?? "Error al subir foto", "error");
+    }
+  };
+
+  const handleDesactivar = async () => {
+    if (!pacienteId) return;
+    setMenuAbierto(false);
+    const result = await Swal.fire({
+      title: "¿Desactivar paciente?",
+      html: `El paciente <strong>${paciente?.nombres} ${paciente?.apellidos}</strong> quedará inactivo y no aparecerá en búsquedas normales.`,
+      icon: "warning",
+      showCancelButton: true,
+      confirmButtonText: "Sí, desactivar",
+      cancelButtonText: "Cancelar",
+      confirmButtonColor: "#f59e0b",
+      cancelButtonColor: "#6b7280",
+    });
+    if (!result.isConfirmed) return;
+    try {
+      await PacienteApiService.desactivar(pacienteId);
+      mostrarNotif("Paciente desactivado", "success");
+      setTimeout(() => navigate(rutaPacientes), 1500);
+    } catch (err: any) {
+      mostrarNotif(err?.response?.data?.message ?? "Error al desactivar", "error");
+    }
+  };
+
+  const handleEliminar = async () => {
+    if (!pacienteId) return;
+    setMenuAbierto(false);
+    const result = await Swal.fire({
+      title: "¿Eliminar paciente?",
+      html: `Esta acción <strong>no se puede deshacer</strong>. Se eliminará permanentemente el registro de <strong>${paciente?.nombres} ${paciente?.apellidos}</strong> y todos sus datos clínicos.`,
+      icon: "error",
+      showCancelButton: true,
+      confirmButtonText: "Sí, eliminar",
+      cancelButtonText: "Cancelar",
+      confirmButtonColor: "#ef4444",
+      cancelButtonColor: "#6b7280",
+    });
+    if (!result.isConfirmed) return;
+    try {
+      await PacienteApiService.eliminar(pacienteId);
+      navigate(rutaPacientes);
+    } catch (err: any) {
+      mostrarNotif(err?.response?.data?.message ?? "Error al eliminar", "error");
+    }
+  };
+
   if (loading) return <div className="hcm-loading">Cargando historia clínica…</div>;
   if (!paciente) return <div className="hcm-loading">Paciente no encontrado.</div>;
 
@@ -205,7 +273,11 @@ export default function HistoriaClinicaMedico() {
       {/* Encabezado del paciente */}
       <div className="hcm-header-card">
         <div className="hcm-header-left">
-          <div className="hcm-avatar">{iniciales}</div>
+          <div className="hcm-avatar" style={paciente.avatar ? { padding: 0, overflow: "hidden" } : undefined}>
+            {paciente.avatar
+              ? <img src={resolverAvatar(paciente.avatar)} alt={nombre} style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+              : iniciales}
+          </div>
           <div className="hcm-header-info">
             <div className="hcm-header-name">{nombre}</div>
             <div className="hcm-header-meta">
@@ -270,24 +342,25 @@ export default function HistoriaClinicaMedico() {
               </button>
               {menuAbierto && (
                 <div className="hcm-action-dropdown">
-                  <button className="hcm-dropdown-item" onClick={() => setMenuAbierto(false)}>
+                  <button className="hcm-dropdown-item" onClick={handleSubirFoto}>
                     <Camera size={15} /> Subir foto
                   </button>
-                  <button className="hcm-dropdown-item" onClick={() => setMenuAbierto(false)}>
-                    <Download size={15} /> Descargar
-                  </button>
-                  <button className="hcm-dropdown-item" onClick={() => setMenuAbierto(false)}>
-                    <GitMerge size={15} /> Fusionar paciente
-                  </button>
                   <div className="hcm-dropdown-divider" />
-                  <button className="hcm-dropdown-item" onClick={() => setMenuAbierto(false)}>
+                  <button className="hcm-dropdown-item" onClick={handleDesactivar}>
                     <PowerOff size={15} /> Desactivar
                   </button>
-                  <button className="hcm-dropdown-item hcm-dropdown-item--danger" onClick={() => setMenuAbierto(false)}>
+                  <button className="hcm-dropdown-item hcm-dropdown-item--danger" onClick={handleEliminar}>
                     <Trash2 size={15} /> Eliminar
                   </button>
                 </div>
               )}
+              <input
+                ref={fotoInputRef}
+                type="file"
+                accept="image/jpeg,image/png,image/webp"
+                style={{ display: "none" }}
+                onChange={handleFotoSeleccionada}
+              />
             </div>
           </div>
         </div>

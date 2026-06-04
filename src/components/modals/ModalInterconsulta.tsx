@@ -15,7 +15,7 @@ const ESPECIALIDADES_INT = ["Medicina General", "Pediatría", "Odontología", "R
 
 export default function ModalInterconsulta({ cita, onClose, onGuardada }: Props) {
   const [form, setForm] = useState({
-    especialidad: "", medicoSolicitado: "", prioridad: "electiva",
+    especialidad: "", medicoSolicitado: "",
     diagnosticoPresuntivo: "", motivoConsulta: "", preguntaClinica: "", informacionRelevante: "",
   });
   const [guardando, setGuardando] = useState(false);
@@ -41,7 +41,7 @@ export default function ModalInterconsulta({ cita, onClose, onGuardada }: Props)
         citaId: cita._id,
         especialidadSolicitada: form.especialidad,
         medicoSolicitado: form.medicoSolicitado || undefined,
-        prioridad: form.prioridad as PrioridadInterconsulta,
+        prioridad: "electiva" as PrioridadInterconsulta,
         diagnosticoPresuntivo: form.diagnosticoPresuntivo || undefined,
         motivoConsulta: form.motivoConsulta,
         preguntaClinica: form.preguntaClinica || undefined,
@@ -91,24 +91,6 @@ export default function ModalInterconsulta({ cita, onClose, onGuardada }: Props)
               <label className="soap-section-label">Médico solicitado (opcional)</label>
               <input className="soap-input" placeholder=""
                 value={form.medicoSolicitado} onChange={e => upF("medicoSolicitado", e.target.value)} />
-            </div>
-          </div>
-
-          <div style={{ marginBottom: 16 }}>
-            <label className="soap-section-label">Prioridad</label>
-            <div style={{ display: "flex", gap: 20, marginTop: 4 }}>
-              {[{ val: "urgente", label: "Urgente", sub: "Hoy / misma guardia" },
-                { val: "preferente", label: "Preferente", sub: "24-48 horas" },
-                { val: "electiva", label: "Electiva", sub: "Dentro de 7 días" }].map(p => (
-                <label key={p.val} style={{ display: "flex", alignItems: "flex-start", gap: 6, cursor: "pointer" }}>
-                  <input type="radio" checked={form.prioridad === p.val} onChange={() => upF("prioridad", p.val)}
-                    style={{ accentColor: "var(--primary)", marginTop: 2 }} />
-                  <span>
-                    <div style={{ fontSize: 13, fontWeight: 600, color: "var(--text-primary)" }}>{p.label}</div>
-                    <div style={{ fontSize: 11, color: "var(--text-muted)" }}>{p.sub}</div>
-                  </span>
-                </label>
-              ))}
             </div>
           </div>
 

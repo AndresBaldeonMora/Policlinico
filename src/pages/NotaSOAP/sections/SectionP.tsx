@@ -94,7 +94,6 @@ export default function SectionP({
                 <div className="soap-plan-item-name">{e.nombre}</div>
                 <div className="soap-plan-item-sub">{e.tipo}</div>
               </div>
-              {e.urgente && <span className="soap-urgente-badge">Urgente</span>}
               <button className="soap-plan-remove" onClick={() => removeExamen(i)}>×</button>
             </div>
           ))

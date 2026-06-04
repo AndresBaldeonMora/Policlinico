@@ -85,7 +85,7 @@
 /* Cabecera de columnas */
 .irec-lista-header {
   display: grid;
-  grid-template-columns: 1fr 2fr 1.6fr 1.5fr 2fr 1.6fr 2fr;
+  grid-template-columns: 2fr 1.6fr 1.5fr 2fr 1.6fr 2fr;
   gap: 1rem;
   padding: 0.5rem 1.25rem;
   font-size: 0.72rem;
@@ -108,14 +108,10 @@
   box-shadow: var(--shadow-md);
 }
 
-/* Borde de prioridad */
-.irec-orden--danger  { border-left: 3px solid #ef4444; }
-.irec-orden--warning { border-left: 3px solid #f59e0b; }
-.irec-orden--info    { border-left: 3px solid #3b82f6; }
 
 .irec-orden-row {
   display: grid;
-  grid-template-columns: 1fr 2fr 1.6fr 1.5fr 2fr 1.6fr 2fr;
+  grid-template-columns: 2fr 1.6fr 1.5fr 2fr 1.6fr 2fr;
   gap: 1rem;
   padding: 1rem 1.25rem;
   align-items: center;
@@ -418,11 +414,6 @@
   line-height: 1.4;
 }
 
-.irec-sin-disp--urgente {
-  background: #fff1f2;
-  border-color: #fca5a5;
-  color: #b91c1c;
-}
 
 .irec-sin-disp--info {
   background: #f0fdf4;

@@ -27,6 +27,7 @@ import PacienteOrdenes from "./pages/PacienteOrdenes/PacienteOrdenes";
 import MiCuentaPerfil from "./pages/PacienteDashboard/MiCuenta/MiCuentaPerfil";
 
 // Páginas del administrador
+import PerfilMedico from "./pages/PerfilMedico/PerfilMedico";
 import AdminDashboard from "./pages/AdminDash/AdminDashboard";
 import GestionEspecialidades from "./pages/AdminDash/GestionEspecialidades";
 import GestionDoctores from "./pages/AdminDash/GestionDoctores";
@@ -155,6 +156,15 @@ function App() {
               element={
                 <ProtectedRoute roles={["MEDICO"]}>
                   <MedicoDashboard />
+                </ProtectedRoute>
+              }
+            />
+
+            <Route
+              path="/medico/perfil"
+              element={
+                <ProtectedRoute roles={["MEDICO"]}>
+                  <PerfilMedico />
                 </ProtectedRoute>
               }
             />

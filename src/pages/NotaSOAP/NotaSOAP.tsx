@@ -91,7 +91,6 @@ export default function NotaSOAP() {
       .then(([data, perfilData]) => {
         setCita(data);
         setPerfil(perfilData);
-        // Prioridad: backend > localStorage > estado inicial
         const rawSource = data.notasClinicas || (citaId ? localStorage.getItem(`soap_draft_${citaId}`) : null);
         if (rawSource) {
           try {
@@ -358,12 +357,19 @@ export default function NotaSOAP() {
       ]);
 
       // Crear OrdenExamen si hay exámenes con ID de catálogo en el Plan
-      if (perfil?.especialidadId?._id && cita) {
-        const itemsConId = examenes
-          .filter(ex => !!ex.examenId)
-          .map(ex => ({ examenId: ex.examenId!, observaciones: ex.instrucciones ?? "" }));
+      const itemsConId = examenes
+        .filter(ex => !!ex.examenId)
+        .map(ex => ({ examenId: ex.examenId!, observaciones: ex.instrucciones ?? "" }));
 
-        if (itemsConId.length > 0) {
+      if (itemsConId.length > 0 && cita) {
+        if (!perfil?.especialidadId?._id) {
+          Swal.fire({
+            icon: "warning",
+            title: "Orden de exámenes no creada",
+            html: "La consulta fue finalizada, pero <strong>tu perfil no tiene especialidad asignada</strong> y no se pudo crear la orden de exámenes. Contacta al administrador.",
+            confirmButtonColor: "var(--primary)",
+          });
+        } else {
           try {
             await ExamenService.crearOrden({
               pacienteId:            cita.pacienteId._id,
@@ -373,8 +379,15 @@ export default function NotaSOAP() {
               items:                 itemsConId,
               diagnosticoPresuntivo: soapData.A.diagnoses?.[0]?.descripcion ?? "",
             });
-          } catch {
-            // No bloquea el flujo principal — el médico puede crear la orden manualmente
+          } catch (ordenErr: any) {
+            console.error("Error al crear orden de exámenes:", ordenErr);
+            const msg = ordenErr?.response?.data?.message ?? ordenErr?.message ?? "Error desconocido";
+            Swal.fire({
+              icon: "warning",
+              title: "Orden de exámenes no creada",
+              html: `La consulta fue finalizada correctamente, pero <strong>no se pudo crear la orden de exámenes</strong>.<br><br><small>${msg}</small><br><br>Puede crearla manualmente desde el módulo de Laboratorio.`,
+              confirmButtonColor: "var(--primary)",
+            });
           }
         }
       }

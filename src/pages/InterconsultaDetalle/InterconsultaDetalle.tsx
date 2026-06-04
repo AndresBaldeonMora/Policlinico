@@ -26,12 +26,6 @@ const ESTADO_META: Record<EstadoInterconsulta, { label: string; cls: string; ico
   CANCELADA:  { label: "Cancelada",     cls: "muted", icon: X },
 };
 
-const PRIORIDAD_META: Record<string, { label: string; cls: string }> = {
-  urgente:    { label: "Urgente",    cls: "danger" },
-  preferente: { label: "Preferente", cls: "warning" },
-  electiva:   { label: "Electiva",   cls: "info" },
-};
-
 function calcEdad(fechaNacimiento?: string): string {
   if (!fechaNacimiento) return "";
   const b = new Date(fechaNacimiento);
@@ -313,12 +307,9 @@ export default function InterconsultaDetalle() {
   };
 
   const sinDisponibilidad = !cargandoHorarios && horarios.length > 0 && horarios.every(h => !h.disponible);
-  const esUrgente = ic?.prioridad === "urgente";
-  const puedeConfirmarSinHora = esUrgente && sinDisponibilidad;
 
   const handleAgendar = async () => {
-    if (!ic || !fechaSel) return;
-    if (!horaSel && !puedeConfirmarSinHora) return;
+    if (!ic || !fechaSel || !horaSel) return;
     setGuardando(true);
     try {
       const actualizada = await InterconsultaApiService.agendarCita(ic._id, {
@@ -370,7 +361,6 @@ export default function InterconsultaDetalle() {
 
   const pac = ic.pacienteId;
   const estadoMeta = ESTADO_META[ic.estado];
-  const prioMeta = PRIORIDAD_META[ic.prioridad] ?? PRIORIDAD_META.electiva;
   const cita = typeof ic.citaGeneradaId === "object" ? ic.citaGeneradaId : null;
   const EstadoIcon = estadoMeta.icon;
 
@@ -402,9 +392,6 @@ export default function InterconsultaDetalle() {
           </div>
         </div>
         <div className="icd-hero-status">
-          <span className={`icd-prio-pill icd-prio-pill--${prioMeta.cls}`}>
-            <span className="icd-prio-dot" /> {prioMeta.label}
-          </span>
           <div className={`icd-estado-big icd-estado-big--${estadoMeta.cls}`}>
             <EstadoIcon size={16} />
             <span>{estadoMeta.label}</span>
@@ -456,12 +443,6 @@ export default function InterconsultaDetalle() {
                   <span className="icd-kv-value">{ic.medicoSolicitado}</span>
                 </div>
               )}
-              <div className="icd-kv">
-                <span className="icd-kv-label">Prioridad</span>
-                <span className="icd-kv-value">
-                  <span className={`icd-mini-badge icd-mini-badge--${prioMeta.cls}`}>{prioMeta.label}</span>
-                </span>
-              </div>
             </div>
             {ic.diagnosticoPresuntivo && (
               <div className="icd-block" style={{ marginTop: 12 }}>
@@ -683,11 +664,7 @@ export default function InterconsultaDetalle() {
                   ) : sinDisponibilidad ? (
                     <div className="icd-horarios-empty">
                       <AlertCircle size={14} />
-                      <span>
-                        {esUrgente
-                          ? "El turno ha terminado — no quedan horarios disponibles. Al ser urgencia, puedes confirmar sin hora fija y el paciente será atendido en el primer hueco del día."
-                          : "El turno del médico ha terminado por hoy. Selecciona otro día para agendar la cita."}
-                      </span>
+                      <span>El turno del médico ha terminado por hoy. Selecciona otro día para agendar la cita.</span>
                     </div>
                   ) : (
                     <div className="icd-horarios-grid">
@@ -723,15 +700,9 @@ export default function InterconsultaDetalle() {
                     <button className="icd-btn icd-btn--ghost" onClick={() => { setModo("ver"); setHoraSel(""); setRespuestaCita(""); }} disabled={guardando}>
                       Cancelar
                     </button>
-                    <button className="icd-btn icd-btn--primary" onClick={handleAgendar} disabled={guardando || (!horaSel && !puedeConfirmarSinHora)}>
+                    <button className="icd-btn icd-btn--primary" onClick={handleAgendar} disabled={guardando || !horaSel}>
                       <CalendarPlus size={13} />
-                      {guardando
-                        ? "Agendando…"
-                        : horaSel
-                          ? `Confirmar — ${horaSel}`
-                          : puedeConfirmarSinHora
-                            ? "Confirmar urgencia — sin hora fija"
-                            : "Selecciona un horario"}
+                      {guardando ? "Agendando…" : horaSel ? `Confirmar — ${horaSel}` : "Selecciona un horario"}
                     </button>
                   </div>
                 </div>

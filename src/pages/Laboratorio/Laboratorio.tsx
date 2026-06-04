@@ -884,7 +884,7 @@ const ModalPagoIngreso = ({ orden, onCerrar, onConfirmado }: ModalPagoIngresoPro
         {/* Body */}
         <div
           className="lab-modal-body"
-          style={{ padding: "1.25rem 1.5rem", maxHeight: "72vh", overflowY: "auto" }}
+          style={{ padding: "1.25rem 1.5rem" }}
         >
           {/* Paciente + Doctor */}
           <div
@@ -917,7 +917,6 @@ const ModalPagoIngreso = ({ orden, onCerrar, onConfirmado }: ModalPagoIngresoPro
                   <th style={{ textAlign: "left" }}>Ítem</th>
                   <th style={{ textAlign: "center", width: 70 }}>Cantidad</th>
                   <th style={{ textAlign: "right", width: 110 }}>Precio Unit.</th>
-                  <th style={{ textAlign: "right", width: 110 }}>Laboratorio</th>
                   <th style={{ textAlign: "right", width: 110 }}>Subtotal</th>
                   <th style={{ width: 36 }} />
                 </tr>
@@ -925,13 +924,13 @@ const ModalPagoIngreso = ({ orden, onCerrar, onConfirmado }: ModalPagoIngresoPro
               <tbody>
                 {lineas.length === 0 ? (
                   <tr>
-                    <td colSpan={6} style={{ textAlign: "center", color: "var(--text-muted)", fontSize: "0.82rem", padding: "0.75rem" }}>
+                    <td colSpan={5} style={{ textAlign: "center", color: "var(--text-muted)", fontSize: "0.82rem", padding: "0.75rem" }}>
                       Sin ítems
                     </td>
                   </tr>
                 ) : (
                   lineas.map((linea, idx) => {
-                    const subtotal = linea.cantidad * linea.precioUnit + linea.costoLab;
+                    const subtotal = linea.cantidad * linea.precioUnit;
                     return (
                       <tr key={idx}>
                         <td style={{ fontSize: "0.88rem" }}>{linea.nombre}</td>
@@ -951,16 +950,6 @@ const ModalPagoIngreso = ({ orden, onCerrar, onConfirmado }: ModalPagoIngresoPro
                             step="0.01"
                             value={linea.precioUnit}
                             onChange={(e) => updateLinea(idx, "precioUnit", Math.max(0, Number(e.target.value)))}
-                            style={inputNumStyle}
-                          />
-                        </td>
-                        <td style={{ textAlign: "right" }}>
-                          <input
-                            type="number"
-                            min={0}
-                            step="0.01"
-                            value={linea.costoLab}
-                            onChange={(e) => updateLinea(idx, "costoLab", Math.max(0, Number(e.target.value)))}
                             style={inputNumStyle}
                           />
                         </td>
@@ -990,7 +979,7 @@ const ModalPagoIngreso = ({ orden, onCerrar, onConfirmado }: ModalPagoIngresoPro
               <tfoot>
                 <tr>
                   <td
-                    colSpan={4}
+                    colSpan={3}
                     style={{
                       textAlign: "right",
                       fontWeight: 600,

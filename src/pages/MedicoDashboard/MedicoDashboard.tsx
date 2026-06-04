@@ -19,12 +19,6 @@ const ESTADO_ENV_LABEL: Record<EstadoInterconsulta, { label: string; cls: string
   CANCELADA:  { label: "Cancelada",     cls: "muted",   icon: XCircle },
 };
 
-const PRIORIDAD_LABEL: Record<string, { label: string; cls: string }> = {
-  urgente:    { label: "Urgente",    cls: "danger" },
-  preferente: { label: "Preferente", cls: "warning" },
-  electiva:   { label: "Electiva",   cls: "info" },
-};
-
 const formatHoy = () =>
   new Date().toLocaleDateString("es-PE", {
     weekday: "long", day: "numeric", month: "long", year: "numeric",
@@ -451,28 +445,22 @@ export default function MedicoDashboard() {
                   </div>
                 ) : (
                   <div className="dash-tab-list">
-                    {interconsultas.slice(0, 5).map((ic) => {
-                      const prio = PRIORIDAD_LABEL[ic.prioridad] ?? PRIORIDAD_LABEL.electiva;
-                      return (
-                        <button key={ic._id} className="dash-tab-item" onClick={() => irADetalle(ic)}>
-                          <div className="dash-tab-item-avatar dash-tab-item-avatar--warn">
-                            <Reply size={14} />
-                          </div>
-                          <div className="dash-tab-item-main">
-                            <span className="dash-tab-item-name">
-                              {ic.pacienteId?.nombres} {ic.pacienteId?.apellidos}
-                            </span>
-                            <span className="dash-tab-item-sub">
-                              De <b>{ic.solicitanteNombre}</b> · {ic.motivoConsulta}
-                            </span>
-                          </div>
-                          <span className={`dash-tab-item-meta dash-tab-item-meta--${prio.cls}`}>
-                            {prio.label}
+                    {interconsultas.slice(0, 5).map((ic) => (
+                      <button key={ic._id} className="dash-tab-item" onClick={() => irADetalle(ic)}>
+                        <div className="dash-tab-item-avatar dash-tab-item-avatar--warn">
+                          <Reply size={14} />
+                        </div>
+                        <div className="dash-tab-item-main">
+                          <span className="dash-tab-item-name">
+                            {ic.pacienteId?.nombres} {ic.pacienteId?.apellidos}
                           </span>
-                          <ChevronRight size={14} className="dash-tab-item-arrow" />
-                        </button>
-                      );
-                    })}
+                          <span className="dash-tab-item-sub">
+                            De <b>{ic.solicitanteNombre}</b> · {ic.motivoConsulta}
+                          </span>
+                        </div>
+                        <ChevronRight size={14} className="dash-tab-item-arrow" />
+                      </button>
+                    ))}
                   </div>
                 )
               )}

@@ -1,9 +1,9 @@
 import { useEffect, useState, useRef } from "react";
 import Swal from "sweetalert2";
 import {
-  ClipboardList, Calendar, Clock, Stethoscope,
-  AlertCircle, ChevronLeft, ChevronRight, X, CalendarPlus,
-  CheckCircle2, Hourglass, RefreshCw, Search, User, CalendarDays,
+  ClipboardList, Clock, Stethoscope,
+  ChevronLeft, ChevronRight, X, CalendarPlus,
+  CheckCircle2, RefreshCw, Search, User, CalendarDays,
 } from "lucide-react";
 import {
   InterconsultaApiService,
@@ -18,12 +18,6 @@ import "../ListaCitas/ReprogramarModal.css";
 import "../Laboratorio/Laboratorio.css";
 
 // ─── Helpers ───────────────────────────────────────────────────────────────────
-
-const PRIORIDAD_META: Record<string, { label: string; cls: string }> = {
-  urgente:    { label: "Urgente",    cls: "danger" },
-  preferente: { label: "Preferente", cls: "warning" },
-  electiva:   { label: "Electiva",   cls: "info" },
-};
 
 const DIAS_SEMANA = ["L", "M", "M", "J", "V", "S", "D"];
 const MESES_NOMBRE = [
@@ -54,7 +48,7 @@ const formatTS = (iso?: string) => (iso ? formatearTimestamp(iso) : "—");
 
 // ─── Mini-calendario ────────────────────────────────────────────────────────────
 
-function MiniCalendario({ valor, onChange, maxFecha }: { valor: string; onChange: (iso: string) => void; maxFecha?: string }) {
+function MiniCalendario({ valor, onChange }: { valor: string; onChange: (iso: string) => void }) {
   const init = new Date(valor);
   const [mes, setMes]   = useState(init.getMonth());
   const [año, setAño]   = useState(init.getFullYear());
@@ -89,12 +83,11 @@ function MiniCalendario({ valor, onChange, maxFecha }: { valor: string; onChange
           const d      = new Date(año, mes, dia);
           const iso    = fechaToISO(d);
           const esDom  = d.getDay() === 0;
-          const fueraDeLimite = !!maxFecha && iso > maxFecha;
-          const off    = d < hoy || esDom || fueraDeLimite;
+          const off    = d < hoy || esDom;
           return (
             <button
               key={idx} type="button" disabled={off}
-              title={esDom ? "Domingo — sin atención" : fueraDeLimite ? "Fuera del plazo permitido por prioridad" : undefined}
+              title={esDom ? "Domingo — sin atención" : undefined}
               className={
                 "irec-cal-celda" +
                 (iso === valor ? " --sel" : "") +
@@ -139,17 +132,8 @@ function ModalAgendar({ interconsulta: ic, onClose, onAgendada }: ModalAgendarPr
   const [guardando, setGuardando]     = useState(false);
   const [paso, setPaso]               = useState<1|2>(1);
 
-  const esUrgente    = ic.prioridad === "urgente";
-  const esPreferente = ic.prioridad === "preferente";
-
-  const maxFecha = esUrgente    ? sumarDias(hoyISO(), 1)
-                 : esPreferente ? sumarDias(hoyISO(), 3)
-                 : undefined;
-
-  const noHaySlots       = !cargandoHor && !!doctorId && (horarios.length === 0 || horarios.every(h => !h.disponible));
-  const sinDisp48h       = esUrgente && noHaySlots && fecha === sumarDias(hoyISO(), 1);
-  const esHoy            = fecha === hoyISO();
-  const puedeConfirmar   = !!doctorId && !!hora;
+  const noHaySlots     = !cargandoHor && !!doctorId && (horarios.length === 0 || horarios.every(h => !h.disponible));
+  const puedeConfirmar = !!doctorId && !!hora;
   const doctorSelec      = doctores.find(d => d.id === doctorId);
 
   useEffect(() => {
@@ -173,14 +157,6 @@ function ModalAgendar({ interconsulta: ic, onClose, onAgendada }: ModalAgendarPr
       .finally(() => setCargandoHor(false));
   }, [doctorId, fecha]);
 
-  // Urgente: si hoy no hay slots, saltar automáticamente a mañana
-  useEffect(() => {
-    if (!esUrgente || cargandoHor || !doctorId) return;
-    if (noHaySlots && fecha === hoyISO()) {
-      setFecha(sumarDias(hoyISO(), 1));
-    }
-  }, [noHaySlots, cargandoHor, esUrgente, doctorId]);
-
   const handleConfirmar = async () => {
     setGuardando(true);
     try {
@@ -198,7 +174,6 @@ function ModalAgendar({ interconsulta: ic, onClose, onAgendada }: ModalAgendarPr
   };
 
   const pac  = ic.pacienteId;
-  const prio = PRIORIDAD_META[ic.prioridad] ?? PRIORIDAD_META.electiva;
 
   const disponibles = horarios.filter(h => h.disponible);
 
@@ -212,8 +187,7 @@ function ModalAgendar({ interconsulta: ic, onClose, onAgendada }: ModalAgendarPr
             <div>
               <h3 className="rep-header__titulo">Agendar cita de interconsulta</h3>
               <p className="rep-header__sub">
-                {pac.nombres} {pac.apellidos} · DNI {pac.dni} ·{" "}
-                <span className={`irec-badge irec-badge--${prio.cls}`} style={{ fontSize: 11 }}>{prio.label}</span>
+                {pac.nombres} {pac.apellidos} · DNI {pac.dni}
               </p>
             </div>
             <button type="button" className="rep-header__close" onClick={onClose}><X size={18}/></button>
@@ -275,24 +249,11 @@ function ModalAgendar({ interconsulta: ic, onClose, onAgendada }: ModalAgendarPr
                 )}
               </div>
 
-              {/* Límite de fecha MINSA */}
-              {(esUrgente || esPreferente) && (
-                <div className="irec-sin-disp" style={{ background: "var(--bg-body)", borderColor: "var(--border)" }}>
-                  <AlertCircle size={14} style={{ color: esUrgente ? "var(--danger)" : "var(--warning)", flexShrink: 0 }}/>
-                  <span style={{ color: "var(--text-secondary)", fontSize: 13 }}>
-                    {esUrgente
-                      ? "Norma MINSA — Urgente: debe agendarse hoy o mañana (máx 48h)"
-                      : "Norma MINSA — Preferente: debe agendarse dentro de 72h"}
-                  </span>
-                </div>
-              )}
-
               {/* Calendario + Horarios en 2 columnas */}
               <div className="rep-paso1">
                 <MiniCalendario
                   valor={fecha}
                   onChange={f => { setFecha(f); setHora(""); }}
-                  maxFecha={maxFecha}
                 />
 
                 {/* Panel de horarios */}
@@ -306,14 +267,6 @@ function ModalAgendar({ interconsulta: ic, onClose, onAgendada }: ModalAgendarPr
                     <div className="rep-slots rep-slots--placeholder" style={{ border: "none", padding: 0 }}>
                       <div className="spinner-small"/>
                       <p>Consultando agenda…</p>
-                    </div>
-                  ) : sinDisp48h ? (
-                    <div className="rep-slots--placeholder" style={{ display:"flex", flexDirection:"column", alignItems:"center", justifyContent:"center", height:"100%", gap:"0.5rem", textAlign:"center" }}>
-                      <AlertCircle size={24} style={{ color: "var(--danger)" }}/>
-                      <p style={{ margin: 0, fontSize: "0.84rem", color: "var(--danger)", lineHeight: 1.4 }}>
-                        Sin disponibilidad hoy ni mañana.<br/>
-                        Prueba con otro especialista.
-                      </p>
                     </div>
                   ) : noHaySlots ? (
                     <div className="rep-slots--placeholder" style={{ display:"flex", flexDirection:"column", alignItems:"center", justifyContent:"center", height:"100%", gap:"0.5rem", textAlign:"center" }}>
@@ -337,12 +290,7 @@ function ModalAgendar({ interconsulta: ic, onClose, onAgendada }: ModalAgendarPr
                           >{h.hora}</button>
                         ))}
                       </div>
-                      {esUrgente && esHoy && hora && (
-                        <div className="irec-sin-disp irec-sin-disp--info" style={{ marginTop: "auto", paddingTop: 8 }}>
-                          <CheckCircle2 size={13}/>
-                          <span>Cita marcada como <strong>En Sala</strong> — paciente presente.</span>
-                        </div>
-                      )}
+
                     </>
                   )}
                 </div>
@@ -361,7 +309,6 @@ function ModalAgendar({ interconsulta: ic, onClose, onAgendada }: ModalAgendarPr
                 <div className="rep-confirm__item">
                   <span className="rep-confirm__label">Especialidad solicitada</span>
                   <strong>{ic.especialidadSolicitada}</strong>
-                  <span className="rep-confirm__sub">Prioridad: {prio.label}</span>
                 </div>
                 <div className="rep-confirm__item">
                   <span className="rep-confirm__label">Médico asignado</span>
@@ -371,7 +318,7 @@ function ModalAgendar({ interconsulta: ic, onClose, onAgendada }: ModalAgendarPr
                 <div className="rep-confirm__item rep-confirm__item--despues">
                   <span className="rep-confirm__label">Fecha y hora de cita</span>
                   <strong>{formatearFechaResumen(fecha)}</strong>
-                  <span className="rep-confirm__sub">{hora} hs{esUrgente && esHoy ? " · Entrará como En Sala" : ""}</span>
+                  <span className="rep-confirm__sub">{hora} hs</span>
                 </div>
               </div>
             </div>
@@ -418,17 +365,11 @@ interface FilaInterconsultaProps {
 
 function FilaInterconsulta({ ic, onAgendar, onCancelar }: FilaInterconsultaProps) {
   const pac  = ic.pacienteId;
-  const prio = PRIORIDAD_META[ic.prioridad] ?? PRIORIDAD_META.electiva;
   const iniciales = ((pac.nombres?.[0] ?? "") + (pac.apellidos?.[0] ?? "")).toUpperCase();
 
   return (
-    <div className={`irec-orden irec-orden--${prio.cls}`}>
+    <div className="irec-orden">
       <div className="irec-orden-row">
-
-        {/* Prioridad */}
-        <div className="irec-orden-col">
-          <span className={`irec-badge irec-badge--${prio.cls}`}>{prio.label}</span>
-        </div>
 
         {/* Paciente */}
         <div className="irec-orden-col irec-orden-paciente">
@@ -560,15 +501,7 @@ export default function InterconsultasRecepcion() {
     return true;
   });
 
-  const urgentes    = lista.filter(i => i.prioridad === "urgente");
-  const preferentes = lista.filter(i => i.prioridad === "preferente");
-  const electivas   = lista.filter(i => i.prioridad === "electiva");
-
-  const ordenadas = [
-    ...listaFiltrada.filter(i => i.prioridad === "urgente"),
-    ...listaFiltrada.filter(i => i.prioridad === "preferente"),
-    ...listaFiltrada.filter(i => i.prioridad === "electiva"),
-  ];
+  const ordenadas = listaFiltrada;
 
   return (
     <div className="irec-page">
@@ -592,30 +525,6 @@ export default function InterconsultasRecepcion() {
           {actualizando ? "Actualizando…" : "Actualizar"}
         </button>
       </div>
-
-      {/* ── Métricas rápidas ── */}
-      {!loading && lista.length > 0 && (
-        <div className="irec-stats">
-          {urgentes.length > 0 && (
-            <div className="irec-stat irec-stat--danger">
-              <AlertCircle size={15}/>
-              <span><strong>{urgentes.length}</strong> urgente{urgentes.length > 1 ? "s" : ""}</span>
-            </div>
-          )}
-          {preferentes.length > 0 && (
-            <div className="irec-stat irec-stat--warning">
-              <Hourglass size={15}/>
-              <span><strong>{preferentes.length}</strong> preferente{preferentes.length > 1 ? "s" : ""}</span>
-            </div>
-          )}
-          {electivas.length > 0 && (
-            <div className="irec-stat irec-stat--info">
-              <Calendar size={15}/>
-              <span><strong>{electivas.length}</strong> electiva{electivas.length > 1 ? "s" : ""}</span>
-            </div>
-          )}
-        </div>
-      )}
 
       {/* ── Filtros ── */}
       <div className="irec-filtros-avanzados">
@@ -726,7 +635,6 @@ export default function InterconsultasRecepcion() {
         <div className="irec-lista">
           {/* Cabecera */}
           <div className="irec-lista-header">
-            <span>Prioridad</span>
             <span>Paciente</span>
             <span>Especialidad solicitada</span>
             <span>Solicitante</span>

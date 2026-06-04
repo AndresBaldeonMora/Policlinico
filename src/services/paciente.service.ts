@@ -337,6 +337,21 @@ export class PacienteApiService {
     };
   }
 
+  static async desactivar(id: string): Promise<void> {
+    await api.patch(`/pacientes/${id}/desactivar`);
+  }
+
+  static async subirAvatarPaciente(id: string, file: File): Promise<{ avatarUrl: string }> {
+    const formData = new FormData();
+    formData.append("avatar", file);
+    const response = await api.post<{ success: boolean; data: { avatarUrl: string } }>(
+      `/pacientes/${id}/avatar`,
+      formData,
+      { headers: { "Content-Type": "multipart/form-data" } }
+    );
+    return response.data.data;
+  }
+
   static async enviarRecordatorioEmail(pacienteId: string): Promise<void> {
     await api.post(`/pacientes/${pacienteId}/recordatorio-email`);
   }

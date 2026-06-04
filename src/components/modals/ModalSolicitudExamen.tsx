@@ -52,7 +52,6 @@ export default function ModalSolicitudExamen({ cita, onClose, onAdd, diagnostico
   const [errorCat, setErrorCat] = useState("");
 
   const [selected, setSelected]   = useState<ExamenLaboratorioImagen[]>([]);
-  const [urgente, setUrgente]     = useState(false);
   const [instrucciones, setInstr] = useState("");
   const [diagnostico, setDx]      = useState(diagnosticoPrefill ?? "");
   const [openGroups, setOpenGroups] = useState<Set<string>>(new Set());
@@ -96,7 +95,7 @@ export default function ModalSolicitudExamen({ cita, onClose, onAdd, diagnostico
         examenId:             ex._id,
         nombre:               ex.nombre,
         tipo:                 TIPOS_LAB.includes(ex.tipo) ? "Patología Clínica" : "Diagnóstico por Imágenes",
-        urgente,
+        urgente:              false,
         diagnosticoPresuntivo: dx || undefined,
         instrucciones:         instr || ex.instrucciones || undefined,
       })
@@ -106,9 +105,7 @@ export default function ModalSolicitudExamen({ cita, onClose, onAdd, diagnostico
   const grupos = agrupar(catalogo, tab === "Patología Clínica" ? TIPOS_LAB : TIPOS_IMAGEN);
   const pac = cita.pacienteId;
   const nombre = `${pac.nombres} ${pac.apellidos}`;
-  const dxVacio    = !diagnostico.trim();
-  const instrVacio = !instrucciones.trim();
-  const disabled   = selected.length === 0 || dxVacio || instrVacio;
+  const disabled   = selected.length === 0;
 
   return (
     <div className="modal-overlay">
@@ -128,20 +125,13 @@ export default function ModalSolicitudExamen({ cita, onClose, onAdd, diagnostico
 
           {/* Diagnóstico presuntivo */}
           <div style={{ marginBottom: 16 }}>
-            <label className="soap-section-label">
-              Diagnóstico presuntivo <span style={{ color: "var(--error, #dc2626)" }}>*</span>
-            </label>
+            <label className="soap-section-label">Diagnóstico presuntivo</label>
             <input
               className="soap-input"
               placeholder="Ej: Diabetes mellitus tipo 2 (E11), Anemia ferropénica (D50)…"
               value={diagnostico}
               onChange={e => setDx(e.target.value)}
             />
-            {dxVacio && (
-              <span style={{ fontSize: 11, color: "var(--error, #dc2626)", marginTop: 3, display: "block" }}>
-                Campo obligatorio.
-              </span>
-            )}
           </div>
 
           {/* Tabs */}
@@ -219,44 +209,15 @@ export default function ModalSolicitudExamen({ cita, onClose, onAdd, diagnostico
             })
           )}
 
-          {/* Indicaciones + Prioridad */}
-          <div style={{ display: "grid", gridTemplateColumns: "1fr auto", gap: 16, alignItems: "flex-start", marginTop: 16 }}>
-            <div>
-              <label className="soap-section-label">
-                Indicaciones para el paciente <span style={{ color: "var(--error, #dc2626)" }}>*</span>
-              </label>
-              <textarea
-                className="soap-input soap-textarea"
-                style={{ minHeight: 60, borderColor: instrVacio ? "var(--error, #dc2626)" : undefined }}
-                value={instrucciones}
-                onChange={e => setInstr(e.target.value)}
-              />
-              {instrVacio && (
-                <span style={{ fontSize: 11, color: "var(--error, #dc2626)", marginTop: 3, display: "block" }}>
-                  Campo obligatorio.
-                </span>
-              )}
-            </div>
-            <div>
-              <label className="soap-section-label">Prioridad</label>
-              {([
-                { val: false, label: "Rutina",  sub: "Orden estándar" },
-                { val: true,  label: "Urgente", sub: "Resultado prioritario" },
-              ] as const).map(p => (
-                <label key={p.label} style={{ display: "flex", alignItems: "flex-start", gap: 7, marginBottom: 10, cursor: "pointer" }}>
-                  <input
-                    type="radio"
-                    checked={urgente === p.val}
-                    onChange={() => setUrgente(p.val)}
-                    style={{ accentColor: "var(--primary)", marginTop: 2 }}
-                  />
-                  <span>
-                    <div style={{ fontSize: 13, fontWeight: 600, color: "var(--text-primary)" }}>{p.label}</div>
-                    <div style={{ fontSize: 11, color: "var(--text-muted)" }}>{p.sub}</div>
-                  </span>
-                </label>
-              ))}
-            </div>
+          {/* Indicaciones para el paciente */}
+          <div style={{ marginTop: 16 }}>
+            <label className="soap-section-label">Indicaciones para el paciente</label>
+            <textarea
+              className="soap-input soap-textarea"
+              style={{ minHeight: 60 }}
+              value={instrucciones}
+              onChange={e => setInstr(e.target.value)}
+            />
           </div>
 
           {/* Resumen seleccionados */}

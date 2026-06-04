@@ -12,7 +12,7 @@ const DOCS_OPCIONES  = ["Resumen de historia clínica", "Resultados de laborator
 
 export default function ModalReferencia({ cita, onClose }: Props) {
   const [form, setForm] = useState({
-    establecimiento: "", especialidad: "", medicoDestino: "", urgencia: "no-urgente",
+    establecimiento: "", especialidad: "", medicoDestino: "",
     diagnostico: "", sintomasResumen: "", tratamientoActual: "", examenesRealizados: "",
     motivoReferencia: "", docsAdjuntos: [] as string[],
   });
@@ -59,21 +59,6 @@ export default function ModalReferencia({ cita, onClose }: Props) {
                 <label className="soap-section-label">Médico que recibirá (opcional)</label>
                 <input className="soap-input" placeholder=""
                   value={form.medicoDestino} onChange={e => upF("medicoDestino", e.target.value)} />
-              </div>
-              <div>
-                <label className="soap-section-label">Urgencia <span className="soap-required">*</span></label>
-                <div style={{ display: "flex", gap: 20, marginTop: 6 }}>
-                  {[{ val: "urgente", label: "Urgente", sub: "Derivación inmediata" }, { val: "no-urgente", label: "No urgente", sub: "Dentro de 7 días" }].map(u => (
-                    <label key={u.val} style={{ display: "flex", alignItems: "flex-start", gap: 6, cursor: "pointer" }}>
-                      <input type="radio" checked={form.urgencia === u.val} onChange={() => upF("urgencia", u.val)}
-                        style={{ accentColor: "var(--primary)", marginTop: 2 }} />
-                      <span>
-                        <div style={{ fontSize: 13, fontWeight: 600 }}>{u.label}</div>
-                        <div style={{ fontSize: 11, color: "var(--text-muted)" }}>{u.sub}</div>
-                      </span>
-                    </label>
-                  ))}
-                </div>
               </div>
             </div>
           </div>

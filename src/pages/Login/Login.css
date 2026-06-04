@@ -90,28 +90,44 @@
   to { opacity: 1; transform: translateX(0); }
 }
 
-/* SVG Illustration */
-.login-illustration {
-  width: 180px;
-  height: 180px;
-  margin-bottom: 2.5rem;
-}
-
-.login-svg-art {
+/* ── Imagen rotativa ── */
+.login-slide-img {
+  position: absolute;
+  inset: 0;
   width: 100%;
   height: 100%;
+  object-fit: cover;
+  object-position: center top;
+  transition: opacity 0.5s ease;
 }
 
-.login-pulse-line {
-  stroke-dasharray: 400;
-  stroke-dashoffset: 400;
-  animation: pulseDraw 3s ease-in-out infinite;
+.login-slide-img--in  { opacity: 1; }
+.login-slide-img--out { opacity: 0; }
+
+/* Indicadores de slide */
+.login-slide-dots {
+  position: absolute;
+  bottom: 1.5rem;
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  gap: 6px;
+  z-index: 2;
 }
 
-@keyframes pulseDraw {
-  0% { stroke-dashoffset: 400; }
-  50% { stroke-dashoffset: 0; }
-  100% { stroke-dashoffset: -400; }
+.login-slide-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: rgba(255,255,255,0.4);
+  transition: all 0.3s ease;
+  cursor: default;
+}
+
+.login-slide-dot--active {
+  background: white;
+  width: 22px;
+  border-radius: 4px;
 }
 
 .login-panel-title {

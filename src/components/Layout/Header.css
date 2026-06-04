@@ -187,6 +187,11 @@
   color: var(--error);
 }
 
+.header-dropdown-item--neutral:hover {
+  background: var(--bg-body);
+  color: var(--primary);
+}
+
 @keyframes dropdown-in {
   from { opacity: 0; transform: translateY(-6px); }
   to   { opacity: 1; transform: translateY(0); }
