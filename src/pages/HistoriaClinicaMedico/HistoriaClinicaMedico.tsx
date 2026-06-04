@@ -768,6 +768,14 @@ export default function HistoriaClinicaMedico() {
                       ) : (
                         <p className="hcm-empty-hint" style={{ padding: "12px 0" }}>Sin nota clínica registrada para esta consulta.</p>
                       )}
+                      {c.altaMedicaUrl && (
+                        <div className="hcm-soap-row" style={{ marginTop: 8, borderTop: "1px solid var(--border)", paddingTop: 8 }}>
+                          <span className="hcm-soap-lbl">Alta médica</span>
+                          <a className="hcm-resultado-link" href={c.altaMedicaUrl} target="_blank" rel="noopener noreferrer">
+                            <FileText size={13} /> Descargar alta
+                          </a>
+                        </div>
+                      )}
                     </div>
                   )}
                 </div>

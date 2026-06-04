@@ -380,7 +380,13 @@ export default function NotaSOAP() {
       }
 
       if (lsKey) localStorage.removeItem(lsKey);
-      await Swal.fire({ icon: "success", title: "Consulta finalizada", text: "La nota SOAP fue guardada correctamente.", confirmButtonColor: "var(--primary)" });
+      await Swal.fire({ icon: "success", title: "Consulta finalizada", text: "La nota SOAP fue guardada. Generando resumen de alta…", confirmButtonColor: "var(--primary)" });
+      try {
+        await MedicoApiService.abrirAlta(citaId);
+      } catch {
+        // El alta no pudo generarse pero la consulta ya fue guardada correctamente.
+        console.warn("No se pudo generar el PDF de alta.");
+      }
       navigate("/medico/citas");
     } catch {
       Swal.fire({ icon: "error", title: "Error", text: "No se pudo finalizar la consulta.", confirmButtonColor: "var(--primary)" });

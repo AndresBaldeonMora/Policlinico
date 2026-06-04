@@ -179,6 +179,13 @@ export class MedicoApiService {
     setTimeout(() => window.URL.revokeObjectURL(url), 60_000);
   }
 
+  static async abrirAlta(citaId: string): Promise<void> {
+    const response = await api.get(`/medico/citas/${citaId}/alta`, { responseType: "blob" });
+    const url = window.URL.createObjectURL(new Blob([response.data], { type: "application/pdf" }));
+    window.open(url, "_blank");
+    setTimeout(() => window.URL.revokeObjectURL(url), 60_000);
+  }
+
   static async prescribirMedicamentos(
     citaId: string,
     medicamentos: MedicamentoPrescrito[]
