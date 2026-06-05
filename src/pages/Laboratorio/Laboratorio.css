@@ -767,6 +767,11 @@
   border-color: var(--primary);
 }
 
+textarea.lab-filtro-input {
+  height: auto !important;
+  padding: 0.5rem 0.75rem !important;
+}
+
 .lab-filtro-select {
   height: 2.25rem;
   padding: 0 0.75rem;

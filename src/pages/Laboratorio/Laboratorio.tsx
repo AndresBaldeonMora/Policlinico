@@ -314,7 +314,7 @@ const ModalGenerarOrden = ({ orden, onCerrar, onGuardado }: ModalGenerarOrdenPro
     : soloImagen ? "Imagenología" : "Laboratorio";
 
   return (
-    <div className="lab-modal-overlay" onClick={onCerrar}>
+    <div className="lab-modal-overlay">
       <div
         className="lab-modal-card"
         style={{ maxWidth: 520 }}
@@ -387,7 +387,7 @@ const ModalGenerarOrden = ({ orden, onCerrar, onGuardado }: ModalGenerarOrdenPro
                   if (dia === null) return <div key={`vacio-${idx}`} aria-hidden="true" />;
                   const estado = getEstadoDia(dia);
                   const clave  = getFechaKey(dia);
-                  const sel    = fechaSel === clave;
+                  const sel    = fechaLabSel === clave;
                   return (
                     <div
                       key={clave}
@@ -613,7 +613,7 @@ const ModalCargarResultados = ({ orden, onCerrar, onGuardado }: ModalResultadosP
   };
 
   return (
-    <div className="lab-modal-overlay" onClick={onCerrar}>
+    <div className="lab-modal-overlay">
       <div
         className="lab-modal-card"
         style={{ maxWidth: 520 }}
@@ -852,7 +852,7 @@ const ModalPagoIngreso = ({ orden, onCerrar, onConfirmado }: ModalPagoIngresoPro
   };
 
   return (
-    <div className="lab-modal-overlay" onClick={onCerrar}>
+    <div className="lab-modal-overlay">
       <div
         className="lab-modal-card"
         style={{ maxWidth: 720, position: "relative" }}
@@ -1192,7 +1192,7 @@ const ModalAsistencia = ({ orden, onCerrar, onGuardado }: ModalAsistenciaProps) 
   };
 
   return (
-    <div className="lab-modal-overlay" onClick={onCerrar}>
+    <div className="lab-modal-overlay">
       <div
         className="lab-modal-card"
         style={{ maxWidth: 600 }}
