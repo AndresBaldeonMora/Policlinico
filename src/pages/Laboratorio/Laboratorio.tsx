@@ -26,6 +26,7 @@ import Swal from "sweetalert2";
 
 import "./Laboratorio.css";
 import "../ListaCitas/ListaCitas.css";
+import "../ListaCitas/ReprogramarModal.css";
 
 // ─── Helpers ─────────────────────────────────────────────────
 const formatFecha = (iso: string) =>
@@ -185,12 +186,29 @@ const ModalGenerarOrden = ({ orden, onCerrar, onGuardado }: ModalGenerarOrdenPro
 
   // ── Estado IMAGEN ──
   const [imgFecha, setImgFecha] = useState("");
-  const [imgHora, setImgHora]   = useState("08:00");
+  const [imgHora, setImgHora]   = useState("");
   const [salaEquipo, setSala]   = useState("");
   const [duracion, setDuracion] = useState(30);
+  const [franjasOcupadas, setFranjasOcupadas] = useState<{ inicio: string; fin: string }[]>([]);
+  const [calImgAño, setCalImgAño] = useState(() => new Date().getFullYear());
+  const [calImgMes, setCalImgMes] = useState(() => new Date().getMonth());
+  const [cargandoSlots, setCargandoSlots] = useState(false);
 
   const [enviando, setEnviando] = useState(false);
   const [error, setError]       = useState("");
+
+  // Consultar franjas ocupadas de imagen cuando cambia fecha o sala
+  useEffect(() => {
+    if (!imgFecha) { setFranjasOcupadas([]); return; }
+    const [y, m, d] = imgFecha.split("-");
+    const fechaDMY = `${d}/${m}/${y}`;
+    setCargandoSlots(true);
+    setImgHora("");
+    ExamenService.obtenerDisponibilidadImagen(fechaDMY, salaEquipo || undefined, duracion)
+      .then(({ franjasOcupadas }) => setFranjasOcupadas(franjasOcupadas))
+      .catch(() => setFranjasOcupadas([]))
+      .finally(() => setCargandoSlots(false));
+  }, [imgFecha, salaEquipo, duracion]);
 
   // Cargar disponibilidad del mes visible
   useEffect(() => {
@@ -222,8 +240,15 @@ const ModalGenerarOrden = ({ orden, onCerrar, onGuardado }: ModalGenerarOrdenPro
   const getFechaKey = (dia: number) =>
     `${calAño}-${String(calMes + 1).padStart(2, "0")}-${String(dia).padStart(2, "0")}`;
 
+  const LAB_CIERRE_H = 11; // El laboratorio cierra a las 11am
   const esDomingo  = (dia: number) => new Date(calAño, calMes, dia).getDay() === 0;
-  const esPasado   = (dia: number) => new Date(calAño, calMes, dia) < hoy;
+  const esPasado   = (dia: number) => {
+    const fecha = new Date(calAño, calMes, dia);
+    if (fecha < hoy) return true;
+    // Si es hoy, bloquear si ya pasó el horario de cierre del lab
+    if (fecha.getTime() === hoy.getTime()) return new Date().getHours() >= LAB_CIERRE_H;
+    return false;
+  };
   const getOcupados = (dia: number) => disponibilidad[getFechaKey(dia)] ?? 0;
   const estaLleno  = (dia: number) => getOcupados(dia) >= capacidad;
   const esBloqueado = (dia: number) => esPasado(dia) || esDomingo(dia) || estaLleno(dia);
@@ -272,7 +297,7 @@ const ModalGenerarOrden = ({ orden, onCerrar, onGuardado }: ModalGenerarOrdenPro
   };
 
   const handleConfirmar = async () => {
-    if (enPasoImagen && !imgFecha) {
+    if (enPasoImagen && (!imgFecha || !imgHora)) {
       setError("Debe seleccionar fecha y hora para el examen de imagenología.");
       return;
     }
@@ -308,6 +333,61 @@ const ModalGenerarOrden = ({ orden, onCerrar, onGuardado }: ModalGenerarOrdenPro
     ? { libres: capacidad - (disponibilidad[fechaLabSel] ?? 0) }
     : null;
 
+  // Slots de imagenología: 08:00–17:00 en pasos de 30 min, filtrando ocupados
+  const IMG_INICIO_H = 8;
+  const IMG_FIN_H    = 17;
+  const slotsImagen = useMemo(() => {
+    if (!imgFecha) return [];
+    const slots: string[] = [];
+    const ahora = new Date();
+    const esHoy = imgFecha === `${ahora.getFullYear()}-${String(ahora.getMonth()+1).padStart(2,"0")}-${String(ahora.getDate()).padStart(2,"0")}`;
+    for (let h = IMG_INICIO_H; h < IMG_FIN_H; h++) {
+      for (const min of [0, 30]) {
+        if (h * 60 + min + duracion > IMG_FIN_H * 60) break;
+        const hora = `${String(h).padStart(2,"0")}:${String(min).padStart(2,"0")}`;
+        if (esHoy && (ahora.getHours() * 60 + ahora.getMinutes()) >= h * 60 + min) continue;
+        const inicioSlot = new Date(`${imgFecha}T${hora}:00.000Z`);
+        const finSlot    = new Date(inicioSlot.getTime() + duracion * 60_000);
+        const ocupado = franjasOcupadas.some((f) => new Date(f.inicio) < finSlot && new Date(f.fin) > inicioSlot);
+        if (!ocupado) slots.push(hora);
+      }
+    }
+    return slots;
+  }, [imgFecha, duracion, franjasOcupadas]);
+
+  // Helpers calendario imagen
+  const imgCalDias = useMemo(() => {
+    const primerDia = (new Date(calImgAño, calImgMes, 1).getDay() + 6) % 7;
+    const total = new Date(calImgAño, calImgMes + 1, 0).getDate();
+    const arr: (number | null)[] = Array(primerDia).fill(null);
+    for (let d = 1; d <= total; d++) arr.push(d);
+    while (arr.length % 7 !== 0) arr.push(null);
+    return arr;
+  }, [calImgAño, calImgMes]);
+
+  const imgCalFechaKey = (dia: number) =>
+    `${calImgAño}-${String(calImgMes + 1).padStart(2, "0")}-${String(dia).padStart(2, "0")}`;
+
+  const imgEsDomingo = (dia: number) => new Date(calImgAño, calImgMes, dia).getDay() === 0;
+  const imgEsPasado  = (dia: number) => {
+    const fecha = new Date(calImgAño, calImgMes, dia);
+    if (fecha < hoy) return true;
+    if (fecha.getTime() === hoy.getTime()) return new Date().getHours() >= IMG_FIN_H;
+    return false;
+  };
+  const imgBloqueado = (dia: number) => imgEsPasado(dia) || imgEsDomingo(dia);
+
+  const irImgMesAnt = () => {
+    if (calImgMes === 0) { setCalImgMes(11); setCalImgAño(a => a - 1); }
+    else setCalImgMes(m => m - 1);
+    setImgFecha(""); setImgHora("");
+  };
+  const irImgMesSig = () => {
+    if (calImgMes === 11) { setCalImgMes(0); setCalImgAño(a => a + 1); }
+    else setCalImgMes(m => m + 1);
+    setImgFecha(""); setImgHora("");
+  };
+
   const tituloModal = enPasoImagen ? "Agendar Examen de Imagenología" : "Agendar Toma de Muestras";
   const subtituloModal = esMixta
     ? (paso === 1 ? "Paso 1 de 2 · Laboratorio" : "Paso 2 de 2 · Imagenología")
@@ -317,7 +397,7 @@ const ModalGenerarOrden = ({ orden, onCerrar, onGuardado }: ModalGenerarOrdenPro
     <div className="lab-modal-overlay">
       <div
         className="lab-modal-card"
-        style={{ maxWidth: 520 }}
+        style={{ maxWidth: enPasoImagen ? 820 : 520 }}
         onClick={(e) => e.stopPropagation()}
       >
         {/* Header */}
@@ -449,35 +529,8 @@ const ModalGenerarOrden = ({ orden, onCerrar, onGuardado }: ModalGenerarOrdenPro
           {/* Sección IMAGEN */}
           {enPasoImagen && (
             <div>
-              <div className="lab-citalab-nota" style={{ marginBottom: "1.25rem" }}>
-                <CalendarClock size={14} style={{ flexShrink: 0, marginTop: 1 }} />
-                <span>
-                  <strong>Examen de imagen:</strong> Selecciona el día y la hora de la cita.
-                  {salaEquipo ? "" : " Sala/equipo opcional."}
-                </span>
-              </div>
-              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "0.75rem", marginBottom: "0.75rem" }}>
-                <div>
-                  <label className="soap-section-label" style={{ fontSize: 12 }}>Fecha <span style={{ color: "var(--danger)" }}>*</span></label>
-                  <input
-                    type="date"
-                    className="soap-input"
-                    min={new Date().toISOString().slice(0, 10)}
-                    value={imgFecha}
-                    onChange={e => setImgFecha(e.target.value)}
-                  />
-                </div>
-                <div>
-                  <label className="soap-section-label" style={{ fontSize: 12 }}>Hora <span style={{ color: "var(--danger)" }}>*</span></label>
-                  <input
-                    type="time"
-                    className="soap-input"
-                    value={imgHora}
-                    onChange={e => setImgHora(e.target.value)}
-                  />
-                </div>
-              </div>
-              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "0.75rem" }}>
+              {/* Sala y duración arriba */}
+              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "0.75rem", marginBottom: "1rem" }}>
                 <div>
                   <label className="soap-section-label" style={{ fontSize: 12 }}>Sala / Equipo</label>
                   <input
@@ -485,7 +538,7 @@ const ModalGenerarOrden = ({ orden, onCerrar, onGuardado }: ModalGenerarOrdenPro
                     className="soap-input"
                     placeholder="Ej: Sala 1, Ecógrafo A…"
                     value={salaEquipo}
-                    onChange={e => setSala(e.target.value)}
+                    onChange={e => { setSala(e.target.value); setImgFecha(""); setImgHora(""); }}
                   />
                 </div>
                 <div>
@@ -493,14 +546,107 @@ const ModalGenerarOrden = ({ orden, onCerrar, onGuardado }: ModalGenerarOrdenPro
                   <input
                     type="number"
                     className="soap-input"
-                    min={10}
-                    max={120}
-                    step={5}
+                    min={10} max={120} step={5}
                     value={duracion}
-                    onChange={e => setDuracion(Number(e.target.value))}
+                    onChange={e => { setDuracion(Number(e.target.value)); setImgHora(""); }}
                   />
                 </div>
               </div>
+
+              {/* Calendario + Slots */}
+              <div className="rep-paso1">
+                {/* Calendario */}
+                <div className="rep-cal">
+                  <div className="rep-cal__nav">
+                    <button type="button" className="rep-cal__nav-btn" onClick={irImgMesAnt}
+                      disabled={calImgAño === hoy.getFullYear() && calImgMes === hoy.getMonth()}
+                      aria-label="Mes anterior">
+                      <ChevronLeft size={16} />
+                    </button>
+                    <span className="rep-cal__titulo">{NOMBRES_MESES[calImgMes]} {calImgAño}</span>
+                    <button type="button" className="rep-cal__nav-btn" onClick={irImgMesSig} aria-label="Mes siguiente">
+                      <ChevronRight size={16} />
+                    </button>
+                  </div>
+                  <div className="rep-cal__semana">
+                    {DIAS_SEMANA_SHORT.map(d => <span key={d} className="rep-cal__semana-dia">{d}</span>)}
+                  </div>
+                  <div className="rep-cal__grid">
+                    {imgCalDias.map((dia, i) => {
+                      if (dia === null) return <span key={`e${i}`} className="rep-cal__celda rep-cal__celda--vacia" />;
+                      const iso = imgCalFechaKey(dia);
+                      const bloqueado = imgBloqueado(dia);
+                      const sel = imgFecha === iso;
+                      const esHoy = new Date(calImgAño, calImgMes, dia).getTime() === hoy.getTime();
+                      const cls = [
+                        "rep-cal__celda",
+                        sel ? "rep-cal__celda--sel" : "",
+                        esHoy && !sel ? "rep-cal__celda--hoy" : "",
+                        bloqueado ? "rep-cal__celda--off" : "",
+                      ].filter(Boolean).join(" ");
+                      return (
+                        <button key={iso} type="button" className={cls} disabled={bloqueado}
+                          onClick={() => setImgFecha(iso)}>
+                          {dia}
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
+
+                {/* Panel de slots */}
+                <div className="rep-slots" style={{ minHeight: 240 }}>
+                  {!imgFecha ? (
+                    <div className="rep-slots rep-slots--placeholder" style={{ border: "none", padding: 0 }}>
+                      <CalendarClock size={28} />
+                      <p>Selecciona un día para ver los horarios disponibles.</p>
+                    </div>
+                  ) : cargandoSlots ? (
+                    <div className="rep-slots rep-slots--placeholder" style={{ border: "none", padding: 0 }}>
+                      <RefreshCw size={20} style={{ animation: "spin 1s linear infinite" }} />
+                      <p>Cargando horarios…</p>
+                    </div>
+                  ) : (
+                    <>
+                      <div className="rep-slots__header">
+                        <Clock size={14} />
+                        <span>
+                          Horarios · <strong>
+                            {(() => { const [y,m,d] = imgFecha.split("-").map(Number); return new Date(y,m-1,d).toLocaleDateString("es-PE",{weekday:"long",day:"numeric",month:"long"}); })()}
+                          </strong>
+                        </span>
+                      </div>
+                      {slotsImagen.length === 0 ? (
+                        <p className="rep-slots__vacio">No hay horarios disponibles para este día.</p>
+                      ) : (
+                        <div className="rep-slots__grid">
+                          {slotsImagen.map(h => (
+                            <button key={h} type="button"
+                              className={`rep-slot${imgHora === h ? " rep-slot--sel" : ""}`}
+                              onClick={() => setImgHora(h)}>
+                              {h}
+                            </button>
+                          ))}
+                        </div>
+                      )}
+                    </>
+                  )}
+                </div>
+              </div>
+
+              {/* Resumen selección */}
+              {imgFecha && imgHora && (
+                <div className="lab-cal-seleccion" style={{ marginTop: "0.75rem" }}>
+                  <div className="lab-cal-seleccion-fecha">
+                    <CalendarClock size={14} />
+                    <strong>
+                      {(() => { const [y,m,d] = imgFecha.split("-").map(Number); return new Date(y,m-1,d).toLocaleDateString("es-PE",{weekday:"long",day:"numeric",month:"long",year:"numeric"}); })()}
+                    </strong>
+                    <span style={{ color: "var(--text-muted)", fontSize: "0.82rem" }}>· {imgHora} hs</span>
+                    {salaEquipo && <span style={{ color: "var(--text-muted)", fontSize: "0.82rem" }}>· {salaEquipo}</span>}
+                  </div>
+                </div>
+              )}
             </div>
           )}
 
@@ -533,7 +679,7 @@ const ModalGenerarOrden = ({ orden, onCerrar, onGuardado }: ModalGenerarOrdenPro
             <button
               className="lab-btn lab-btn--primary"
               onClick={handleConfirmar}
-              disabled={enviando || (enPasoImagen && !imgFecha)}
+              disabled={enviando || (enPasoImagen && (!imgFecha || !imgHora))}
             >
               {enviando ? (
                 <>
@@ -660,6 +806,7 @@ const ModalCargarResultados = ({ orden, onCerrar, onGuardado }: ModalResultadosP
                           background: "var(--bg-hover)",
                           padding: "0.1rem 0.4rem",
                           borderRadius: 4,
+                          flexShrink: 0,
                         }}
                       >
                         {TIPO_EXAMEN_LABEL[ex.tipo] ?? ex.tipo}

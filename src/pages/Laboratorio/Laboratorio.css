@@ -925,18 +925,23 @@ textarea.lab-filtro-input {
 /* Exámenes */
 .lab-citalab-examenes {
   display: flex;
-  align-items: baseline;
+  align-items: center;
   gap: 0.5rem;
   padding: 0.6rem 0.85rem;
   border-radius: var(--radius-sm);
   border: 1px solid var(--border);
   background: var(--bg-hover);
   font-size: 0.83rem;
+  min-width: 0;
 }
 .lab-citalab-examenes-label {
   font-weight: 600;
   color: var(--text-secondary);
-  flex-shrink: 0;
+  flex: 1 1 0;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 .lab-citalab-examenes-lista {
   color: var(--text-primary);

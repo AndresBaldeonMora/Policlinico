@@ -164,6 +164,23 @@ export class ExamenService {
     return { data: res.data.data ?? [], capacidadDiaria: res.data.capacidadDiaria };
   }
 
+  // ─── Disponibilidad de imagenología por día ───────────────
+  // fecha: "DD/MM/YYYY", salaEquipo opcional, duracionMin en minutos
+  static async obtenerDisponibilidadImagen(
+    fecha: string,
+    salaEquipo?: string,
+    duracionMin?: number
+  ): Promise<{ franjasOcupadas: { inicio: string; fin: string; salaEquipo?: string }[] }> {
+    let url = `/ordenes/disponibilidad-imagen?fecha=${encodeURIComponent(fecha)}`;
+    if (salaEquipo) url += `&salaEquipo=${encodeURIComponent(salaEquipo)}`;
+    if (duracionMin) url += `&duracionMin=${duracionMin}`;
+    const res = await api.get<{
+      success: boolean;
+      franjasOcupadas: { inicio: string; fin: string; salaEquipo?: string }[];
+    }>(url);
+    return { franjasOcupadas: res.data.franjasOcupadas ?? [] };
+  }
+
   // ─── Flujo clínico: Autorizar orden (recepción) ────────────
   // PENDIENTE → EN_PROCESO
   // LAB:    fechaCitaLab    "YYYY-MM-DD" → backend recibe "DD/MM/YYYY"
