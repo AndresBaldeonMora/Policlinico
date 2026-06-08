@@ -94,6 +94,9 @@ export const AuthService = {
 
   cambiarPassword: async (passwordActual: string, passwordNuevo: string): Promise<void> => {
     const token = localStorage.getItem(TOKEN_KEY);
+    if (!token) {
+      throw new Error("Tu sesión expiró. Vuelve a iniciar sesión.");
+    }
     await axios.post(
       `${API_BASE_URL}/auth/cambiar-password`,
       { passwordActual, passwordNuevo },

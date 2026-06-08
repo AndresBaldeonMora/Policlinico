@@ -19,7 +19,9 @@ api.interceptors.request.use(
   (error) => Promise.reject(error)
 );
 
-// Si el backend responde 401, la sesión expiró → limpiar y redirigir a /login.
+// Interceptor único de respuesta:
+//  - 401 → la sesión expiró: limpiar y redirigir a /login.
+//  - Propaga el mensaje de error del backend a error.message para la UI.
 api.interceptors.response.use(
   (response) => response,
   (error) => {
@@ -29,14 +31,7 @@ api.interceptors.response.use(
         window.location.href = "/login";
       }
     }
-    return Promise.reject(error);
-  }
-);
-
-api.interceptors.response.use(
-  (response) => response,
-  (error) => {
-    if (error.response?.data?.message) {
+    if (error?.response?.data?.message) {
       error.message = error.response.data.message;
     }
     return Promise.reject(error);

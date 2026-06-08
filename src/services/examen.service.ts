@@ -117,6 +117,26 @@ export class ExamenService {
     return res.data.data ?? [];
   }
 
+  // ─── Crear orden desde recepción (va directo a EN_PROCESO) ──
+  static async crearOrdenRecepcion(payload: {
+    pacienteId: string;
+    doctorId: string;
+    especialidadId: string;
+    observacionesGenerales?: string;
+    items: { examenId: string; observaciones?: string }[];
+    // Programación
+    fechaCitaLab?: string;      // "DD/MM/YYYY"
+    citaImagenFecha?: string;   // "DD/MM/YYYY HH:mm"
+    salaEquipo?: string;
+    duracionEstimadaMin?: number;
+    // Pago
+    metodoPago: "EFECTIVO" | "TARJETA" | "TRANSFERENCIA";
+    montoPagado?: number;
+  }): Promise<OrdenExamen> {
+    const res = await api.post<{ success: boolean; data: OrdenExamen }>("/ordenes/recepcion", payload);
+    return res.data.data;
+  }
+
   // ─── Crear orden (uso médico) ──────────────────────────────
   static async crearOrden(payload: {
     pacienteId: string;

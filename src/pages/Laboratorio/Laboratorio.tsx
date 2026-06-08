@@ -19,7 +19,9 @@ import {
   ChevronRight,
   Trash2,
   Receipt,
+  Plus,
 } from "lucide-react";
+import { NuevaOrdenRecepcionModal } from "./NuevaOrdenRecepcionModal";
 import type { OrdenExamen, EstadoOrden } from "../../services/examen.service";
 import { ExamenService, TIPO_EXAMEN_LABEL } from "../../services/examen.service";
 import Swal from "sweetalert2";
@@ -1821,6 +1823,7 @@ export default function LaboratorioImagen() {
   const fechaInputRef = useRef<HTMLInputElement>(null);
   const [actualizando, setActualizando] = useState(false);
   const inicializado = useRef(false);
+  const [modalNuevaOrden, setModalNuevaOrden] = useState(false);
 
   // ── Cargar conteos de todos los estados ──
   const cargarConteos = useCallback(async () => {
@@ -1931,21 +1934,31 @@ export default function LaboratorioImagen() {
             <p>Autorización, seguimiento y entrega de resultados de exámenes de laboratorio</p>
           </div>
         </div>
-        <button
-          className="lab-btn lab-btn--cancel lab-btn--sm"
-          onClick={handleActualizar}
-          disabled={actualizando || cargando}
-          title="Actualizar y procesar vencimientos"
-        >
-          <RefreshCw
-            size={14}
-            style={{
-              marginRight: 5,
-              animation: actualizando ? "spin 1s linear infinite" : undefined,
-            }}
-          />
-          {actualizando ? "Actualizando…" : "Actualizar"}
-        </button>
+        <div style={{ display: "flex", gap: "0.5rem" }}>
+          <button
+            className="lab-btn lab-btn--primary lab-btn--sm"
+            onClick={() => setModalNuevaOrden(true)}
+            title="Crear nueva orden directamente desde recepción"
+          >
+            <Plus size={14} style={{ marginRight: 4 }} />
+            Nueva Orden
+          </button>
+          <button
+            className="lab-btn lab-btn--cancel lab-btn--sm"
+            onClick={handleActualizar}
+            disabled={actualizando || cargando}
+            title="Actualizar y procesar vencimientos"
+          >
+            <RefreshCw
+              size={14}
+              style={{
+                marginRight: 5,
+                animation: actualizando ? "spin 1s linear infinite" : undefined,
+              }}
+            />
+            {actualizando ? "Actualizando…" : "Actualizar"}
+          </button>
+        </div>
       </div>
 
       {/* ── Tabs de estado ── */}
@@ -2116,6 +2129,21 @@ export default function LaboratorioImagen() {
             />
           ))}
         </div>
+      )}
+
+      {/* ── Modal Nueva Orden (Recepción) ── */}
+      {modalNuevaOrden && (
+        <NuevaOrdenRecepcionModal
+          onCerrar={() => setModalNuevaOrden(false)}
+          onOrdenCreada={(ordenId) => {
+            setModalNuevaOrden(false);
+            // Cambiar al tab En Vigencia y recargar
+            cambiarTab("EN_PROCESO");
+            cargarConteos();
+            // Abrir impresión en nueva pestaña
+            window.open(`/ordenes/${ordenId}/imprimir`, "_blank");
+          }}
+        />
       )}
     </div>
   );

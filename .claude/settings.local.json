@@ -24,7 +24,10 @@
       "WebFetch(domain:img.lpderecho.pe)",
       "WebFetch(domain:www.gob.pe)",
       "Bash(node -e \"require\\('qrcode'\\); console.log\\('qrcode OK'\\)\")",
-      "Bash(echo \"EXIT:$?\")"
+      "Bash(echo \"EXIT:$?\")",
+      "Bash(echo \"EXIT: $?\")",
+      "Bash(xargs grep -l \"text-primary\")",
+      "Bash(xargs grep -l \"\\\\-\\\\-text-primary:\")"
     ]
   }
 }

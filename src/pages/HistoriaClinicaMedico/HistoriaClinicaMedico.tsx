@@ -248,8 +248,8 @@ export default function HistoriaClinicaMedico() {
   if (loading) return <div className="hcm-loading">Cargando historia clínica…</div>;
   if (!paciente) return <div className="hcm-loading">Paciente no encontrado.</div>;
 
-  const nombre        = `${paciente.nombres} ${paciente.apellidos}`;
-  const iniciales     = `${paciente.nombres[0] ?? ""}${paciente.apellidos[0] ?? ""}`.toUpperCase();
+  const nombre        = `${paciente.nombres ?? ""} ${paciente.apellidos ?? ""}`.trim();
+  const iniciales     = `${paciente.nombres?.[0] ?? ""}${paciente.apellidos?.[0] ?? ""}`.toUpperCase();
   const citasAtendidas = citas.filter((c: any) => c.estado === "ATENDIDA");
   const ultimaNota    = citasAtendidas.find((c: any) => c.notasClinicas);
   const datosActuales = ultimaNota ? parsearSOAP(ultimaNota.notasClinicas) : null;
