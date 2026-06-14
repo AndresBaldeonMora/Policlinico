@@ -129,12 +129,13 @@ export class DoctorApiService {
   }
 
   static async eliminar(id: string): Promise<void> {
-    try {
-      await api.delete(`/doctores/${id}`);
-    } catch (error: unknown) {
-      const err = error as AxiosErrorResponse;
-      throw new Error(err.response?.data?.message || "Error al eliminar doctor");
-    }
+    await api.delete(`/doctores/${id}`);
+    // try {
+    //   await api.delete(`/doctores/${id}`);
+    // } catch (error: unknown) {
+    //   const err = error as AxiosErrorResponse;
+    //   throw new Error(err.response?.data?.message || "Error al eliminar doctor");
+    // }
   }
 }
 
