@@ -200,8 +200,8 @@ const GestionarEspecialidades = () => {
       await EspecialidadApiService.eliminar(id);
       setEspecialidades((prev) => prev.filter((e) => e.id !== id));
       showNotification("Especialidad eliminada.", "success");
-    } catch {
-      showNotification("Error al eliminar la especialidad.", "error");
+    } catch (err: any) {
+      showNotification(err.message || "Error al eliminar la especialidad.", "error");
     } finally {
       setEliminandoId(null);
     }

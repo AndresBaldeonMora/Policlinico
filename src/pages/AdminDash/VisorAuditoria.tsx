@@ -165,10 +165,10 @@ const VisorAuditoria = () => {
                     </td>
                     <td>
                       <span className="av-usuario">
-                        {r.usuarioNombre === "Sistema (Cron)" ? (
+                        {r.usuarioNombre?.includes("Sistema") ? (
                           <>
                             <Clock size={13} style={{ marginRight: '4px', verticalAlign: 'middle', display: 'inline-block', marginBottom: '2px' }} />
-                            Sistema (Cron)
+                            {r.usuarioNombre}
                           </>
                         ) : (
                           r.usuarioNombre || "—"
