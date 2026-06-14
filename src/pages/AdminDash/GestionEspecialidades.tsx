@@ -1,6 +1,19 @@
 import { useEffect, useReducer, useState } from "react";
-import { Search, Plus, Pencil, Trash2, FlaskConical, X, AlertCircle, Check } from "lucide-react";
-import { EspecialidadApiService, type Especialidad, type ExamenResumen } from "../../services/especialidad.service";
+import {
+  Search,
+  Plus,
+  Pencil,
+  Trash2,
+  FlaskConical,
+  X,
+  AlertCircle,
+  Check,
+} from "lucide-react";
+import {
+  EspecialidadApiService,
+  type Especialidad,
+  type ExamenResumen,
+} from "../../services/especialidad.service";
 import { ExamenService } from "../../services/examen.service";
 import "./GestionEspecialidades.css";
 
@@ -56,8 +69,10 @@ function modalReducer(state: ModalState, action: ModalAction): ModalState {
         abierto: true,
         especialidad: action.especialidad,
         nombre: action.especialidad.nombre,
-        tieneLaboratorioImagen: action.especialidad.tieneLaboratorioImagen ?? false,
-        examenesSeleccionados: action.especialidad.examenes?.map((e) => e._id) ?? [],
+        tieneLaboratorioImagen:
+          action.especialidad.tieneLaboratorioImagen ?? false,
+        examenesSeleccionados:
+          action.especialidad.examenes?.map((e) => e._id) ?? [],
         todosExamenes: state.todosExamenes,
         cargandoExamenes: false,
         loading: false,
@@ -74,7 +89,11 @@ function modalReducer(state: ModalState, action: ModalAction): ModalState {
         examenesSeleccionados: action.value ? state.examenesSeleccionados : [],
       };
     case "SET_EXAMENES_CATALOGO":
-      return { ...state, todosExamenes: action.examenes, cargandoExamenes: false };
+      return {
+        ...state,
+        todosExamenes: action.examenes,
+        cargandoExamenes: false,
+      };
     case "SET_CARGANDO_EXAMENES":
       return { ...state, cargandoExamenes: action.value };
     case "TOGGLE_EXAMEN": {
@@ -124,7 +143,10 @@ const GestionarEspecialidades = () => {
 
   const showNotification = (message: string, type: "success" | "error") => {
     setNotification({ message, type, visible: true });
-    setTimeout(() => setNotification((prev) => ({ ...prev, visible: false })), 3000);
+    setTimeout(
+      () => setNotification((prev) => ({ ...prev, visible: false })),
+      3000,
+    );
   };
 
   const cargar = async () => {
@@ -138,7 +160,9 @@ const GestionarEspecialidades = () => {
     }
   };
 
-  useEffect(() => { cargar(); }, []);
+  useEffect(() => {
+    cargar();
+  }, []);
 
   useEffect(() => {
     if (!modal.abierto) return;
@@ -155,7 +179,7 @@ const GestionarEspecialidades = () => {
   }, [modal.abierto]);
 
   const filtradas = especialidades.filter((e) =>
-    e.nombre.toLowerCase().includes(busqueda.toLowerCase())
+    e.nombre.toLowerCase().includes(busqueda.toLowerCase()),
   );
 
   // ── Guardar (crear o actualizar) ──
@@ -170,11 +194,18 @@ const GestionarEspecialidades = () => {
       const payload = {
         nombre: modal.nombre.trim(),
         tieneLaboratorioImagen: modal.tieneLaboratorioImagen,
-        examenes: modal.tieneLaboratorioImagen ? modal.examenesSeleccionados : [],
+        examenes: modal.tieneLaboratorioImagen
+          ? modal.examenesSeleccionados
+          : [],
       };
       if (modal.especialidad) {
-        const actualizada = await EspecialidadApiService.actualizar(modal.especialidad.id, payload);
-        setEspecialidades((prev) => prev.map((e) => (e.id === actualizada.id ? actualizada : e)));
+        const actualizada = await EspecialidadApiService.actualizar(
+          modal.especialidad.id,
+          payload,
+        );
+        setEspecialidades((prev) =>
+          prev.map((e) => (e.id === actualizada.id ? actualizada : e)),
+        );
         showNotification("Especialidad actualizada correctamente.", "success");
       } else {
         const nueva = await EspecialidadApiService.crear(payload);
@@ -201,7 +232,10 @@ const GestionarEspecialidades = () => {
       setEspecialidades((prev) => prev.filter((e) => e.id !== id));
       showNotification("Especialidad eliminada.", "success");
     } catch (err: any) {
-      showNotification(err.message || "Error al eliminar la especialidad.", "error");
+      showNotification(
+        err.message || "Error al eliminar la especialidad.",
+        "error",
+      );
     } finally {
       setEliminandoId(null);
     }
@@ -210,16 +244,23 @@ const GestionarEspecialidades = () => {
   return (
     <div className="lista-page">
       {notification.visible && (
-        <div className={`notification ${notification.type}`}>{notification.message}</div>
+        <div className={`notification ${notification.type}`}>
+          {notification.message}
+        </div>
       )}
 
       {/* Header */}
       <div className="lista-page-header">
         <div>
           <h1>Especialidades</h1>
-          <p className="lista-page-subtitle">{especialidades.length} especialidades registradas</p>
+          <p className="lista-page-subtitle">
+            {especialidades.length} especialidades registradas
+          </p>
         </div>
-        <button className="btn-page-action" onClick={() => dispatch({ type: "ABRIR_NUEVO" })}>
+        <button
+          className="btn-page-action"
+          onClick={() => dispatch({ type: "ABRIR_NUEVO" })}
+        >
           <Plus size={16} /> Nueva Especialidad
         </button>
       </div>
@@ -254,7 +295,9 @@ const GestionarEspecialidades = () => {
               <thead>
                 <tr>
                   <th>Especialidad</th>
-                  <th style={{ width: 150, textAlign: "center" }}>Lab. / Imagen</th>
+                  <th style={{ width: 150, textAlign: "center" }}>
+                    Lab. / Imagen
+                  </th>
                   <th style={{ width: 180, textAlign: "center" }}>Exámenes</th>
                   <th style={{ width: 120, textAlign: "center" }}>Acciones</th>
                 </tr>
@@ -271,15 +314,22 @@ const GestionarEspecialidades = () => {
                           <span className="ge-nombre">{e.nombre}</span>
                         </div>
                       </td>
-                      <td style={{ textAlign: "center", verticalAlign: "middle" }}>
-                        <span className={`ge-badge ${e.tieneLaboratorioImagen ? "ge-badge--yes" : "ge-badge--no"}`}>
+                      <td
+                        style={{ textAlign: "center", verticalAlign: "middle" }}
+                      >
+                        <span
+                          className={`ge-badge ${e.tieneLaboratorioImagen ? "ge-badge--yes" : "ge-badge--no"}`}
+                        >
                           {e.tieneLaboratorioImagen ? "Sí" : "No"}
                         </span>
                       </td>
-                      <td style={{ textAlign: "center", verticalAlign: "middle" }}>
+                      <td
+                        style={{ textAlign: "center", verticalAlign: "middle" }}
+                      >
                         {e.tieneLaboratorioImagen ? (
                           <span className="ge-examenes-count">
-                            {e.examenes?.length ?? 0} examen{(e.examenes?.length ?? 0) !== 1 ? "es" : ""}
+                            {e.examenes?.length ?? 0} examen
+                            {(e.examenes?.length ?? 0) !== 1 ? "es" : ""}
                           </span>
                         ) : (
                           <span className="ge-text-muted">-</span>
@@ -289,7 +339,12 @@ const GestionarEspecialidades = () => {
                         <div className="ge-actions">
                           <button
                             className="btn-action"
-                            onClick={() => dispatch({ type: "ABRIR_EDITAR", especialidad: e })}
+                            onClick={() =>
+                              dispatch({
+                                type: "ABRIR_EDITAR",
+                                especialidad: e,
+                              })
+                            }
                             title="Editar"
                           >
                             <Pencil size={14} />
@@ -328,14 +383,26 @@ const GestionarEspecialidades = () => {
       {modal.abierto && (
         <div
           className="pm-overlay"
-          onClick={(e) => { if (e.target === e.currentTarget) dispatch({ type: "CERRAR" }); }}
+          onClick={(e) => {
+            if (e.target === e.currentTarget) dispatch({ type: "CERRAR" });
+          }}
         >
           <div className="pm-modal" style={{ maxWidth: 460 }}>
             <div className="pm-header">
               <div className="pm-header-info">
-                <div className="pm-header-icon">{modal.especialidad ? <Pencil size={16} /> : <FlaskConical size={16} />}</div>
+                <div className="pm-header-icon">
+                  {modal.especialidad ? (
+                    <Pencil size={16} />
+                  ) : (
+                    <FlaskConical size={16} />
+                  )}
+                </div>
                 <div>
-                  <h2>{modal.especialidad ? "Editar Especialidad" : "Nueva Especialidad"}</h2>
+                  <h2>
+                    {modal.especialidad
+                      ? "Editar Especialidad"
+                      : "Nueva Especialidad"}
+                  </h2>
                 </div>
               </div>
               <button
@@ -363,25 +430,36 @@ const GestionarEspecialidades = () => {
                   <input
                     className="pm-input"
                     value={modal.nombre}
-                    onChange={(e) => dispatch({ type: "SET_NOMBRE", value: e.target.value })}
+                    onChange={(e) =>
+                      dispatch({ type: "SET_NOMBRE", value: e.target.value })
+                    }
                     placeholder="Ej: Cardiología"
                     disabled={modal.loading}
                   />
                 </div>
 
                 <div className="pm-field">
-                  <label className="pm-label">¿Tiene laboratorio / imagen?</label>
+                  <label className="pm-label">
+                    ¿Tiene laboratorio / imagen?
+                  </label>
                   <div className="ge-toggle-wrap">
                     <button
                       type="button"
                       className={`ge-toggle ${modal.tieneLaboratorioImagen ? "ge-toggle--on" : ""}`}
-                      onClick={() => dispatch({ type: "SET_LAB", value: !modal.tieneLaboratorioImagen })}
+                      onClick={() =>
+                        dispatch({
+                          type: "SET_LAB",
+                          value: !modal.tieneLaboratorioImagen,
+                        })
+                      }
                       disabled={modal.loading}
                     >
                       <span className="ge-toggle-knob" />
                     </button>
                     <span className="ge-toggle-label">
-                      {modal.tieneLaboratorioImagen ? "Sí tiene lab. / imagen" : "No tiene lab. / imagen"}
+                      {modal.tieneLaboratorioImagen
+                        ? "Sí tiene lab. / imagen"
+                        : "No tiene lab. / imagen"}
                     </span>
                   </div>
                 </div>
@@ -403,11 +481,14 @@ const GestionarEspecialidades = () => {
                         <span className="pm-spinner-sm" /> Cargando exámenes…
                       </div>
                     ) : modal.todosExamenes.length === 0 ? (
-                      <p className="ge-examenes-empty">No hay exámenes en el catálogo aún.</p>
+                      <p className="ge-examenes-empty">
+                        No hay exámenes en el catálogo aún.
+                      </p>
                     ) : (
                       <div className="ge-examenes-lista">
                         {modal.todosExamenes.map((ex) => {
-                          const seleccionado = modal.examenesSeleccionados.includes(ex._id);
+                          const seleccionado =
+                            modal.examenesSeleccionados.includes(ex._id);
                           return (
                             <label
                               key={ex._id}
@@ -416,10 +497,17 @@ const GestionarEspecialidades = () => {
                               <input
                                 type="checkbox"
                                 checked={seleccionado}
-                                onChange={() => dispatch({ type: "TOGGLE_EXAMEN", id: ex._id })}
+                                onChange={() =>
+                                  dispatch({
+                                    type: "TOGGLE_EXAMEN",
+                                    id: ex._id,
+                                  })
+                                }
                                 disabled={modal.loading}
                               />
-                              <span className="ge-examen-nombre">{ex.nombre}</span>
+                              <span className="ge-examen-nombre">
+                                {ex.nombre}
+                              </span>
                               <span className="ge-examen-tipo">{ex.tipo}</span>
                             </label>
                           );
@@ -447,9 +535,16 @@ const GestionarEspecialidades = () => {
                     disabled={modal.loading || !modal.nombre.trim()}
                   >
                     {modal.loading ? (
-                      <><span className="pm-spinner-sm" /> Guardando…</>
+                      <>
+                        <span className="pm-spinner-sm" /> Guardando…
+                      </>
                     ) : (
-                      <><Check size={14} /> {modal.especialidad ? "Guardar cambios" : "Crear especialidad"}</>
+                      <>
+                        <Check size={14} />{" "}
+                        {modal.especialidad
+                          ? "Guardar cambios"
+                          : "Crear especialidad"}
+                      </>
                     )}
                   </button>
                 </div>
@@ -469,14 +564,32 @@ const GestionarEspecialidades = () => {
           >
             <div className="pm-header">
               <div className="pm-header-info">
-                <div className="pm-header-icon"><Trash2 size={16} /></div>
-                <div><h2>¿Eliminar especialidad?</h2></div>
+                <div className="pm-header-icon">
+                  <Trash2 size={16} />
+                </div>
+                <div>
+                  <h2>¿Eliminar especialidad?</h2>
+                </div>
               </div>
-              <button className="pm-close" aria-label="Cerrar" onClick={() => setConfirmDelete(null)}><X size={16} /></button>
+              <button
+                className="pm-close"
+                aria-label="Cerrar"
+                onClick={() => setConfirmDelete(null)}
+              >
+                <X size={16} />
+              </button>
             </div>
-            <p style={{ padding: "0 1.25rem 1rem", color: "var(--text-secondary)", fontSize: "0.875rem" }}>
-              Esta acción no se puede deshacer.
-            </p>
+            <div className="pm-section">
+              <p
+                style={{
+                  color: "var(--text-secondary)",
+                  fontSize: "0.875rem",
+                  margin: 0,
+                }}
+              >
+                Esta acción no se puede deshacer.
+              </p>
+            </div>
             <div className="pm-footer">
               <div />
               <div className="pm-footer-actions">
