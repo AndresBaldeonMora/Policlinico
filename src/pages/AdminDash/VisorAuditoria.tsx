@@ -164,7 +164,16 @@ const VisorAuditoria = () => {
                       <span className="av-fecha"><Clock size={13} /> {fmtFecha(r.timestamp)}</span>
                     </td>
                     <td>
-                      <span className="av-usuario">{r.usuarioNombre || "—"}</span>
+                      <span className="av-usuario">
+                        {r.usuarioNombre === "Sistema (Cron)" ? (
+                          <>
+                            <Clock size={13} style={{ marginRight: '4px', verticalAlign: 'middle', display: 'inline-block', marginBottom: '2px' }} />
+                            Sistema (Cron)
+                          </>
+                        ) : (
+                          r.usuarioNombre || "—"
+                        )}
+                      </span>
                     </td>
                     <td>
                       <span className={`av-tag ${colorAccion(r.accion)}`}>{r.accion}</span>
