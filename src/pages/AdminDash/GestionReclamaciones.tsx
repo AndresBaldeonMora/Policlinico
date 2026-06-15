@@ -1,8 +1,9 @@
 import { useEffect, useState, useCallback, useMemo } from "react";
 import {
-  FileText, Search, X, Clock, User, Phone, Mail
+  FileText, Search, X, Clock, User, Phone, Mail, ShieldCheck, CheckCircle, Loader2
 } from "lucide-react";
 import { ReclamacionApiService, type Reclamacion } from "../../services/reclamacion.service";
+import { toastExito, toastError } from "../../utils/toast";
 import "./GestionReclamaciones.css";
 
 const fmtFecha = (iso: string): string => {
@@ -16,6 +17,19 @@ const fmtFecha = (iso: string): string => {
 const normalizeString = (str: string): string =>
   (str || "").toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
 
+const EstadoBadge = ({ estado }: { estado: string }) => {
+  switch (estado) {
+    case "PENDIENTE":
+      return <span className="rec-estado rec-estado--pendiente">Pendiente</span>;
+    case "EN_REVISION":
+      return <span className="rec-estado rec-estado--revision">En Revisión</span>;
+    case "RESUELTO":
+      return <span className="rec-estado rec-estado--resuelto">Resuelto</span>;
+    default:
+      return <span className="rec-estado">{estado}</span>;
+  }
+};
+
 const GestionReclamaciones = () => {
   const [reclamaciones, setReclamaciones] = useState<Reclamacion[]>([]);
   const [cargando, setCargando] = useState(true);
@@ -25,6 +39,12 @@ const GestionReclamaciones = () => {
   const [busqueda, setBusqueda] = useState("");
   const [filtroTipo, setFiltroTipo] = useState<"TODOS" | "QUEJA" | "RECLAMO">("TODOS");
   const [seleccionada, setSeleccionada] = useState<Reclamacion | null>(null);
+
+  // Gestión
+  const [gestionando, setGestionando] = useState<Reclamacion | null>(null);
+  const [nuevoEstado, setNuevoEstado] = useState<"EN_REVISION" | "RESUELTO">("EN_REVISION");
+  const [respuestaAdmin, setRespuestaAdmin] = useState("");
+  const [enviando, setEnviando] = useState(false);
 
   const cargar = useCallback(async () => {
     try {
@@ -66,6 +86,31 @@ const GestionReclamaciones = () => {
       return matchesSearch && matchesTipo;
     });
   }, [reclamaciones, busqueda, filtroTipo]);
+
+  const handleGestionar = async () => {
+    if (!gestionando) return;
+    if (nuevoEstado === "RESUELTO" && !respuestaAdmin.trim()) {
+      toastError("Para marcar como RESUELTO, debes proporcionar una respuesta al paciente.");
+      return;
+    }
+
+    setEnviando(true);
+    try {
+      const actualizada = await ReclamacionApiService.gestionar(gestionando._id, {
+        estado: nuevoEstado,
+        respuestaAdmin: respuestaAdmin.trim() || undefined,
+      });
+      // Actualizar la lista localmente
+      setReclamaciones(prev => prev.map(r => r._id === actualizada._id ? actualizada : r));
+      toastExito(`Reclamación actualizada a ${nuevoEstado === "RESUELTO" ? "RESUELTO" : "EN REVISIÓN"}`);
+      setGestionando(null);
+      setRespuestaAdmin("");
+    } catch (err: any) {
+      toastError(err?.message || "Error al gestionar la reclamación");
+    } finally {
+      setEnviando(false);
+    }
+  };
 
   const limpiarFiltros = () => {
     setBusqueda("");
@@ -139,8 +184,9 @@ const GestionReclamaciones = () => {
                   <th style={{ width: 150 }}>Fecha / Hora</th>
                   <th style={{ width: 220 }}>Paciente</th>
                   <th style={{ width: 110 }}>Tipo</th>
+                  <th style={{ width: 100 }}>Estado</th>
                   <th>Descripción corta</th>
-                  <th style={{ width: 90, textAlign: "center" }}>Acción</th>
+                  <th style={{ width: 110, textAlign: "center" }}>Acciones</th>
                 </tr>
               </thead>
               <tbody>
@@ -149,9 +195,7 @@ const GestionReclamaciones = () => {
                   return (
                     <tr key={r._id}>
                       <td><span className="td-mono" style={{ fontWeight: 600 }}>{r.codigo}</span></td>
-                      <td>
-                        <span className="av-fecha"><Clock size={13} /> {fmtFecha(r.createdAt)}</span>
-                      </td>
+                      <td><span className="av-fecha"><Clock size={13} /> {fmtFecha(r.createdAt)}</span></td>
                       <td>
                         {pac ? (
                           <div style={{ display: "flex", flexDirection: "column" }}>
@@ -167,17 +211,30 @@ const GestionReclamaciones = () => {
                           {r.tipo}
                         </span>
                       </td>
-                      <td>
-                        <span className="rec-desc-preview">{r.descripcion}</span>
-                      </td>
+                      <td><EstadoBadge estado={r.estado || "PENDIENTE"} /></td>
+                      <td><span className="rec-desc-preview">{r.descripcion}</span></td>
                       <td className="td-center">
-                        <button
-                          className="btn-action"
-                          onClick={() => setSeleccionada(r)}
-                          title="Ver detalle completo"
-                        >
-                          <FileText size={15} />
-                        </button>
+                        <div className="ge-actions" style={{ gap: "0.5rem", justifyContent: "center" }}>
+                          <button
+                            className="btn-action"
+                            onClick={() => setSeleccionada(r)}
+                            title="Ver detalle completo"
+                          >
+                            <FileText size={15} />
+                          </button>
+                          <button
+                            className="btn-action btn-action--primary"
+                            onClick={() => {
+                              setGestionando(r);
+                              setNuevoEstado(r.estado === "PENDIENTE" ? "EN_REVISION" : "EN_REVISION");
+                              setRespuestaAdmin(r.respuestaAdmin || "");
+                            }}
+                            title="Gestionar"
+                            disabled={r.estado === "RESUELTO"}
+                          >
+                            <ShieldCheck size={15} />
+                          </button>
+                        </div>
                       </td>
                     </tr>
                   );
@@ -215,6 +272,10 @@ const GestionReclamaciones = () => {
                     {seleccionada.tipo}
                   </span>
                 </div>
+                <div className="rec-modal-meta-item">
+                  <span className="rec-modal-meta-label">Estado:</span>
+                  <EstadoBadge estado={seleccionada.estado || "PENDIENTE"} />
+                </div>
               </div>
 
               {/* Paciente Card */}
@@ -225,9 +286,7 @@ const GestionReclamaciones = () => {
                     {seleccionada.pacienteId.nombres} {seleccionada.pacienteId.apellidos}
                   </div>
                   <div className="rec-modal-paciente-info-grid">
-                    <div>
-                      <strong>DNI:</strong> {seleccionada.pacienteId.dni}
-                    </div>
+                    <div><strong>DNI:</strong> {seleccionada.pacienteId.dni}</div>
                     {seleccionada.pacienteId.telefono && (
                       <div style={{ display: "flex", alignItems: "center", gap: "0.35rem" }}>
                         <Phone size={12} /> <span>{seleccionada.pacienteId.telefono}</span>
@@ -245,15 +304,101 @@ const GestionReclamaciones = () => {
               {/* Descripción */}
               <div className="rec-modal-paciente-card">
                 <h3><FileText size={14} /> Detalle del Hecho / Declaración</h3>
-                <div className="rec-modal-desc-text">
-                  {seleccionada.descripcion}
-                </div>
+                <div className="rec-modal-desc-text">{seleccionada.descripcion}</div>
               </div>
+
+              {/* Respuesta del administrador si existe */}
+              {seleccionada.respuestaAdmin && (
+                <div className="rec-modal-paciente-card" style={{ borderLeftColor: "var(--primary)" }}>
+                  <h3><ShieldCheck size={14} /> Respuesta del Administrador</h3>
+                  <div className="rec-modal-desc-text" style={{ background: "var(--bg-muted)", color: "var(--text-primary)" }}>
+                    {seleccionada.respuestaAdmin}
+                    {seleccionada.fechaResolucion && (
+                      <div style={{ fontSize: "0.7rem", marginTop: "0.5rem", color: "var(--text-muted)" }}>
+                        Resuelto el {new Date(seleccionada.fechaResolucion).toLocaleDateString("es-PE")}
+                      </div>
+                    )}
+                  </div>
+                </div>
+              )}
             </div>
 
             <div className="rec-modal-footer">
-              <button className="btn btn-secondary" onClick={() => setSeleccionada(null)}>
-                Cerrar
+              <button className="btn btn-secondary" onClick={() => setSeleccionada(null)}>Cerrar</button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Modal de Gestión */}
+      {gestionando && (
+        <div className="rec-modal-overlay" onClick={() => !enviando && setGestionando(null)}>
+          <div className="rec-modal-card" style={{ maxWidth: 500 }} onClick={(e) => e.stopPropagation()}>
+            <div className="rec-modal-header">
+              <div style={{ display: "flex", alignItems: "center", gap: "0.5rem" }}>
+                <ShieldCheck size={20} className="rec-modal-icon" />
+                <h2>Gestionar Reclamación</h2>
+              </div>
+              <button className="rec-modal-close" onClick={() => !enviando && setGestionando(null)} disabled={enviando}>
+                <X size={18} />
+              </button>
+            </div>
+
+            <div className="rec-modal-body" style={{ gap: "1rem" }}>
+              <div className="rec-modal-meta-card" style={{ flexDirection: "column", alignItems: "flex-start" }}>
+                <div className="rec-modal-meta-item">
+                  <span className="rec-modal-meta-label">Código:</span>
+                  <span className="rec-modal-meta-value" style={{ fontWeight: 600 }}>{gestionando.codigo}</span>
+                </div>
+                <div className="rec-modal-meta-item">
+                  <span className="rec-modal-meta-label">Estado actual:</span>
+                  <EstadoBadge estado={gestionando.estado || "PENDIENTE"} />
+                </div>
+              </div>
+
+              <div className="micuenta-perfil__field">
+                <label className="micuenta-perfil__field-label">Nuevo Estado</label>
+                <select
+                  className="micuenta-perfil__select"
+                  value={nuevoEstado}
+                  onChange={(e) => setNuevoEstado(e.target.value as "EN_REVISION" | "RESUELTO")}
+                  disabled={enviando}
+                >
+                  <option value="EN_REVISION">En Revisión</option>
+                  <option value="RESUELTO">Resuelto</option>
+                </select>
+              </div>
+
+              <div className="micuenta-perfil__field">
+                <label className="micuenta-perfil__field-label">
+                  Respuesta del Administrador
+                  {nuevoEstado === "RESUELTO" && <span style={{ color: "var(--error)" }}> *</span>}
+                </label>
+                <textarea
+                  className="micuenta-perfil__input"
+                  rows={4}
+                  placeholder="Explique la resolución o acciones tomadas..."
+                  value={respuestaAdmin}
+                  onChange={(e) => setRespuestaAdmin(e.target.value)}
+                  disabled={enviando}
+                />
+                {nuevoEstado === "RESUELTO" && !respuestaAdmin.trim() && (
+                  <p className="micuenta-seg__field-error">La respuesta es obligatoria para marcar como RESUELTO.</p>
+                )}
+              </div>
+            </div>
+
+            <div className="rec-modal-footer" style={{ justifyContent: "space-between" }}>
+              <button className="pm-btn pm-btn--ghost" onClick={() => setGestionando(null)} disabled={enviando}>
+                Cancelar
+              </button>
+              <button
+                className="pm-btn pm-btn--primary"
+                onClick={handleGestionar}
+                disabled={enviando || (nuevoEstado === "RESUELTO" && !respuestaAdmin.trim())}
+              >
+                {enviando ? <Loader2 size={14} className="micuenta-perfil__spinner" /> : <CheckCircle size={14} />}
+                <span style={{ marginLeft: "0.3rem" }}>Actualizar</span>
               </button>
             </div>
           </div>
