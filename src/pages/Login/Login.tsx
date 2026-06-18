@@ -2,6 +2,7 @@ import type { FormEvent, KeyboardEvent } from "react";
 import { useEffect, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "../../hooks/userAuth";
+import ForgotPasswordModal from "./ForgotPasswordModal";
 import {
   Mail, Lock, AlertCircle, ArrowRight, Eye, EyeOff,
   ShieldCheck, CheckCircle2, Check,
@@ -50,6 +51,7 @@ const Login = () => {
   const [remember, setRemember] = useState(true);
   const [cargando, setCargando] = useState(false);
   const [error, setError]       = useState("");
+  const [showForgot, setShowForgot] = useState(false);
   const passRef  = useRef<HTMLInputElement>(null);
   const [slideIdx, setSlideIdx] = useState(() => Math.floor(Math.random() * SLIDES.length));
 
@@ -90,6 +92,7 @@ const Login = () => {
   };
 
   return (
+    <>
     <div className="login-page">
 
       {/* ── LEFT: form panel (tinted) ── */}
@@ -155,9 +158,13 @@ const Login = () => {
                 <span className="lv-check">{remember && <Check size={11} strokeWidth={3} />}</span>
                 Recordar sesión
               </label>
-              <a className="lv-forgot" href="#" onClick={e => e.preventDefault()}>
+              <button
+                type="button"
+                className="lv-forgot"
+                onClick={() => setShowForgot(true)}
+              >
                 ¿Olvidaste tu contraseña?
-              </a>
+              </button>
             </div>
 
             {/* Error */}
@@ -221,6 +228,9 @@ const Login = () => {
       </div>
 
     </div>
+
+    {showForgot && <ForgotPasswordModal onClose={() => setShowForgot(false)} />}
+    </>
   );
 };
 

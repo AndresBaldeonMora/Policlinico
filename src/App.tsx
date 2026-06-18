@@ -9,6 +9,7 @@ import ListaPacientes from "./pages/ListaPacientes/ListaPacientes";
 import Calendario from "./pages/Calendario/Calendario";
 import PerfilCita from "./pages/PerfilCita/PerfilCita";
 import Login from "./pages/Login/Login";
+import ResetPassword from "./pages/Login/ResetPassword";
 import LaboratorioImagen from "./pages/Laboratorio/Laboratorio";
 import ImprimirOrden from "./pages/Laboratorio/ImprimirOrden";
 import MedicoDashboard from "./pages/MedicoDashboard/MedicoDashboard";
@@ -48,6 +49,7 @@ function App() {
         <Routes>
           {/* ================== PUBLIC ================== */}
           <Route path="/login" element={<Login />} />
+          <Route path="/reset-password" element={<ResetPassword />} />
 
           {/* ================== PROTECTED ================== */}
           <Route element={<ProtectedLayout />}>

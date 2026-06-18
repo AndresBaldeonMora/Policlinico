@@ -79,7 +79,7 @@ const MiCuentaSeguridad = () => {
         setGuardando(false);
       }
     },
-    [puedeGuardar],
+    [puedeGuardar, actual, nueva, confirmar],
   );
 
   return (

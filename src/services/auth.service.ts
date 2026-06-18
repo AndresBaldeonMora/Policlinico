@@ -113,6 +113,14 @@ export const AuthService = {
     }
   },
 
+  forgotPassword: async (correo: string): Promise<void> => {
+    await axios.post(`${API_BASE_URL}/auth/forgot-password`, { correo });
+  },
+
+  resetPassword: async (token: string, passwordNuevo: string): Promise<void> => {
+    await axios.post(`${API_BASE_URL}/auth/reset-password`, { token, passwordNuevo });
+  },
+
   getToken: (): string | null => localStorage.getItem(TOKEN_KEY),
 
   // Verifica si el JWT no ha expirado (decodifica el payload sin librería externa).

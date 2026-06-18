@@ -263,6 +263,10 @@
   color: #059669;
   text-decoration: none;
   transition: color 0.15s;
+  background: none;
+  border: none;
+  padding: 0;
+  cursor: pointer;
 }
 
 .lv-forgot:hover { color: #047857; text-decoration: underline; }
