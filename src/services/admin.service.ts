@@ -48,6 +48,13 @@ export interface PaginacionAuditoria {
   totalPaginas: number;
 }
 
+export interface PaginacionUsuarios {
+  page: number;
+  limit: number;
+  total: number;
+  totalPaginas: number;
+}
+
 export interface FiltrosAuditoria {
   entidad?: string;
   accion?: string;
@@ -70,16 +77,36 @@ const msg = (error: unknown, fallback: string): string => {
 
 // ─── Servicio de usuarios ──────────────────────────────────────
 export class UsuarioApiService {
-  static async listar(params?: { rol?: string; activo?: boolean; q?: string }): Promise<UsuarioSistema[]> {
+  static async listar(
+    params?: { rol?: string; activo?: boolean; q?: string; page?: number; limit?: number }
+  ): Promise<{ data: UsuarioSistema[]; paginacion: PaginacionUsuarios; totalActivos: number }> {
     try {
-      const response = await api.get<{ success: boolean; data: UsuarioSistema[] }>("/admin/usuarios", {
+      const response = await api.get<{
+        success: boolean;
+        data: UsuarioSistema[];
+        paginacion: PaginacionUsuarios;
+        totalActivos: number;
+      }>("/admin/usuarios", {
         params: {
-          rol: params?.rol,
+          rol: params?.rol || undefined,
           activo: params?.activo === undefined ? undefined : String(params.activo),
           q: params?.q || undefined,
+          page: params?.page,
+          limit: params?.limit,
         },
       });
-      return response.data.data ?? [];
+      const data = response.data.data ?? [];
+      return {
+        data,
+        // Fallback por si el backend respondiera sin metadatos de paginación.
+        paginacion: response.data.paginacion ?? {
+          page: params?.page ?? 1,
+          limit: params?.limit ?? data.length,
+          total: data.length,
+          totalPaginas: 1,
+        },
+        totalActivos: response.data.totalActivos ?? data.filter((u) => u.activo).length,
+      };
     } catch (error) {
       throw new Error(msg(error, "Error al listar usuarios"));
     }
