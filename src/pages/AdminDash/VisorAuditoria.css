@@ -122,3 +122,9 @@
 .av-page-btn:hover:not(:disabled) { border-color: var(--primary, #14b8a6); color: var(--primary, #14b8a6); }
 .av-page-btn:disabled { opacity: 0.45; cursor: not-allowed; }
 .av-page-info { font-size: 0.83rem; color: var(--text-secondary, #64748b); }
+
+[data-theme="dark"] .av-page-btn, [data-theme="dark"] .av-select, [data-theme="dark"] .av-date, [data-theme="dark"] .av-clear-btn {
+  background: var(--bg-card, #1e293b);
+  color: var(--text-primary, #f8fafc);
+  border-color: var(--border, #334155);
+}
