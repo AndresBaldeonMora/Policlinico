@@ -3,6 +3,7 @@ import { Link, useLocation } from "react-router-dom";
 import { useAuth } from "../../hooks/userAuth";
 import {
   Calendar,
+  CalendarClock,
   CalendarPlus,
   ClipboardList,
   Stethoscope,
@@ -37,6 +38,7 @@ const Sidebar = () => {
     { path: "/pacientes", label: "Pacientes", icon: Users, description: "Listado de pacientes" },
     { path: "/laboratorio-imagen", label: "Laboratorio / Imagen", icon: FlaskConical, description: "Órdenes de exámenes e imagen" },
     { path: "/interconsultas", label: "Interconsultas", icon: ArrowLeftRight, description: "Gestionar interconsultas pendientes" },
+    { path: "/admin/horarios", label: "Horarios", icon: CalendarClock, description: "Bloqueos y horario mensual de médicos" },
   ];
 
   const medicoMenu = [
@@ -52,6 +54,7 @@ const Sidebar = () => {
     { path: "/admin/usuarios", label: "Usuarios", icon: UserCog, description: "Gestión de usuarios del sistema" },
     { path: "/admin/especialidades", label: "Especialidades", icon: BookOpen, description: "CRUD especialidades" },
     { path: "/admin/doctores", label: "Doctores", icon: Stethoscope, description: "CRUD doctores" },
+    { path: "/admin/horarios", label: "Horarios Médicos", icon: CalendarClock, description: "Bloqueos y horario mensual de médicos" },
     { path: "/admin/pacientes", label: "Pacientes", icon: Users, description: "CRUD pacientes" },
     { path: "/admin/medicamentos", label: "Medicamentos", icon: Pill, description: "Catálogo de medicamentos" },
     { path: "/admin/auditoria", label: "Auditoría", icon: ScrollText, description: "Registro de acciones del sistema" },
