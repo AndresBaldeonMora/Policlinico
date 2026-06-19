@@ -47,10 +47,14 @@ export class ReportesApiService {
     }
   }
 
-  static async examenesMasSolicitados(): Promise<ReporteExamenSolicitado[]> {
+  static async examenesMasSolicitados(
+    fechaInicio?: string,
+    fechaFin?: string
+  ): Promise<ReporteExamenSolicitado[]> {
     try {
       const response = await api.get<{ success: boolean; data: ReporteExamenSolicitado[] }>(
-        "/reportes/examenes-mas-solicitados"
+        "/reportes/examenes-mas-solicitados",
+        { params: { fechaInicio, fechaFin } }
       );
       return response.data.data ?? [];
     } catch (error: unknown) {

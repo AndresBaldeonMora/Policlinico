@@ -106,20 +106,19 @@ const AdminDashboard = () => {
     fetchData();
   }, []);
 
-  // ── Cargar exámenes al montar ──
-  useEffect(() => {
-    const fetchExamenes = async () => {
-      try {
-        setCargandoExamenes(true);
-        setExamenes(await ReportesApiService.examenesMasSolicitados());
-      } catch {
-        setErrorExamenes("No se pudo cargar el reporte de exámenes.");
-      } finally {
-        setCargandoExamenes(false);
-      }
-    };
-    fetchExamenes();
-  }, []);
+  // ── Buscar exámenes por período ──
+  const buscarExamenes = async () => {
+    if (!fechaInicio || !fechaFin) return;
+    try {
+      setCargandoExamenes(true);
+      setErrorExamenes(null);
+      setExamenes(await ReportesApiService.examenesMasSolicitados(fechaInicio, fechaFin));
+    } catch {
+      setErrorExamenes("No se pudo cargar el reporte de exámenes.");
+    } finally {
+      setCargandoExamenes(false);
+    }
+  };
  
   // ── Buscar órdenes por período ──
   const buscarOrdenes = async () => {
@@ -154,8 +153,8 @@ const AdminDashboard = () => {
     }
   };
 
-  // Un único botón "Buscar" actualiza órdenes y citas del mismo período.
-  const buscarPeriodo = () => { buscarOrdenes(); buscarCitas(); };
+  // Un único botón "Buscar" actualiza órdenes, citas y exámenes del mismo período.
+  const buscarPeriodo = () => { buscarOrdenes(); buscarCitas(); buscarExamenes(); };
 
   useEffect(() => { buscarPeriodo(); }, []);
 
@@ -246,8 +245,8 @@ const AdminDashboard = () => {
                 onChange={(e) => setFechaFin(e.target.value)} min={fechaInicio} max={hoy}
               />
             </div>
-            <button className="btn-page-action" onClick={buscarPeriodo} disabled={cargandoOrdenes || cargandoCitas}>
-              {cargandoOrdenes || cargandoCitas
+            <button className="btn-page-action" onClick={buscarPeriodo} disabled={cargandoOrdenes || cargandoCitas || cargandoExamenes}>
+              {cargandoOrdenes || cargandoCitas || cargandoExamenes
                 ? <><span className="ar-spinner" /> Buscando…</>
                 : <><Search size={15} /> Buscar</>
               }
