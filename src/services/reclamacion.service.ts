@@ -14,6 +14,9 @@ export interface Reclamacion {
   tipo: "QUEJA" | "RECLAMO";
   descripcion: string;
   fecha: string;
+  estado: "PENDIENTE" | "EN_REVISION" | "RESUELTO";
+  respuestaAdmin?: string;
+  fechaResolucion?: string;
   createdAt: string;
   updatedAt: string;
 }
@@ -28,4 +31,17 @@ export class ReclamacionApiService {
     const response = await api.get<{ success: boolean; data: Reclamacion[] }>("/reclamaciones");
     return response.data.data;
   }
+
+  static async gestionar(id: string, payload: GestionReclamacionPayload): Promise<Reclamacion> {
+    const response = await api.patch<{ success: boolean; data: Reclamacion }>(
+      `/reclamaciones/${id}/gestionar`,
+      payload
+    );
+    return response.data.data;
+  }
+}
+
+export interface GestionReclamacionPayload {
+  estado?: "PENDIENTE" | "EN_REVISION" | "RESUELTO";
+  respuestaAdmin?: string;
 }

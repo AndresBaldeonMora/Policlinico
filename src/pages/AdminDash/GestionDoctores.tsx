@@ -81,7 +81,7 @@ const GestionarDoctores = () => {
   const [eliminandoId, setEliminandoId] = useState<string | null>(null);
   const [confirmDelete, setConfirmDelete] = useState<string | null>(null);
   const [notification, setNotification] = useState<NotificationState>({ message: "", type: "", visible: false });
-
+  const [errorDependencias, setErrorDependencias] = useState<any[] | null>(null);
   const [modal, dispatch] = useReducer(modalReducer, {
     abierto: false, doctor: null, campos: camposVacios, loading: false, error: "",
   });
@@ -162,8 +162,12 @@ const GestionarDoctores = () => {
       await DoctorApiService.eliminar(id);
       setDoctores((prev) => prev.filter((d) => d.id !== id));
       showNotification("Doctor eliminado.", "success");
-    } catch {
-      showNotification("Error al eliminar el doctor.", "error");
+    } catch (error: any)  {
+      if (error.response?.status === 409 && error.response?.data?.dependencias) {
+        setErrorDependencias(error.response.data.dependencias);
+      } else {
+        showNotification(error.response?.data?.message || "Error al eliminar el doctor.", "error");
+      }
     } finally {
       setEliminandoId(null);
     }
@@ -399,6 +403,52 @@ const GestionarDoctores = () => {
                   onClick={() => handleEliminarConfirmado(confirmDelete)}
                 >
                   <Trash2 size={14} /> Sí, eliminar
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Modal de dependencias (error 409) */}
+      {errorDependencias && (
+        <div className="pm-overlay" onClick={() => setErrorDependencias(null)}>
+          <div
+            className="pm-modal"
+            style={{ maxWidth: 480 }}
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="pm-header">
+              <div className="pm-header-info">
+                <div className="pm-header-icon" style={{ backgroundColor: "var(--danger-light)", color: "var(--danger)" }}>
+                  <AlertCircle size={16} />
+                </div>
+                <div><h2>No se puede eliminar el doctor</h2></div>
+              </div>
+              <button className="pm-close" aria-label="Cerrar" onClick={() => setErrorDependencias(null)}>
+                <X size={16} />
+              </button>
+            </div>
+            <div style={{ padding: "0 1.25rem 1rem" }}>
+              <p style={{ marginBottom: "0.75rem", color: "var(--text-secondary)" }}>
+                El doctor tiene las siguientes dependencias activas:
+              </p>
+              <ul style={{ paddingLeft: "1.25rem", display: "flex", flexDirection: "column", gap: "0.5rem" }}>
+                {errorDependencias.map((dep, idx) => (
+                  <li key={idx} style={{ fontSize: "0.875rem" }}>
+                    <span style={{ color: "var(--danger)" }}>•</span> {dep.mensaje}
+                  </li>
+                ))}
+              </ul>
+            </div>
+            <div className="pm-footer">
+              <div />
+              <div className="pm-footer-actions">
+                <button
+                  className="pm-btn pm-btn--primary"
+                  onClick={() => setErrorDependencias(null)}
+                >
+                  Entendido
                 </button>
               </div>
             </div>
