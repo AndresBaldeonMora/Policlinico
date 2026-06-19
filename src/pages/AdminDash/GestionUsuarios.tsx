@@ -1,13 +1,16 @@
-import { useEffect, useReducer, useState } from "react";
+import { useCallback, useEffect, useReducer, useState } from "react";
 import {
   Search, Plus, Pencil, UserCog, X, AlertCircle, KeyRound,
-  ShieldCheck, Power, Copy, Check,
+  ShieldCheck, Power, Copy, Check, Stethoscope, ChevronLeft, ChevronRight,
 } from "lucide-react";
 import {
   UsuarioApiService,
   type UsuarioSistema,
   type RolGestionable,
+  type CrearUsuarioPayload,
+  type PaginacionUsuarios,
 } from "../../services/admin.service";
+import { DoctorApiService, type DoctorTransformado } from "../../services/doctor.service";
 import "./GestionUsuarios.css";
 
 // ─── Constantes ───────────────────────────────────────────────
@@ -24,12 +27,15 @@ const ROL_LABEL: Record<string, string> = {
   PACIENTE: "Paciente",
 };
 
+const LIMIT = 25;
+
 // ─── Tipos del modal ──────────────────────────────────────────
 interface FormFields {
   nombres: string;
   apellidos: string;
   correo: string;
   rol: RolGestionable;
+  medicoId: string; // vinculación opcional cuando rol === "MEDICO" (solo al crear)
 }
 
 interface ModalState {
@@ -48,7 +54,7 @@ type ModalAction =
   | { type: "SET_LOADING"; value: boolean }
   | { type: "SET_ERROR"; message: string };
 
-const camposVacios: FormFields = { nombres: "", apellidos: "", correo: "", rol: "RECEPCIONISTA" };
+const camposVacios: FormFields = { nombres: "", apellidos: "", correo: "", rol: "RECEPCIONISTA", medicoId: "" };
 
 function modalReducer(state: ModalState, action: ModalAction): ModalState {
   switch (action.type) {
@@ -65,14 +71,19 @@ function modalReducer(state: ModalState, action: ModalAction): ModalState {
           rol: (["RECEPCIONISTA", "MEDICO", "ADMINISTRADOR"].includes(action.usuario.rol)
             ? action.usuario.rol
             : "RECEPCIONISTA") as RolGestionable,
+          medicoId: action.usuario.medicoId ?? "",
         },
         loading: false,
         error: "",
       };
     case "CERRAR":
       return { ...state, abierto: false, error: "" };
-    case "SET_CAMPO":
-      return { ...state, campos: { ...state.campos, [action.field]: action.value }, error: "" };
+    case "SET_CAMPO": {
+      const campos = { ...state.campos, [action.field]: action.value };
+      // Si deja de ser MEDICO, descartar la vinculación a doctor.
+      if (action.field === "rol" && action.value !== "MEDICO") campos.medicoId = "";
+      return { ...state, campos, error: "" };
+    }
     case "SET_LOADING":
       return { ...state, loading: action.value };
     case "SET_ERROR":
@@ -91,8 +102,11 @@ interface NotificationState {
 // ─── Componente principal ─────────────────────────────────────
 const GestionUsuarios = () => {
   const [usuarios, setUsuarios] = useState<UsuarioSistema[]>([]);
+  const [paginacion, setPaginacion] = useState<PaginacionUsuarios>({ page: 1, limit: LIMIT, total: 0, totalPaginas: 1 });
+  const [totalActivos, setTotalActivos] = useState(0);
   const [busqueda, setBusqueda] = useState("");
   const [filtroRol, setFiltroRol] = useState<string>("");
+  const [page, setPage] = useState(1);
   const [cargando, setCargando] = useState(true);
   const [procesandoId, setProcesandoId] = useState<string | null>(null);
   const [notification, setNotification] = useState<NotificationState>({ message: "", type: "", visible: false });
@@ -100,6 +114,13 @@ const GestionUsuarios = () => {
   // Modal de credenciales temporales (tras crear o resetear)
   const [credenciales, setCredenciales] = useState<{ correo: string; password: string } | null>(null);
   const [copiado, setCopiado] = useState(false);
+
+  // Confirmación de reset de contraseña (GAP-A10)
+  const [confirmReset, setConfirmReset] = useState<UsuarioSistema | null>(null);
+
+  // Doctores sin cuenta vinculada, para el select de vinculación (GAP-A3)
+  const [doctoresDisponibles, setDoctoresDisponibles] = useState<DoctorTransformado[]>([]);
+  const [cargandoDoctores, setCargandoDoctores] = useState(false);
 
   const [modal, dispatch] = useReducer(modalReducer, {
     abierto: false, usuario: null, campos: camposVacios, loading: false, error: "",
@@ -110,27 +131,57 @@ const GestionUsuarios = () => {
     setTimeout(() => setNotification((prev) => ({ ...prev, visible: false })), 3000);
   };
 
-  const cargar = async () => {
+  // Carga server-side: la búsqueda y el filtro de rol viajan al backend junto
+  // con la página; mezclar paginación de servidor con filtrado local daría
+  // resultados incorrectos (solo filtraría la página actual).
+  const cargar = useCallback(async () => {
     try {
       setCargando(true);
-      setUsuarios(await UsuarioApiService.listar());
+      const res = await UsuarioApiService.listar({
+        q: busqueda || undefined,
+        rol: filtroRol || undefined,
+        page,
+        limit: LIMIT,
+      });
+      setUsuarios(res.data);
+      setPaginacion(res.paginacion);
+      setTotalActivos(res.totalActivos);
     } catch {
       showNotification("Error al cargar los usuarios.", "error");
     } finally {
       setCargando(false);
     }
-  };
+  }, [busqueda, filtroRol, page]);
 
-  useEffect(() => { cargar(); }, []);
+  useEffect(() => { cargar(); }, [cargar]);
 
-  const filtrados = usuarios.filter((u) => {
-    const q = busqueda.toLowerCase();
-    const coincideTexto =
-      `${u.nombres} ${u.apellidos}`.toLowerCase().includes(q) ||
-      u.correo.toLowerCase().includes(q);
-    const coincideRol = !filtroRol || u.rol === filtroRol;
-    return coincideTexto && coincideRol;
-  });
+  // Al cambiar un filtro, volver a la página 1 (mismo patrón que el visor de auditoría).
+  const aplicarFiltro = (fn: () => void) => { fn(); setPage(1); };
+
+  // Carga los doctores que aún no tienen cuenta de usuario vinculada.
+  const cargarDoctoresDisponibles = useCallback(async () => {
+    try {
+      setCargandoDoctores(true);
+      const [doctores, medicos] = await Promise.all([
+        DoctorApiService.listar(),
+        // Traer todos los usuarios MÉDICO para saber qué doctores ya están vinculados.
+        UsuarioApiService.listar({ rol: "MEDICO", limit: 1000 }),
+      ]);
+      const vinculados = new Set(
+        medicos.data.map((u) => u.medicoId).filter((id): id is string => Boolean(id))
+      );
+      setDoctoresDisponibles(doctores.filter((d) => !vinculados.has(d.id)));
+    } catch {
+      setDoctoresDisponibles([]);
+    } finally {
+      setCargandoDoctores(false);
+    }
+  }, []);
+
+  // Al abrir el modal de creación, precargar doctores disponibles.
+  useEffect(() => {
+    if (modal.abierto && !modal.usuario) cargarDoctoresDisponibles();
+  }, [modal.abierto, modal.usuario, cargarDoctoresDisponibles]);
 
   // ── Validar ──
   const validar = (): string | null => {
@@ -149,22 +200,31 @@ const GestionUsuarios = () => {
     if (err) { dispatch({ type: "SET_ERROR", message: err }); return; }
     dispatch({ type: "SET_LOADING", value: true });
     try {
-      const { nombres, apellidos, correo, rol } = modal.campos;
-      const payload = { nombres: nombres.trim(), apellidos: apellidos.trim(), correo: correo.trim(), rol };
+      const { nombres, apellidos, correo, rol, medicoId } = modal.campos;
 
       if (modal.usuario) {
-        const actualizado = await UsuarioApiService.actualizar(modal.usuario.id, payload);
+        const actualizado = await UsuarioApiService.actualizar(modal.usuario.id, {
+          nombres: nombres.trim(), apellidos: apellidos.trim(), correo: correo.trim(), rol,
+        });
         setUsuarios((prev) => prev.map((u) => (u.id === actualizado.id ? actualizado : u)));
         showNotification("Usuario actualizado correctamente.", "success");
         dispatch({ type: "CERRAR" });
       } else {
+        const payload: CrearUsuarioPayload = { nombres: nombres.trim(), apellidos: apellidos.trim(), correo: correo.trim(), rol };
+        if (rol === "MEDICO" && medicoId) payload.medicoId = medicoId;
+
         const { usuario, passwordTemporal } = await UsuarioApiService.crear(payload);
-        setUsuarios((prev) => [usuario, ...prev]);
         dispatch({ type: "CERRAR" });
         if (passwordTemporal) {
           setCredenciales({ correo: usuario.correo, password: passwordTemporal });
         }
         showNotification("Usuario creado correctamente.", "success");
+        // El doctor recién vinculado ya no debe aparecer como disponible.
+        setDoctoresDisponibles([]);
+        // Refrescar la lista: si ya estamos en la página 1, recargar; si no, saltar a ella
+        // (el nuevo usuario aparece arriba por orden de creación).
+        if (page === 1) await cargar();
+        else setPage(1);
       }
     } catch (err) {
       dispatch({ type: "SET_ERROR", message: err instanceof Error ? err.message : "Error al guardar." });
@@ -177,6 +237,7 @@ const GestionUsuarios = () => {
     try {
       const actualizado = await UsuarioApiService.toggleActivo(u.id);
       setUsuarios((prev) => prev.map((x) => (x.id === actualizado.id ? actualizado : x)));
+      setTotalActivos((n) => n + (actualizado.activo ? 1 : -1));
       showNotification(actualizado.activo ? "Usuario activado." : "Usuario desactivado.", "success");
     } catch (err) {
       showNotification(err instanceof Error ? err.message : "Error al cambiar el estado.", "error");
@@ -185,11 +246,12 @@ const GestionUsuarios = () => {
     }
   };
 
-  // ── Resetear contraseña ──
-  const handleReset = async (u: UsuarioSistema) => {
+  // ── Resetear contraseña (se ejecuta tras confirmar en el modal) ──
+  const ejecutarReset = async (u: UsuarioSistema) => {
     setProcesandoId(u.id);
     try {
       const passwordTemporal = await UsuarioApiService.resetearPassword(u.id);
+      setConfirmReset(null);
       setCredenciales({ correo: u.correo, password: passwordTemporal });
       showNotification("Contraseña reseteada.", "success");
     } catch (err) {
@@ -213,7 +275,7 @@ const GestionUsuarios = () => {
     } catch { /* ignorar */ }
   };
 
-  const totalActivos = usuarios.filter((u) => u.activo).length;
+  const reseteando = confirmReset ? procesandoId === confirmReset.id : false;
 
   return (
     <div className="lista-page">
@@ -226,7 +288,7 @@ const GestionUsuarios = () => {
         <div>
           <h1>Usuarios del Sistema</h1>
           <p className="lista-page-subtitle">
-            {usuarios.length} usuarios · {totalActivos} activos
+            {paginacion.total} usuarios · {totalActivos} activos
           </p>
         </div>
         <button className="btn-page-action" onClick={() => dispatch({ type: "ABRIR_NUEVO" })}>
@@ -242,11 +304,15 @@ const GestionUsuarios = () => {
             type="text"
             placeholder="Buscar por nombre o correo..."
             value={busqueda}
-            onChange={(e) => setBusqueda(e.target.value)}
+            onChange={(e) => aplicarFiltro(() => setBusqueda(e.target.value))}
             className="lista-search-input"
           />
         </div>
-        <select className="gu-filter-select" value={filtroRol} onChange={(e) => setFiltroRol(e.target.value)}>
+        <select
+          className="gu-filter-select"
+          value={filtroRol}
+          onChange={(e) => aplicarFiltro(() => setFiltroRol(e.target.value))}
+        >
           <option value="">Todos los roles</option>
           {ROLES.map((r) => <option key={r.value} value={r.value}>{r.label}</option>)}
         </select>
@@ -271,8 +337,8 @@ const GestionUsuarios = () => {
                 </tr>
               </thead>
               <tbody>
-                {filtrados.length > 0 ? (
-                  filtrados.map((u) => (
+                {usuarios.length > 0 ? (
+                  usuarios.map((u) => (
                     <tr key={u.id} className={!u.activo ? "gu-row--inactivo" : ""}>
                       <td>
                         <div className="td-person">
@@ -306,7 +372,7 @@ const GestionUsuarios = () => {
                           </button>
                           <button
                             className="btn-action"
-                            onClick={() => handleReset(u)}
+                            onClick={() => setConfirmReset(u)}
                             title="Resetear contraseña"
                             disabled={procesandoId === u.id}
                           >
@@ -335,6 +401,29 @@ const GestionUsuarios = () => {
               </tbody>
             </table>
           </div>
+        </div>
+      )}
+
+      {/* Paginación */}
+      {!cargando && paginacion.totalPaginas > 1 && (
+        <div className="gu-pagination">
+          <button
+            className="gu-page-btn"
+            onClick={() => setPage((p) => Math.max(1, p - 1))}
+            disabled={page <= 1}
+          >
+            <ChevronLeft size={16} /> Anterior
+          </button>
+          <span className="gu-page-info">
+            Página {paginacion.page} de {paginacion.totalPaginas}
+          </span>
+          <button
+            className="gu-page-btn"
+            onClick={() => setPage((p) => Math.min(paginacion.totalPaginas, p + 1))}
+            disabled={page >= paginacion.totalPaginas}
+          >
+            Siguiente <ChevronRight size={16} />
+          </button>
         </div>
       )}
 
@@ -383,6 +472,35 @@ const GestionUsuarios = () => {
                   </div>
                 </div>
 
+                {/* GAP-A3: vincular a un doctor existente al crear una cuenta MÉDICO */}
+                {!modal.usuario && modal.campos.rol === "MEDICO" && (
+                  <div className="pm-field">
+                    <label className="pm-label">Vincular a doctor</label>
+                    <select
+                      className="pm-select"
+                      name="medicoId"
+                      value={modal.campos.medicoId}
+                      onChange={handleChange}
+                      disabled={modal.loading || cargandoDoctores}
+                    >
+                      <option value="">
+                        {cargandoDoctores ? "Cargando doctores…" : "Sin vincular"}
+                      </option>
+                      {doctoresDisponibles.map((d) => (
+                        <option key={d.id} value={d.id}>
+                          {d.nombres} {d.apellidos} — {d.especialidad}
+                        </option>
+                      ))}
+                    </select>
+                    <p className="gu-hint" style={{ marginTop: "0.4rem" }}>
+                      <Stethoscope size={13} />
+                      {doctoresDisponibles.length === 0 && !cargandoDoctores
+                        ? " No hay doctores sin cuenta vinculada."
+                        : " Solo se listan doctores que aún no tienen cuenta."}
+                    </p>
+                  </div>
+                )}
+
                 {!modal.usuario && (
                   <p className="gu-hint">
                     <KeyRound size={13} /> Se generará una <strong>contraseña temporal</strong> que deberás entregar al usuario.
@@ -404,6 +522,41 @@ const GestionUsuarios = () => {
                 </div>
               </div>
             </form>
+          </div>
+        </div>
+      )}
+
+      {/* Modal de confirmación de reset de contraseña (GAP-A10) */}
+      {confirmReset && (
+        <div
+          className="pm-overlay"
+          onClick={(e) => { if (e.target === e.currentTarget && !reseteando) setConfirmReset(null); }}
+        >
+          <div className="pm-modal" style={{ maxWidth: 400 }} onClick={(e) => e.stopPropagation()}>
+            <div className="pm-header">
+              <div className="pm-header-info">
+                <div className="pm-header-icon"><KeyRound size={18} /></div>
+                <div><h2>¿Resetear contraseña?</h2></div>
+              </div>
+              <button className="pm-close" aria-label="Cerrar" onClick={() => setConfirmReset(null)} disabled={reseteando}><X size={16} /></button>
+            </div>
+            <p style={{ padding: "0 1.25rem 1rem", color: "var(--text-secondary)", fontSize: "0.875rem" }}>
+              Se generará una nueva contraseña temporal para <strong>{confirmReset.nombres} {confirmReset.apellidos}</strong> ({confirmReset.correo}).
+              La contraseña actual dejará de funcionar y el usuario deberá cambiarla en su próximo ingreso.
+            </p>
+            <div className="pm-footer">
+              <div />
+              <div className="pm-footer-actions">
+                <button className="pm-btn pm-btn--ghost" onClick={() => setConfirmReset(null)} disabled={reseteando}>
+                  <X size={14} /> Cancelar
+                </button>
+                <button className="pm-btn pm-btn--primary" onClick={() => ejecutarReset(confirmReset)} disabled={reseteando}>
+                  {reseteando
+                    ? <><span className="pm-spinner-sm" /> Reseteando…</>
+                    : <><KeyRound size={14} /> Sí, resetear</>}
+                </button>
+              </div>
+            </div>
           </div>
         </div>
       )}

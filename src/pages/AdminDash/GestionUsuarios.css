@@ -95,3 +95,29 @@
   color: #b45309;
 }
 .gu-cred-warning svg { flex-shrink: 0; margin-top: 1px; }
+
+/* ── Paginación ───────────────────────────────────────────── */
+.gu-pagination {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 1rem;
+  margin-top: 1.25rem;
+}
+.gu-page-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  padding: 0.5rem 0.9rem;
+  border: 1px solid var(--border, #e2e8f0);
+  border-radius: 9px;
+  background: var(--surface, #fff);
+  color: var(--text-primary, #1e293b);
+  font-size: 0.82rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+.gu-page-btn:hover:not(:disabled) { border-color: var(--primary, #14b8a6); color: var(--primary, #14b8a6); }
+.gu-page-btn:disabled { opacity: 0.45; cursor: not-allowed; }
+.gu-page-info { font-size: 0.83rem; color: var(--text-secondary, #64748b); }
