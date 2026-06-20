@@ -436,7 +436,7 @@ const GestionarDoctores = () => {
               <ul style={{ paddingLeft: "1.25rem", display: "flex", flexDirection: "column", gap: "0.5rem" }}>
                 {errorDependencias.map((dep, idx) => (
                   <li key={idx} style={{ fontSize: "0.875rem" }}>
-                    <span style={{ color: "var(--danger)" }}>•</span> {dep.mensaje}
+                    <span style={{ color: "var(--danger)" }}></span> {dep.mensaje}
                   </li>
                 ))}
               </ul>
