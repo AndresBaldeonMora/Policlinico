@@ -6,6 +6,9 @@ export interface Medicamento {
   nombre: string;
   principioActivo: string;
   presentacion: string;
+  concentracion?: string;
+  formaFarmaceutica?: string;
+  viaAdministracion?: string;
   activo: boolean;
   createdAt?: string;
   updatedAt?: string;
@@ -15,6 +18,9 @@ export interface MedicamentoPayload {
   nombre: string;
   principioActivo: string;
   presentacion: string;
+  concentracion: string;
+  formaFarmaceutica: string;
+  viaAdministracion: string;
 }
 
 interface AxiosErrorResponse {

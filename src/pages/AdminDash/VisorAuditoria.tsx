@@ -1,6 +1,6 @@
 import { useEffect, useState, useCallback } from "react";
 import {
-  ScrollText, Search, ChevronLeft, ChevronRight, Filter, X, Clock,
+  ScrollText, Search, ChevronLeft, ChevronRight, Filter, X, Clock, Download,
 } from "lucide-react";
 import {
   AuditoriaApiService,
@@ -27,11 +27,18 @@ const fmtFecha = (iso: string): string => {
 };
 
 const LIMIT = 25;
+const EXPORT_LIMIT = 100;
+
+const escaparCSV = (valor: unknown): string => {
+  const texto = valor == null ? "" : String(valor);
+  return `"${texto.replace(/"/g, '""')}"`;
+};
 
 const VisorAuditoria = () => {
   const [registros, setRegistros] = useState<RegistroAuditoria[]>([]);
   const [paginacion, setPaginacion] = useState<PaginacionAuditoria>({ page: 1, limit: LIMIT, total: 0, totalPaginas: 1 });
   const [cargando, setCargando] = useState(true);
+  const [exportando, setExportando] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   // Filtros
@@ -78,6 +85,53 @@ const VisorAuditoria = () => {
   };
 
   const hayFiltros = filtroEntidad || filtroDesde || filtroHasta || busqueda;
+
+  const exportarCSV = async () => {
+    try {
+      setExportando(true);
+      setError(null);
+
+      const filtros = {
+        entidad: filtroEntidad || undefined,
+        accion: busqueda || undefined,
+        desde: filtroDesde || undefined,
+        hasta: filtroHasta || undefined,
+        limit: EXPORT_LIMIT,
+      };
+      const primeraPagina = await AuditoriaApiService.listar({ ...filtros, page: 1 });
+      const todosLosRegistros = [...primeraPagina.data];
+
+      for (let pagina = 2; pagina <= primeraPagina.paginacion.totalPaginas; pagina += 1) {
+        const resultado = await AuditoriaApiService.listar({ ...filtros, page: pagina });
+        todosLosRegistros.push(...resultado.data);
+      }
+
+      const headers = ["Fecha", "Usuario", "Acción", "Entidad", "Descripción"];
+      const filas = todosLosRegistros.map((registro) => [
+        fmtFecha(registro.timestamp),
+        registro.usuarioNombre ?? "",
+        registro.accion,
+        registro.entidad,
+        registro.descripcion ?? "",
+      ]);
+      const csv = [headers, ...filas]
+        .map((fila) => fila.map(escaparCSV).join(","))
+        .join("\r\n");
+      const blob = new Blob(["\uFEFF", csv], { type: "text/csv;charset=utf-8;" });
+      const url = URL.createObjectURL(blob);
+      const enlace = document.createElement("a");
+      enlace.href = url;
+      enlace.download = `auditoria_${new Date().toISOString().slice(0, 10)}.csv`;
+      document.body.appendChild(enlace);
+      enlace.click();
+      enlace.remove();
+      URL.revokeObjectURL(url);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "No se pudo exportar la auditoría.");
+    } finally {
+      setExportando(false);
+    }
+  };
 
   return (
     <div className="lista-page">
@@ -129,6 +183,15 @@ const VisorAuditoria = () => {
             <X size={14} /> Limpiar
           </button>
         )}
+        <button
+          className="av-export-btn"
+          onClick={exportarCSV}
+          disabled={cargando || exportando || paginacion.total === 0}
+          title="Exportar todos los registros del filtro activo"
+        >
+          {exportando ? <span className="lista-loading-spinner av-export-spinner" /> : <Download size={15} />}
+          {exportando ? "Exportando…" : "Exportar CSV"}
+        </button>
       </div>
 
       {error && <div className="ar-error">{error}</div>}

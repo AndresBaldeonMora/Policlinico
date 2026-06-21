@@ -11,7 +11,13 @@ interface FormFields {
   nombre: string;
   principioActivo: string;
   presentacion: string;
+  concentracion: string;
+  formaFarmaceutica: string;
+  viaAdministracion: string;
 }
+
+const FORMAS_FARMACEUTICAS = ["Tableta", "Cápsula", "Jarabe", "Ampolla", "Crema", "Otra"];
+const VIAS_ADMINISTRACION = ["VO", "IV", "IM", "SC", "Tópico", "Inhalatoria", "Otra"];
 
 interface ModalState {
   abierto: boolean;
@@ -29,7 +35,14 @@ type ModalAction =
   | { type: "SET_LOADING"; value: boolean }
   | { type: "SET_ERROR"; message: string };
 
-const camposVacios: FormFields = { nombre: "", principioActivo: "", presentacion: "" };
+const camposVacios: FormFields = {
+  nombre: "",
+  principioActivo: "",
+  presentacion: "",
+  concentracion: "",
+  formaFarmaceutica: "Tableta",
+  viaAdministracion: "VO",
+};
 
 function modalReducer(state: ModalState, action: ModalAction): ModalState {
   switch (action.type) {
@@ -43,6 +56,9 @@ function modalReducer(state: ModalState, action: ModalAction): ModalState {
           nombre: action.medicamento.nombre,
           principioActivo: action.medicamento.principioActivo,
           presentacion: action.medicamento.presentacion,
+          concentracion: action.medicamento.concentracion ?? "",
+          formaFarmaceutica: action.medicamento.formaFarmaceutica ?? "Tableta",
+          viaAdministracion: action.medicamento.viaAdministracion ?? "VO",
         },
         loading: false,
         error: "",
@@ -101,15 +117,20 @@ const GestionMedicamentos = () => {
     return (
       m.nombre.toLowerCase().includes(q) ||
       m.principioActivo.toLowerCase().includes(q) ||
-      m.presentacion.toLowerCase().includes(q)
+      m.presentacion.toLowerCase().includes(q) ||
+      (m.concentracion ?? "").toLowerCase().includes(q) ||
+      (m.formaFarmaceutica ?? "").toLowerCase().includes(q)
     );
   });
 
   const validar = (): string | null => {
-    const { nombre, principioActivo, presentacion } = modal.campos;
-    if (!nombre.trim())          return "El nombre es obligatorio.";
+    const { nombre, principioActivo, presentacion, concentracion, formaFarmaceutica, viaAdministracion } = modal.campos;
+    if (!nombre.trim()) return "El nombre es obligatorio.";
     if (!principioActivo.trim()) return "El principio activo es obligatorio.";
-    if (!presentacion.trim())    return "La presentación es obligatoria.";
+    if (!presentacion.trim()) return "La presentación es obligatoria.";
+    if (!concentracion.trim()) return "La concentración es obligatoria.";
+    if (!formaFarmaceutica) return "La forma farmacéutica es obligatoria.";
+    if (!viaAdministracion) return "La vía de administración es obligatoria.";
     return null;
   };
 
@@ -119,8 +140,22 @@ const GestionMedicamentos = () => {
     if (err) { dispatch({ type: "SET_ERROR", message: err }); return; }
     dispatch({ type: "SET_LOADING", value: true });
     try {
-      const { nombre, principioActivo, presentacion } = modal.campos;
-      const payload = { nombre: nombre.trim(), principioActivo: principioActivo.trim(), presentacion: presentacion.trim() };
+      const {
+        nombre,
+        principioActivo,
+        presentacion,
+        concentracion,
+        formaFarmaceutica,
+        viaAdministracion,
+      } = modal.campos;
+      const payload = {
+        nombre: nombre.trim(),
+        principioActivo: principioActivo.trim(),
+        presentacion: presentacion.trim(),
+        concentracion: concentracion.trim(),
+        formaFarmaceutica,
+        viaAdministracion,
+      };
 
       if (modal.medicamento) {
         const actualizado = await MedicamentoApiService.actualizar(modal.medicamento._id, payload);
@@ -150,7 +185,7 @@ const GestionMedicamentos = () => {
     }
   };
 
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
     dispatch({ type: "SET_CAMPO", field: e.target.name as keyof FormFields, value: e.target.value });
   };
 
@@ -178,7 +213,7 @@ const GestionMedicamentos = () => {
         <Search size={18} className="lista-search-icon" />
         <input
           type="text"
-          placeholder="Buscar por nombre, principio activo o presentación..."
+          placeholder="Buscar por nombre, principio activo, forma o concentración..."
           value={busqueda}
           onChange={(e) => setBusqueda(e.target.value)}
           className="lista-search-input"
@@ -203,6 +238,7 @@ const GestionMedicamentos = () => {
                   <th>Medicamento</th>
                   <th>Principio activo</th>
                   <th>Presentación</th>
+                  <th>Forma / concentración</th>
                   <th style={{ width: 110, textAlign: "center" }}>Estado</th>
                   <th style={{ width: 110, textAlign: "center" }}>Acciones</th>
                 </tr>
@@ -219,6 +255,12 @@ const GestionMedicamentos = () => {
                       </td>
                       <td>{m.principioActivo}</td>
                       <td>{m.presentacion}</td>
+                      <td>
+                        <div className="gm-forma-cell">
+                          <span>{m.formaFarmaceutica || "—"}</span>
+                          <small>{m.concentracion || "Sin concentración"} · {m.viaAdministracion || "Sin vía"}</small>
+                        </div>
+                      </td>
                       <td className="td-center">
                         <span className={`gm-estado ${m.activo ? "gm-estado--on" : "gm-estado--off"}`}>
                           {m.activo ? "Activo" : "Inactivo"}
@@ -248,7 +290,7 @@ const GestionMedicamentos = () => {
                   ))
                 ) : (
                   <tr>
-                    <td colSpan={5} className="td-empty">
+                    <td colSpan={6} className="td-empty">
                       <Pill size={32} className="td-empty-icon" />
                       <p>{busqueda ? "No se encontraron medicamentos." : "No hay medicamentos en el catálogo."}</p>
                     </td>
@@ -266,7 +308,7 @@ const GestionMedicamentos = () => {
           className="pm-overlay"
           onClick={(e) => { if (e.target === e.currentTarget) dispatch({ type: "CERRAR" }); }}
         >
-          <div className="pm-modal" style={{ maxWidth: 480 }}>
+          <div className="pm-modal" style={{ maxWidth: 620 }}>
             <div className="pm-header">
               <div className="pm-header-info">
                 <div className="pm-header-icon"><Pill size={18} /></div>
@@ -292,6 +334,24 @@ const GestionMedicamentos = () => {
                 <div className="pm-field">
                   <label className="pm-label">Presentación <span className="pm-req">*</span></label>
                   <input className="pm-input" name="presentacion" value={modal.campos.presentacion} onChange={handleChange} placeholder="Ej: Tableta 500mg / Jarabe 120ml" disabled={modal.loading} />
+                </div>
+                <div className="pm-field">
+                  <label className="pm-label">Concentración <span className="pm-req">*</span></label>
+                  <input className="pm-input" name="concentracion" value={modal.campos.concentracion} onChange={handleChange} placeholder="Ej: 500mg o 120mg/5ml" disabled={modal.loading} />
+                </div>
+                <div className="gm-form-grid">
+                  <div className="pm-field">
+                    <label className="pm-label">Forma farmacéutica <span className="pm-req">*</span></label>
+                    <select className="pm-input" name="formaFarmaceutica" value={modal.campos.formaFarmaceutica} onChange={handleChange} disabled={modal.loading}>
+                      {FORMAS_FARMACEUTICAS.map((forma) => <option key={forma} value={forma}>{forma}</option>)}
+                    </select>
+                  </div>
+                  <div className="pm-field">
+                    <label className="pm-label">Vía de administración <span className="pm-req">*</span></label>
+                    <select className="pm-input" name="viaAdministracion" value={modal.campos.viaAdministracion} onChange={handleChange} disabled={modal.loading}>
+                      {VIAS_ADMINISTRACION.map((via) => <option key={via} value={via}>{via}</option>)}
+                    </select>
+                  </div>
                 </div>
               </div>
 
