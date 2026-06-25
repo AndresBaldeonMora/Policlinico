@@ -1,4 +1,4 @@
-import { useState, useMemo } from "react";
+import { useMemo } from "react";
 import type { DoctorTransformado } from "../../services/doctor.service";
 
 const DOCTOR_TODOS_ID = "ALL";
@@ -6,12 +6,12 @@ const DOCTOR_TODOS_ID = "ALL";
 interface Props {
   doctores: DoctorTransformado[];
   doctorId: string;
+  especialidadFiltro: string;
   onSeleccionar: (id: string) => void;
+  onEspecialidadFiltro: (esp: string) => void;
 }
 
-const DoctoresPanel = ({ doctores, doctorId, onSeleccionar }: Props) => {
-  const [especialidadFiltro, setEspecialidadFiltro] = useState("ALL");
-
+const DoctoresPanel = ({ doctores, doctorId, especialidadFiltro, onSeleccionar, onEspecialidadFiltro }: Props) => {
   const especialidades = useMemo(() => {
     const set = new Set(doctores.map((d) => d.especialidad));
     return Array.from(set).sort();
@@ -31,7 +31,7 @@ const DoctoresPanel = ({ doctores, doctorId, onSeleccionar }: Props) => {
       <select
         className="doctores-panel__filtro"
         value={especialidadFiltro}
-        onChange={(e) => setEspecialidadFiltro(e.target.value)}
+        onChange={(e) => { onEspecialidadFiltro(e.target.value); onSeleccionar(DOCTOR_TODOS_ID); }}
         aria-label="Filtrar por especialidad"
       >
         <option value="ALL">Todas las especialidades</option>

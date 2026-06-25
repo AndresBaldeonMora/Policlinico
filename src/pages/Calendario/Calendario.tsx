@@ -1,5 +1,5 @@
 // src/pages/Calendario/Calendario.tsx
-import { useEffect, useReducer, useCallback, useMemo } from "react";
+import { useEffect, useReducer, useCallback, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import Swal from "sweetalert2";
 import { toastExito, toastError } from "../../utils/toast";
@@ -125,6 +125,7 @@ function calendarioReducer(state: CalendarioState, action: CalendarioAction): Ca
 const Calendario = () => {
   const [state, dispatch] = useReducer(calendarioReducer, initialState);
   const { vista, fecha, citas, doctores, doctorId, loading, citaPanelId, panelPos, citaDetalleId, drawerPacienteId, bloqueos } = state;
+  const [especialidadFiltro, setEspecialidadFiltro] = useState("ALL");
 
   // ── Estado del modal de reprogramar ──
   const [repState, repDispatch] = useReducer(listaCitasReducer, repInitial);
@@ -301,6 +302,13 @@ const Calendario = () => {
 
   const inicioSemana = useMemo(() => obtenerInicioSemana(fecha), [fecha]);
 
+  const doctoresFiltrados = useMemo(() =>
+    especialidadFiltro === "ALL"
+      ? doctores
+      : doctores.filter((d) => d.especialidad === especialidadFiltro),
+    [doctores, especialidadFiltro]
+  );
+
   const ESTADOS_ACTIVOS = ["PENDIENTE", "REPROGRAMADA", "ASISTIO"];
   const citasActivas = useMemo(
     () => citas.filter((c) => ESTADOS_ACTIVOS.includes(c.estado)),
@@ -324,7 +332,9 @@ const Calendario = () => {
           <DoctoresPanel
             doctores={doctores}
             doctorId={doctorId}
+            especialidadFiltro={especialidadFiltro}
             onSeleccionar={(id) => dispatch({ type: "SET_DOCTOR_ID", doctorId: id })}
+            onEspecialidadFiltro={setEspecialidadFiltro}
           />
         </div>
 
@@ -345,7 +355,7 @@ const Calendario = () => {
                   fecha={fecha}
                   horas={HORAS_LABORALES}
                   citas={citasActivas}
-                  doctores={doctores}
+                  doctores={doctoresFiltrados}
                   doctorId={doctorId}
                   onVerCita={irADetalleCita}
                 />
@@ -355,7 +365,7 @@ const Calendario = () => {
                   inicioSemana={inicioSemana}
                   horas={HORAS_LABORALES}
                   citas={citasActivas}
-                  doctores={doctores}
+                  doctores={doctoresFiltrados}
                   doctorId={doctorId}
                   onVerCita={irADetalleCita}
                 />
@@ -364,7 +374,7 @@ const Calendario = () => {
                 <VistaMes
                   diasDelMes={diasDelMes}
                   citas={citasActivas}
-                  doctores={doctores}
+                  doctores={doctoresFiltrados}
                   doctorId={doctorId}
                   bloqueos={bloqueos}
                   onVerCita={irADetalleCita}
