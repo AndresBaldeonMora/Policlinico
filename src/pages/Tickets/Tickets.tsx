@@ -150,7 +150,7 @@ function ModalDetalle({ ticketId, esAdmin, onClose, onActualizado }: {
           <button className="tk-modal-close" onClick={onClose}><X size={18} /></button>
         </div>
 
-        <div className="tk-modal-body tk-detalle-body">
+        <div className={`tk-modal-body ${esAdmin && ticket.estado !== "CERRADO" ? "tk-detalle-body--con-panel" : "tk-detalle-body"}`}>
           {/* ── Columna izquierda: info + comentarios ── */}
           <div className="tk-detalle-main">
             {/* Badges */}
@@ -164,8 +164,12 @@ function ModalDetalle({ ticketId, esAdmin, onClose, onActualizado }: {
 
             <div className="tk-detalle-meta">
               <span>Abierto por <strong>{ticket.creadoPorNombre}</strong></span>
+              <span className="tk-detalle-meta-sep">·</span>
               <span>{formatFecha(ticket.creadoEn)}</span>
-              {ticket.asignadoANombre && <span>Asignado a <strong>{ticket.asignadoANombre}</strong></span>}
+              {ticket.asignadoANombre && <>
+                <span className="tk-detalle-meta-sep">·</span>
+                <span>Asignado a <strong>{ticket.asignadoANombre}</strong></span>
+              </>}
             </div>
 
             <div className="tk-desc-box">
