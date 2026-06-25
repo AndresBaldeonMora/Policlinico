@@ -12,6 +12,9 @@ interface Props {
   esPaciente?: boolean;
 }
 
+const getPrecio = (especialidad: string | null | undefined) =>
+  especialidad?.toLowerCase().includes("psiquiat") ? 90 : 40;
+
 const calcularHorasRestantes = (fechaISO: string, hora: string): number => {
   try {
     const [y, m, d] = fechaISO.split("-").map(Number);
@@ -49,6 +52,10 @@ const PasoResumen = ({ pacienteSeleccionado, doctorSeleccionado, especialidadSel
           <span>Fecha y Hora</span>
           <strong>{fechaSeleccionada ? fechaSeleccionada.split("-").reverse().join("/") : ""}</strong>
           <span>{horaSeleccionada} hs</span>
+        </div>
+        <div className="resumen-item resumen-item--costo">
+          <span>Costo de Consulta</span>
+          <strong>S/. {getPrecio(especialidadSeleccionada?.nombre)}.00</strong>
         </div>
       </div>
 

@@ -66,7 +66,7 @@ const GestionReclamaciones = () => {
   // Filtrado local
   const reclamacionesFiltradas = useMemo(() => {
     return reclamaciones.filter((r) => {
-      const pac = typeof r.pacienteId === "object" ? r.pacienteId : null;
+      const pac = r.pacienteId !== null && typeof r.pacienteId === "object" ? r.pacienteId : null;
       
       const pacienteNombre = pac ? normalizeString(`${pac.nombres || ""} ${pac.apellidos || ""}`) : "";
       const pacienteDni = pac && pac.dni ? normalizeString(pac.dni) : "";
@@ -191,7 +191,7 @@ const GestionReclamaciones = () => {
               </thead>
               <tbody>
                 {reclamacionesFiltradas.map((r) => {
-                  const pac = typeof r.pacienteId === "object" ? r.pacienteId : null;
+                  const pac = r.pacienteId !== null && typeof r.pacienteId === "object" ? r.pacienteId : null;
                   return (
                     <tr key={r._id}>
                       <td><span className="td-mono" style={{ fontWeight: 600 }}>{r.codigo}</span></td>
@@ -279,7 +279,7 @@ const GestionReclamaciones = () => {
               </div>
 
               {/* Paciente Card */}
-              {typeof seleccionada.pacienteId === "object" && (
+              {seleccionada.pacienteId !== null && typeof seleccionada.pacienteId === "object" && (
                 <div className="rec-modal-paciente-card">
                   <h3><User size={14} /> Información del Paciente</h3>
                   <div className="rec-modal-paciente-nombre">

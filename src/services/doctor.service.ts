@@ -94,6 +94,18 @@ export class DoctorApiService {
     }
   }
 
+  static async obtenerHorariosDia(doctorId: string, fecha: string): Promise<string[]> {
+    try {
+      const response = await api.get<{ success: boolean; data: string[] }>(
+        `/doctores/${doctorId}/horarios-dia`,
+        { params: { fecha } }
+      );
+      return response.data.success ? response.data.data : [];
+    } catch {
+      return [];
+    }
+  }
+
   static async crear(payload: {
     nombres: string;
     apellidos: string;

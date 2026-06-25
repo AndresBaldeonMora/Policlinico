@@ -1,436 +1,303 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
+import Swal from "sweetalert2";
 import {
   Stethoscope, Users, BookOpen, ArrowRight,
-  ClipboardList, FlaskConical, Search, CalendarDays, Layers,
+  AlertTriangle, Info, Megaphone, Trash2,
+  CheckCircle2, MessageSquare, ArrowLeftRight, Plus,
+  Send, ShieldAlert,
 } from "lucide-react";
-import { DoctorApiService } from "../../services/doctor.service";
-import { EspecialidadApiService } from "../../services/especialidad.service";
-import { PacienteApiService } from "../../services/paciente.service";
-import {
-  ReportesApiService,
-  type ReporteOrdenPorEstado,
-  type ReporteExamenSolicitado,
-  type ReporteCitaPorEstado,
-  type ReporteCitaPorEspecialidad,
-} from "../../services/reportes.service";
+import { AvisoService, type Aviso, type TipoAviso, type DashboardResumen } from "../../services/aviso.service";
+import { toastExito, toastError } from "../../utils/toast";
 import "./AdminDashboard.css";
 
-interface StatsState {
-  doctores: number;
-  especialidades: number;
-  pacientes: number;
-}
-
-const ESTADO_LABELS: Record<string, string> = {
-  PENDIENTE:  "Pendiente",
-  EN_PROCESO: "En proceso",
-  ASISTIDO:   "En análisis",
-  FINALIZADO: "Finalizado",
-  CANCELADA:  "Cancelada",
+// ─── Helpers ─────────────────────────────────────────────────────────────────
+const formatFecha = (iso: string) => {
+  const d = new Date(iso);
+  return d.toLocaleDateString("es-PE", { day: "2-digit", month: "short", year: "numeric", hour: "2-digit", minute: "2-digit" });
 };
 
-const ESTADO_COLORS: Record<string, string> = {
-  PENDIENTE:  "#3b82f6",
-  EN_PROCESO: "#f59e0b",
-  ASISTIDO:   "#8b5cf6",
-  FINALIZADO: "#10b981",
-  CANCELADA:  "#ef4444",
+const TIPO_AVISO_CONFIG: Record<TipoAviso, { label: string; color: string; bg: string; icon: React.ElementType }> = {
+  INFO:    { label: "Información", color: "#3b82f6", bg: "rgba(59,130,246,0.08)",  icon: Info         },
+  ALERTA:  { label: "Alerta",      color: "#f59e0b", bg: "rgba(245,158,11,0.08)",  icon: AlertTriangle },
+  URGENTE: { label: "Urgente",     color: "#ef4444", bg: "rgba(239,68,68,0.08)",   icon: ShieldAlert  },
 };
 
-// Estados propios de las CITAS (distintos a los de las órdenes)
-const CITA_ESTADO_LABELS: Record<string, string> = {
-  PENDIENTE:    "Pendiente",
-  ASISTIO:      "En sala",
-  ATENDIDA:     "Atendida",
-  REPROGRAMADA: "Reprogramada",
-  CANCELADA:    "Cancelada",
-  // Alias defensivo para datos heredados sin migrar (VENCIDA → Cancelada)
-  VENCIDA:      "Cancelada",
+const ESTADO_RECLAMACION: Record<string, { label: string; color: string }> = {
+  PENDIENTE:   { label: "Pendiente",   color: "#ef4444" },
+  EN_REVISION: { label: "En revisión", color: "#f59e0b" },
+  RESUELTO:    { label: "Resuelto",    color: "#10b981" },
 };
 
-const CITA_ESTADO_COLORS: Record<string, string> = {
-  PENDIENTE:    "#3b82f6",
-  ASISTIO:      "#8b5cf6",
-  ATENDIDA:     "#10b981",
-  REPROGRAMADA: "#f59e0b",
-  CANCELADA:    "#ef4444",
-  VENCIDA:      "#ef4444",
-};
-
+// ─── Componente principal ─────────────────────────────────────────────────────
 const AdminDashboard = () => {
   const navigate = useNavigate();
-  const [stats, setStats] = useState<StatsState>({ doctores: 0, especialidades: 0, pacientes: 0 });
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-  // Reportes - período
-  const hoy    = new Date().toISOString().split("T")[0];
-  const hace30 = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString().split("T")[0];
-  const [fechaInicio,     setFechaInicio]     = useState(hace30);
-  const [fechaFin,        setFechaFin]        = useState(hoy);
-  const [ordenes,         setOrdenes]         = useState<ReporteOrdenPorEstado[]>([]);
-  const [cargandoOrdenes, setCargandoOrdenes] = useState(false);
-  const [errorOrdenes,    setErrorOrdenes]    = useState<string | null>(null);
- 
-  // Reportes - exámenes
-  const [examenes,         setExamenes]         = useState<ReporteExamenSolicitado[]>([]);
-  const [cargandoExamenes, setCargandoExamenes] = useState(true);
-  const [errorExamenes,    setErrorExamenes]    = useState<string | null>(null);
 
-  // Reportes - citas
-  const [citasEstado,       setCitasEstado]       = useState<ReporteCitaPorEstado[]>([]);
-  const [citasEspecialidad, setCitasEspecialidad] = useState<ReporteCitaPorEspecialidad[]>([]);
-  const [cargandoCitas,     setCargandoCitas]     = useState(false);
-  const [errorCitas,        setErrorCitas]        = useState<string | null>(null);
+  const [resumen, setResumen] = useState<DashboardResumen | null>(null);
+  const [avisos, setAvisos]   = useState<Aviso[]>([]);
+  const [cargando, setCargando] = useState(true);
 
-  useEffect(() => {
-    const fetchData = async () => {
-      try {
-        setLoading(true);
-        const [doctores, especialidades, pacientes] = await Promise.all([
-          DoctorApiService.listar(),
-          EspecialidadApiService.listar(),
-          PacienteApiService.listar(),
-        ]);
-        setStats({
-          doctores: doctores.length,
-          especialidades: especialidades.length,
-          pacientes: pacientes.length,
-        });
-      } catch {
-        setError("No se pudo cargar la información.");
-      } finally {
-        setLoading(false);
-      }
-    };
-    fetchData();
+  // Form nuevo aviso
+  const [form, setForm]         = useState({ titulo: "", mensaje: "", tipo: "INFO" as TipoAviso });
+  const [guardando, setGuardando] = useState(false);
+  const [mostrarForm, setMostrarForm] = useState(false);
+
+  const cargar = useCallback(async () => {
+    try {
+      setCargando(true);
+      const [res, avs] = await Promise.all([AvisoService.resumen(), AvisoService.listar()]);
+      setResumen(res);
+      setAvisos(avs);
+    } catch {
+      toastError("No se pudo cargar el panel de administración.");
+    } finally {
+      setCargando(false);
+    }
   }, []);
 
-  // ── Buscar exámenes por período ──
-  const buscarExamenes = async () => {
-    if (!fechaInicio || !fechaFin) return;
-    try {
-      setCargandoExamenes(true);
-      setErrorExamenes(null);
-      setExamenes(await ReportesApiService.examenesMasSolicitados(fechaInicio, fechaFin));
-    } catch {
-      setErrorExamenes("No se pudo cargar el reporte de exámenes.");
-    } finally {
-      setCargandoExamenes(false);
+  useEffect(() => { cargar(); }, [cargar]);
+
+  const handleCrearAviso = async () => {
+    if (!form.titulo.trim() || !form.mensaje.trim()) {
+      Swal.fire({ icon: "warning", title: "Campos requeridos", text: "Escribe un título y un mensaje.", confirmButtonColor: "var(--primary)" });
+      return;
     }
-  };
- 
-  // ── Buscar órdenes por período ──
-  const buscarOrdenes = async () => {
-    if (!fechaInicio || !fechaFin) return;
+    setGuardando(true);
     try {
-      setCargandoOrdenes(true);
-      setErrorOrdenes(null);
-      setOrdenes(await ReportesApiService.ordenesPorPeriodo(fechaInicio, fechaFin));
+      const nuevo = await AvisoService.crear(form);
+      setAvisos(prev => [nuevo, ...prev]);
+      setForm({ titulo: "", mensaje: "", tipo: "INFO" });
+      setMostrarForm(false);
+      toastExito("Aviso publicado.");
     } catch {
-      setErrorOrdenes("No se pudo cargar el reporte de órdenes.");
+      toastError("No se pudo publicar el aviso.");
     } finally {
-      setCargandoOrdenes(false);
-    }
-  };
- 
-  // ── Buscar citas por período (estado + especialidad) ──
-  const buscarCitas = async () => {
-    if (!fechaInicio || !fechaFin) return;
-    try {
-      setCargandoCitas(true);
-      setErrorCitas(null);
-      const [estado, especialidad] = await Promise.all([
-        ReportesApiService.citasPorPeriodo(fechaInicio, fechaFin),
-        ReportesApiService.citasPorEspecialidad(fechaInicio, fechaFin),
-      ]);
-      setCitasEstado(estado);
-      setCitasEspecialidad(especialidad);
-    } catch {
-      setErrorCitas("No se pudo cargar el reporte de citas.");
-    } finally {
-      setCargandoCitas(false);
+      setGuardando(false);
     }
   };
 
-  // Un único botón "Buscar" actualiza órdenes, citas y exámenes del mismo período.
-  const buscarPeriodo = () => { buscarOrdenes(); buscarCitas(); buscarExamenes(); };
+  const handleEliminarAviso = async (id: string) => {
+    const { isConfirmed } = await Swal.fire({
+      title: "¿Eliminar aviso?", icon: "warning",
+      showCancelButton: true, confirmButtonColor: "#ef4444",
+      confirmButtonText: "Sí, eliminar", cancelButtonText: "Cancelar",
+    });
+    if (!isConfirmed) return;
+    try {
+      await AvisoService.eliminar(id);
+      setAvisos(prev => prev.filter(a => a._id !== id));
+      toastExito("Aviso eliminado.");
+    } catch {
+      toastError("No se pudo eliminar el aviso.");
+    }
+  };
 
-  useEffect(() => { buscarPeriodo(); }, []);
+  const stats = resumen?.stats;
 
-  const totalOrdenes        = ordenes.reduce((acc, o) => acc + o.cantidad, 0);
-  const totalCitas          = citasEstado.reduce((acc, c) => acc + c.cantidad, 0);
-  const maxExamen           = examenes[0]?.total ?? 1;
-  const maxCitaEspecialidad = citasEspecialidad[0]?.cantidad ?? 1;
-
-  const cards = [
-    {
-      label: "Especialidades",
-      value: stats.especialidades,
-      icon: BookOpen,
-      path: "/admin/especialidades",
-      color: "var(--primary)",
-      bg: "rgba(20, 184, 166, 0.08)",
-    },
-    {
-      label: "Doctores",
-      value: stats.doctores,
-      icon: Stethoscope,
-      path: "/admin/doctores",
-      color: "#6366f1",
-      bg: "rgba(99, 102, 241, 0.08)",
-    },
-    {
-      label: "Pacientes",
-      value: stats.pacientes,
-      icon: Users,
-      path: "/admin/pacientes",
-      color: "#f59e0b",
-      bg: "rgba(245, 158, 11, 0.08)",
-    },
+  const kpiCards = [
+    { label: "Doctores",         value: stats?.totalDoctores,       icon: Stethoscope,    path: "/admin/doctores",       color: "#6366f1", bg: "rgba(99,102,241,0.08)"   },
+    { label: "Pacientes",        value: stats?.totalPacientes,      icon: Users,          path: "/admin/pacientes",      color: "#f59e0b", bg: "rgba(245,158,11,0.08)"   },
+    { label: "Especialidades",   value: stats?.totalEspecialidades, icon: BookOpen,       path: "/admin/especialidades", color: "var(--primary)", bg: "rgba(5,150,105,0.08)" },
+    { label: "Reclamaciones",    value: stats?.reclamacionesPendientes, icon: MessageSquare, path: "/admin/reclamaciones", color: stats?.reclamacionesPendientes ? "#ef4444" : "#10b981", bg: stats?.reclamacionesPendientes ? "rgba(239,68,68,0.08)" : "rgba(16,185,129,0.08)" },
+    { label: "Interconsultas",   value: stats?.interconsultasPendientes, icon: ArrowLeftRight, path: "/interconsultas", color: stats?.interconsultasPendientes ? "#f59e0b" : "#10b981", bg: stats?.interconsultasPendientes ? "rgba(245,158,11,0.08)" : "rgba(16,185,129,0.08)" },
   ];
 
   return (
     <div className="dashboard">
+      {/* ── Header ── */}
       <div className="dashboard-top">
         <div className="dashboard-heading">
           <h1 className="dashboard-title">Panel de Administración</h1>
-          <p className="dashboard-subtitle">Gestión general del sistema</p>
+          <p className="dashboard-subtitle">Centro de control y comunicaciones del sistema</p>
         </div>
       </div>
 
-      {error && <div className="dashboard-error">{error}</div>}
-
-      <div className="dashboard-stats">
-        {cards.map(({ label, value, icon: Icon, path, color, bg }) => (
+      {/* ── KPI Cards ── */}
+      <div className="dashboard-stats" style={{ gridTemplateColumns: "repeat(auto-fit, minmax(170px, 1fr))" }}>
+        {kpiCards.map(({ label, value, icon: Icon, path, color, bg }) => (
           <div
-            key={label}
-            className="ad-card"
+            key={label} className="ad-card"
             style={{ "--card-color": color, "--card-bg": bg } as React.CSSProperties}
             onClick={() => navigate(path)}
           >
-            <div className="ad-card-icon">
-              <Icon size={22} />
-            </div>
+            <div className="ad-card-icon"><Icon size={20} /></div>
             <div className="ad-card-info">
               <span className="stat-label">{label}</span>
               <span className="stat-value">
-                {loading ? <span className="stat-skeleton" /> : value}
+                {cargando ? <span className="stat-skeleton" /> : (value ?? 0)}
               </span>
             </div>
-            <ArrowRight size={16} className="ad-card-arrow" />
+            <ArrowRight size={15} className="ad-card-arrow" />
           </div>
         ))}
       </div>
 
-      {/* ── Reporte: Órdenes por período ── */}
-      <div className="ar-section">
-        <div className="ar-section-header">
-          <div className="ar-section-title">
-            <ClipboardList size={18} />
-            <h2>Órdenes por Período</h2>
-          </div>
-          <div className="ar-filters">
-            <div className="ar-filter-group">
-              <label className="ar-filter-label">Desde</label>
-              <input
-                type="date" className="ar-input" value={fechaInicio}
-                onChange={(e) => setFechaInicio(e.target.value)} max={fechaFin}
-              />
+      {/* ── Layout dos columnas ── */}
+      <div className="adm-two-col">
+
+        {/* ── Columna izquierda: Alertas + Reclamaciones ── */}
+        <div className="adm-col">
+
+          {/* Alertas del sistema */}
+          <div className="ar-section">
+            <div className="ar-section-header">
+              <div className="ar-section-title">
+                <AlertTriangle size={18} />
+                <h2>Alertas del Sistema</h2>
+              </div>
             </div>
-            <div className="ar-filter-group">
-              <label className="ar-filter-label">Hasta</label>
-              <input
-                type="date" className="ar-input" value={fechaFin}
-                onChange={(e) => setFechaFin(e.target.value)} min={fechaInicio} max={hoy}
-              />
-            </div>
-            <button className="btn-page-action" onClick={buscarPeriodo} disabled={cargandoOrdenes || cargandoCitas || cargandoExamenes}>
-              {cargandoOrdenes || cargandoCitas || cargandoExamenes
-                ? <><span className="ar-spinner" /> Buscando…</>
-                : <><Search size={15} /> Buscar</>
-              }
-            </button>
-          </div>
-        </div>
- 
-        {errorOrdenes && <div className="ar-error">{errorOrdenes}</div>}
- 
-        {cargandoOrdenes ? (
-          <div className="lista-loading"><div className="lista-loading-spinner" /><p>Cargando reporte…</p></div>
-        ) : ordenes.length === 0 ? (
-          <div className="ar-empty"><ClipboardList size={32} /><p>No hay órdenes en este período.</p></div>
-        ) : (
-          <>
-            <div className="ar-stats-row">
-              {ordenes.map((o) => (
-                <div
-                  key={o._id} className="ar-stat-card"
-                  style={{ "--estado-color": ESTADO_COLORS[o._id] ?? "var(--primary)" } as React.CSSProperties}
-                >
-                  <span className="ar-stat-label">{ESTADO_LABELS[o._id] ?? o._id}</span>
-                  <span className="ar-stat-value">{o.cantidad}</span>
-                  <div className="ar-stat-bar">
-                    <div className="ar-stat-bar-fill" style={{ width: `${(o.cantidad / totalOrdenes) * 100}%` }} />
+            {cargando ? (
+              <div className="lista-loading"><div className="lista-loading-spinner" /></div>
+            ) : (
+              <div className="adm-alertas-list">
+                {resumen?.alertas.map((a, i) => (
+                  <div key={i} className={`adm-alerta adm-alerta--${a.tipo}`}>
+                    {a.tipo === "error"   && <ShieldAlert size={16} />}
+                    {a.tipo === "warning" && <AlertTriangle size={16} />}
+                    {a.tipo === "info"    && <CheckCircle2 size={16} />}
+                    <span>{a.mensaje}</span>
                   </div>
-                  <span className="ar-stat-pct">{Math.round((o.cantidad / totalOrdenes) * 100)}%</span>
-                </div>
-              ))}
+                ))}
+              </div>
+            )}
+          </div>
+
+          {/* Reclamaciones recientes de pacientes */}
+          <div className="ar-section">
+            <div className="ar-section-header">
+              <div className="ar-section-title">
+                <MessageSquare size={18} />
+                <h2>Reclamaciones de Pacientes</h2>
+              </div>
+              <button className="btn-page-action" style={{ fontSize: 12 }} onClick={() => navigate("/admin/reclamaciones")}>
+                Ver todas <ArrowRight size={13} />
+              </button>
             </div>
-            <p className="ar-total">Total: <strong>{totalOrdenes}</strong> órdenes en el período</p>
-          </>
-        )}
-      </div>
- 
-      {/* ── Reporte: Citas por Período (por estado) ── */}
-      <div className="ar-section">
-        <div className="ar-section-header">
-          <div className="ar-section-title">
-            <CalendarDays size={18} />
-            <h2>Citas por Período</h2>
+
+            {cargando ? (
+              <div className="lista-loading"><div className="lista-loading-spinner" /></div>
+            ) : !resumen?.reclamacionesRecientes.length ? (
+              <div className="ar-empty">
+                <CheckCircle2 size={28} style={{ color: "#10b981" }} />
+                <p>Sin reclamaciones pendientes.</p>
+              </div>
+            ) : (
+              <div className="adm-reclamaciones-list">
+                {resumen.reclamacionesRecientes.map(r => {
+                  const est = ESTADO_RECLAMACION[r.estado] ?? { label: r.estado, color: "#64748b" };
+                  const pac = r.pacienteId;
+                  return (
+                    <div
+                      key={r._id} className="adm-reclam-item"
+                      onClick={() => navigate("/admin/reclamaciones")}
+                    >
+                      <div className="adm-reclam-top">
+                        <span className="adm-reclam-codigo">{r.codigo}</span>
+                        <span className="adm-reclam-tipo">{r.tipo}</span>
+                        <span className="adm-reclam-estado" style={{ color: est.color }}>{est.label}</span>
+                      </div>
+                      {pac && (
+                        <div className="adm-reclam-pac">{pac.nombres} {pac.apellidos}</div>
+                      )}
+                      <div className="adm-reclam-desc">{r.descripcion.slice(0, 100)}{r.descripcion.length > 100 ? "…" : ""}</div>
+                      <div className="adm-reclam-fecha">{formatFecha(r.createdAt)}</div>
+                    </div>
+                  );
+                })}
+              </div>
+            )}
           </div>
         </div>
 
-        {errorCitas && <div className="ar-error">{errorCitas}</div>}
+        {/* ── Columna derecha: Tablón de avisos ── */}
+        <div className="adm-col">
+          <div className="ar-section" style={{ flex: 1 }}>
+            <div className="ar-section-header">
+              <div className="ar-section-title">
+                <Megaphone size={18} />
+                <h2>Tablón de Avisos</h2>
+              </div>
+              <button
+                className="btn-page-action"
+                style={{ fontSize: 12 }}
+                onClick={() => setMostrarForm(v => !v)}
+              >
+                <Plus size={14} /> Nuevo aviso
+              </button>
+            </div>
 
-        {cargandoCitas ? (
-          <div className="lista-loading"><div className="lista-loading-spinner" /><p>Cargando reporte…</p></div>
-        ) : citasEstado.length === 0 ? (
-          <div className="ar-empty"><CalendarDays size={32} /><p>No hay citas en este período.</p></div>
-        ) : (
-          <>
-            <div className="ar-stats-row">
-              {citasEstado.map((c) => (
-                <div
-                  key={c._id} className="ar-stat-card"
-                  style={{ "--estado-color": CITA_ESTADO_COLORS[c._id] ?? "var(--primary)" } as React.CSSProperties}
-                >
-                  <span className="ar-stat-label">{CITA_ESTADO_LABELS[c._id] ?? c._id}</span>
-                  <span className="ar-stat-value">{c.cantidad}</span>
-                  <div className="ar-stat-bar">
-                    <div className="ar-stat-bar-fill" style={{ width: `${(c.cantidad / totalCitas) * 100}%` }} />
+            {/* Form nuevo aviso */}
+            {mostrarForm && (
+              <div className="adm-aviso-form">
+                <input
+                  className="adm-aviso-input"
+                  placeholder="Título del aviso"
+                  value={form.titulo}
+                  onChange={e => setForm(p => ({ ...p, titulo: e.target.value }))}
+                />
+                <textarea
+                  className="adm-aviso-textarea"
+                  placeholder="Escribe el mensaje o aviso para el personal del sistema…"
+                  rows={3}
+                  value={form.mensaje}
+                  onChange={e => setForm(p => ({ ...p, mensaje: e.target.value }))}
+                />
+                <div className="adm-aviso-form-footer">
+                  <select
+                    className="adm-aviso-select"
+                    value={form.tipo}
+                    onChange={e => setForm(p => ({ ...p, tipo: e.target.value as TipoAviso }))}
+                  >
+                    <option value="INFO">Información</option>
+                    <option value="ALERTA">Alerta</option>
+                    <option value="URGENTE">Urgente</option>
+                  </select>
+                  <div style={{ display: "flex", gap: 8 }}>
+                    <button className="adm-aviso-cancel" onClick={() => setMostrarForm(false)}>Cancelar</button>
+                    <button className="btn-page-action" style={{ fontSize: 12 }} onClick={handleCrearAviso} disabled={guardando}>
+                      <Send size={13} /> {guardando ? "Publicando…" : "Publicar"}
+                    </button>
                   </div>
-                  <span className="ar-stat-pct">{Math.round((c.cantidad / totalCitas) * 100)}%</span>
                 </div>
-              ))}
-            </div>
-            <p className="ar-total">Total: <strong>{totalCitas}</strong> citas en el período</p>
-          </>
-        )}
-      </div>
+              </div>
+            )}
 
-      {/* ── Reporte: Citas por Especialidad ── */}
-      <div className="ar-section">
-        <div className="ar-section-header">
-          <div className="ar-section-title">
-            <Layers size={18} />
-            <h2>Citas por Especialidad</h2>
+            {/* Lista de avisos */}
+            {cargando ? (
+              <div className="lista-loading"><div className="lista-loading-spinner" /></div>
+            ) : avisos.length === 0 ? (
+              <div className="ar-empty">
+                <Megaphone size={28} />
+                <p>No hay avisos activos. Crea el primero.</p>
+              </div>
+            ) : (
+              <div className="adm-avisos-list">
+                {avisos.map(a => {
+                  const cfg = TIPO_AVISO_CONFIG[a.tipo];
+                  const Icon = cfg.icon;
+                  return (
+                    <div key={a._id} className="adm-aviso-item" style={{ "--av-color": cfg.color, "--av-bg": cfg.bg } as React.CSSProperties}>
+                      <div className="adm-aviso-item-header">
+                        <span className="adm-aviso-badge" style={{ background: cfg.bg, color: cfg.color }}>
+                          <Icon size={12} /> {cfg.label}
+                        </span>
+                        <span className="adm-aviso-fecha">{formatFecha(a.creadoEn)}</span>
+                        <button className="adm-aviso-del" onClick={() => handleEliminarAviso(a._id)} title="Eliminar aviso">
+                          <Trash2 size={14} />
+                        </button>
+                      </div>
+                      <div className="adm-aviso-titulo">{a.titulo}</div>
+                      <div className="adm-aviso-msg">{a.mensaje}</div>
+                    </div>
+                  );
+                })}
+              </div>
+            )}
           </div>
         </div>
-
-        {cargandoCitas ? (
-          <div className="lista-loading"><div className="lista-loading-spinner" /><p>Cargando reporte…</p></div>
-        ) : citasEspecialidad.length === 0 ? (
-          <div className="ar-empty"><Layers size={32} /><p>No hay datos de citas por especialidad.</p></div>
-        ) : (
-          <div className="lista-table-card">
-            <div className="table-container">
-              <table className="modern-table">
-                <thead>
-                  <tr>
-                    <th style={{ width: 50 }}>#</th>
-                    <th>Especialidad</th>
-                    <th style={{ width: 200 }}>Distribución</th>
-                    <th style={{ width: 80, textAlign: "center" }}>Citas</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {citasEspecialidad.map((c, idx) => (
-                    <tr key={c._id}>
-                      <td>
-                        <span className={`ar-rank ${idx < 3 ? "ar-rank--top" : ""}`}>{idx + 1}</span>
-                      </td>
-                      <td>
-                        <div className="ge-especialidad-cell">
-                          <div className="ge-icon-wrap"><Layers size={14} /></div>
-                          <span className="ge-nombre">{c._id}</span>
-                        </div>
-                      </td>
-                      <td>
-                        <div className="ar-bar-wrap">
-                          <div className="ar-bar" style={{ width: `${(c.cantidad / maxCitaEspecialidad) * 100}%` }} />
-                        </div>
-                      </td>
-                      <td className="td-center">
-                        <span className="ar-count">{c.cantidad}</span>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          </div>
-        )}
       </div>
-
-      {/* ── Reporte: Exámenes más solicitados ── */}
-      <div className="ar-section">
-        <div className="ar-section-header">
-          <div className="ar-section-title">
-            <FlaskConical size={18} />
-            <h2>Exámenes más Solicitados</h2>
-          </div>
-        </div>
- 
-        {errorExamenes && <div className="ar-error">{errorExamenes}</div>}
- 
-        {cargandoExamenes ? (
-          <div className="lista-loading"><div className="lista-loading-spinner" /><p>Cargando exámenes…</p></div>
-        ) : examenes.length === 0 ? (
-          <div className="ar-empty"><FlaskConical size={32} /><p>No hay datos de exámenes aún.</p></div>
-        ) : (
-          <div className="lista-table-card">
-            <div className="table-container">
-              <table className="modern-table">
-                <thead>
-                  <tr>
-                    <th style={{ width: 50 }}>#</th>
-                    <th>Examen</th>
-                    <th style={{ width: 200 }}>Frecuencia</th>
-                    <th style={{ width: 80, textAlign: "center" }}>Total</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {examenes.map((e, idx) => (
-                    <tr key={String(e._id)}>
-                      <td>
-                        <span className={`ar-rank ${idx < 3 ? "ar-rank--top" : ""}`}>{idx + 1}</span>
-                      </td>
-                      <td>
-                        <div className="ge-especialidad-cell">
-                          <div className="ge-icon-wrap"><FlaskConical size={14} /></div>
-                          <span className="ge-nombre">{String(e._id)}</span>
-                        </div>
-                      </td>
-                      <td>
-                        <div className="ar-bar-wrap">
-                          <div className="ar-bar" style={{ width: `${(e.total / maxExamen) * 100}%` }} />
-                        </div>
-                      </td>
-                      <td className="td-center">
-                        <span className="ar-count">{e.total}</span>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          </div>
-        )}
-      </div>
- 
     </div>
   );
 };
- 
+
 export default AdminDashboard;

@@ -45,8 +45,8 @@ type Vista = "dia" | "semana" | "mes";
 
 const DOCTOR_TODOS_ID = "ALL";
 const HORA_INICIO = 8;
-const HORA_FIN = 17;
-const INTERVALO_MINUTOS = 15;
+const HORA_FIN = 22;
+const INTERVALO_MINUTOS = 30;
 
 
 const HORAS_LABORALES = (() => {

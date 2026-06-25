@@ -17,11 +17,11 @@ import "./MedicoCitas.css";
 type Vista = "dia" | "semana" | "mes";
 
 const HORA_INICIO = 8;
-const HORA_FIN    = 17;
+const HORA_FIN    = 22;
 const HORAS_LABORALES = Array.from(
-  { length: Math.ceil(((HORA_FIN - HORA_INICIO) * 60) / 15) },
+  { length: Math.ceil(((HORA_FIN - HORA_INICIO) * 60) / 30) },
   (_, i) => {
-    const mins = HORA_INICIO * 60 + i * 15;
+    const mins = HORA_INICIO * 60 + i * 30;
     return `${String(Math.floor(mins / 60)).padStart(2, "0")}:${String(mins % 60).padStart(2, "0")}`;
   }
 );

@@ -36,6 +36,10 @@ import GestionUsuarios from "./pages/AdminDash/GestionUsuarios";
 import VisorAuditoria from "./pages/AdminDash/VisorAuditoria";
 import GestionMedicamentos from "./pages/AdminDash/GestionMedicamentos";
 import GestionReclamaciones from "./pages/AdminDash/GestionReclamaciones";
+import ChatAdmin from "./pages/Chat/Chat";
+import ChatPaciente from "./pages/Chat/ChatPaciente";
+import Tickets from "./pages/Tickets/Tickets";
+import ChatWidget from "./components/ChatWidget/ChatWidget";
 
 import { AuthProvider } from "./context/AuthProvider";
 import { ThemeProvider } from "./context/ThemeContext";
@@ -271,6 +275,15 @@ function App() {
             />
 
             <Route
+              path="/paciente/chat"
+              element={
+                <ProtectedRoute roles={["paciente"]}>
+                  <ChatPaciente />
+                </ProtectedRoute>
+              }
+            />
+
+            <Route
               path="/admin"
               element={
                 <ProtectedRoute roles={["administrador"]}>
@@ -335,6 +348,30 @@ function App() {
                 </ProtectedRoute>
               }
             />
+            <Route
+              path="/admin/chat"
+              element={
+                <ProtectedRoute roles={["administrador"]}>
+                  <ChatAdmin />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/admin/tickets"
+              element={
+                <ProtectedRoute roles={["administrador"]}>
+                  <Tickets />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/tickets"
+              element={
+                <ProtectedRoute roles={["RECEPCIONISTA", "MEDICO"]}>
+                  <Tickets />
+                </ProtectedRoute>
+              }
+            />
 
           </Route>
         </Routes>
@@ -361,6 +398,7 @@ function ProtectedLayout() {
           <Outlet />
         </main>
       </div>
+      <ChatWidget />
     </div>
   );
 }

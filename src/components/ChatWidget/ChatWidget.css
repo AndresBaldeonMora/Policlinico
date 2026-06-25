@@ -1,0 +1,286 @@
+/* ── Contenedor raíz (posicionado fixed) ───────────────────────── */
+.cw-root {
+  position: fixed;
+  bottom: 1.5rem;
+  right: 1.5rem;
+  z-index: 1200;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 0.75rem;
+  pointer-events: none;
+}
+
+.cw-root > * { pointer-events: all; }
+
+/* ── Panel de chat ─────────────────────────────────────────────── */
+.cw-panel {
+  width: 340px;
+  height: 460px;
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  box-shadow: 0 8px 32px rgba(0,0,0,0.18);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  animation: cw-slide-up 0.2s ease;
+}
+
+.cw-panel--mini {
+  height: auto;
+}
+
+@keyframes cw-slide-up {
+  from { opacity: 0; transform: translateY(16px) scale(0.97); }
+  to   { opacity: 1; transform: translateY(0)    scale(1);    }
+}
+
+/* ── Header del panel ──────────────────────────────────────────── */
+.cw-panel-header {
+  display: flex;
+  align-items: center;
+  gap: 0.65rem;
+  padding: 0.75rem 1rem;
+  background: var(--primary);
+  color: #fff;
+  flex-shrink: 0;
+  border-radius: 16px 16px 0 0;
+}
+
+.cw-panel--mini .cw-panel-header {
+  border-radius: 16px;
+}
+
+.cw-panel-avatar {
+  width: 36px; height: 36px;
+  border-radius: 50%;
+  background: rgba(255,255,255,0.25);
+  font-weight: 700;
+  font-size: 1rem;
+  display: flex; align-items: center; justify-content: center;
+  flex-shrink: 0;
+}
+
+.cw-panel-info { flex: 1; overflow: hidden; }
+
+.cw-panel-nombre {
+  font-size: 0.9rem;
+  font-weight: 700;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.cw-panel-sub {
+  font-size: 0.75rem;
+  opacity: 0.85;
+}
+
+.cw-panel-actions {
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+}
+
+.cw-icon-btn {
+  width: 28px; height: 28px;
+  border-radius: 6px;
+  background: transparent;
+  border: none;
+  color: rgba(255,255,255,0.85);
+  cursor: pointer;
+  display: flex; align-items: center; justify-content: center;
+  transition: background 0.12s, color 0.12s;
+}
+
+.cw-icon-btn:hover {
+  background: rgba(255,255,255,0.2);
+  color: #fff;
+}
+
+/* ── Área de mensajes ──────────────────────────────────────────── */
+.cw-mensajes {
+  flex: 1;
+  overflow-y: auto;
+  padding: 1rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.cw-empty {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  color: var(--text-muted);
+  font-size: 0.825rem;
+  text-align: center;
+  padding: 2rem 1rem;
+}
+
+.cw-loading {
+  display: flex; justify-content: center; align-items: center;
+  padding: 2rem 0;
+}
+
+.cw-spinner {
+  width: 24px; height: 24px;
+  border: 3px solid var(--border);
+  border-top-color: var(--primary);
+  border-radius: 50%;
+  animation: cw-spin 0.8s linear infinite;
+}
+
+@keyframes cw-spin { to { transform: rotate(360deg); } }
+
+/* ── Burbujas ──────────────────────────────────────────────────── */
+.cw-burbuja-wrap {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  margin-bottom: 0.3rem;
+}
+
+.cw-burbuja-wrap--mio { align-items: flex-end; }
+
+.cw-burbuja-autor {
+  font-size: 0.7rem;
+  color: var(--text-muted);
+  font-weight: 600;
+  margin-bottom: 0.15rem;
+  padding-left: 0.5rem;
+}
+
+.cw-burbuja {
+  max-width: 80%;
+  padding: 0.5rem 0.75rem;
+  border-radius: 14px;
+  font-size: 0.845rem;
+  line-height: 1.5;
+  word-break: break-word;
+}
+
+.cw-burbuja--otro {
+  background: var(--bg-page);
+  border: 1px solid var(--border);
+  color: var(--text-primary);
+  border-bottom-left-radius: 4px;
+}
+
+.cw-burbuja--mio {
+  background: var(--primary);
+  color: #fff;
+  border-bottom-right-radius: 4px;
+}
+
+.cw-hora {
+  display: block;
+  font-size: 0.65rem;
+  margin-top: 0.2rem;
+  text-align: right;
+  opacity: 0.6;
+}
+
+/* ── Input ─────────────────────────────────────────────────────── */
+.cw-input-row {
+  display: flex;
+  align-items: flex-end;
+  gap: 0.5rem;
+  padding: 0.625rem 0.875rem;
+  border-top: 1px solid var(--border);
+  background: var(--bg-card);
+  flex-shrink: 0;
+}
+
+.cw-input {
+  flex: 1;
+  padding: 0.5rem 0.75rem;
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  background: var(--bg-page);
+  color: var(--text-primary);
+  font-size: 0.845rem;
+  font-family: inherit;
+  resize: none;
+  outline: none;
+  max-height: 100px;
+  line-height: 1.45;
+  transition: border-color 0.15s;
+}
+
+.cw-input:focus { border-color: var(--primary); }
+
+.cw-send {
+  width: 34px; height: 34px;
+  border-radius: 50%;
+  background: var(--primary);
+  color: #fff;
+  border: none;
+  cursor: pointer;
+  display: flex; align-items: center; justify-content: center;
+  flex-shrink: 0;
+  transition: background 0.15s, transform 0.1s;
+}
+
+.cw-send:hover:not(:disabled) { background: #047857; }
+.cw-send:active:not(:disabled) { transform: scale(0.93); }
+.cw-send:disabled { opacity: 0.4; cursor: not-allowed; }
+
+/* ── FAB (botón flotante) ──────────────────────────────────────── */
+.cw-fab {
+  width: 52px; height: 52px;
+  border-radius: 50%;
+  background: var(--primary);
+  color: #fff;
+  border: none;
+  cursor: pointer;
+  display: flex; align-items: center; justify-content: center;
+  box-shadow: 0 4px 16px rgba(5,150,105,0.45);
+  position: relative;
+  transition: background 0.15s, transform 0.15s, box-shadow 0.15s;
+  animation: cw-pop 0.25s cubic-bezier(.34,1.56,.64,1);
+}
+
+.cw-fab:hover {
+  background: #047857;
+  transform: scale(1.06);
+  box-shadow: 0 6px 20px rgba(5,150,105,0.5);
+}
+
+.cw-fab:active { transform: scale(0.96); }
+
+@keyframes cw-pop {
+  from { transform: scale(0); opacity: 0; }
+  to   { transform: scale(1); opacity: 1; }
+}
+
+.cw-fab-badge {
+  position: absolute;
+  top: -3px; right: -3px;
+  background: #ef4444;
+  color: #fff;
+  font-size: 0.65rem;
+  font-weight: 700;
+  min-width: 18px; height: 18px;
+  border-radius: 9999px;
+  display: flex; align-items: center; justify-content: center;
+  padding: 0 4px;
+  border: 2px solid var(--bg-page);
+}
+
+/* ── Responsive ────────────────────────────────────────────────── */
+@media (max-width: 480px) {
+  .cw-root {
+    bottom: 1rem;
+    right: 1rem;
+  }
+
+  .cw-panel {
+    width: calc(100vw - 2rem);
+    height: 400px;
+  }
+}

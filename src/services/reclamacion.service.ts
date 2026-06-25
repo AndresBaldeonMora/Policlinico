@@ -21,8 +21,33 @@ export interface Reclamacion {
   updatedAt: string;
 }
 
+export interface TerceroReclamacion {
+  tipoDoc: "DNI" | "CE" | "PASAPORTE" | "RUC";
+  nroDoc: string;
+  nombre: string;
+  email?: string;
+  domicilio?: string;
+  telefono?: string;
+}
+
+export interface RegistrarReclamacionPayload {
+  tipo: "QUEJA" | "RECLAMO";
+  descripcion: string;
+  tipoDocIdentificado?: string;
+  nroDocIdentificado?: string;
+  nombreIdentificado?: string;
+  emailIdentificado?: string;
+  domicilioIdentificado?: string;
+  telefonoIdentificado?: string;
+  presentadoPorTercero?: boolean;
+  tercero?: TerceroReclamacion;
+  area?: string;
+  servicio?: string;
+  autorizaNotificacion?: boolean;
+}
+
 export class ReclamacionApiService {
-  static async registrar(datos: { tipo: "QUEJA" | "RECLAMO"; descripcion: string }): Promise<Reclamacion> {
+  static async registrar(datos: RegistrarReclamacionPayload): Promise<Reclamacion> {
     const response = await api.post<{ success: boolean; data: Reclamacion }>("/reclamaciones", datos);
     return response.data.data;
   }

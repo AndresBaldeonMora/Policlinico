@@ -435,6 +435,243 @@
   color: var(--primary);
 }
 
+/* ── Dos columnas ────────────────────────── */
+.adm-two-col {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1.75rem;
+  align-items: start;
+}
+
+.adm-col {
+  display: flex;
+  flex-direction: column;
+  gap: 1.75rem;
+}
+
+@media (max-width: 820px) {
+  .adm-two-col { grid-template-columns: 1fr; }
+}
+
+/* ── Alertas del sistema ─────────────────── */
+.adm-alertas-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.625rem;
+}
+
+.adm-alerta {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.5rem;
+  padding: 0.75rem 1rem;
+  border-radius: var(--radius-md);
+  font-size: 0.875rem;
+  line-height: 1.45;
+}
+
+.adm-alerta--info    { background: rgba(16,185,129,0.08); color: #065f46; border: 1px solid rgba(16,185,129,0.2); }
+.adm-alerta--warning { background: rgba(245,158,11,0.08); color: #92400e; border: 1px solid rgba(245,158,11,0.2); }
+.adm-alerta--error   { background: rgba(239,68,68,0.08);  color: #991b1b; border: 1px solid rgba(239,68,68,0.2);  }
+
+[data-theme="dark"] .adm-alerta--info    { color: #6ee7b7; }
+[data-theme="dark"] .adm-alerta--warning { color: #fcd34d; }
+[data-theme="dark"] .adm-alerta--error   { color: #fca5a5; }
+
+/* ── Reclamaciones ───────────────────────── */
+.adm-reclamaciones-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.adm-reclam-item {
+  padding: 0.875rem 1rem;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  cursor: pointer;
+  transition: background 0.15s, border-color 0.15s;
+  display: flex;
+  flex-direction: column;
+  gap: 0.3rem;
+}
+
+.adm-reclam-item:hover {
+  background: var(--bg-hover);
+  border-color: var(--primary);
+}
+
+.adm-reclam-top {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+}
+
+.adm-reclam-codigo {
+  font-size: 0.75rem;
+  font-weight: 700;
+  color: var(--text-muted);
+  font-family: monospace;
+}
+
+.adm-reclam-tipo {
+  font-size: 0.7rem;
+  padding: 0.15rem 0.5rem;
+  border-radius: 100px;
+  background: var(--bg-hover);
+  color: var(--text-muted);
+  font-weight: 600;
+  text-transform: uppercase;
+}
+
+.adm-reclam-estado {
+  font-size: 0.75rem;
+  font-weight: 700;
+  margin-left: auto;
+}
+
+.adm-reclam-pac {
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.adm-reclam-desc {
+  font-size: 0.825rem;
+  color: var(--text-secondary);
+  line-height: 1.45;
+}
+
+.adm-reclam-fecha {
+  font-size: 0.75rem;
+  color: var(--text-muted);
+}
+
+/* ── Tablón de avisos ────────────────────── */
+.adm-aviso-form {
+  display: flex;
+  flex-direction: column;
+  gap: 0.625rem;
+  padding: 1rem;
+  background: var(--bg-page, #f9fafb);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+}
+
+.adm-aviso-input,
+.adm-aviso-textarea,
+.adm-aviso-select {
+  width: 100%;
+  padding: 0.6rem 0.75rem;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  background: var(--bg-card);
+  color: var(--text-primary);
+  font-size: 0.875rem;
+  outline: none;
+  transition: border-color 0.15s;
+  box-sizing: border-box;
+}
+
+.adm-aviso-input:focus,
+.adm-aviso-textarea:focus,
+.adm-aviso-select:focus { border-color: var(--primary); }
+
+.adm-aviso-textarea { resize: vertical; font-family: inherit; }
+
+.adm-aviso-form-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+}
+
+.adm-aviso-select { width: auto; min-width: 130px; }
+
+.adm-aviso-cancel {
+  padding: 0 0.875rem;
+  height: 34px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  background: transparent;
+  color: var(--text-muted);
+  font-size: 0.85rem;
+  cursor: pointer;
+  transition: background 0.15s;
+}
+
+.adm-aviso-cancel:hover { background: var(--bg-hover); }
+
+.adm-avisos-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.625rem;
+  max-height: 520px;
+  overflow-y: auto;
+}
+
+.adm-aviso-item {
+  padding: 0.875rem 1rem;
+  border: 1px solid var(--border);
+  border-left: 3px solid var(--av-color, var(--primary));
+  border-radius: var(--radius-md);
+  background: var(--av-bg, transparent);
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+}
+
+.adm-aviso-item-header {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.adm-aviso-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  padding: 0.15rem 0.5rem;
+  border-radius: 100px;
+  font-size: 0.7rem;
+  font-weight: 700;
+  text-transform: uppercase;
+}
+
+.adm-aviso-fecha {
+  font-size: 0.72rem;
+  color: var(--text-muted);
+  margin-left: auto;
+}
+
+.adm-aviso-del {
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: var(--text-muted);
+  padding: 0.2rem;
+  border-radius: var(--radius-sm);
+  display: flex;
+  align-items: center;
+  transition: color 0.15s, background 0.15s;
+}
+
+.adm-aviso-del:hover { color: #ef4444; background: rgba(239,68,68,0.08); }
+
+.adm-aviso-titulo {
+  font-size: 0.9rem;
+  font-weight: 700;
+  color: var(--text-primary);
+}
+
+.adm-aviso-msg {
+  font-size: 0.85rem;
+  color: var(--text-secondary);
+  line-height: 1.5;
+}
+
 /* ── Dark mode ───────────────────────────── */
 [data-theme="dark"] .ar-stat-card {
   background: var(--bg-hover);

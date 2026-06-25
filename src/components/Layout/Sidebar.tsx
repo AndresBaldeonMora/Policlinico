@@ -1,6 +1,7 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Link, useLocation } from "react-router-dom";
 import { useAuth } from "../../hooks/userAuth";
+import { InterconsultaApiService } from "../../services/interconsulta.service";
 import {
   Calendar,
   CalendarPlus,
@@ -17,26 +18,39 @@ import {
   Home,
   User,
   UserCog,
-  Pill,
   ScrollText,
   ArrowLeftRight,
   MessageSquare,
+  Ticket,
 } from "lucide-react";
 import "./Sidebar.css";
 const Sidebar = () => {
   const location = useLocation();
   const { user } = useAuth();
   const [collapsed, setCollapsed] = useState(false);
+  const [interconsultasPendientes, setInterconsultasPendientes] = useState(0);
+
+  useEffect(() => {
+    if (user?.rol !== "RECEPCIONISTA") return;
+    const cargar = () => {
+      InterconsultaApiService.listarPendientesRecepcion()
+        .then(lista => setInterconsultasPendientes(lista.length))
+        .catch(() => {});
+    };
+    cargar();
+    const interval = setInterval(cargar, 30_000);
+    return () => clearInterval(interval);
+  }, [user?.rol]);
 
   // pequeña correcion : de adminMenu a recepcionistaMenu 
   const recepcionistaMenu = [
-    { path: "/calendario", label: "Calendario", icon: Calendar, description: "Vista principal de citas" },
-    { path: "/reserva-cita", label: "Reservar Cita", icon: CalendarPlus, description: "Agendar nueva cita" },
-    { path: "/lista-citas", label: "Gestion de Citas", icon: ClipboardList, description: "Administrar citas" },
-    { path: "/medicos", label: "Medicos", icon: Stethoscope, description: "Directorio de doctores" },
-    { path: "/pacientes", label: "Pacientes", icon: Users, description: "Listado de pacientes" },
-    { path: "/laboratorio-imagen", label: "Laboratorio / Imagen", icon: FlaskConical, description: "Órdenes de exámenes e imagen" },
-    { path: "/interconsultas", label: "Interconsultas", icon: ArrowLeftRight, description: "Gestionar interconsultas pendientes" },
+    { path: "/calendario",          label: "Calendario",         icon: Calendar,       description: "Vista principal de citas" },
+    { path: "/reserva-cita",        label: "Reservar Cita",      icon: CalendarPlus,   description: "Agendar nueva cita" },
+    { path: "/lista-citas",         label: "Gestión de Citas",   icon: ClipboardList,  description: "Administrar citas" },
+    { path: "/laboratorio-imagen",  label: "Laboratorio / Imagen", icon: FlaskConical, description: "Órdenes de exámenes e imagen" },
+    { path: "/interconsultas",      label: "Interconsultas",     icon: ArrowLeftRight, description: "Gestionar interconsultas pendientes" },
+    { path: "/pacientes",           label: "Pacientes",          icon: Users,          description: "Listado de pacientes" },
+    { path: "/medicos",             label: "Médicos",            icon: Stethoscope,    description: "Directorio de doctores" },
   ];
 
   const medicoMenu = [
@@ -48,14 +62,14 @@ const Sidebar = () => {
 
   // Menú ADMINISTRADOR
   const administradorMenu = [
-    { path: "/admin", label: "Panel Admin", icon: ShieldCheck, description: "Inicio administración" },
-    { path: "/admin/usuarios", label: "Usuarios", icon: UserCog, description: "Gestión de usuarios del sistema" },
-    { path: "/admin/especialidades", label: "Especialidades", icon: BookOpen, description: "CRUD especialidades" },
-    { path: "/admin/doctores", label: "Doctores", icon: Stethoscope, description: "CRUD doctores" },
-    { path: "/admin/pacientes", label: "Pacientes", icon: Users, description: "CRUD pacientes" },
-    { path: "/admin/medicamentos", label: "Medicamentos", icon: Pill, description: "Catálogo de medicamentos" },
-    { path: "/admin/auditoria", label: "Auditoría", icon: ScrollText, description: "Registro de acciones del sistema" },
-    { path: "/admin/reclamaciones", label: "Reclamaciones", icon: MessageSquare, description: "Libro de reclamaciones virtual" },
+    { path: "/admin",                label: "Panel Admin",    icon: ShieldCheck,   description: "Inicio administración" },
+    { path: "/admin/doctores",       label: "Doctores",       icon: Stethoscope,   description: "CRUD doctores" },
+    { path: "/admin/especialidades", label: "Especialidades", icon: BookOpen,      description: "CRUD especialidades" },
+    { path: "/admin/pacientes",      label: "Pacientes",      icon: Users,         description: "CRUD pacientes" },
+    { path: "/admin/usuarios",       label: "Usuarios",       icon: UserCog,       description: "Gestión de usuarios del sistema" },
+    { path: "/admin/reclamaciones",  label: "Reclamaciones",  icon: MessageSquare, description: "Libro de reclamaciones virtual" },
+    { path: "/admin/chat",           label: "Soporte",        icon: Ticket,        description: "Chat y tickets de soporte" },
+    { path: "/admin/auditoria",      label: "Auditoría",      icon: ScrollText,    description: "Registro de acciones del sistema" },
   ];
 
   const pacienteMenu = [
@@ -130,6 +144,9 @@ const Sidebar = () => {
             {menuItems.map((item) => {
               const isActive = location.pathname === item.path;
               const Icon = item.icon;
+              const badge = item.path === "/interconsultas" && interconsultasPendientes > 0
+                ? interconsultasPendientes
+                : null;
               return (
                 <Link
                   key={item.path}
@@ -137,11 +154,35 @@ const Sidebar = () => {
                   className={`sidebar-link ${isActive ? "active" : ""}`}
                   title={item.description}
                 >
-                  <Icon size={20} strokeWidth={isActive ? 2.2 : 1.8} />
+                  <span style={{ position: "relative", display: "inline-flex" }}>
+                    <Icon size={20} strokeWidth={isActive ? 2.2 : 1.8} />
+                    {badge !== null && (
+                      <span style={{
+                        position: "absolute", top: -6, right: -8,
+                        background: "#ef4444", color: "#fff",
+                        borderRadius: "9999px", fontSize: 10, fontWeight: 700,
+                        minWidth: 16, height: 16, display: "flex",
+                        alignItems: "center", justifyContent: "center",
+                        padding: "0 3px", lineHeight: 1,
+                      }}>
+                        {badge > 99 ? "99+" : badge}
+                      </span>
+                    )}
+                  </span>
                   {!collapsed && (
                     <>
                       <span className="sidebar-label">{item.label}</span>
-                      {isActive && <ChevronRight size={16} className="sidebar-link-arrow" />}
+                      {badge !== null && (
+                        <span style={{
+                          marginLeft: "auto", background: "#ef4444", color: "#fff",
+                          borderRadius: "9999px", fontSize: 11, fontWeight: 700,
+                          minWidth: 20, height: 20, display: "flex",
+                          alignItems: "center", justifyContent: "center", padding: "0 5px",
+                        }}>
+                          {badge > 99 ? "99+" : badge}
+                        </span>
+                      )}
+                      {isActive && !badge && <ChevronRight size={16} className="sidebar-link-arrow" />}
                     </>
                   )}
                 </Link>

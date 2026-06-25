@@ -56,19 +56,21 @@ const ListaMedicos = () => {
   const esAdmin = user?.rol === "administrador";
 
   // ── Bloqueos ──────────────────────────────────────────
-  const [doctorBloqueo, setDoctorBloqueo] = useState<Doctor | null>(null);
-  const [bloqueosDoctor, setBloqueosDoctor] = useState<Bloqueo[]>([]);
-  const [bloqueoForm, setBloqueoForm] = useState({ fecha: "", motivo: "No asistió", descripcion: "" });
-  const [bloqueoLoading, setBloqueoLoading] = useState(false);
+  const [doctorBloqueo, setDoctorBloqueo]     = useState<Doctor | null>(null);
+  const [bloqueosDoctor, setBloqueosDoctor]   = useState<Bloqueo[]>([]);
   const [showBloqueoModal, setShowBloqueoModal] = useState(false);
+  const [bloqueoLoading, setBloqueoLoading]   = useState(false);
+  const [slotsDoctor, setSlotsDoctor]         = useState<string[]>([]);
+  const [slotsLoading, setSlotsLoading]       = useState(false);
+  const [bloqueoForm, setBloqueoForm] = useState({
+    fecha: "", tipoDia: "DIA_COMPLETO" as "DIA_COMPLETO" | "RANGO_HORAS",
+    horaInicio: "", horaFin: "", motivo: "No asistió", descripcion: "",
+  });
 
   const cargarBloqueosDoctor = async (doctorId: string) => {
     try {
-      const bloqueos = await BloqueoService.listar({ doctorId });
-      setBloqueosDoctor(bloqueos);
-    } catch {
-      setBloqueosDoctor([]);
-    }
+      setBloqueosDoctor(await BloqueoService.listar({ doctorId }));
+    } catch { setBloqueosDoctor([]); }
   };
 
   const abrirPanelBloqueos = (doctor: Doctor) => {
@@ -76,25 +78,43 @@ const ListaMedicos = () => {
     cargarBloqueosDoctor(doctor.id);
   };
 
+  const cargarSlotsDoctor = async (doctorId: string, fecha: string) => {
+    if (!fecha) { setSlotsDoctor([]); return; }
+    setSlotsLoading(true);
+    try {
+      const slots = await DoctorApiService.obtenerHorariosDia(doctorId, fecha);
+      setSlotsDoctor(slots);
+    } catch { setSlotsDoctor([]); }
+    finally { setSlotsLoading(false); }
+  };
+
+  const handleFechaBloqueo = (fecha: string) => {
+    setBloqueoForm(f => ({ ...f, fecha, horaInicio: "", horaFin: "" }));
+    if (doctorBloqueo) cargarSlotsDoctor(doctorBloqueo.id, fecha);
+  };
+
   const handleCrearBloqueo = async () => {
     if (!doctorBloqueo || !bloqueoForm.fecha || !bloqueoForm.motivo) return;
+    if (bloqueoForm.tipoDia === "RANGO_HORAS" && (!bloqueoForm.horaInicio || !bloqueoForm.horaFin)) return;
     setBloqueoLoading(true);
     try {
       await BloqueoService.crear({
-        doctorId: doctorBloqueo.id,
-        fecha: bloqueoForm.fecha,
-        motivo: bloqueoForm.motivo,
+        doctorId:    doctorBloqueo.id,
+        fecha:       bloqueoForm.fecha,
+        tipoDia:     bloqueoForm.tipoDia,
+        horaInicio:  bloqueoForm.tipoDia === "RANGO_HORAS" ? bloqueoForm.horaInicio : undefined,
+        horaFin:     bloqueoForm.tipoDia === "RANGO_HORAS" ? bloqueoForm.horaFin    : undefined,
+        motivo:      bloqueoForm.motivo,
         descripcion: bloqueoForm.descripcion || undefined,
       });
       showNotification("Bloqueo creado correctamente.", "success");
       setShowBloqueoModal(false);
-      setBloqueoForm({ fecha: "", motivo: "No asistió", descripcion: "" });
+      setBloqueoForm({ fecha: "", tipoDia: "DIA_COMPLETO", horaInicio: "", horaFin: "", motivo: "No asistió", descripcion: "" });
+      setSlotsDoctor([]);
       cargarBloqueosDoctor(doctorBloqueo.id);
     } catch (err: any) {
       showNotification(err?.response?.data?.message || "Error al crear bloqueo.", "error");
-    } finally {
-      setBloqueoLoading(false);
-    }
+    } finally { setBloqueoLoading(false); }
   };
 
   const handleDesactivarBloqueo = async (bloqueoId: string) => {
@@ -102,9 +122,7 @@ const ListaMedicos = () => {
       await BloqueoService.desactivar(bloqueoId);
       showNotification("Bloqueo desactivado.", "success");
       if (doctorBloqueo) cargarBloqueosDoctor(doctorBloqueo.id);
-    } catch {
-      showNotification("Error al desactivar bloqueo.", "error");
-    }
+    } catch { showNotification("Error al desactivar bloqueo.", "error"); }
   };
 
   const showNotification = (message: string, type: "success" | "error") => {
@@ -245,7 +263,7 @@ const ListaMedicos = () => {
                   <th style={{ width: 150 }}>Especialidad</th>
                   <th style={{ width: 100 }}>CMP</th>
                   <th style={{ width: 200 }}>Contacto</th>
-                  <th style={{ width: 100 }}>Bloqueos</th>
+                  {esAdmin && <th style={{ width: 100 }}>Bloqueos</th>}
                   <th style={{ width: 140 }}>CV</th>
                 </tr>
               </thead>
@@ -299,16 +317,18 @@ const ListaMedicos = () => {
                           )}
                         </div>
                       </td>
-                      <td>
-                        <button
-                          type="button"
-                          className="btn-action"
-                          onClick={() => abrirPanelBloqueos(d)}
-                          title="Ver/Bloquear día"
-                        >
-                          <Calendar size={15} />
-                        </button>
-                      </td>
+                      {esAdmin && (
+                        <td>
+                          <button
+                            type="button"
+                            className="btn-action"
+                            onClick={() => abrirPanelBloqueos(d)}
+                            title="Bloquear horario"
+                          >
+                            <Calendar size={15} />
+                          </button>
+                        </td>
+                      )}
                       <td>
                         <div className="td-cv-actions">
                           {getCvUrl(d) && (
@@ -376,8 +396,8 @@ const ListaMedicos = () => {
                   <thead>
                     <tr>
                       <th>Fecha</th>
+                      <th>Horario</th>
                       <th>Motivo</th>
-                      <th>Descripción</th>
                       <th>Acción</th>
                     </tr>
                   </thead>
@@ -389,8 +409,12 @@ const ListaMedicos = () => {
                             day: "2-digit", month: "2-digit", year: "numeric", timeZone: "UTC",
                           })}
                         </td>
-                        <td>{b.motivo}</td>
-                        <td>{b.descripcion || "—"}</td>
+                        <td>
+                          {b.tipoDia === "RANGO_HORAS" && b.horaInicio && b.horaFin
+                            ? `${b.horaInicio} – ${b.horaFin}`
+                            : "Día completo"}
+                        </td>
+                        <td>{b.motivo}{b.descripcion ? ` — ${b.descripcion}` : ""}</td>
                         <td>
                           <button
                             type="button"
@@ -415,7 +439,12 @@ const ListaMedicos = () => {
               <button
                 type="button"
                 className="btn btn-primary"
-                onClick={() => setShowBloqueoModal(true)}
+                onClick={() => {
+                  const hoy = new Date().toISOString().split("T")[0];
+                  setBloqueoForm(f => ({ ...f, fecha: hoy }));
+                  if (doctorBloqueo) cargarSlotsDoctor(doctorBloqueo.id, hoy);
+                  setShowBloqueoModal(true);
+                }}
               >
                 <Lock size={15} /> Bloquear día
               </button>
@@ -426,82 +455,125 @@ const ListaMedicos = () => {
 
       {/* Modal crear bloqueo */}
       {showBloqueoModal && doctorBloqueo && (
-        <div
-          className="modal-overlay"
-          onClick={(e) => { if (e.target === e.currentTarget) setShowBloqueoModal(false); }}
-        >
-          <div className="modal-card-cv" style={{ maxWidth: "450px" }}>
+        <div className="modal-overlay" onClick={(e) => { if (e.target === e.currentTarget) setShowBloqueoModal(false); }}>
+          <div className="modal-card-cv" style={{ maxWidth: "520px" }}>
             <div className="modal-cv-header">
               <div style={{ display: "flex", alignItems: "center", gap: "0.5rem" }}>
                 <Lock size={20} />
-                <h3>Bloquear día</h3>
+                <h3>Bloquear horario — Dr. {doctorBloqueo.nombres} {doctorBloqueo.apellidos}</h3>
               </div>
               <button type="button" className="modal-cv-close" onClick={() => setShowBloqueoModal(false)}>
                 <X size={16} />
               </button>
             </div>
 
-            <div style={{ padding: "1rem", display: "flex", flexDirection: "column", gap: "1rem" }}>
-              <p style={{ margin: 0, color: "var(--text-secondary)", fontSize: "0.85rem" }}>
-                Dr. {doctorBloqueo.nombres} {doctorBloqueo.apellidos}
-              </p>
+            <div style={{ padding: "1.25rem", display: "flex", flexDirection: "column", gap: "1.1rem" }}>
 
+              {/* Fecha */}
               <div>
-                <label style={{ display: "block", marginBottom: "0.25rem", fontSize: "0.85rem", fontWeight: 500 }}>
-                  Fecha
-                </label>
-                <input
-                  type="date"
-                  value={bloqueoForm.fecha}
-                  onChange={(e) => setBloqueoForm((f) => ({ ...f, fecha: e.target.value }))}
-                  className="lista-search-input"
-                  style={{ width: "100%" }}
+                <label style={{ display: "block", marginBottom: "0.3rem", fontSize: "0.85rem", fontWeight: 600 }}>Fecha *</label>
+                <input type="date" value={bloqueoForm.fecha}
+                  onChange={(e) => handleFechaBloqueo(e.target.value)}
+                  className="lista-search-input" style={{ width: "100%" }}
                 />
               </div>
 
+              {/* Horarios del médico ese día */}
+              {bloqueoForm.fecha && (
+                <div style={{ background: "var(--bg-muted)", borderRadius: "var(--radius-md)", padding: "1rem" }}>
+                  <p style={{ margin: "0 0 0.6rem", fontSize: "0.82rem", fontWeight: 600, color: "var(--text-secondary)" }}>
+                    Horario asignado para esa fecha
+                  </p>
+                  {slotsLoading ? (
+                    <p style={{ margin: 0, fontSize: "0.82rem", color: "var(--text-muted)" }}>Cargando horarios…</p>
+                  ) : slotsDoctor.length === 0 ? (
+                    <p style={{ margin: 0, fontSize: "0.82rem", color: "var(--text-muted)" }}>El médico no tiene horarios asignados para esta fecha.</p>
+                  ) : (
+                    <div style={{ display: "flex", flexWrap: "wrap", gap: "0.4rem" }}>
+                      {slotsDoctor.map(h => (
+                        <span key={h} style={{
+                          padding: "0.2rem 0.6rem", borderRadius: "9999px", fontSize: "0.78rem",
+                          background: "var(--bg-card)", border: "1px solid var(--border)", color: "var(--text-primary)",
+                        }}>{h}</span>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              )}
+
+              {/* Tipo de bloqueo */}
               <div>
-                <label style={{ display: "block", marginBottom: "0.25rem", fontSize: "0.85rem", fontWeight: 500 }}>
-                  Motivo
-                </label>
-                <select
-                  value={bloqueoForm.motivo}
-                  onChange={(e) => setBloqueoForm((f) => ({ ...f, motivo: e.target.value }))}
-                  className="lista-search-input"
-                  style={{ width: "100%" }}
-                >
+                <label style={{ display: "block", marginBottom: "0.4rem", fontSize: "0.85rem", fontWeight: 600 }}>Tipo de bloqueo *</label>
+                <div style={{ display: "flex", gap: "1.25rem" }}>
+                  {(["DIA_COMPLETO", "RANGO_HORAS"] as const).map(t => (
+                    <label key={t} style={{ display: "flex", alignItems: "center", gap: "0.4rem", cursor: "pointer", fontSize: "0.85rem" }}>
+                      <input type="radio" name="tipoDia" value={t}
+                        checked={bloqueoForm.tipoDia === t}
+                        onChange={() => setBloqueoForm(f => ({ ...f, tipoDia: t, horaInicio: "", horaFin: "" }))}
+                      />
+                      {t === "DIA_COMPLETO" ? "Día completo" : "Rango de horas"}
+                    </label>
+                  ))}
+                </div>
+              </div>
+
+              {/* Selectores hora inicio / fin */}
+              {bloqueoForm.tipoDia === "RANGO_HORAS" && slotsDoctor.length > 0 && (
+                <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "0.75rem" }}>
+                  <div>
+                    <label style={{ display: "block", marginBottom: "0.25rem", fontSize: "0.82rem", fontWeight: 600 }}>Hora inicio *</label>
+                    <select value={bloqueoForm.horaInicio}
+                      onChange={e => setBloqueoForm(f => ({ ...f, horaInicio: e.target.value, horaFin: "" }))}
+                      className="lista-search-input" style={{ width: "100%" }}>
+                      <option value="">Seleccionar</option>
+                      {slotsDoctor.map(h => <option key={h} value={h}>{h}</option>)}
+                    </select>
+                  </div>
+                  <div>
+                    <label style={{ display: "block", marginBottom: "0.25rem", fontSize: "0.82rem", fontWeight: 600 }}>Hora fin *</label>
+                    <select value={bloqueoForm.horaFin}
+                      onChange={e => setBloqueoForm(f => ({ ...f, horaFin: e.target.value }))}
+                      className="lista-search-input" style={{ width: "100%" }}
+                      disabled={!bloqueoForm.horaInicio}>
+                      <option value="">Seleccionar</option>
+                      {slotsDoctor.filter(h => h > bloqueoForm.horaInicio).map(h => <option key={h} value={h}>{h}</option>)}
+                    </select>
+                  </div>
+                </div>
+              )}
+
+              {/* Motivo */}
+              <div>
+                <label style={{ display: "block", marginBottom: "0.3rem", fontSize: "0.85rem", fontWeight: 600 }}>Motivo *</label>
+                <select value={bloqueoForm.motivo}
+                  onChange={(e) => setBloqueoForm(f => ({ ...f, motivo: e.target.value }))}
+                  className="lista-search-input" style={{ width: "100%" }}>
                   <option value="No asistió">No asistió</option>
                   <option value="Permiso médico">Permiso médico</option>
                   <option value="Capacitación">Capacitación</option>
+                  <option value="Almuerzo">Almuerzo</option>
+                  <option value="Imprevisto">Imprevisto</option>
                   <option value="Otro">Otro</option>
                 </select>
               </div>
 
+              {/* Descripción */}
               <div>
-                <label style={{ display: "block", marginBottom: "0.25rem", fontSize: "0.85rem", fontWeight: 500 }}>
-                  Descripción (opcional)
-                </label>
-                <input
-                  type="text"
-                  value={bloqueoForm.descripcion}
-                  onChange={(e) => setBloqueoForm((f) => ({ ...f, descripcion: e.target.value }))}
+                <label style={{ display: "block", marginBottom: "0.3rem", fontSize: "0.85rem", fontWeight: 600 }}>Descripción (opcional)</label>
+                <input type="text" value={bloqueoForm.descripcion}
+                  onChange={(e) => setBloqueoForm(f => ({ ...f, descripcion: e.target.value }))}
                   placeholder="Detalle adicional..."
-                  className="lista-search-input"
-                  style={{ width: "100%" }}
+                  className="lista-search-input" style={{ width: "100%" }}
                 />
               </div>
             </div>
 
             <div className="modal-actions">
-              <button type="button" className="btn btn-secondary" onClick={() => setShowBloqueoModal(false)}>
-                Cancelar
-              </button>
-              <button
-                type="button"
-                className="btn btn-primary"
-                onClick={handleCrearBloqueo}
-                disabled={bloqueoLoading || !bloqueoForm.fecha || !bloqueoForm.motivo}
-              >
-                {bloqueoLoading ? "Guardando..." : "Confirmar bloqueo"}
+              <button type="button" className="btn btn-secondary" onClick={() => setShowBloqueoModal(false)}>Cancelar</button>
+              <button type="button" className="btn btn-primary" onClick={handleCrearBloqueo}
+                disabled={bloqueoLoading || !bloqueoForm.fecha || !bloqueoForm.motivo ||
+                  (bloqueoForm.tipoDia === "RANGO_HORAS" && (!bloqueoForm.horaInicio || !bloqueoForm.horaFin))}>
+                <Lock size={14} /> {bloqueoLoading ? "Guardando..." : "Confirmar bloqueo"}
               </button>
             </div>
           </div>

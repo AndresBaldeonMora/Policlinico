@@ -8,6 +8,9 @@ interface Props {
   onSeleccionar: (doctor: Doctor) => void;
 }
 
+const getPrecio = (especialidad: string | null | undefined) =>
+  especialidad?.toLowerCase().includes("psiquiat") ? 90 : 40;
+
 const PasoDoctor = ({ doctoresDisponibles, doctorSeleccionado, especialidadSeleccionada, onSeleccionar }: Props) => (
   <div className="form-step">
     <div className="step-header">
@@ -38,7 +41,7 @@ const PasoDoctor = ({ doctoresDisponibles, doctorSeleccionado, especialidadSelec
               <p>{doctor.especialidad}</p>
             </div>
             {doctorSeleccionado?.id === doctor.id && (
-              <svg width="20" height="20" viewBox="0 0 20 20" fill="none" style={{ marginLeft: "auto", flexShrink: 0 }}>
+              <svg width="20" height="20" viewBox="0 0 20 20" fill="none" style={{ flexShrink: 0 }}>
                 <circle cx="10" cy="10" r="10" fill="#0f766e" />
                 <path d="M5.5 10l3 3 6-6" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
               </svg>

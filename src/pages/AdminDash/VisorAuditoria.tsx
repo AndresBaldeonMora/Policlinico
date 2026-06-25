@@ -9,12 +9,66 @@ import {
 } from "../../services/admin.service";
 import "./VisorAuditoria.css";
 
+// ── Traducciones ──────────────────────────────────────────────────────────────
+const ACCION_LABEL: Record<string, string> = {
+  // Citas
+  crear_cita:           "Nueva cita",
+  cancelar_cita:        "Cancelar cita",
+  CAMBIO_ESTADO:        "Cambio de estado",
+  cambio_estado:        "Cambio de estado",
+  // Órdenes
+  crear_orden:          "Crear orden",
+  autorizar_orden:      "Autorizar orden",
+  registrar_asistencia: "Registrar asistencia",
+  anular_orden:         "Anular orden",
+  // Usuarios
+  crear_usuario:        "Crear usuario",
+  CREAR:                "Crear",
+  ACTUALIZAR:           "Actualizar",
+  DESACTIVAR:           "Desactivar",
+  ACTIVAR:              "Activar",
+  RESETEAR_CLAVE:       "Restablecer contraseña",
+  resetear_clave:       "Restablecer contraseña",
+  LOGIN:                "Inicio de sesión",
+  LOGOUT:               "Cierre de sesión",
+};
+
+const ENTIDAD_LABEL: Record<string, string> = {
+  Cita:         "Cita médica",
+  OrdenExamen:  "Orden de examen",
+  Usuario:      "Usuario",
+  Doctor:       "Médico",
+  Paciente:     "Paciente",
+  Especialidad: "Especialidad",
+  Horario:      "Horario",
+  Reclamacion:  "Reclamación",
+  Interconsulta:"Interconsulta",
+  AuditLog:     "Registro",
+};
+
+const ESTADO_LABEL: Record<string, string> = {
+  PENDIENTE:    "Pendiente",
+  CONFIRMADA:   "Confirmada",
+  CANCELADA:    "Cancelada",
+  ASISTIO:      "Asistió",
+  NO_ASISTIO:   "No asistió",
+  EN_PROCESO:   "En proceso",
+  ASISTIDO:     "Asistido",
+  AUTORIZADO:   "Autorizado",
+  COMPLETADO:   "Completado",
+  ANULADO:      "Anulado",
+};
+
+const labelAccion = (a: string) => ACCION_LABEL[a] ?? a.replace(/_/g, " ").replace(/\b\w/g, c => c.toUpperCase());
+const labelEntidad = (e: string) => ENTIDAD_LABEL[e] ?? e;
+const labelEstado = (e: string) => ESTADO_LABEL[e] ?? e.replace(/_/g, " ");
+
 // Colorea la acción según su naturaleza (creación, modificación, baja).
 const colorAccion = (accion: string): string => {
-  const a = accion.toUpperCase();
-  if (a.startsWith("CREAR") || a.startsWith("ACTIVAR")) return "av-tag--green";
-  if (a.startsWith("DESACTIVAR") || a.startsWith("ELIMINAR") || a.startsWith("CANCELAR")) return "av-tag--red";
-  if (a.startsWith("RESETEAR")) return "av-tag--amber";
+  const a = accion.toLowerCase();
+  if (a.includes("crear") || a.includes("activar") || a.includes("autorizar") || a.includes("login")) return "av-tag--green";
+  if (a.includes("cancelar") || a.includes("anular") || a.includes("desactivar") || a.includes("eliminar")) return "av-tag--red";
+  if (a.includes("resetear") || a.includes("restablecer")) return "av-tag--amber";
   return "av-tag--blue";
 };
 
@@ -97,7 +151,7 @@ const VisorAuditoria = () => {
           <Search size={18} className="lista-search-icon" />
           <input
             type="text"
-            placeholder="Buscar por acción (ej: CREAR, DESACTIVAR)…"
+            placeholder="Buscar por acción (ej: cita, orden, usuario)…"
             value={busqueda}
             onChange={(e) => aplicarFiltro(() => setBusqueda(e.target.value))}
             className="lista-search-input"
@@ -110,7 +164,7 @@ const VisorAuditoria = () => {
           onChange={(e) => aplicarFiltro(() => setFiltroEntidad(e.target.value))}
         >
           <option value="">Todas las entidades</option>
-          {entidades.map((e) => <option key={e} value={e}>{e}</option>)}
+          {entidades.map((e) => <option key={e} value={e}>{labelEntidad(e)}</option>)}
         </select>
 
         <div className="av-date-group">
@@ -176,17 +230,18 @@ const VisorAuditoria = () => {
                       </span>
                     </td>
                     <td>
-                      <span className={`av-tag ${colorAccion(r.accion)}`}>{r.accion}</span>
+                      <span className={`av-tag ${colorAccion(r.accion)}`}>{labelAccion(r.accion)}</span>
                     </td>
-                    <td><span className="av-entidad">{r.entidad}</span></td>
+                    <td><span className="av-entidad">{labelEntidad(r.entidad)}</span></td>
                     <td>
-                      <span className="av-desc">{r.descripcion || "—"}</span>
-                      {(r.estadoAnterior || r.estadoNuevo) && (
+                      {(r.estadoAnterior || r.estadoNuevo) ? (
                         <span className="av-estados">
-                          {r.estadoAnterior && <span className="av-estado-old">{r.estadoAnterior}</span>}
+                          {r.estadoAnterior && <span className="av-estado-old">{labelEstado(r.estadoAnterior)}</span>}
                           {r.estadoAnterior && r.estadoNuevo && <span className="av-arrow">→</span>}
-                          {r.estadoNuevo && <span className="av-estado-new">{r.estadoNuevo}</span>}
+                          {r.estadoNuevo && <span className="av-estado-new">{labelEstado(r.estadoNuevo)}</span>}
                         </span>
+                      ) : (
+                        <span className="av-desc">{r.descripcion || "—"}</span>
                       )}
                     </td>
                   </tr>

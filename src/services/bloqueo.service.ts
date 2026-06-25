@@ -4,6 +4,9 @@ export interface Bloqueo {
   _id: string;
   doctorId: { _id: string; nombres: string; apellidos: string } | string;
   fecha: string;
+  tipoDia: "DIA_COMPLETO" | "RANGO_HORAS";
+  horaInicio?: string;
+  horaFin?: string;
   motivo: string;
   descripcion?: string;
   creadoPor?: { _id: string; nombres: string; apellidos: string } | string;
@@ -22,6 +25,9 @@ export class BloqueoService {
     fecha: string;
     motivo: string;
     descripcion?: string;
+    tipoDia?: "DIA_COMPLETO" | "RANGO_HORAS";
+    horaInicio?: string;
+    horaFin?: string;
   }): Promise<Bloqueo> {
     const res = await api.post<{ success: boolean; data: Bloqueo }>("/bloqueos", payload);
     return res.data.data;

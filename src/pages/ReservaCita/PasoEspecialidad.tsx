@@ -31,11 +31,15 @@ const PasoEspecialidad = ({
   }, [onToggleSuggestions]);
 
   // Filtrar - si no hay texto muestra todas
-  const sugerencias = searchEspecialidad
+  const sugerencias = (searchEspecialidad
     ? especialidades.filter((e) =>
         e.nombre.toLowerCase().includes(searchEspecialidad.toLowerCase())
       )
-    : especialidades;
+    : especialidades
+  ).slice().sort((a, b) => a.nombre.localeCompare(b.nombre, "es"));
+
+  const getPrecio = (nombre: string) =>
+    nombre.toLowerCase().includes("psiquiat") ? 90 : 40;
 
   return (
     <div className="form-step">
@@ -99,8 +103,12 @@ const PasoEspecialidad = ({
                         onToggleSuggestions(false);
                       }
                     }}
+                    style={{ display: "flex", alignItems: "center", width: "100%" }}
                   >
-                    {esp.nombre}
+                    <span style={{ flex: 1 }}>{esp.nombre}</span>
+                    <span style={{ fontSize: "0.82rem", fontWeight: 600, color: "var(--primary)", flexShrink: 0 }}>
+                      S/. {getPrecio(esp.nombre)}
+                    </span>
                   </div>
                 ))
               )}

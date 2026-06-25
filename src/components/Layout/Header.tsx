@@ -3,7 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { useAuth } from "../../hooks/userAuth";
 import { useTheme } from "../../context/ThemeContext";
 import { MedicoApiService } from "../../services/medico.service";
-import { Moon, Search, Sun, LogOut, ChevronDown, Menu, UserCircle } from "lucide-react";
+import { Moon, Search, Sun, LogOut, ChevronDown, Menu, UserCircle, Ticket } from "lucide-react";
 
 const BACKEND_URL = (import.meta.env.VITE_API_URL ?? "http://localhost:3000/api").replace(/\/api$/, "");
 const resolverAvatar = (avatar?: string) => (avatar ? `${BACKEND_URL}${avatar}` : undefined);
@@ -160,12 +160,30 @@ const Header = () => {
               {dropdownOpen && (
                 <div className="header-dropdown">
                   {user?.rol === "MEDICO" && (
+                    <>
+                      <button
+                        className="header-dropdown-item header-dropdown-item--neutral"
+                        onClick={() => { setDropdownOpen(false); navigate("/medico/perfil"); }}
+                      >
+                        <UserCircle size={15} strokeWidth={2} />
+                        <span>Perfil</span>
+                      </button>
+                      <button
+                        className="header-dropdown-item header-dropdown-item--neutral"
+                        onClick={() => { setDropdownOpen(false); navigate("/tickets"); }}
+                      >
+                        <Ticket size={15} strokeWidth={2} />
+                        <span>Tickets</span>
+                      </button>
+                    </>
+                  )}
+                  {user?.rol === "RECEPCIONISTA" && (
                     <button
                       className="header-dropdown-item header-dropdown-item--neutral"
-                      onClick={() => { setDropdownOpen(false); navigate("/medico/perfil"); }}
+                      onClick={() => { setDropdownOpen(false); navigate("/tickets"); }}
                     >
-                      <UserCircle size={15} strokeWidth={2} />
-                      <span>Perfil</span>
+                      <Ticket size={15} strokeWidth={2} />
+                      <span>Tickets</span>
                     </button>
                   )}
                   <button

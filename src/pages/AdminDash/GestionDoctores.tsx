@@ -1,7 +1,8 @@
 import { useEffect, useReducer, useState } from "react";
-import { Search, Plus, Pencil, Trash2, Stethoscope, X, AlertCircle, Check } from "lucide-react";
+import { Search, Plus, Pencil, Trash2, Stethoscope, X, AlertCircle, Check, CalendarOff } from "lucide-react";
 import { DoctorApiService, type DoctorTransformado } from "../../services/doctor.service";
 import { EspecialidadApiService, type Especialidad } from "../../services/especialidad.service";
+import { BloqueoService, type Bloqueo } from "../../services/bloqueo.service";
 import "./GestionarDoctores.css";
 
 // ─── Tipos ───────────────────────────────────────────────
@@ -82,6 +83,16 @@ const GestionarDoctores = () => {
   const [confirmDelete, setConfirmDelete] = useState<string | null>(null);
   const [notification, setNotification] = useState<NotificationState>({ message: "", type: "", visible: false });
   const [errorDependencias, setErrorDependencias] = useState<any[] | null>(null);
+
+  // ── Bloqueos ──────────────────────────────────────────────
+  const [doctorBloqueo, setDoctorBloqueo] = useState<DoctorTransformado | null>(null);
+  const [bloqueoFecha, setBloqueoFecha] = useState("");
+  const [bloqueoNota, setBloqueoNota] = useState("");
+  const [slotsDelDia, setSlotsDelDia] = useState<string[]>([]);
+  const [bloqueosPorDia, setBloqueosPorDia] = useState<Bloqueo[]>([]);
+  const [cargandoSlots, setCargandoSlots] = useState(false);
+  const [toggling, setToggling] = useState<string | null>(null);
+  const [bloqueoLoading, setBloqueoLoading] = useState(false);
   const [modal, dispatch] = useReducer(modalReducer, {
     abierto: false, doctor: null, campos: camposVacios, loading: false, error: "",
   });
@@ -89,6 +100,92 @@ const GestionarDoctores = () => {
   const showNotification = (message: string, type: "success" | "error") => {
     setNotification({ message, type, visible: true });
     setTimeout(() => setNotification((prev) => ({ ...prev, visible: false })), 3000);
+  };
+
+  const abrirBloqueos = (doctor: DoctorTransformado) => {
+    setDoctorBloqueo(doctor);
+    setBloqueoFecha("");
+    setBloqueoNota("");
+    setSlotsDelDia([]);
+    setBloqueosPorDia([]);
+  };
+
+  const cargarSlotsYBloqueos = async (doctor: DoctorTransformado, fecha: string) => {
+    if (!fecha) return;
+    setCargandoSlots(true);
+    try {
+      const [slots, bloqueos] = await Promise.all([
+        DoctorApiService.obtenerHorariosDia(doctor.id, fecha),
+        BloqueoService.listar({ doctorId: doctor.id }),
+      ]);
+      setSlotsDelDia(slots);
+      setBloqueosPorDia(bloqueos.filter(b => {
+        const bf = new Date(b.fecha).toISOString().split("T")[0];
+        return bf === fecha;
+      }));
+    } catch {
+      setSlotsDelDia([]);
+      setBloqueosPorDia([]);
+    } finally { setCargandoSlots(false); }
+  };
+
+  const calcHoraFin = (hora: string, slots: string[]): string => {
+    const idx = slots.indexOf(hora);
+    if (idx >= 0 && idx < slots.length - 1) return slots[idx + 1];
+    const [h, m] = hora.split(":").map(Number);
+    const total = h * 60 + m + 30;
+    return `${String(Math.floor(total / 60)).padStart(2, "0")}:${String(total % 60).padStart(2, "0")}`;
+  };
+
+  const toggleSlot = async (hora: string) => {
+    if (!doctorBloqueo || !bloqueoFecha || toggling) return;
+    setToggling(hora);
+
+    const bloqueoExistente = bloqueosPorDia.find(b =>
+      b.tipoDia === "RANGO_HORAS" && b.horaInicio === hora
+    );
+
+    try {
+      if (bloqueoExistente) {
+        await BloqueoService.desactivar(bloqueoExistente._id);
+      } else {
+        await BloqueoService.crear({
+          doctorId: doctorBloqueo.id,
+          fecha: bloqueoFecha,
+          motivo: "Bloqueado por administrador",
+          descripcion: bloqueoNota || undefined,
+          tipoDia: "RANGO_HORAS",
+          horaInicio: hora,
+          horaFin: calcHoraFin(hora, slotsDelDia),
+        });
+      }
+      await cargarSlotsYBloqueos(doctorBloqueo, bloqueoFecha);
+    } catch (err: any) {
+      showNotification(err?.response?.data?.message || "Error al cambiar bloqueo.", "error");
+    } finally { setToggling(null); }
+  };
+
+  const bloquearDiaCompleto = async () => {
+    if (!doctorBloqueo || !bloqueoFecha || bloqueoLoading) return;
+    const yaCompleto = bloqueosPorDia.some(b => b.tipoDia === "DIA_COMPLETO");
+    setBloqueoLoading(true);
+    try {
+      if (yaCompleto) {
+        const bc = bloqueosPorDia.find(b => b.tipoDia === "DIA_COMPLETO")!;
+        await BloqueoService.desactivar(bc._id);
+      } else {
+        await BloqueoService.crear({
+          doctorId: doctorBloqueo.id,
+          fecha: bloqueoFecha,
+          motivo: "Día bloqueado",
+          descripcion: bloqueoNota || undefined,
+          tipoDia: "DIA_COMPLETO",
+        });
+      }
+      await cargarSlotsYBloqueos(doctorBloqueo, bloqueoFecha);
+    } catch (err: any) {
+      showNotification(err?.response?.data?.message || "Error.", "error");
+    } finally { setBloqueoLoading(false); }
   };
 
   const cargar = async () => {
@@ -258,15 +355,22 @@ const GestionarDoctores = () => {
                           <button
                             className="btn-action"
                             onClick={() => dispatch({ type: "ABRIR_EDITAR", doctor: d })}
-                            title="Editar"
+                            title="Editar doctor"
                           >
                             <Pencil size={14} />
+                          </button>
+                          <button
+                            className="btn-action btn-action--amber"
+                            onClick={() => abrirBloqueos(d)}
+                            title="Gestionar bloqueos de horario"
+                          >
+                            <CalendarOff size={14} />
                           </button>
                           <button
                             className="btn-action btn-action--danger"
                             onClick={() => setConfirmDelete(d.id)}
                             disabled={eliminandoId === d.id}
-                            title="Eliminar"
+                            title="Eliminar doctor"
                           >
                             <Trash2 size={14} />
                           </button>
@@ -370,6 +474,132 @@ const GestionarDoctores = () => {
           </div>
         </div>
       )}
+
+      {/* Modal de bloqueos de horario */}
+      {doctorBloqueo && (() => {
+        const diaBloqueadoCompleto = bloqueosPorDia.some(b => b.tipoDia === "DIA_COMPLETO");
+        return (
+          <div className="pm-overlay" onClick={(e) => { if (e.target === e.currentTarget) setDoctorBloqueo(null); }}>
+            <div className="pm-modal" style={{ maxWidth: 520 }} onClick={e => e.stopPropagation()}>
+              <div className="pm-header">
+                <div className="pm-header-info">
+                  <div className="pm-header-icon" style={{ background: "rgba(245,158,11,0.12)", color: "#d97706" }}><CalendarOff size={16} /></div>
+                  <div>
+                    <h2>Bloquear horario — Dr. {doctorBloqueo.nombres} {doctorBloqueo.apellidos}</h2>
+                    <p style={{ fontSize: "0.78rem", color: "var(--text-muted)", margin: 0 }}>{doctorBloqueo.especialidad}</p>
+                  </div>
+                </div>
+                <button className="pm-close" onClick={() => setDoctorBloqueo(null)}><X size={16} /></button>
+              </div>
+
+              <div style={{ padding: "1.25rem", display: "flex", flexDirection: "column", gap: "1rem" }}>
+                {/* Selector de fecha */}
+                <div className="pm-field">
+                  <label className="pm-label">Fecha <span className="pm-req">*</span></label>
+                  <input
+                    type="date"
+                    className="pm-input"
+                    value={bloqueoFecha}
+                    min={new Date().toISOString().split("T")[0]}
+                    onChange={e => {
+                      const f = e.target.value;
+                      setBloqueoFecha(f);
+                      cargarSlotsYBloqueos(doctorBloqueo, f);
+                    }}
+                  />
+                </div>
+
+                {/* Grid de slots */}
+                {bloqueoFecha && (
+                  <div>
+                    {cargandoSlots ? (
+                      <div style={{ textAlign: "center", padding: "1.5rem 0", color: "var(--text-muted)", fontSize: "0.875rem" }}>
+                        <span className="pm-spinner-sm" style={{ display: "inline-block", marginRight: "0.5rem" }} />
+                        Cargando horario…
+                      </div>
+                    ) : slotsDelDia.length === 0 ? (
+                      <div style={{ textAlign: "center", padding: "1.5rem 0", color: "var(--text-muted)", fontSize: "0.875rem" }}>
+                        Este doctor no tiene horario registrado para esa fecha.
+                      </div>
+                    ) : (
+                      <>
+                        {diaBloqueadoCompleto && (
+                          <div style={{ marginBottom: "0.75rem", padding: "0.5rem 0.875rem", background: "rgba(239,68,68,0.08)", border: "1px solid rgba(239,68,68,0.25)", borderRadius: "var(--radius-md)", fontSize: "0.82rem", color: "#dc2626", fontWeight: 600 }}>
+                            Día completo bloqueado
+                          </div>
+                        )}
+                        <div style={{ display: "flex", flexWrap: "wrap", gap: "0.5rem" }}>
+                          {slotsDelDia.map(hora => {
+                            const bloqueado = diaBloqueadoCompleto || bloqueosPorDia.some(b =>
+                              b.tipoDia === "RANGO_HORAS" && b.horaInicio === hora
+                            );
+                            const cargando = toggling === hora;
+                            return (
+                              <button
+                                key={hora}
+                                type="button"
+                                disabled={!!toggling || bloqueoLoading}
+                                onClick={() => toggleSlot(hora)}
+                                style={{
+                                  padding: "0.4rem 0.85rem",
+                                  borderRadius: "var(--radius-md)",
+                                  border: bloqueado ? "1.5px solid #ef4444" : "1.5px solid var(--border)",
+                                  background: bloqueado ? "rgba(239,68,68,0.1)" : "var(--bg-card)",
+                                  color: bloqueado ? "#dc2626" : "var(--text-primary)",
+                                  fontWeight: 600,
+                                  fontSize: "0.82rem",
+                                  cursor: diaBloqueadoCompleto ? "default" : "pointer",
+                                  opacity: (!!toggling && toggling !== hora) ? 0.5 : 1,
+                                  transition: "all 0.15s",
+                                  minWidth: 62,
+                                }}
+                              >
+                                {cargando ? "…" : hora}
+                              </button>
+                            );
+                          })}
+                        </div>
+                        <p style={{ margin: "0.5rem 0 0", fontSize: "0.75rem", color: "var(--text-muted)" }}>
+                          Toca una hora para bloquear / desbloquear
+                        </p>
+                      </>
+                    )}
+                  </div>
+                )}
+
+                {/* Nota opcional */}
+                {bloqueoFecha && slotsDelDia.length > 0 && (
+                  <div className="pm-field">
+                    <label className="pm-label">Nota <span className="pm-label-optional">(opcional)</span></label>
+                    <input
+                      className="pm-input"
+                      placeholder="Ej: reunión, permiso médico…"
+                      value={bloqueoNota}
+                      onChange={e => setBloqueoNota(e.target.value)}
+                    />
+                  </div>
+                )}
+
+                {/* Bloquear / desbloquear día completo */}
+                {bloqueoFecha && slotsDelDia.length > 0 && (
+                  <div style={{ display: "flex", justifyContent: "flex-end", borderTop: "1px solid var(--border)", paddingTop: "1rem" }}>
+                    <button
+                      className="pm-btn pm-btn--primary"
+                      onClick={bloquearDiaCompleto}
+                      disabled={bloqueoLoading || !!toggling}
+                      style={{ background: diaBloqueadoCompleto ? "#6b7280" : "#d97706" }}
+                    >
+                      {bloqueoLoading
+                        ? <><span className="pm-spinner-sm" /> Guardando…</>
+                        : <><CalendarOff size={14} /> {diaBloqueadoCompleto ? "Desbloquear día completo" : "Bloquear día completo"}</>}
+                    </button>
+                  </div>
+                )}
+              </div>
+            </div>
+          </div>
+        );
+      })()}
 
       {/*Modal confirmar eliminación */}
       {confirmDelete && (

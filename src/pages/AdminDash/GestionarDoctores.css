@@ -12,6 +12,15 @@
   color: var(--primary);
 }
 
+.btn-action--amber {
+  color: #d97706;
+  border-color: rgba(217,119,6,0.25);
+}
+.btn-action--amber:hover {
+  background: rgba(245,158,11,0.1);
+  border-color: #d97706;
+}
+
 .pm-label-optional {
   font-size: 0.7rem;
   color: var(--text-muted);
