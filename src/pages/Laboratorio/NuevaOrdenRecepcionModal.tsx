@@ -64,11 +64,8 @@ export const NuevaOrdenRecepcionModal = ({ onCerrar, onOrdenCreada }: Props) => 
   const [gruposAbiertos, setGruposAbiertos] = useState<Set<string>>(new Set());
   const [busqExamen, setBusqExamen]         = useState("");
 
-  // Paso 4 – programación
-  const [fechaLab, setFechaLab]         = useState(hoyISO());
-  const [fechaImagen, setFechaImagen]   = useState(`${hoyISO()} 08:00`);
-  const [salaEquipo, setSalaEquipo]     = useState("");
-  const [duracion, setDuracion]         = useState(30);
+  // Paso 4 – programación por examen
+  const [fechasPorExamen, setFechasPorExamen] = useState<Record<string, string>>({});
 
   // Paso 5 – pago
   const [metodoPago, setMetodoPago]   = useState<MetodoPago>("EFECTIVO");
@@ -86,8 +83,9 @@ export const NuevaOrdenRecepcionModal = ({ onCerrar, onOrdenCreada }: Props) => 
   }, []);
 
   // ── Tipo de orden detectado ────────────────────────────────────────────────
+  const IMAGEN_TIPOS: TipoExamen[] = ["RADIOGRAFIA","ECOGRAFIA","TOMOGRAFIA","RESONANCIA","ELECTROCARDIOGRAMA"];
+
   const tipoOrden = useMemo(() => {
-    const IMAGEN_TIPOS: TipoExamen[] = ["RADIOGRAFIA","ECOGRAFIA","TOMOGRAFIA","RESONANCIA","ELECTROCARDIOGRAMA"];
     const selArray = [...seleccionados];
     const exSel = examenes.filter((e) => selArray.includes(e._id));
     const tieneImagen = exSel.some((e) => IMAGEN_TIPOS.includes(e.tipo));
@@ -141,16 +139,21 @@ export const NuevaOrdenRecepcionModal = ({ onCerrar, onOrdenCreada }: Props) => 
     }, {});
   }, [examenesTotalesFiltrados]);
 
+  const gruposLab = useMemo(() =>
+    Object.entries(grupos).filter(([tipo]) => TIPO_EXAMEN_CATEGORIA[tipo as TipoExamen] === "LABORATORIO"),
+    [grupos]
+  );
+  const gruposImagen = useMemo(() =>
+    Object.entries(grupos).filter(([tipo]) => TIPO_EXAMEN_CATEGORIA[tipo as TipoExamen] === "IMAGEN"),
+    [grupos]
+  );
+
   // ── Navegación entre pasos ─────────────────────────────────────────────────
   const puedeAvanzar = (): boolean => {
     if (paso === 1) return pacienteSelec !== null;
     if (paso === 2) return doctorSelec !== null;
     if (paso === 3) return seleccionados.size > 0;
-    if (paso === 4) {
-      if (necesitaLab    && !fechaLab)    return false;
-      if (necesitaImagen && !fechaImagen) return false;
-      return true;
-    }
+    if (paso === 4) return [...seleccionados].every(id => !!fechasPorExamen[id]);
     return true;
   };
 
@@ -165,15 +168,24 @@ export const NuevaOrdenRecepcionModal = ({ onCerrar, onOrdenCreada }: Props) => 
       const items = [...seleccionados].map((id) => ({
         examenId: id,
         observaciones: obsItem[id] || "",
+        fechaCita: fechasPorExamen[id] || "",
       }));
 
-      // Convertir fechas a formato DD/MM/YYYY [HH:mm]
-      const [fy, fm, fd] = fechaLab.split("-");
-      const fechaCitaLab = necesitaLab ? `${fd}/${fm}/${fy}` : undefined;
+      // Derivar fechas globales (primer examen de cada tipo) para validación de capacidad en backend
+      const exSel = examenes.filter(e => seleccionados.has(e._id));
+      const firstLab = exSel.find(e => !IMAGEN_TIPOS.includes(e.tipo));
+      const firstImg = exSel.find(e => IMAGEN_TIPOS.includes(e.tipo));
+
+      let fechaCitaLab: string | undefined;
+      if (firstLab && fechasPorExamen[firstLab._id]) {
+        const [y, m, d] = fechasPorExamen[firstLab._id].split("-");
+        fechaCitaLab = `${d}/${m}/${y}`;
+      }
 
       let citaImagenFechaFmt: string | undefined;
-      if (necesitaImagen) {
-        const [datePart, timePart] = fechaImagen.split(" ");
+      if (firstImg && fechasPorExamen[firstImg._id]) {
+        const dt = fechasPorExamen[firstImg._id]; // "YYYY-MM-DDTHH:mm"
+        const [datePart, timePart] = dt.split("T");
         const [iy, im, id_] = datePart.split("-");
         citaImagenFechaFmt = `${id_}/${im}/${iy} ${timePart ?? "08:00"}`;
       }
@@ -186,8 +198,6 @@ export const NuevaOrdenRecepcionModal = ({ onCerrar, onOrdenCreada }: Props) => 
         observacionesGenerales: obsGenerales,
         fechaCitaLab,
         citaImagenFecha: citaImagenFechaFmt,
-        salaEquipo:      salaEquipo || undefined,
-        duracionEstimadaMin: necesitaImagen ? duracion : undefined,
         metodoPago,
         montoPagado:     monto ? parseFloat(monto) : undefined,
       });
@@ -373,62 +383,85 @@ export const NuevaOrdenRecepcionModal = ({ onCerrar, onOrdenCreada }: Props) => 
               )}
 
               <div className="nor-examenes-scroll">
-                {Object.entries(grupos).map(([tipo, exs]) => {
-                  const abierto = gruposAbiertos.has(tipo);
-                  const cat = TIPO_EXAMEN_CATEGORIA[tipo as TipoExamen];
-                  return (
-                    <div key={tipo} className="nor-grupo">
-                      <button
-                        className="nor-grupo-header"
-                        data-open={abierto ? "true" : "false"}
-                        onClick={() => setGruposAbiertos((prev) => {
-                          const next = new Set(prev);
-                          next.has(tipo) ? next.delete(tipo) : next.add(tipo);
-                          return next;
-                        })}
-                      >
-                        <span className={`nor-grupo-cat nor-grupo-cat--${cat.toLowerCase()}`}>{cat}</span>
-                        <span className="nor-grupo-nombre">{TIPO_EXAMEN_LABEL[tipo as TipoExamen]}</span>
-                        <span className="nor-grupo-count">{exs.filter((e) => seleccionados.has(e._id)).length}/{exs.length}</span>
-                        <span className="nor-grupo-arrow">{abierto ? "▲" : "▼"}</span>
-                      </button>
-                      {abierto && (
-                        <div className="nor-grupo-body">
-                          {exs.map((ex) => {
-                            const sel = seleccionados.has(ex._id);
-                            return (
-                              <div key={ex._id} className={`nor-examen-row ${sel ? "nor-examen-row--sel" : ""}`}>
-                                <label className="nor-examen-check-wrap">
-                                  <input
-                                    type="checkbox"
-                                    checked={sel}
-                                    onChange={() => {
-                                      setSeleccionados((prev) => {
-                                        const next = new Set(prev);
-                                        next.has(ex._id) ? next.delete(ex._id) : next.add(ex._id);
-                                        return next;
-                                      });
-                                    }}
-                                  />
-                                  <span className="nor-examen-nombre">{ex.nombre}</span>
-                                  {ex.precio && <span className="nor-examen-precio">S/ {ex.precio.toFixed(2)}</span>}
-                                </label>
-                                {sel && (
-                                  <input
-                                    className="nor-examen-obs"
-                                    placeholder="Observaciones (opcional)"
-                                    value={obsItem[ex._id] ?? ""}
-                                    onChange={(e) => setObsItem((prev) => ({ ...prev, [ex._id]: e.target.value }))}
-                                  />
-                                )}
-                              </div>
-                            );
-                          })}
+                {gruposLab.length > 0 && (
+                  <>
+                    <div className="nor-seccion-header nor-seccion-header--lab">Laboratorio</div>
+                    {gruposLab.map(([tipo, exs]) => {
+                      const abierto = gruposAbiertos.has(tipo);
+                      return (
+                        <div key={tipo} className="nor-grupo">
+                          <button className="nor-grupo-header" data-open={abierto ? "true" : "false"}
+                            onClick={() => setGruposAbiertos(prev => { const n = new Set(prev); n.has(tipo) ? n.delete(tipo) : n.add(tipo); return n; })}>
+                            <span className="nor-grupo-cat nor-grupo-cat--laboratorio">LAB</span>
+                            <span className="nor-grupo-nombre">{TIPO_EXAMEN_LABEL[tipo as TipoExamen]}</span>
+                            <span className="nor-grupo-count">{exs.filter(e => seleccionados.has(e._id)).length}/{exs.length}</span>
+                            <span className="nor-grupo-arrow">{abierto ? "▲" : "▼"}</span>
+                          </button>
+                          {abierto && (
+                            <div className="nor-grupo-body">
+                              {exs.map(ex => {
+                                const sel = seleccionados.has(ex._id);
+                                return (
+                                  <div key={ex._id} className={`nor-examen-row ${sel ? "nor-examen-row--sel" : ""}`}>
+                                    <label className="nor-examen-check-wrap">
+                                      <input type="checkbox" checked={sel} onChange={() => setSeleccionados(prev => { const n = new Set(prev); n.has(ex._id) ? n.delete(ex._id) : n.add(ex._id); return n; })} />
+                                      <span className="nor-examen-nombre">{ex.nombre}</span>
+                                      {ex.precio > 0 && <span className="nor-examen-precio">S/ {ex.precio.toFixed(2)}</span>}
+                                    </label>
+                                    <div className="nor-examen-obs-wrap">
+                                      <input className="nor-examen-obs" placeholder="Observaciones (opcional)" tabIndex={sel ? 0 : -1}
+                                        value={obsItem[ex._id] ?? ""} onChange={e => setObsItem(prev => ({ ...prev, [ex._id]: e.target.value }))} />
+                                    </div>
+                                  </div>
+                                );
+                              })}
+                            </div>
+                          )}
                         </div>
-                      )}
-                    </div>
-                  );
-                })}
+                      );
+                    })}
+                  </>
+                )}
+
+                {gruposImagen.length > 0 && (
+                  <>
+                    <div className="nor-seccion-header nor-seccion-header--img">Imagenología</div>
+                    {gruposImagen.map(([tipo, exs]) => {
+                      const abierto = gruposAbiertos.has(tipo);
+                      return (
+                        <div key={tipo} className="nor-grupo">
+                          <button className="nor-grupo-header" data-open={abierto ? "true" : "false"}
+                            onClick={() => setGruposAbiertos(prev => { const n = new Set(prev); n.has(tipo) ? n.delete(tipo) : n.add(tipo); return n; })}>
+                            <span className="nor-grupo-cat nor-grupo-cat--imagen">IMAGEN</span>
+                            <span className="nor-grupo-nombre">{TIPO_EXAMEN_LABEL[tipo as TipoExamen]}</span>
+                            <span className="nor-grupo-count">{exs.filter(e => seleccionados.has(e._id)).length}/{exs.length}</span>
+                            <span className="nor-grupo-arrow">{abierto ? "▲" : "▼"}</span>
+                          </button>
+                          {abierto && (
+                            <div className="nor-grupo-body">
+                              {exs.map(ex => {
+                                const sel = seleccionados.has(ex._id);
+                                return (
+                                  <div key={ex._id} className={`nor-examen-row ${sel ? "nor-examen-row--sel" : ""}`}>
+                                    <label className="nor-examen-check-wrap">
+                                      <input type="checkbox" checked={sel} onChange={() => setSeleccionados(prev => { const n = new Set(prev); n.has(ex._id) ? n.delete(ex._id) : n.add(ex._id); return n; })} />
+                                      <span className="nor-examen-nombre">{ex.nombre}</span>
+                                      {ex.precio > 0 && <span className="nor-examen-precio">S/ {ex.precio.toFixed(2)}</span>}
+                                    </label>
+                                    <div className="nor-examen-obs-wrap">
+                                      <input className="nor-examen-obs" placeholder="Observaciones (opcional)" tabIndex={sel ? 0 : -1}
+                                        value={obsItem[ex._id] ?? ""} onChange={e => setObsItem(prev => ({ ...prev, [ex._id]: e.target.value }))} />
+                                    </div>
+                                  </div>
+                                );
+                              })}
+                            </div>
+                          )}
+                        </div>
+                      );
+                    })}
+                  </>
+                )}
               </div>
 
               <textarea
@@ -441,63 +474,38 @@ export const NuevaOrdenRecepcionModal = ({ onCerrar, onOrdenCreada }: Props) => 
             </div>
           )}
 
-          {/* ── Paso 4: Programación ── */}
+          {/* ── Paso 4: Programación por examen ── */}
           {paso === 4 && (
             <div className="nor-paso">
-              <h4 className="nor-paso-titulo"><CalendarCheck size={16} /> Programar Cita</h4>
-              <div className="nor-tipo-badge nor-tipo-badge--{tipoOrden.toLowerCase()}">
-                Tipo de orden: <strong>{tipoOrden}</strong>
-              </div>
-
-              {necesitaLab && (
-                <div className="nor-field-group">
-                  <label className="nor-label">Fecha de toma de muestra (Laboratorio)</label>
-                  <input
-                    type="date"
-                    className="nor-input"
-                    value={fechaLab}
-                    min={hoyISO()}
-                    onChange={(e) => setFechaLab(e.target.value)}
-                  />
-                </div>
-              )}
-
-              {necesitaImagen && (
-                <>
-                  <div className="nor-field-group">
-                    <label className="nor-label">Fecha y hora de cita (Imagenología)</label>
+              <h4 className="nor-paso-titulo"><CalendarCheck size={16} /> Programar citas</h4>
+              <p className="nor-programa-hint">
+                Asigna fecha y hora a cada examen. Los de laboratorio usan solo fecha; los de imagenología requieren fecha y hora.
+              </p>
+              {[...seleccionados].map(id => {
+                const ex = examenes.find(e => e._id === id);
+                if (!ex) return null;
+                const esImagen = IMAGEN_TIPOS.includes(ex.tipo);
+                const cat = TIPO_EXAMEN_CATEGORIA[ex.tipo];
+                const tieneValor = !!fechasPorExamen[id];
+                return (
+                  <div key={id} className={`nor-programa-item ${tieneValor ? "nor-programa-item--ok" : ""}`}>
+                    <div className="nor-programa-item-header">
+                      <span className={`nor-grupo-cat nor-grupo-cat--${cat.toLowerCase()}`}>
+                        {cat === "IMAGEN" ? "IMAGEN" : "LAB"}
+                      </span>
+                      <span className="nor-programa-nombre">{ex.nombre}</span>
+                      {tieneValor && <span className="nor-programa-check">✓</span>}
+                    </div>
                     <input
-                      type="datetime-local"
+                      type={esImagen ? "datetime-local" : "date"}
                       className="nor-input"
-                      value={fechaImagen}
-                      min={`${hoyISO()}T00:00`}
-                      onChange={(e) => setFechaImagen(e.target.value)}
+                      value={fechasPorExamen[id] ?? ""}
+                      min={esImagen ? `${hoyISO()}T00:00` : hoyISO()}
+                      onChange={e => setFechasPorExamen(prev => ({ ...prev, [id]: e.target.value }))}
                     />
                   </div>
-                  <div className="nor-row-2">
-                    <div className="nor-field-group">
-                      <label className="nor-label">Sala / Equipo (opcional)</label>
-                      <input
-                        className="nor-input"
-                        placeholder="Ej: Sala de Rayos X"
-                        value={salaEquipo}
-                        onChange={(e) => setSalaEquipo(e.target.value)}
-                      />
-                    </div>
-                    <div className="nor-field-group">
-                      <label className="nor-label">Duración estimada (min)</label>
-                      <input
-                        type="number"
-                        className="nor-input"
-                        min={5}
-                        max={180}
-                        value={duracion}
-                        onChange={(e) => setDuracion(Number(e.target.value))}
-                      />
-                    </div>
-                  </div>
-                </>
-              )}
+                );
+              })}
             </div>
           )}
 
@@ -524,18 +532,10 @@ export const NuevaOrdenRecepcionModal = ({ onCerrar, onOrdenCreada }: Props) => 
                   <span className="nor-resumen-lbl">Exámenes</span>
                   <span className="nor-resumen-val">{seleccionados.size} examen{seleccionados.size > 1 ? "es" : ""}</span>
                 </div>
-                {necesitaLab && (
-                  <div className="nor-resumen-fila">
-                    <span className="nor-resumen-lbl">Fecha Lab</span>
-                    <span className="nor-resumen-val">{isoADMY(fechaLab)}</span>
-                  </div>
-                )}
-                {necesitaImagen && (
-                  <div className="nor-resumen-fila">
-                    <span className="nor-resumen-lbl">Cita Imagen</span>
-                    <span className="nor-resumen-val">{fechaImagen.replace("T", " ")}</span>
-                  </div>
-                )}
+                <div className="nor-resumen-fila">
+                  <span className="nor-resumen-lbl">Citas programadas</span>
+                  <span className="nor-resumen-val">{Object.keys(fechasPorExamen).filter(id => seleccionados.has(id)).length} / {seleccionados.size}</span>
+                </div>
                 {precioEstimado > 0 && (
                   <div className="nor-resumen-fila nor-resumen-fila--total">
                     <span className="nor-resumen-lbl">Total estimado</span>

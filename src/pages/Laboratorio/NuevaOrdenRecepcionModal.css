@@ -390,9 +390,19 @@
   white-space: nowrap;
 }
 
+/* Wrapper animado — siempre presente, height 0 cuando no seleccionado */
+.nor-examen-obs-wrap {
+  max-height: 0;
+  overflow: hidden;
+  transition: max-height 0.15s ease;
+}
+.nor-examen-row--sel .nor-examen-obs-wrap {
+  max-height: 44px;
+}
+
 .nor-examen-obs {
   display: block;
-  margin-top: 0.4rem;
+  margin-top: 0.35rem;
   margin-left: 1.65rem;
   width: calc(100% - 1.65rem);
   padding: 0.3rem 0.65rem;
@@ -406,6 +416,68 @@
 }
 .nor-examen-obs::placeholder { color: var(--text-muted); }
 .nor-examen-obs:focus { outline: none; border-color: #10b981; }
+
+/* ── Sección headers (Laboratorio / Imagenología) ───── */
+.nor-seccion-header {
+  font-size: 0.72rem;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.07em;
+  padding: 0.35rem 0.5rem;
+  margin-top: 0.25rem;
+  border-radius: var(--radius-sm);
+}
+.nor-seccion-header--lab {
+  color: #1e40af;
+  background: #dbeafe;
+}
+.nor-seccion-header--img {
+  color: #5b21b6;
+  background: #ede9fe;
+}
+
+/* ── Programación por examen (Paso 4) ───────────────── */
+.nor-programa-hint {
+  font-size: 0.8rem;
+  color: var(--text-muted);
+  margin: 0;
+  line-height: 1.5;
+}
+
+.nor-programa-item {
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+  padding: 0.75rem 0.875rem;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  background: var(--bg-page);
+  transition: border-color 0.15s;
+}
+
+.nor-programa-item--ok {
+  border-color: rgba(16,185,129,0.4);
+  background: rgba(16,185,129,0.04);
+}
+
+.nor-programa-item-header {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.nor-programa-nombre {
+  flex: 1;
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.nor-programa-check {
+  font-size: 0.8rem;
+  color: #10b981;
+  font-weight: 700;
+}
 
 .nor-obs-generales {
   width: 100%;
