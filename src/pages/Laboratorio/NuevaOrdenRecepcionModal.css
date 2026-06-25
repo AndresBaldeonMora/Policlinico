@@ -294,8 +294,7 @@
   align-items: center;
   gap: 0.5rem;
   padding: 0.55rem 0.9rem;
-  /* diferencia visual clara respecto al body en modo oscuro */
-  background: color-mix(in srgb, var(--bg-card) 80%, #000 20%);
+  background: var(--bg-muted, #f3f4f6);
   border: none;
   border-bottom: 1px solid transparent;
   width: 100%;
@@ -305,12 +304,7 @@
   color: var(--text-primary);
   transition: background 0.15s;
 }
-/* fallback para navegadores sin color-mix */
-@supports not (background: color-mix(in srgb, red 50%, blue)) {
-  .nor-grupo-header { background: #111827; }
-  [data-theme="light"] .nor-grupo-header { background: #e5e7eb; }
-}
-.nor-grupo-header:hover { filter: brightness(1.1); }
+.nor-grupo-header:hover { background: var(--bg-hover, #e5e7eb); }
 .nor-grupo-header[data-open="true"] { border-bottom-color: var(--border); }
 
 .nor-grupo-cat {
