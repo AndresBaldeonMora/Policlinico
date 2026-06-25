@@ -178,7 +178,7 @@ const PerfilCita = () => {
       toastExito("Orden cancelada correctamente");
       await cargarOrdenes();
     } catch {
-      Swal.fire("Error", "No se pudo cancelar la orden.", "error");
+      toastError("No se pudo cancelar la orden.");
     }
   };
 
@@ -238,7 +238,7 @@ const PerfilCita = () => {
       toastExito("Asistencia confirmada. Esperando finalización del médico.");
       cargarCita();
     } catch (error) {
-      Swal.fire("Error", "No se pudo confirmar la asistencia", "error");
+      toastError("No se pudo confirmar la asistencia");
     }
   };
 

@@ -25,6 +25,7 @@ import { NuevaOrdenRecepcionModal } from "./NuevaOrdenRecepcionModal";
 import type { OrdenExamen, EstadoOrden } from "../../services/examen.service";
 import { ExamenService, TIPO_EXAMEN_LABEL } from "../../services/examen.service";
 import Swal from "sweetalert2";
+import { toastExito, toastError } from "../../utils/toast";
 
 import "./Laboratorio.css";
 import "../ListaCitas/ListaCitas.css";
@@ -1324,15 +1325,7 @@ const ModalAsistencia = ({ orden, onCerrar, onGuardado }: ModalAsistenciaProps) 
       await ExamenService.registrarAsistencia(orden._id, respuestasPayload);
       onGuardado();
       onCerrar();
-      Swal.fire({
-        icon: "success",
-        title: "Asistencia registrada",
-        text: "El paciente ha sido registrado como presente. La orden pasa a análisis.",
-        timer: 2500,
-        showConfirmButton: false,
-        toast: true,
-        position: "top-end",
-      });
+      toastExito("Asistencia registrada. La orden pasa a análisis.");
     } catch (e: any) {
       setError(e?.response?.data?.message ?? "No se pudo registrar la asistencia.");
     } finally {

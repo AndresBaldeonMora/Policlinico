@@ -3,6 +3,7 @@ import { CitaApiService } from "../../services/cita.service";
 import type { CitaTransformada, AuditoriaCita } from "../../services/cita.service";
 import { X, MapPin } from "lucide-react";
 import Swal from "sweetalert2";
+import { toastExito, toastError } from "../../utils/toast";
 import { fmtEstado, horasHastaCitaISO } from "../../utils/fecha.utils";
 import "../../pages/MedicoDashboard/CitaModal.css";
 import "./CitaQuickModal.css";
@@ -89,9 +90,9 @@ const CitaQuickModal = ({ citaId, onCerrar, onCitaActualizada, onReprogramar }: 
       await CitaApiService.eliminar(cita._id);
       onCitaActualizada();
       onCerrar();
-      Swal.fire({ icon: "success", title: "Cita eliminada", toast: true, position: "top-end", timer: 3000, showConfirmButton: false });
+      toastExito("Cita eliminada");
     } catch (err) {
-      Swal.fire({ icon: "error", title: "Error", text: err instanceof Error ? err.message : "Error al eliminar" });
+      toastError(err instanceof Error ? err.message : "Error al eliminar");
     }
   };
 

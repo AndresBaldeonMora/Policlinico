@@ -236,7 +236,7 @@ function PresupuestosTab({ ordenes }: { ordenes: any[] }) {
           )}
 
           <div className="pd-orden-footer">
-            <span>Médico: {o.medicoNombre ?? "—"}</span>
+            <span>Médico: {o.doctorId ? `${o.doctorId.nombres} ${o.doctorId.apellidos}` : (o.medicoNombre ?? "—")}</span>
             <span>{o.fechaCreacion ? fmtFecha(String(o.fechaCreacion)) : ""}</span>
           </div>
         </div>

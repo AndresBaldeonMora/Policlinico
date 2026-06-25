@@ -8,6 +8,7 @@ import { EspecialidadApiService } from "../../services/especialidad.service";
 import { DoctorApiService } from "../../services/doctor.service";
 import { CitaApiService } from "../../services/cita.service";
 import { BloqueoService } from "../../services/bloqueo.service";
+import { toastExito, toastError } from "../../utils/toast";
 
 import { reservaReducer, initialState, generarMesesDisponibles, generarDiasDelMes } from "./reservaCitaReducer";
 import type { MesOption, ReservaAction } from "./reservaCitaReducer";
@@ -140,11 +141,18 @@ const ReservaCita = () => {
         ? PacienteApiService.obtenerMiPerfil().then((p) => (p ? [p as any] : []))
         : PacienteApiService.listar();
 
-      const [pacientes, especialidades, doctores] = await Promise.all([
+      const [pacientes, especialidadesRaw, doctores] = await Promise.all([
         pacientesPromise,
         EspecialidadApiService.listar(),
         DoctorApiService.listar(),
       ]);
+      const seen = new Set<string>();
+      const especialidades = especialidadesRaw.filter((e) => {
+        const key = e.nombre.trim().toLowerCase();
+        if (seen.has(key)) return false;
+        seen.add(key);
+        return true;
+      });
       dispatch({ type: "CARGA_EXITO", pacientes, especialidades, doctores, meses: generarMesesDisponibles() });
 
       if (esPaciente) {
@@ -314,13 +322,12 @@ const ReservaCita = () => {
         hora: horaSeleccionada,
       });
 
-      dispatch({ type: "CONFIRMAR_EXITO" });
-      setTimeout(() => {
-        dispatch({ type: "HIDE_NOTIFICATION" });
-        dispatch({ type: "RESET" });
-      }, NOTIFICATION_DURATION);
+      toastExito("Cita registrada exitosamente");
+      dispatch({ type: "RESET" });
     } catch (err) {
-      dispatch({ type: "CONFIRMAR_ERROR", message: err instanceof Error ? err.message : "Error al crear la cita" });
+      const msg = err instanceof Error ? err.message : "Error al crear la cita";
+      toastError(msg);
+      dispatch({ type: "CONFIRMAR_ERROR", message: msg });
     }
   }, [state]);
 
@@ -341,12 +348,6 @@ const ReservaCita = () => {
   // ── Main render ───────────────────────────────────────
   return (
     <div className="reserva-cita">
-      {state.notification.visible && (
-        <div className={`notification ${state.notification.type}`}>
-          {state.notification.message}
-        </div>
-      )}
-
       <div className="reserva-cita-header">
         <h1 style={{ display: "inline-flex", alignItems: "center", gap: 8 }}><Calendar size={22} /> Reservar Cita Médica</h1>
         <button

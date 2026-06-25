@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import { Camera, User, Mail, Phone, Award, Stethoscope } from "lucide-react";
 import Swal from "sweetalert2";
+import { toastExito, toastError } from "../../utils/toast";
 import { MedicoApiService, type MedicoPerfil } from "../../services/medico.service";
 import "./PerfilMedico.css";
 
@@ -30,9 +31,9 @@ export default function PerfilMedico() {
     try {
       const { avatarUrl } = await MedicoApiService.subirAvatar(file);
       setPerfil(prev => prev ? { ...prev, avatar: avatarUrl } : prev);
-      Swal.fire({ icon: "success", title: "Foto actualizada", timer: 1500, showConfirmButton: false });
+      toastExito("Foto actualizada");
     } catch (err: any) {
-      Swal.fire({ icon: "error", title: "Error", text: err?.response?.data?.message ?? err?.message ?? "Error al subir foto", confirmButtonColor: "var(--primary)" });
+      toastError(err?.response?.data?.message ?? err?.message ?? "Error al subir foto");
     } finally {
       setSubiendo(false);
     }

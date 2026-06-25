@@ -2,6 +2,7 @@
 import { useEffect, useReducer, useCallback, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
 import Swal from "sweetalert2";
+import { toastExito, toastError } from "../../utils/toast";
 import { CitaApiService } from "../../services/cita.service";
 import { DoctorApiService } from "../../services/doctor.service";
 import { BloqueoService, type Bloqueo } from "../../services/bloqueo.service";
@@ -200,7 +201,7 @@ const Calendario = () => {
       await CitaApiService.cambiarEstado(citaId, "ASISTIO");
       cargarCitas();
     } catch {
-      Swal.fire({ icon: "error", title: "Error", text: "No se pudo actualizar el estado." });
+      toastError("No se pudo actualizar el estado.");
     }
   }, [cargarCitas]);
 
@@ -220,9 +221,9 @@ const Calendario = () => {
     try {
       await CitaApiService.eliminar(citaId);
       cargarCitas();
-      Swal.fire({ icon: "success", title: "Cita eliminada", toast: true, position: "top-end", timer: 3000, showConfirmButton: false });
+      toastExito("Cita eliminada");
     } catch {
-      Swal.fire({ icon: "error", title: "Error", text: "No se pudo eliminar la cita." });
+      toastError("No se pudo eliminar la cita.");
     }
   }, [cargarCitas]);
 
@@ -280,9 +281,9 @@ const Calendario = () => {
       await CitaApiService.reprogramar(editando.id, editando.fecha, editando.hora);
       repDispatch({ type: "CLOSE_MODAL" });
       cargarCitas();
-      Swal.fire({ icon: "success", title: "Cita reprogramada", toast: true, position: "top-end", timer: 3000, showConfirmButton: false });
+      toastExito("Cita reprogramada");
     } catch {
-      Swal.fire({ icon: "error", title: "Error", text: "No se pudo reprogramar la cita." });
+      toastError("No se pudo reprogramar la cita.");
     }
   }, [editando, cargarCitas]);
 
