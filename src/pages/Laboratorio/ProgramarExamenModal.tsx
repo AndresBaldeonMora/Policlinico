@@ -273,7 +273,8 @@ function HorarioImagen({ examen, onSeleccionar, onCerrar }: Props) {
               className="pem-input"
               value={fecha}
               min={hoyISO()}
-              onChange={e => setFecha(e.target.value)}
+              max="2099-12-31"
+              onChange={e => { if (e.target.value >= hoyISO()) setFecha(e.target.value); }}
             />
           </div>
 
