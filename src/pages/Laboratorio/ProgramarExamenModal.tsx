@@ -23,6 +23,10 @@ const isoToBackend = (iso: string) => {
 const MESES = ["Enero","Febrero","Marzo","Abril","Mayo","Junio","Julio","Agosto","Septiembre","Octubre","Noviembre","Diciembre"];
 const DIAS_SEMANA = ["Lu","Ma","Mi","Ju","Vi","Sá","Do"];
 
+// Laboratorio atiende toma de muestras de 7:00 a 11:00 a.m.
+// Si ya pasaron las 11:00, el día de hoy ya no tiene cupos.
+const LAB_HORA_CIERRE = 11; // 11:00 a.m.
+
 const IMAGEN_TIPOS: TipoExamen[] = ["RADIOGRAFIA","ECOGRAFIA","TOMOGRAFIA","RESONANCIA","ELECTROCARDIOGRAMA"];
 
 // Genera franjas horarias de 7:00 a 17:30 cada 30 min
@@ -92,6 +96,9 @@ function CalendarioLab({ examen, onSeleccionar, onCerrar }: Props) {
   const offsetLun = (primero === 0 ? 6 : primero - 1);
   const diasEnMes = new Date(anio, mes + 1, 0).getDate();
   const hoyISO_   = hoyISO();
+  // Si ya pasó la hora de cierre del lab (11 AM), hoy también está bloqueado
+  const horaActual = new Date().getHours();
+  const hoyYaSinCupos = horaActual >= LAB_HORA_CIERRE;
 
   const celdas: (number | null)[] = [
     ...Array(offsetLun).fill(null),
@@ -149,7 +156,8 @@ function CalendarioLab({ examen, onSeleccionar, onCerrar }: Props) {
                 const iso = getDiaISO(d);
                 const oc  = ocupados[iso] ?? 0;
                 const pasado = iso < hoyISO_;
-                const lleno  = oc >= capacidad;
+                const esHoy  = iso === hoyISO_;
+                const lleno  = oc >= capacidad || (esHoy && hoyYaSinCupos);
                 const casi   = !lleno && oc >= capacidad * 0.8;
                 const activo = iso === seleccionado;
                 const disabled = pasado || lleno;
