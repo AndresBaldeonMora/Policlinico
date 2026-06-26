@@ -1449,6 +1449,24 @@
   overflow: hidden;
   transition: border-color 0.12s;
 }
+/* Tarjeta como botón (abre modal de detalle) */
+.sp-cita-card--btn {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 10px 12px;
+  cursor: pointer;
+  background: var(--bg-card);
+  text-align: left;
+  font-family: inherit;
+  transition: background 0.1s, border-color 0.12s;
+  min-height: 52px;
+}
+.sp-cita-card--btn:hover { background: var(--bg-hover); border-color: var(--primary); }
+.sp-cita-card-right-hint { display: flex; align-items: center; gap: 6px; flex-shrink: 0; }
+
 .sp-cita-card--open { border-color: var(--primary); }
 .sp-cita-card-header {
   display: flex;
@@ -1572,6 +1590,59 @@
 .sp-count-pill--success {
   background: #dcfce7;
   color: #166534;
+}
+
+/* ── Modal detalle de cita clínica ──────────────────────────────── */
+.scd-bloque {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 0.75rem 0.9rem;
+  background: var(--bg-muted, #f9fafb);
+  border: 1px solid var(--border, #e5e7eb);
+  border-radius: 10px;
+}
+.scd-bloque--dx {
+  background: #f0fdf4;
+  border-color: #bbf7d0;
+}
+.scd-bloque-titulo {
+  font-size: 10px;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.07em;
+  color: var(--text-muted);
+  margin: 0;
+}
+.scd-bloque--dx .scd-bloque-titulo { color: #166534; }
+.scd-bloque-texto {
+  font-size: 13px;
+  color: var(--text-primary);
+  line-height: 1.55;
+  margin: 0;
+  white-space: pre-wrap;
+}
+.scd-vitales {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+.scd-vital {
+  font-size: 12px;
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 3px 8px;
+  color: var(--text-primary);
+}
+.scd-cie10 {
+  font-size: 11px;
+  color: #166534;
+  font-weight: 600;
+  background: #dcfce7;
+  border-radius: 5px;
+  padding: 2px 7px;
+  width: fit-content;
 }
 .sp-orden-link {
   display: inline-flex;

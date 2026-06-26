@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import Swal from "sweetalert2";
-import { AlertTriangle, Pill, Plus, ChevronDown, ChevronUp, Scissors, Users, Activity } from "lucide-react";
+import { AlertTriangle, Pill, Plus, ChevronDown, ChevronUp, ChevronRight, Scissors, Users, Activity } from "lucide-react";
 import "./NotaSOAP.css";
 import { formatearFechaDMY, formatearFechaCorta } from "../../utils/fecha.utils";
 
@@ -75,6 +75,7 @@ export default function NotaSOAP() {
   const [modalCitas,           setModalCitas]           = useState(false);
   const [citaExpandidaModal,   setCitaExpandidaModal]   = useState<string | null>(null);
   const [paginaCitas,          setPaginaCitas]          = useState(0);
+  const [citaDetalle,          setCitaDetalle]          = useState<CitaHistorial | null>(null);
   const [savingHistorial,      setSavingHistorial]      = useState(false);
   const [modalHistorial,       setModalHistorial]       = useState<"alergia" | "medicamento" | "problema" | "cirugia" | "antFamiliar" | null>(null);
   const [nuevoItem,         setNuevoItem]         = useState<Record<string, string>>({});
@@ -658,51 +659,20 @@ export default function NotaSOAP() {
               ) : (
                 <>
                   {historialCitas.filter(c => c.estado === "ATENDIDA").slice(0, 3).map(c => {
-                    const esExpandida = citaExpandidaId === c._id;
                     const especialidad = (c.doctorId as any)?.especialidadId?.nombre ?? "—";
                     const doctor = c.doctorId ? `${c.doctorId.nombres} ${c.doctorId.apellidos}` : "—";
-                    let motivoConsulta = "";
-                    if (c.notasClinicas) {
-                      try {
-                        const parsed = JSON.parse(c.notasClinicas);
-                        motivoConsulta = parsed.soap?.S?.motivoConsulta ?? "";
-                      } catch { /* ignorar */ }
-                    }
                     return (
-                      <div key={c._id} className={`sp-cita-card${esExpandida ? " sp-cita-card--open" : ""}`}>
-                        <div className="sp-cita-card-header" onClick={() => setCitaExpandidaId(esExpandida ? null : c._id)}>
-                          <div className="sp-cita-card-left">
-                            <span className="sp-cita-card-fecha">{formatearFechaCorta(c.fecha)}</span>
-                            <span className="sp-cita-card-esp">{especialidad}</span>
-                            <span className="sp-cita-card-dr">Dr. {doctor}</span>
-                          </div>
-                          <span className="sp-badge sp-badge--atendida">ATENDIDA</span>
+                      <button key={c._id} className="sp-cita-card sp-cita-card--btn" onClick={() => setCitaDetalle(c)}>
+                        <div className="sp-cita-card-left">
+                          <span className="sp-cita-card-fecha">{formatearFechaCorta(c.fecha)}</span>
+                          <span className="sp-cita-card-esp">{especialidad}</span>
+                          <span className="sp-cita-card-dr">Dr. {doctor}</span>
                         </div>
-                        {esExpandida && (
-                          <div className="sp-cita-card-body">
-                            {motivoConsulta && (
-                              <div className="sp-cita-detail-row">
-                                <span className="sp-cita-detail-lbl">Motivo</span>
-                                <span>{motivoConsulta}</span>
-                              </div>
-                            )}
-                            {c.diagnostico ? (
-                              <div className="sp-cita-detail-row">
-                                <span className="sp-cita-detail-lbl">Dx</span>
-                                <span>{c.diagnostico}</span>
-                              </div>
-                            ) : (
-                              <span className="sp-hist-empty" style={{ fontStyle: "italic" }}>Sin diagnóstico registrado</span>
-                            )}
-                            {c.tratamiento && (
-                              <div className="sp-cita-detail-row">
-                                <span className="sp-cita-detail-lbl">Tx</span>
-                                <span>{c.tratamiento}</span>
-                              </div>
-                            )}
-                          </div>
-                        )}
-                      </div>
+                        <div className="sp-cita-card-right-hint">
+                          <span className="sp-badge sp-badge--atendida">ATENDIDA</span>
+                          <ChevronRight size={12} style={{ color: "var(--text-muted)" }} />
+                        </div>
+                      </button>
                     );
                   })}
                   {historialCitas.filter(c => c.estado === "ATENDIDA").length > 3 && (
@@ -972,53 +942,20 @@ export default function NotaSOAP() {
               {/* Lista */}
               <div style={{ overflowY: "auto", padding: "12px 16px", display: "flex", flexDirection: "column", gap: 6, flex: 1 }}>
                 {citasPag.map(c => {
-                  const esExpandida = citaExpandidaModal === c._id;
                   const especialidad = (c.doctorId as any)?.especialidadId?.nombre ?? "—";
                   const doctor = c.doctorId ? `${c.doctorId.nombres} ${c.doctorId.apellidos}` : "—";
-                  let motivoConsulta = "";
-                  if (c.notasClinicas) {
-                    try {
-                      const parsed = JSON.parse(c.notasClinicas);
-                      motivoConsulta = parsed.soap?.S?.motivoConsulta ?? "";
-                    } catch { /* ignorar */ }
-                  }
                   return (
-                    <div key={c._id} className={`sp-cita-card${esExpandida ? " sp-cita-card--open" : ""}`}>
-                      <div className="sp-cita-card-header" onClick={() => setCitaExpandidaModal(esExpandida ? null : c._id)}>
-                        <div className="sp-cita-card-left">
-                          <div className="sp-cita-card-top-row">
-                            <span className="sp-cita-card-fecha">{formatearFechaCorta(c.fecha)}</span>
-                            <span className="sp-cita-card-esp">{especialidad}</span>
-                          </div>
-                          <span className="sp-cita-card-dr">Dr. {doctor}</span>
-                        </div>
-                        <span className="sp-badge sp-badge--atendida">ATENDIDA</span>
+                    <button key={c._id} className="sp-cita-card sp-cita-card--btn" onClick={() => setCitaDetalle(c)}>
+                      <div className="sp-cita-card-left">
+                        <span className="sp-cita-card-fecha">{formatearFechaCorta(c.fecha)}</span>
+                        <span className="sp-cita-card-esp">{especialidad}</span>
+                        <span className="sp-cita-card-dr">Dr. {doctor}</span>
                       </div>
-                      {esExpandida && (
-                        <div className="sp-cita-card-body">
-                          {motivoConsulta && (
-                            <div className="sp-cita-detail-row">
-                              <span className="sp-cita-detail-lbl">Motivo</span>
-                              <span>{motivoConsulta}</span>
-                            </div>
-                          )}
-                          {c.diagnostico ? (
-                            <div className="sp-cita-detail-row">
-                              <span className="sp-cita-detail-lbl">Dx</span>
-                              <span>{c.diagnostico}</span>
-                            </div>
-                          ) : (
-                            <span className="sp-hist-empty" style={{ fontStyle: "italic" }}>Sin diagnóstico registrado</span>
-                          )}
-                          {c.tratamiento && (
-                            <div className="sp-cita-detail-row">
-                              <span className="sp-cita-detail-lbl">Tx</span>
-                              <span>{c.tratamiento}</span>
-                            </div>
-                          )}
-                        </div>
-                      )}
-                    </div>
+                      <div className="sp-cita-card-right-hint">
+                        <span className="sp-badge sp-badge--atendida">ATENDIDA</span>
+                        <ChevronRight size={12} style={{ color: "var(--text-muted)" }} />
+                      </div>
+                    </button>
                   );
                 })}
               </div>
@@ -1044,6 +981,111 @@ export default function NotaSOAP() {
                   >Siguiente →</button>
                 </div>
               )}
+            </div>
+          </div>
+        );
+      })()}
+
+      {/* ── Modal detalle de cita ── */}
+      {citaDetalle && (() => {
+        const c = citaDetalle;
+        const especialidad = (c.doctorId as any)?.especialidadId?.nombre ?? "—";
+        const doctor = c.doctorId ? `${c.doctorId.nombres} ${c.doctorId.apellidos}` : "—";
+        let soap: any = {};
+        if (c.notasClinicas) {
+          try { soap = JSON.parse(c.notasClinicas)?.soap ?? {}; } catch { /* ignorar */ }
+        }
+        const S = soap.S ?? {};
+        const O = soap.O ?? {};
+        const A = soap.A ?? {};
+        const P = soap.P ?? {};
+
+        return (
+          <div
+            style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.5)", zIndex: 1100, display: "flex", alignItems: "center", justifyContent: "center", padding: "1rem" }}
+            onClick={() => setCitaDetalle(null)}
+          >
+            <div
+              style={{ background: "var(--bg-card)", borderRadius: 14, width: 560, maxWidth: "95vw", maxHeight: "88vh", display: "flex", flexDirection: "column", boxShadow: "0 24px 60px rgba(0,0,0,0.25)", border: "1px solid var(--border)" }}
+              onClick={e => e.stopPropagation()}
+            >
+              {/* Header */}
+              <div style={{ padding: "1rem 1.25rem 0.9rem", borderBottom: "1px solid var(--border)", display: "flex", justifyContent: "space-between", alignItems: "flex-start", flexShrink: 0 }}>
+                <div>
+                  <p style={{ margin: 0, fontSize: 11, fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.06em", color: "var(--text-muted)" }}>Consulta anterior</p>
+                  <h3 style={{ margin: "2px 0 0", fontSize: 16, fontWeight: 800, color: "var(--text-primary)" }}>{formatearFechaCorta(c.fecha)}</h3>
+                  <p style={{ margin: "3px 0 0", fontSize: 12, color: "var(--text-muted)" }}>{especialidad} · Dr. {doctor}</p>
+                </div>
+                <button onClick={() => setCitaDetalle(null)} style={{ background: "none", border: "none", cursor: "pointer", fontSize: 20, color: "var(--text-muted)", lineHeight: 1, padding: "2px 6px" }}>×</button>
+              </div>
+
+              {/* Body */}
+              <div style={{ overflowY: "auto", padding: "1rem 1.25rem", display: "flex", flexDirection: "column", gap: "0.85rem", flex: 1 }}>
+
+                {/* Motivo de consulta */}
+                {S.motivoConsulta && (
+                  <div className="scd-bloque">
+                    <p className="scd-bloque-titulo">Motivo de consulta</p>
+                    <p className="scd-bloque-texto">{S.motivoConsulta}</p>
+                  </div>
+                )}
+
+                {/* Síntomas */}
+                {S.sintomasDescripcion && (
+                  <div className="scd-bloque">
+                    <p className="scd-bloque-titulo">Síntomas</p>
+                    <p className="scd-bloque-texto">{S.sintomasDescripcion}</p>
+                  </div>
+                )}
+
+                {/* Signos vitales */}
+                {O.signosVitales && Object.values(O.signosVitales).some(Boolean) && (
+                  <div className="scd-bloque">
+                    <p className="scd-bloque-titulo">Signos vitales</p>
+                    <div className="scd-vitales">
+                      {O.signosVitales.presionArterial && <span className="scd-vital"><strong>PA</strong> {O.signosVitales.presionArterial}</span>}
+                      {O.signosVitales.frecuenciaCardiaca && <span className="scd-vital"><strong>FC</strong> {O.signosVitales.frecuenciaCardiaca} lpm</span>}
+                      {O.signosVitales.frecuenciaRespiratoria && <span className="scd-vital"><strong>FR</strong> {O.signosVitales.frecuenciaRespiratoria} rpm</span>}
+                      {O.signosVitales.temperatura && <span className="scd-vital"><strong>T°</strong> {O.signosVitales.temperatura} °C</span>}
+                      {O.signosVitales.saturacionOxigeno && <span className="scd-vital"><strong>SpO₂</strong> {O.signosVitales.saturacionOxigeno}%</span>}
+                      {O.signosVitales.peso && <span className="scd-vital"><strong>Peso</strong> {O.signosVitales.peso} kg</span>}
+                      {O.signosVitales.talla && <span className="scd-vital"><strong>Talla</strong> {O.signosVitales.talla} cm</span>}
+                    </div>
+                  </div>
+                )}
+
+                {/* Examen físico */}
+                {O.examenFisico && (
+                  <div className="scd-bloque">
+                    <p className="scd-bloque-titulo">Examen físico</p>
+                    <p className="scd-bloque-texto">{O.examenFisico}</p>
+                  </div>
+                )}
+
+                {/* Diagnóstico */}
+                {(c.diagnostico || A.diagnostico) && (
+                  <div className="scd-bloque scd-bloque--dx">
+                    <p className="scd-bloque-titulo">Diagnóstico</p>
+                    <p className="scd-bloque-texto">{c.diagnostico || A.diagnostico}</p>
+                    {A.cie10 && <span className="scd-cie10">CIE-10: {A.cie10}</span>}
+                  </div>
+                )}
+
+                {/* Tratamiento / Plan */}
+                {(c.tratamiento || P.tratamiento) && (
+                  <div className="scd-bloque">
+                    <p className="scd-bloque-titulo">Tratamiento</p>
+                    <p className="scd-bloque-texto">{c.tratamiento || P.tratamiento}</p>
+                  </div>
+                )}
+
+                {/* Sin notas */}
+                {!S.motivoConsulta && !c.diagnostico && !c.tratamiento && (
+                  <p style={{ color: "var(--text-muted)", fontStyle: "italic", fontSize: 13, textAlign: "center", padding: "1.5rem 0" }}>
+                    Esta consulta no tiene notas clínicas registradas.
+                  </p>
+                )}
+              </div>
             </div>
           </div>
         );
