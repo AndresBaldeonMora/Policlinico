@@ -11,6 +11,7 @@ import type { PacienteTransformado } from "../../services/paciente.service";
 import { DoctorApiService } from "../../services/doctor.service";
 import type { DoctorTransformado } from "../../services/doctor.service";
 import AgregarPacienteSimple from "../ReservaCita/AgregarPacienteSimple";
+import { ProgramarExamenModal } from "./ProgramarExamenModal";
 import Swal from "sweetalert2";
 import "./NuevaOrdenRecepcionModal.css";
 
@@ -66,6 +67,7 @@ export const NuevaOrdenRecepcionModal = ({ onCerrar, onOrdenCreada }: Props) => 
 
   // Paso 4 – programación por examen
   const [fechasPorExamen, setFechasPorExamen] = useState<Record<string, string>>({});
+  const [examenProgramando, setExamenProgramando] = useState<ExamenLaboratorioImagen | null>(null);
 
   // Paso 5 – pago
   const [metodoPago, setMetodoPago]   = useState<MetodoPago>("EFECTIVO");
@@ -479,14 +481,28 @@ export const NuevaOrdenRecepcionModal = ({ onCerrar, onOrdenCreada }: Props) => 
             <div className="nor-paso">
               <h4 className="nor-paso-titulo"><CalendarCheck size={16} /> Programar citas</h4>
               <p className="nor-programa-hint">
-                Asigna fecha y hora a cada examen. Los de laboratorio usan solo fecha; los de imagenología requieren fecha y hora.
+                Selecciona la disponibilidad de cada examen. Laboratorio muestra cupos por día; imagenología muestra horarios disponibles.
               </p>
               {[...seleccionados].map(id => {
                 const ex = examenes.find(e => e._id === id);
                 if (!ex) return null;
                 const esImagen = IMAGEN_TIPOS.includes(ex.tipo);
                 const cat = TIPO_EXAMEN_CATEGORIA[ex.tipo];
-                const tieneValor = !!fechasPorExamen[id];
+                const valor = fechasPorExamen[id];
+                const tieneValor = !!valor;
+
+                let displayFecha = "";
+                if (valor) {
+                  if (esImagen) {
+                    const [datePart, timePart] = valor.split("T");
+                    const [y, m, d] = datePart.split("-");
+                    displayFecha = `${d}/${m}/${y} ${timePart ?? ""}`;
+                  } else {
+                    const [y, m, d] = valor.split("-");
+                    displayFecha = `${d}/${m}/${y}`;
+                  }
+                }
+
                 return (
                   <div key={id} className={`nor-programa-item ${tieneValor ? "nor-programa-item--ok" : ""}`}>
                     <div className="nor-programa-item-header">
@@ -496,16 +512,24 @@ export const NuevaOrdenRecepcionModal = ({ onCerrar, onOrdenCreada }: Props) => 
                       <span className="nor-programa-nombre">{ex.nombre}</span>
                       {tieneValor && <span className="nor-programa-check">✓</span>}
                     </div>
-                    <input
-                      type={esImagen ? "datetime-local" : "date"}
-                      className="nor-input"
-                      value={fechasPorExamen[id] ?? ""}
-                      min={esImagen ? `${hoyISO()}T00:00` : hoyISO()}
-                      onChange={e => setFechasPorExamen(prev => ({ ...prev, [id]: e.target.value }))}
-                    />
+                    <button
+                      className={`nor-programa-selec-btn ${tieneValor ? "nor-programa-selec-btn--ok" : ""}`}
+                      onClick={() => setExamenProgramando(ex)}
+                    >
+                      <CalendarCheck size={14} />
+                      {tieneValor ? displayFecha : (esImagen ? "Seleccionar fecha y horario" : "Ver disponibilidad y seleccionar fecha")}
+                    </button>
                   </div>
                 );
               })}
+
+              {examenProgramando && (
+                <ProgramarExamenModal
+                  examen={examenProgramando}
+                  onSeleccionar={valor => setFechasPorExamen(prev => ({ ...prev, [examenProgramando._id]: valor }))}
+                  onCerrar={() => setExamenProgramando(null)}
+                />
+              )}
             </div>
           )}
 

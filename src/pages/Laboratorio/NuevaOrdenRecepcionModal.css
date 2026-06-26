@@ -479,6 +479,35 @@
   font-weight: 700;
 }
 
+.nor-programa-selec-btn {
+  display: flex;
+  align-items: center;
+  gap: 0.45rem;
+  width: 100%;
+  padding: 0.55rem 0.8rem;
+  border: 1.5px dashed var(--border, #e5e7eb);
+  border-radius: var(--radius-md);
+  background: var(--bg-muted, #f9fafb);
+  color: var(--text-muted, #6b7280);
+  font-size: 0.82rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: border-color 0.15s, background 0.15s, color 0.15s;
+  text-align: left;
+}
+.nor-programa-selec-btn:hover {
+  border-color: var(--primary, #0ea5e9);
+  color: var(--primary, #0ea5e9);
+  background: rgba(14,165,233,0.05);
+}
+.nor-programa-selec-btn--ok {
+  border-style: solid;
+  border-color: #10b981;
+  background: rgba(16,185,129,0.06);
+  color: #065f46;
+  font-weight: 600;
+}
+
 .nor-obs-generales {
   width: 100%;
   padding: 0.6rem 0.8rem;
