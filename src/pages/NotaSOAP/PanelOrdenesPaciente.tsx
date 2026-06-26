@@ -165,15 +165,20 @@ export default function PanelOrdenesPaciente({ pacienteId }: Props) {
                 const itemsConResultado = o.items?.filter(it => it.valorResultado || it.archivoUrl) ?? [];
                 const totalItems = o.items?.length ?? 0;
 
+                // Nombres de exámenes para preview en header
+                const nombresExamenes = o.items?.map(it => {
+                  const ex = typeof it.examenId === "object" ? it.examenId : null;
+                  return ex?.nombre || null;
+                }).filter(Boolean) ?? [];
+
                 return (
                   <div
                     key={o._id}
                     className={`pop-orden pop-orden--${meta.cls}${esExpandida ? " pop-orden--open" : ""}`}
                   >
-                    {/* Rail lateral */}
                     <div className="pop-orden-rail" />
 
-                    {/* Header */}
+                    {/* Header clicable */}
                     <button
                       className="pop-orden-head"
                       onClick={() => setOrdenAbierta(esExpandida ? null : o._id)}
@@ -187,13 +192,17 @@ export default function PanelOrdenesPaciente({ pacienteId }: Props) {
                       <div className="pop-orden-main">
                         <div className="pop-orden-top">
                           <span className="pop-orden-cod">{codigo}</span>
-                          <span className="pop-orden-tipo-label">{tipo.label}</span>
-                          {totalItems > 0 && (
-                            <span className="pop-orden-items">
-                              {totalItems} {totalItems === 1 ? "examen" : "exámenes"}
-                            </span>
-                          )}
+                          <span className={`pop-badge pop-badge--${meta.cls}`}>
+                            <EstadoIcon size={10} />{meta.label}
+                          </span>
                         </div>
+                        {/* Nombres de exámenes en el header */}
+                        {nombresExamenes.length > 0 && (
+                          <div className="pop-orden-examenes-preview">
+                            {nombresExamenes.slice(0, 3).join(" · ")}
+                            {nombresExamenes.length > 3 && ` +${nombresExamenes.length - 3} más`}
+                          </div>
+                        )}
                         <div className="pop-orden-sub">
                           <span>{formatFecha(o.fecha)}</span>
                           {o.especialidadId?.nombre && <span>· {o.especialidadId.nombre}</span>}
@@ -201,64 +210,72 @@ export default function PanelOrdenesPaciente({ pacienteId }: Props) {
                       </div>
 
                       <div className="pop-orden-right">
-                        <span className={`pop-badge pop-badge--${meta.cls}`}>
-                          <EstadoIcon size={10} />
-                          {meta.label}
-                        </span>
                         {esExpandida ? <ChevronUp size={12} /> : <ChevronDown size={12} />}
                       </div>
                     </button>
 
-                    {/* Cuerpo */}
+                    {/* Cuerpo expandido — detalle completo */}
                     {esExpandida && (
                       <div className="pop-orden-body">
-                        {/* PDF link */}
+                        {/* PDF */}
                         {o.estado === "FINALIZADO" && o.archivoResultadoUrl && (
-                          <a
-                            className="pop-pdf"
-                            href={o.archivoResultadoUrl}
-                            target="_blank"
-                            rel="noreferrer"
-                          >
-                            <FileText size={12} />
-                            <span>Ver PDF de resultados</span>
-                            <ExternalLink size={10} />
+                          <a className="pop-pdf" href={o.archivoResultadoUrl} target="_blank" rel="noreferrer">
+                            <FileText size={12} /><span>Ver PDF de resultados</span><ExternalLink size={10} />
                           </a>
                         )}
 
-                        {/* Tabla de items con resultados */}
-                        {itemsConResultado.length > 0 ? (
-                          <div className="pop-tabla">
-                            <div className="pop-tabla-head">
-                              <span>Examen</span>
-                              <span>Resultado</span>
-                              <span>Unidad</span>
-                            </div>
-                            {itemsConResultado.map((it, idx) => {
+                        {/* Observaciones generales */}
+                        {o.observacionesGenerales && (
+                          <div className="pop-indic">
+                            <span className="pop-indic-label">Indicaciones generales</span>
+                            <span className="pop-indic-text">{o.observacionesGenerales}</span>
+                          </div>
+                        )}
+
+                        {/* Todos los ítems */}
+                        {(o.items?.length ?? 0) > 0 && (
+                          <div className="pop-items-lista">
+                            {o.items!.map((it, idx) => {
                               const ex = typeof it.examenId === "object" ? it.examenId : null;
                               const nombre = ex?.nombre || "Examen";
                               const tipoEx = ex?.tipo ? TIPO_EXAMEN_LABEL[ex.tipo] ?? ex.tipo : "";
+                              const fechaCita = it.fechaCita
+                                ? new Date(it.fechaCita).toLocaleString("es-PE", { day:"2-digit", month:"short", year:"numeric", hour:"2-digit", minute:"2-digit", timeZone:"UTC" })
+                                : null;
+                              const tieneResultado = !!(it.valorResultado || it.archivoUrl);
                               return (
-                                <div key={idx} className="pop-tabla-row">
-                                  <span className="pop-tabla-nombre">
-                                    {nombre}
-                                    {tipoEx && <span className="pop-tabla-tipo"> · {tipoEx}</span>}
-                                  </span>
-                                  <span className="pop-tabla-valor">{it.valorResultado || "—"}</span>
-                                  <span className="pop-tabla-unidad">{it.unidadResultado || ""}</span>
+                                <div key={idx} className={`pop-item-row ${tieneResultado ? "pop-item-row--ok" : ""}`}>
+                                  <div className="pop-item-left">
+                                    <span className={`pop-item-sec pop-item-sec--${it.seccion?.toLowerCase() ?? "lab"}`}>
+                                      {it.seccion === "IMAGEN" ? "IMAGEN" : "LAB"}
+                                    </span>
+                                    <div className="pop-item-info">
+                                      <span className="pop-item-nombre">{nombre}</span>
+                                      {tipoEx && <span className="pop-item-tipo">{tipoEx}</span>}
+                                      {it.observaciones && <span className="pop-item-obs">"{it.observaciones}"</span>}
+                                      {fechaCita && <span className="pop-item-fecha">📅 {fechaCita}</span>}
+                                    </div>
+                                  </div>
+                                  <div className="pop-item-right">
+                                    {tieneResultado ? (
+                                      <span className="pop-item-result">
+                                        {it.valorResultado && <strong>{it.valorResultado}</strong>}
+                                        {it.unidadResultado && <span> {it.unidadResultado}</span>}
+                                        {it.archivoUrl && !it.valorResultado && (
+                                          <a href={it.archivoUrl} target="_blank" rel="noreferrer" className="pop-item-arch">
+                                            <FileText size={11} /> Archivo
+                                          </a>
+                                        )}
+                                      </span>
+                                    ) : (
+                                      <span className="pop-item-pendiente">
+                                        <Hourglass size={10} /> Pendiente
+                                      </span>
+                                    )}
+                                  </div>
                                 </div>
                               );
                             })}
-                          </div>
-                        ) : o.observacionesGenerales ? (
-                          <div className="pop-indic">
-                            <span className="pop-indic-label">Indicaciones</span>
-                            <span className="pop-indic-text">{o.observacionesGenerales}</span>
-                          </div>
-                        ) : (
-                          <div className="pop-sin-result">
-                            <Hourglass size={12} />
-                            <span>Sin resultados cargados aún</span>
                           </div>
                         )}
                       </div>
@@ -344,6 +361,10 @@ export default function PanelOrdenesPaciente({ pacienteId }: Props) {
                 const esExpandida = ordenAbiertaModal === o._id;
                 const itemsConResultado = o.items?.filter(it => it.valorResultado || it.archivoUrl) ?? [];
                 const totalItems = o.items?.length ?? 0;
+                const nombresExamenesM = o.items?.map(it => {
+                  const ex = typeof it.examenId === "object" ? it.examenId : null;
+                  return ex?.nombre || null;
+                }).filter(Boolean) ?? [];
                 return (
                   <div key={o._id} className={`pop-orden pop-orden--${meta.cls}${esExpandida ? " pop-orden--open" : ""}`}>
                     <div className="pop-orden-rail" />
@@ -354,16 +375,20 @@ export default function PanelOrdenesPaciente({ pacienteId }: Props) {
                       <div className="pop-orden-main">
                         <div className="pop-orden-top">
                           <span className="pop-orden-cod">{codigo}</span>
-                          <span className="pop-orden-tipo-label">{tipo.label}</span>
-                          {totalItems > 0 && <span className="pop-orden-items">{totalItems} {totalItems === 1 ? "examen" : "exámenes"}</span>}
+                          <span className={`pop-badge pop-badge--${meta.cls}`}><EstadoIcon size={10} />{meta.label}</span>
                         </div>
+                        {nombresExamenesM.length > 0 && (
+                          <div className="pop-orden-examenes-preview">
+                            {nombresExamenesM.slice(0,3).join(" · ")}
+                            {nombresExamenesM.length > 3 && ` +${nombresExamenesM.length - 3} más`}
+                          </div>
+                        )}
                         <div className="pop-orden-sub">
                           <span>{formatFecha(o.fecha)}</span>
                           {o.especialidadId?.nombre && <span>· {o.especialidadId.nombre}</span>}
                         </div>
                       </div>
                       <div className="pop-orden-right">
-                        <span className={`pop-badge pop-badge--${meta.cls}`}><EstadoIcon size={10} />{meta.label}</span>
                         {esExpandida ? <ChevronUp size={12} /> : <ChevronDown size={12} />}
                       </div>
                     </button>
@@ -374,29 +399,48 @@ export default function PanelOrdenesPaciente({ pacienteId }: Props) {
                             <FileText size={12} /><span>Ver PDF de resultados</span><ExternalLink size={10} />
                           </a>
                         )}
-                        {itemsConResultado.length > 0 ? (
-                          <div className="pop-tabla">
-                            <div className="pop-tabla-head"><span>Examen</span><span>Resultado</span><span>Unidad</span></div>
-                            {itemsConResultado.map((it, idx) => {
+                        {o.observacionesGenerales && (
+                          <div className="pop-indic">
+                            <span className="pop-indic-label">Indicaciones generales</span>
+                            <span className="pop-indic-text">{o.observacionesGenerales}</span>
+                          </div>
+                        )}
+                        {(o.items?.length ?? 0) > 0 && (
+                          <div className="pop-items-lista">
+                            {o.items!.map((it, idx) => {
                               const ex = typeof it.examenId === "object" ? it.examenId : null;
                               const nombre = ex?.nombre || "Examen";
                               const tipoEx = ex?.tipo ? TIPO_EXAMEN_LABEL[ex.tipo] ?? ex.tipo : "";
+                              const fechaCita = it.fechaCita ? new Date(it.fechaCita).toLocaleString("es-PE", { day:"2-digit", month:"short", year:"numeric", hour:"2-digit", minute:"2-digit", timeZone:"UTC" }) : null;
+                              const tieneResultado = !!(it.valorResultado || it.archivoUrl);
                               return (
-                                <div key={idx} className="pop-tabla-row">
-                                  <span className="pop-tabla-nombre">{nombre}{tipoEx && <span className="pop-tabla-tipo"> · {tipoEx}</span>}</span>
-                                  <span className="pop-tabla-valor">{it.valorResultado || "—"}</span>
-                                  <span className="pop-tabla-unidad">{it.unidadResultado || ""}</span>
+                                <div key={idx} className={`pop-item-row ${tieneResultado ? "pop-item-row--ok" : ""}`}>
+                                  <div className="pop-item-left">
+                                    <span className={`pop-item-sec pop-item-sec--${it.seccion?.toLowerCase() ?? "lab"}`}>{it.seccion === "IMAGEN" ? "IMAGEN" : "LAB"}</span>
+                                    <div className="pop-item-info">
+                                      <span className="pop-item-nombre">{nombre}</span>
+                                      {tipoEx && <span className="pop-item-tipo">{tipoEx}</span>}
+                                      {it.observaciones && <span className="pop-item-obs">"{it.observaciones}"</span>}
+                                      {fechaCita && <span className="pop-item-fecha">📅 {fechaCita}</span>}
+                                    </div>
+                                  </div>
+                                  <div className="pop-item-right">
+                                    {tieneResultado ? (
+                                      <span className="pop-item-result">
+                                        {it.valorResultado && <strong>{it.valorResultado}</strong>}
+                                        {it.unidadResultado && <span> {it.unidadResultado}</span>}
+                                        {it.archivoUrl && !it.valorResultado && (
+                                          <a href={it.archivoUrl} target="_blank" rel="noreferrer" className="pop-item-arch"><FileText size={11} /> Archivo</a>
+                                        )}
+                                      </span>
+                                    ) : (
+                                      <span className="pop-item-pendiente"><Hourglass size={10} /> Pendiente</span>
+                                    )}
+                                  </div>
                                 </div>
                               );
                             })}
                           </div>
-                        ) : o.observacionesGenerales ? (
-                          <div className="pop-indic">
-                            <span className="pop-indic-label">Indicaciones</span>
-                            <span className="pop-indic-text">{o.observacionesGenerales}</span>
-                          </div>
-                        ) : (
-                          <div className="pop-sin-result"><Hourglass size={12} /><span>Sin resultados cargados aún</span></div>
                         )}
                       </div>
                     )}

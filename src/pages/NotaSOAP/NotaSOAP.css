@@ -1942,6 +1942,64 @@
   border-radius: 6px;
 }
 
+/* ── Preview de nombres en header ────────────────────────────────── */
+.pop-orden-examenes-preview {
+  font-size: 11px;
+  color: var(--text-secondary, #374151);
+  font-weight: 500;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 100%;
+  margin-top: 1px;
+}
+
+/* ── Lista de ítems de orden ─────────────────────────────────────── */
+.pop-items-lista {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+.pop-item-row {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 8px 10px;
+  border-top: 1px solid var(--border-subtle, #f3f4f6);
+  transition: background 0.12s;
+}
+.pop-item-row:first-child { border-top: none; }
+.pop-item-row:hover { background: var(--bg-hover); }
+.pop-item-row--ok { background: rgba(16,185,129,0.04); }
+
+.pop-item-left { display: flex; align-items: flex-start; gap: 7px; flex: 1; min-width: 0; }
+
+.pop-item-sec {
+  font-size: 9px; font-weight: 800; letter-spacing: 0.06em;
+  padding: 2px 5px; border-radius: 4px; flex-shrink: 0; margin-top: 1px;
+}
+.pop-item-sec--lab   { background: #dbeafe; color: #1e40af; }
+.pop-item-sec--imagen { background: #ede9fe; color: #5b21b6; }
+
+.pop-item-info { display: flex; flex-direction: column; gap: 1px; min-width: 0; }
+.pop-item-nombre { font-size: 12px; font-weight: 600; color: var(--text-primary); }
+.pop-item-tipo   { font-size: 10.5px; color: var(--text-muted); }
+.pop-item-obs    { font-size: 10.5px; color: var(--text-muted); font-style: italic; }
+.pop-item-fecha  { font-size: 10.5px; color: var(--text-muted); }
+
+.pop-item-right { flex-shrink: 0; text-align: right; }
+.pop-item-result { font-size: 12px; color: var(--text-primary); display: flex; flex-direction: column; align-items: flex-end; gap: 2px; }
+.pop-item-arch   { font-size: 11px; color: var(--primary); display: flex; align-items: center; gap: 3px; text-decoration: none; }
+.pop-item-pendiente {
+  font-size: 10.5px; color: var(--text-muted); font-style: italic;
+  display: flex; align-items: center; gap: 3px;
+}
+
 /* ── Loading / Empty ─────────────────────────────────────────────── */
 .pop-loading { display: flex; flex-direction: column; gap: 6px; }
 .pop-sk {
