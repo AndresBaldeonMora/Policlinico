@@ -206,12 +206,19 @@ function CalendarioLab({ examen, onSeleccionar, onCerrar }: Props) {
 // ═══════════════════════════════════════════════════════════════════════════════
 // Modal de programación para IMAGENOLOGÍA (selector de horario)
 // ═══════════════════════════════════════════════════════════════════════════════
+function sumarDias(iso: string, n: number): string {
+  const d = new Date(`${iso}T12:00:00`);
+  d.setDate(d.getDate() + n);
+  return d.toISOString().slice(0, 10);
+}
+
 function HorarioImagen({ examen, onSeleccionar, onCerrar }: Props) {
   const [fecha, setFecha]       = useState(hoyISO());
   const [ocupadas, setOcupadas] = useState<{ inicio: string; fin: string }[]>([]);
   const [cargando, setCargando] = useState(false);
   const [horaSelec, setHoraSelec] = useState("");
-  const duracion = 30; // minutos por defecto
+  const [buscandoProximo, setBuscandoProximo] = useState(false);
+  const duracion = 30;
 
   useEffect(() => {
     if (!fecha) return;
@@ -221,6 +228,24 @@ function HorarioImagen({ examen, onSeleccionar, onCerrar }: Props) {
       .then(r => setOcupadas(r.franjasOcupadas))
       .finally(() => setCargando(false));
   }, [fecha]);
+
+  // Si no quedan slots disponibles en el día actual, avanzar al próximo con disponibilidad
+  useEffect(() => {
+    if (cargando) return;
+    const franjas = generarFranjas();
+    const hoyISO_ = hoyISO();
+    const ahoraMin = new Date().getHours() * 60 + new Date().getMinutes();
+    const hayDisponibles = franjas.some(slot => {
+      const pasado = fecha === hoyISO_ && horaAMin(slot) <= ahoraMin;
+      return !pasado && !franjaOcupada(slot, duracion, ocupadas);
+    });
+    if (!hayDisponibles && !buscandoProximo) {
+      setBuscandoProximo(true);
+      setFecha(prev => sumarDias(prev, 1));
+    } else {
+      setBuscandoProximo(false);
+    }
+  }, [ocupadas, cargando]);
 
   const franjas = generarFranjas();
   const hoyISO_ = hoyISO();
