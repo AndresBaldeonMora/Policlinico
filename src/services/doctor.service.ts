@@ -15,6 +15,9 @@ export interface Doctor {
   telefono: string;
   especialidadId: EspecialidadPoblada | string;
   cmp?: string;
+  descripcion?: string;
+  consultorio?: number;
+  turno?: "MANANA" | "TARDE" | "AMBOS";
   createdAt?: string;
   updatedAt?: string;
 }
@@ -28,6 +31,9 @@ export interface DoctorTransformado {
   especialidad: string;
   especialidadId: string;
   cmp?: string;
+  descripcion?: string;
+  consultorio?: number;
+  turno?: "MANANA" | "TARDE" | "AMBOS";
 }
 
 export interface HorarioDisponible {
@@ -54,6 +60,9 @@ const transformarDoctor = (doctor: Doctor): DoctorTransformado => {
     especialidad: esp?.nombre || "Sin especialidad",
     especialidadId: esp?._id || (typeof doctor.especialidadId === "string" ? doctor.especialidadId : ""),
     cmp: doctor.cmp,
+    descripcion: doctor.descripcion,
+    consultorio: doctor.consultorio,
+    turno: doctor.turno,
   };
 };
 
@@ -113,6 +122,9 @@ export class DoctorApiService {
     telefono: string;
     especialidadId: string;
     cmp?: string;
+    descripcion?: string;
+    consultorio?: number;
+    turno?: string;
   }): Promise<DoctorTransformado> {
     try {
       const response = await api.post<{ success: boolean; data: Doctor }>("/doctores", payload);
@@ -130,6 +142,9 @@ export class DoctorApiService {
     telefono: string;
     especialidadId: string;
     cmp: string;
+    descripcion: string;
+    consultorio: number;
+    turno: string;
   }>): Promise<DoctorTransformado> {
     try {
       const response = await api.patch<{ success: boolean; data: Doctor }>(`/doctores/${id}`, payload);

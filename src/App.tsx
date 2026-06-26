@@ -32,6 +32,7 @@ import PerfilMedico from "./pages/PerfilMedico/PerfilMedico";
 import AdminDashboard from "./pages/AdminDash/AdminDashboard";
 import GestionEspecialidades from "./pages/AdminDash/GestionEspecialidades";
 import GestionDoctores from "./pages/AdminDash/GestionDoctores";
+import GestionHorarios from "./pages/AdminDash/GestionHorarios";
 import GestionUsuarios from "./pages/AdminDash/GestionUsuarios";
 import VisorAuditoria from "./pages/AdminDash/VisorAuditoria";
 import GestionMedicamentos from "./pages/AdminDash/GestionMedicamentos";
@@ -297,6 +298,14 @@ function App() {
               element={
                 <ProtectedRoute roles={["administrador"]}>
                   <GestionDoctores />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/admin/horarios"
+              element={
+                <ProtectedRoute roles={["administrador"]}>
+                  <GestionHorarios />
                 </ProtectedRoute>
               }
             />

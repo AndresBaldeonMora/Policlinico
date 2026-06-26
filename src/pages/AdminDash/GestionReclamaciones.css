@@ -234,15 +234,12 @@
   margin-bottom: 1.5rem;
 }
 
-/* Remover margen inferior del buscador y forzar alto consistente */
+/* Buscador reclamaciones */
 .av-filters .lista-search-bar {
-  margin-bottom: 0 !important;
-  height: 42px !important;
-  box-sizing: border-box !important;
-}
-
-.av-filters .lista-search-input {
-  line-height: normal;
+  margin-bottom: 0;
+  flex: 1;
+  max-width: 420px;
+  min-width: 260px;
 }
 
 /* Forzar estilos del select */

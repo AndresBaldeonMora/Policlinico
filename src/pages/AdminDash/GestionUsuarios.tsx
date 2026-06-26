@@ -298,14 +298,14 @@ const GestionUsuarios = () => {
 
       {/* Filtros */}
       <div className="gu-filters">
-        <div className="lista-search-bar" style={{ flex: 1 }}>
-          <Search size={18} className="lista-search-icon" />
+        <div className="gu-filter-search">
+          <Search size={15} className="gu-filter-search-icon" />
           <input
             type="text"
-            placeholder="Buscar por nombre o correo..."
+            placeholder="Buscar por nombre o correo…"
             value={busqueda}
             onChange={(e) => aplicarFiltro(() => setBusqueda(e.target.value))}
-            className="lista-search-input"
+            className="gu-filter-input"
           />
         </div>
         <select
@@ -316,6 +316,11 @@ const GestionUsuarios = () => {
           <option value="">Todos los roles</option>
           {ROLES.map((r) => <option key={r.value} value={r.value}>{r.label}</option>)}
         </select>
+        {(busqueda || filtroRol) && (
+          <button className="gu-filter-clear" onClick={() => { aplicarFiltro(() => { setBusqueda(""); setFiltroRol(""); }); }}>
+            <X size={13} /> Limpiar
+          </button>
+        )}
       </div>
 
       {/* Tabla */}
@@ -327,18 +332,27 @@ const GestionUsuarios = () => {
       ) : (
         <div className="lista-table-card">
           <div className="table-container">
-            <table className="modern-table">
+            <table className="modern-table" style={{ tableLayout: "fixed", width: "100%" }}>
+              <colgroup>
+                <col style={{ width: "46%" }} />
+                <col style={{ width: "20%" }} />
+                <col style={{ width: "14%" }} />
+                <col style={{ width: "20%" }} />
+              </colgroup>
               <thead>
                 <tr>
                   <th>Usuario</th>
-                  <th style={{ width: 150 }}>Rol</th>
-                  <th style={{ width: 110, textAlign: "center" }}>Estado</th>
-                  <th style={{ width: 150, textAlign: "center" }}>Acciones</th>
+                  <th>Rol</th>
+                  <th style={{ textAlign: "center" }}>Estado</th>
+                  <th style={{ textAlign: "center" }}>Acciones</th>
                 </tr>
               </thead>
               <tbody>
                 {usuarios.length > 0 ? (
-                  usuarios.map((u) => (
+                  [...usuarios].sort((a, b) => {
+                    const orden: Record<string, number> = { ADMINISTRADOR: 0, MEDICO: 1, RECEPCIONISTA: 2, PACIENTE: 3 };
+                    return (orden[a.rol] ?? 9) - (orden[b.rol] ?? 9);
+                  }).map((u) => (
                     <tr key={u.id} className={!u.activo ? "gu-row--inactivo" : ""}>
                       <td>
                         <div className="td-person">

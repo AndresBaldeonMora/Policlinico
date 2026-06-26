@@ -5,6 +5,7 @@ import { X, MapPin } from "lucide-react";
 import Swal from "sweetalert2";
 import { toastExito, toastError } from "../../utils/toast";
 import { fmtEstado, horasHastaCitaISO } from "../../utils/fecha.utils";
+import { useAuth } from "../../hooks/userAuth";
 import "../../pages/MedicoDashboard/CitaModal.css";
 import "./CitaQuickModal.css";
 
@@ -31,6 +32,9 @@ interface Props {
 }
 
 const CitaQuickModal = ({ citaId, onCerrar, onCitaActualizada, onReprogramar }: Props) => {
+  const { hasRole } = useAuth();
+  const esAdmin = hasRole("ADMINISTRADOR");
+
   const [cita, setCita]       = useState<CitaTransformada | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError]     = useState("");
@@ -273,12 +277,14 @@ const CitaQuickModal = ({ citaId, onCerrar, onCitaActualizada, onReprogramar }: 
         </div>
 
         <div className="cita-modal-footer" style={{ justifyContent: "space-between" }}>
-          <button
-            className="cita-modal-btn cita-modal-btn--danger"
-            onClick={handleEliminar}
-          >
-            Eliminar cita
-          </button>
+          {esAdmin && (
+            <button
+              className="cita-modal-btn cita-modal-btn--danger"
+              onClick={handleEliminar}
+            >
+              Eliminar cita
+            </button>
+          )}
           <div style={{ display: "flex", gap: "0.625rem" }}>
             <button className="cita-modal-btn cita-modal-btn--secondary" onClick={onCerrar}>
               Cancelar

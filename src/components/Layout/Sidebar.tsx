@@ -22,6 +22,7 @@ import {
   ArrowLeftRight,
   MessageSquare,
   Ticket,
+  Clock,
 } from "lucide-react";
 import "./Sidebar.css";
 const Sidebar = () => {
@@ -64,6 +65,7 @@ const Sidebar = () => {
   const administradorMenu = [
     { path: "/admin",                label: "Panel Admin",    icon: ShieldCheck,   description: "Inicio administración" },
     { path: "/admin/doctores",       label: "Doctores",       icon: Stethoscope,   description: "CRUD doctores" },
+    { path: "/admin/horarios",       label: "Horarios",       icon: Clock,         description: "Gestión mensual de horarios" },
     { path: "/admin/especialidades", label: "Especialidades", icon: BookOpen,      description: "CRUD especialidades" },
     { path: "/admin/pacientes",      label: "Pacientes",      icon: Users,         description: "CRUD pacientes" },
     { path: "/admin/usuarios",       label: "Usuarios",       icon: UserCog,       description: "Gestión de usuarios del sistema" },

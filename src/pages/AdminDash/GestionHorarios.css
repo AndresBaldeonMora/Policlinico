@@ -1,0 +1,470 @@
+/* ─── GestionHorarios.css ─────────────────────────────────────────────────── */
+
+.gh-root { padding: 1.5rem 2rem; max-width: 1200px; margin: 0 auto; }
+
+.gh-loading {
+  display: flex; flex-direction: column; align-items: center;
+  justify-content: center; gap: 0.75rem; padding: 4rem; color: #6b7280;
+}
+.gh-spin { animation: gh-spin 0.9s linear infinite; }
+@keyframes gh-spin { to { transform: rotate(360deg); } }
+.gh-spin--inline { display: inline-block; margin-left: 0.4rem; }
+
+/* Page header */
+.gh-page-header { margin-bottom: 1.25rem; }
+.gh-page-title {
+  font-size: 1.3rem; font-weight: 700; color: #111827;
+  display: flex; align-items: center; gap: 0.5rem; margin: 0;
+}
+.gh-page-sub { font-size: 0.82rem; color: #6b7280; margin: 0.2rem 0 0; }
+
+/* ── Selector de médico ── */
+.gh-selector-section {
+  background: #fff; border: 1px solid #e5e7eb; border-radius: 12px;
+  padding: 1rem 1.25rem 1.25rem; margin-bottom: 1.25rem;
+  box-shadow: 0 1px 4px rgba(0,0,0,0.04);
+}
+.gh-selector-header {
+  display: flex; align-items: center; justify-content: space-between;
+  flex-wrap: wrap; gap: 0.75rem; margin-bottom: 0.9rem;
+}
+.gh-selector-titulo {
+  font-size: 0.8rem; font-weight: 700; color: #374151;
+  text-transform: uppercase; letter-spacing: 0.04em; margin: 0;
+  display: flex; align-items: center; gap: 0.5rem;
+}
+.gh-selector-count {
+  font-size: 0.72rem; font-weight: 500; color: #9ca3af;
+  background: #f3f4f6; border-radius: 10px; padding: 1px 7px;
+  text-transform: none; letter-spacing: 0;
+}
+.gh-selector-controles { display: flex; align-items: center; gap: 0.5rem; }
+
+.gh-search-wrap { position: relative; display: flex; align-items: center; }
+.gh-search-icon { position: absolute; left: 0.55rem; color: #9ca3af; pointer-events: none; }
+.gh-search-input {
+  padding: 0.38rem 2rem 0.38rem 1.85rem;
+  border: 1.5px solid #e5e7eb; border-radius: 7px;
+  font-size: 0.82rem; color: #111827; outline: none; width: 200px;
+}
+.gh-search-input:focus { border-color: #6366f1; }
+.gh-search-clear {
+  position: absolute; right: 0.4rem; background: none; border: none;
+  cursor: pointer; color: #9ca3af; display: flex; align-items: center; padding: 2px;
+}
+.gh-filter-wrap { position: relative; display: flex; align-items: center; }
+.gh-filter-icon { position: absolute; left: 0.55rem; color: #9ca3af; pointer-events: none; }
+.gh-filter-select {
+  padding: 0.38rem 0.75rem 0.38rem 1.85rem;
+  border: 1.5px solid #e5e7eb; border-radius: 7px;
+  font-size: 0.82rem; color: #111827; outline: none;
+  background: #fff; cursor: pointer; max-width: 190px;
+}
+.gh-filter-select:focus { border-color: #6366f1; }
+.gh-selector-empty { font-size: 0.84rem; color: #9ca3af; text-align: center; padding: 1rem 0; margin: 0; }
+
+.gh-doctores-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(210px, 1fr));
+  gap: 0.55rem;
+}
+.gh-doctor-card {
+  display: flex; align-items: center; gap: 0.65rem;
+  background: #f9fafb; border: 1.5px solid #e5e7eb; border-radius: 9px;
+  padding: 0.55rem 0.8rem; cursor: pointer; transition: all 0.14s;
+  text-align: left; position: relative;
+}
+.gh-doctor-card:hover { border-color: #a5b4fc; background: #f5f3ff; }
+.gh-doctor-card--active { border-color: #6366f1; background: #eef2ff; box-shadow: 0 0 0 3px rgba(99,102,241,0.12); }
+.gh-doctor-avatar {
+  width: 34px; height: 34px; border-radius: 50%;
+  background: linear-gradient(135deg, #6366f1, #8b5cf6); color: #fff;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 0.88rem; font-weight: 700; flex-shrink: 0;
+}
+.gh-doctor-card--active .gh-doctor-avatar { background: linear-gradient(135deg, #4f46e5, #7c3aed); }
+.gh-doctor-info { flex: 1; min-width: 0; }
+.gh-doctor-nombre { font-size: 0.82rem; font-weight: 600; color: #111827; margin: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.gh-doctor-esp    { font-size: 0.72rem; color: #6b7280; margin: 0.1rem 0 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.gh-doctor-check  { color: #6366f1; flex-shrink: 0; }
+
+/* ── Main panel ── */
+.gh-panel {
+  background: #fff; border: 1px solid #e5e7eb; border-radius: 14px;
+  overflow: hidden; box-shadow: 0 1px 6px rgba(0,0,0,0.05);
+}
+
+/* Tabs */
+.gh-tabs { display: flex; border-bottom: 1.5px solid #e5e7eb; background: #f9fafb; }
+.gh-tab {
+  flex: 1; padding: 0.8rem 1.25rem;
+  font-size: 0.85rem; font-weight: 500; color: #6b7280;
+  display: flex; align-items: center; justify-content: center; gap: 0.4rem;
+  cursor: pointer; background: none; border: none;
+  border-bottom: 2.5px solid transparent; margin-bottom: -1.5px; transition: all 0.15s;
+}
+.gh-tab:hover { color: #6366f1; background: #f3f4f6; }
+.gh-tab--active { color: #6366f1; border-bottom-color: #6366f1; background: #fff; font-weight: 600; }
+
+/* Selector de mes en sidebar */
+.gh-mes-selector { display: flex; flex-direction: column; gap: 0.6rem; }
+.gh-mes-selector-hdr {
+  display: flex; align-items: center; justify-content: space-between;
+  padding-bottom: 0.5rem; border-bottom: 1px solid #f3f4f6;
+}
+.gh-mes-anio {
+  font-size: 0.95rem; font-weight: 700; color: #111827;
+}
+.gh-mes-anio-btn {
+  width: 26px; height: 26px; display: flex; align-items: center; justify-content: center;
+  border: 1px solid #e5e7eb; border-radius: 6px; background: #fff; cursor: pointer; color: #374151;
+}
+.gh-mes-anio-btn:hover { background: #f3f4f6; }
+.gh-mes-grid {
+  display: grid; grid-template-columns: repeat(3, 1fr); gap: 0.4rem;
+}
+.gh-mes-chip {
+  padding: 0.45rem 0.2rem; border: 1.5px solid #e5e7eb; border-radius: 7px;
+  font-size: 0.78rem; font-weight: 600; color: #374151; background: #fff;
+  cursor: pointer; text-align: center; transition: all 0.12s;
+}
+.gh-mes-chip:hover { border-color: #6366f1; color: #6366f1; background: #f5f3ff; }
+.gh-mes-chip--activo { background: #6366f1; color: #fff; border-color: #6366f1; }
+.gh-mes-chip--pasado { opacity: 0.45; }
+.gh-mes-cargando {
+  display: flex; align-items: center; gap: 0.4rem;
+  font-size: 0.75rem; color: #9ca3af; padding: 0.25rem 0;
+}
+
+/* Mes nav (legacy, kept for bloqueos tab) */
+.gh-mes-nav {
+  display: flex; align-items: center; gap: 0.6rem;
+  padding: 0.7rem 1.25rem; border-bottom: 1px solid #f3f4f6;
+}
+.gh-mes-btn {
+  width: 30px; height: 30px; display: flex; align-items: center; justify-content: center;
+  border: 1px solid #e5e7eb; border-radius: 6px; background: #fff; cursor: pointer; color: #374151;
+}
+.gh-mes-btn:hover { background: #f3f4f6; }
+.gh-mes-titulo {
+  flex: 1; font-size: 0.95rem; font-weight: 700; color: #111827;
+  display: flex; align-items: center;
+}
+.gh-mes-reload {
+  width: 26px; height: 26px; display: flex; align-items: center; justify-content: center;
+  border: none; background: none; cursor: pointer; color: #9ca3af; border-radius: 4px;
+}
+.gh-mes-reload:hover { color: #6366f1; background: #f3f4f6; }
+
+/* ══ HORARIO LAYOUT ══ */
+.gh-horario-layout {
+  display: grid; grid-template-columns: 280px 1fr;
+  min-height: 560px;
+}
+
+/* Sidebar horario */
+.gh-horario-sidebar {
+  border-right: 1px solid #f3f4f6;
+  padding: 1.1rem 1rem;
+  display: flex; flex-direction: column; gap: 1.25rem;
+}
+
+.gh-mes-info-titulo {
+  font-size: 0.72rem; font-weight: 700; color: #9ca3af;
+  text-transform: uppercase; letter-spacing: 0.05em; margin: 0 0 0.65rem;
+}
+
+/* Cobertura */
+.gh-cobertura { display: flex; flex-direction: column; gap: 0.45rem; }
+.gh-cobertura-nums { display: flex; align-items: baseline; gap: 0.3rem; flex-wrap: wrap; }
+.gh-cobertura-actual { font-size: 1.6rem; font-weight: 800; color: #6366f1; line-height: 1; }
+.gh-cobertura-sep    { font-size: 1rem; font-weight: 600; color: #9ca3af; }
+.gh-cobertura-lbl    { font-size: 0.75rem; color: #6b7280; }
+.gh-cobertura-bar {
+  height: 6px; background: #e5e7eb; border-radius: 99px; overflow: hidden;
+}
+.gh-cobertura-fill {
+  height: 100%; background: linear-gradient(90deg, #6366f1, #8b5cf6);
+  border-radius: 99px; transition: width 0.4s ease;
+  min-width: 0;
+}
+.gh-reservados-aviso {
+  display: flex; align-items: center; gap: 0.4rem;
+  font-size: 0.76rem; color: #d97706; margin-top: 0.5rem;
+  background: #fefce8; border: 1px solid #fde68a;
+  border-radius: 6px; padding: 0.35rem 0.6rem;
+}
+
+/* Mini calendario */
+.gh-mini-cal {}
+.gh-cal {
+  display: grid; grid-template-columns: repeat(7, 1fr); gap: 2px;
+}
+.gh-cal-hdr {
+  text-align: center; font-size: 0.65rem; font-weight: 700;
+  color: #9ca3af; padding: 0.2rem 0; text-transform: uppercase;
+}
+.gh-dia {
+  aspect-ratio: 1; display: flex; flex-direction: column;
+  align-items: center; justify-content: center; border-radius: 5px;
+  font-size: 0.72rem; position: relative; border: 1px solid transparent;
+  background: none; color: #374151; gap: 2px; cursor: default;
+}
+.gh-dia-num { font-size: 0.72rem; font-weight: 500; line-height: 1; }
+.gh-dia-dot {
+  width: 4px; height: 4px; border-radius: 50%; background: #4ade80;
+}
+.gh-dia-lock { color: #ef4444; position: absolute; bottom: 2px; }
+.gh-dia-badge {
+  font-size: 0.58rem; background: #dcfce7; color: #166534;
+  border-radius: 3px; padding: 0 3px; font-weight: 600;
+}
+.gh-dia--con-slots { background: #f0fdf4; }
+.gh-dia--bloqueado { background: #fff7ed; }
+.gh-dia--pasado { opacity: 0.35; }
+.gh-dia--hoy .gh-dia-num {
+  background: #6366f1; color: #fff; border-radius: 50%;
+  width: 18px; height: 18px; display: flex; align-items: center; justify-content: center;
+  font-size: 0.68rem;
+}
+.gh-dia--domingo { opacity: 0.3; }
+.gh-dia--activo {
+  background: #eef2ff !important; border-color: #6366f1 !important;
+  font-weight: 700; cursor: pointer;
+}
+/* En tab bloqueos los días son clicables */
+.gh-cal-wrap .gh-dia { cursor: pointer; }
+.gh-cal-wrap .gh-dia:hover:not(.gh-dia--domingo):not(.gh-dia--pasado) { background: #f3f4f6; border-color: #d1d5db; }
+.gh-cal-wrap .gh-dia--con-slots:hover:not(.gh-dia--pasado) { background: #dcfce7; }
+.gh-cal-wrap .gh-dia--bloqueado:hover:not(.gh-dia--pasado) { background: #ffedd5; }
+.gh-cal-wrap .gh-dia--pasado { cursor: not-allowed; }
+.gh-cal-wrap .gh-dia--domingo { cursor: not-allowed; }
+
+.gh-leyenda { display: flex; gap: 0.6rem; flex-wrap: wrap; padding: 0.5rem 0 0; margin-top: 0.25rem; }
+.gh-ley-item {
+  font-size: 0.65rem; font-weight: 600; padding: 2px 6px;
+  border-radius: 4px; text-transform: uppercase; letter-spacing: 0.03em;
+}
+.gh-ley--slots  { background: #dcfce7; color: #166534; }
+.gh-ley--vacio  { background: #f3f4f6; color: #6b7280; border: 1px solid #e5e7eb; }
+.gh-ley--bloq   { background: #ffedd5; color: #9a3412; }
+.gh-ley--libre  { background: #f3f4f6; color: #6b7280; }
+
+.gh-sidebar-actions { margin-top: auto; }
+
+/* Resumen bloqueos lateral */
+.gh-bloq-resumen-lateral { margin-top: 0.75rem; display: flex; flex-direction: column; gap: 0.3rem; }
+
+/* ── Horario main ── */
+.gh-horario-main {
+  padding: 1.25rem 1.5rem;
+  display: flex; flex-direction: column; gap: 1.1rem;
+  overflow-y: auto;
+}
+.gh-horario-main-hdr {
+  display: flex; align-items: flex-start; justify-content: space-between; gap: 1rem;
+}
+.gh-horario-main-titulo { font-size: 1rem; font-weight: 700; color: #111827; margin: 0; }
+.gh-horario-main-sub { font-size: 0.8rem; color: #6b7280; margin: 0.25rem 0 0; line-height: 1.5; }
+.gh-horario-selec-count {
+  display: flex; align-items: center; gap: 0.4rem;
+  background: #eef2ff; border: 1px solid #c7d2fe; border-radius: 20px;
+  padding: 0.3rem 0.8rem; font-size: 0.8rem; font-weight: 600; color: #4f46e5;
+  white-space: nowrap; flex-shrink: 0;
+}
+
+/* Presets */
+.gh-presets {
+  display: flex; align-items: center; gap: 0.4rem; flex-wrap: wrap;
+  background: #f9fafb; border-radius: 8px; padding: 0.6rem 0.85rem;
+}
+.gh-presets-lbl {
+  font-size: 0.72rem; font-weight: 700; color: #9ca3af; text-transform: uppercase;
+  letter-spacing: 0.04em; display: flex; align-items: center; gap: 0.25rem;
+  margin-right: 0.25rem;
+}
+.gh-preset-btn {
+  font-size: 0.78rem; padding: 0.3rem 0.7rem; border-radius: 6px;
+  border: 1px solid #e5e7eb; background: #fff; cursor: pointer; color: #374151;
+  font-weight: 500; transition: all 0.12s;
+}
+.gh-preset-btn:hover { background: #eef2ff; border-color: #c7d2fe; color: #4f46e5; }
+.gh-preset-btn--clear:hover { background: #fef2f2; border-color: #fecaca; color: #ef4444; }
+
+/* Turnos */
+.gh-turno-bloque { display: flex; flex-direction: column; gap: 0.5rem; }
+.gh-turno-titulo {
+  font-size: 0.78rem; font-weight: 600; color: #374151;
+  display: flex; align-items: center; gap: 0.5rem; margin: 0;
+}
+.gh-turno-tag {
+  font-size: 0.65rem; font-weight: 700; padding: 2px 7px; border-radius: 4px;
+  text-transform: uppercase; letter-spacing: 0.04em;
+}
+.gh-turno-tag--manana { background: #fef9c3; color: #854d0e; }
+.gh-turno-tag--tarde  { background: #ede9fe; color: #5b21b6; }
+
+/* Slots */
+.gh-slots-grid {
+  display: grid; grid-template-columns: repeat(7, 1fr); gap: 5px;
+}
+.gh-slots-grid--bloqueo { grid-template-columns: repeat(5, 1fr); }
+
+.gh-slot {
+  font-size: 0.76rem; padding: 0.42rem 0.15rem; border-radius: 6px;
+  border: 1.5px solid #e5e7eb; background: #fff; cursor: pointer;
+  color: #374151; text-align: center; transition: all 0.12s;
+  font-weight: 500;
+}
+.gh-slot:hover { background: #f0fdf4; border-color: #86efac; color: #166534; }
+.gh-slot--activo { background: #dcfce7; border-color: #4ade80; color: #166534; font-weight: 700; }
+
+.gh-slot-bloq {
+  font-size: 0.74rem; padding: 0.4rem 0.2rem; border-radius: 6px;
+  border: 1.5px solid #e5e7eb; background: #fff; cursor: pointer;
+  color: #374151; display: flex; flex-direction: column; align-items: center;
+  gap: 2px; transition: all 0.12s;
+}
+.gh-slot-bloq:hover { background: #fef2f2; border-color: #fca5a5; color: #b91c1c; }
+.gh-slot-bloq--bloqueado { background: #fef2f2; border-color: #f87171; color: #b91c1c; }
+
+/* Nota info */
+.gh-nota-info {
+  display: flex; align-items: flex-start; gap: 0.4rem;
+  background: #eff6ff; border-radius: 7px; padding: 0.55rem 0.75rem;
+  font-size: 0.77rem; color: #1d4ed8;
+}
+
+/* Botón aplicar */
+.gh-btn--apply {
+  width: 100%; justify-content: center;
+  padding: 0.7rem; font-size: 0.9rem;
+}
+
+/* Confirm box */
+.gh-confirm-box {
+  display: flex; align-items: center; gap: 0.75rem;
+  background: #fefce8; border: 1.5px solid #fde68a; border-radius: 10px;
+  padding: 0.85rem 1rem;
+}
+.gh-confirm-icon { color: #d97706; flex-shrink: 0; }
+.gh-confirm-text {
+  flex: 1; display: flex; flex-direction: column; gap: 2px;
+  font-size: 0.82rem; color: #374151;
+}
+.gh-confirm-text strong { font-size: 0.85rem; color: #111827; }
+.gh-confirm-btns { display: flex; gap: 0.4rem; }
+
+/* ══ BLOQUEOS LAYOUT ══ */
+.gh-content {
+  display: grid; grid-template-columns: 300px 1fr;
+  gap: 0; min-height: 520px;
+}
+.gh-cal-wrap {
+  border-right: 1px solid #f3f4f6; padding: 1rem;
+}
+
+/* Detail panel */
+.gh-detalle { padding: 1.25rem; overflow-y: auto; }
+.gh-detalle-empty {
+  display: flex; flex-direction: column; align-items: center;
+  justify-content: center; text-align: center; gap: 0.75rem;
+  padding: 2.5rem 1rem; height: 100%;
+}
+.gh-detalle-empty-icon { color: #d1d5db; }
+.gh-detalle-empty p { font-size: 0.87rem; color: #9ca3af; max-width: 260px; }
+
+.gh-resumen-mes { display: flex; gap: 1.5rem; margin-top: 0.5rem; }
+.gh-resumen-stat { display: flex; flex-direction: column; align-items: center; gap: 2px; }
+.gh-resumen-stat span { font-size: 1.5rem; font-weight: 700; color: #111827; }
+.gh-resumen-stat small { font-size: 0.72rem; color: #9ca3af; text-transform: uppercase; }
+.gh-resumen-stat--warn span { color: #f59e0b; }
+
+/* Día editor (bloqueos) */
+.gh-dia-editor { display: flex; flex-direction: column; gap: 0.9rem; }
+.gh-dia-editor-hdr { display: flex; justify-content: space-between; align-items: flex-start; }
+.gh-dia-editor-fecha { font-size: 1.05rem; font-weight: 700; color: #111827; margin: 0; }
+.gh-dia-editor-sub   { font-size: 0.77rem; color: #6b7280; margin: 0.1rem 0 0; }
+
+.gh-bloqueo-form { display: flex; flex-direction: column; gap: 0.6rem; }
+.gh-field { display: flex; flex-direction: column; gap: 0.28rem; }
+.gh-label { font-size: 0.74rem; font-weight: 600; color: #374151; }
+.gh-label-opt { font-weight: 400; color: #9ca3af; }
+.gh-select, .gh-input {
+  width: 100%; padding: 0.42rem 0.65rem; border-radius: 7px;
+  border: 1.5px solid #e5e7eb; font-size: 0.82rem; color: #111827;
+  background: #fff; outline: none;
+}
+.gh-select:focus, .gh-input:focus { border-color: #6366f1; }
+
+.gh-dia-completo-banner {
+  display: flex; align-items: center; gap: 0.5rem;
+  background: #fef2f2; border: 1.5px solid #fca5a5; border-radius: 8px;
+  padding: 0.6rem 0.9rem; font-size: 0.82rem; color: #b91c1c;
+}
+.gh-dia-completo-banner span { flex: 1; }
+.gh-btn-desbloquear {
+  display: inline-flex; align-items: center; gap: 0.3rem;
+  font-size: 0.76rem; font-weight: 600; padding: 0.3rem 0.65rem;
+  border-radius: 5px; border: 1px solid #fca5a5; background: #fff; color: #b91c1c; cursor: pointer;
+}
+.gh-btn-desbloquear:hover:not(:disabled) { background: #fee2e2; }
+
+.gh-bloqdia-lista { display: flex; flex-direction: column; gap: 0.4rem; }
+.gh-bloqdia-row {
+  display: flex; align-items: flex-start; gap: 0.6rem;
+  background: #f9fafb; border: 1px solid #e5e7eb; border-radius: 8px;
+  padding: 0.5rem 0.7rem;
+}
+.gh-bloqdia-icon { color: #ef4444; flex-shrink: 0; margin-top: 2px; }
+.gh-bloqdia-info { flex: 1; display: flex; flex-direction: column; gap: 1px; }
+.gh-bloqdia-tipo  { font-size: 0.82rem; font-weight: 600; color: #111827; }
+.gh-bloqdia-motivo{ font-size: 0.75rem; color: #6b7280; }
+.gh-bloqdia-desc  { font-size: 0.72rem; color: #9ca3af; font-style: italic; }
+
+.gh-bloq-chip {
+  display: flex; align-items: center; gap: 0.4rem;
+  background: #fff7ed; border: 1px solid #fed7aa; border-radius: 6px;
+  padding: 0.3rem 0.6rem; font-size: 0.73rem; color: #92400e;
+}
+.gh-bloq-chip-motivo { margin-left: auto; font-size: 0.68rem; color: #9a3412; font-weight: 600; }
+.gh-bloq-mas { font-size: 0.73rem; color: #9ca3af; text-align: center; margin: 0.2rem 0 0; }
+
+/* Buttons */
+.gh-btn {
+  display: inline-flex; align-items: center; gap: 0.4rem;
+  font-size: 0.82rem; font-weight: 600; padding: 0.48rem 1rem;
+  border-radius: 7px; border: none; cursor: pointer; transition: all 0.14s;
+}
+.gh-btn:disabled { opacity: 0.5; cursor: default; }
+.gh-btn--primary { background: #6366f1; color: #fff; }
+.gh-btn--primary:hover:not(:disabled) { background: #4f46e5; }
+.gh-btn--ghost { background: #f3f4f6; color: #374151; border: 1px solid #e5e7eb; }
+.gh-btn--ghost:hover:not(:disabled) { background: #e5e7eb; }
+.gh-btn--danger-outline { background: #fff; color: #ef4444; border: 1.5px solid #fca5a5; }
+.gh-btn--danger-outline:hover:not(:disabled) { background: #fef2f2; }
+.gh-btn--full { width: 100%; justify-content: center; }
+.gh-btn--bloq-dia {
+  width: 100%; justify-content: center; background: #fff7ed;
+  color: #c2410c; border: 1.5px solid #fed7aa;
+}
+.gh-btn--bloq-dia:hover:not(:disabled) { background: #ffedd5; }
+
+.gh-icon-btn {
+  width: 30px; height: 30px; display: flex; align-items: center; justify-content: center;
+  border: 1px solid #e5e7eb; border-radius: 6px; background: #fff; cursor: pointer; color: #6b7280;
+}
+.gh-icon-btn:hover { background: #f3f4f6; }
+.gh-icon-btn--danger:hover { background: #fef2f2; border-color: #fca5a5; color: #ef4444; }
+
+.gh-slots-lbl {
+  font-size: 0.7rem; font-weight: 700; color: #9ca3af;
+  text-transform: uppercase; letter-spacing: 0.04em;
+  display: flex; align-items: center; gap: 0.3rem; margin: 0;
+}
+
+.gh-sin-doctor {
+  display: flex; flex-direction: column; align-items: center;
+  gap: 0.75rem; padding: 3rem 1rem; text-align: center;
+}
+.gh-sin-doctor p { font-size: 0.9rem; color: #9ca3af; }

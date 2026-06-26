@@ -1,7 +1,7 @@
 // src/services/cita.service.ts
 import api from "./api";
 
-export type EstadoCita = "PENDIENTE" | "ASISTIO" | "ATENDIDA" | "CANCELADA" | "REPROGRAMADA";
+export type EstadoCita = "PENDIENTE" | "ASISTIO" | "ATENDIDA" | "CANCELADA" | "REPROGRAMADA" | "AFECTADA";
 
 export interface CrearCitaDTO {
   pacienteId: string;
@@ -243,6 +243,21 @@ export class CitaApiService {
       `/citas/${id}/auditoria`
     );
     return response.data.data ?? [];
+  }
+
+  // ── Listar citas afectadas por bloqueos ───────────────────────────────────
+  static async listarAfectadas(): Promise<any[]> {
+    const response = await api.get<{ success: boolean; data: any[] }>("/citas/afectadas");
+    return response.data.data ?? [];
+  }
+
+  // ── Reprogramar cita afectada ─────────────────────────────────────────────
+  static async reprogramarAfectada(id: string, nuevaFecha: string, nuevaHora: string): Promise<void> {
+    const response = await api.post<{ success: boolean; message?: string }>(
+      `/citas/${id}/reprogramar-afectada`,
+      { nuevaFecha, nuevaHora }
+    );
+    if (!response.data.success) throw new Error(response.data.message || "Error al reprogramar");
   }
 
   // ── Actualizar cita (doctor, notas) ────────────────────────────────────────

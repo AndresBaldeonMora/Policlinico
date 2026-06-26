@@ -190,33 +190,33 @@ const ListaPacientes = ({ puedeEliminar = false }: Props) => {
                       <td className="td-center">{p.edad != null ? `${p.edad}` : <span className="td-muted">--</span>}</td>
                       {!esMedico && (
                         <td className="td-center">
-                          {p.tieneCuentaPortal ? (
-                            <span className="lp-badge lp-badge--ok" title="Tiene cuenta de portal">
-                              <ShieldCheck size={13} /> Activa
-                            </span>
-                          ) : (
-                            <span className="lp-badge lp-badge--off" title="Sin cuenta de portal">
-                              <ShieldOff size={13} /> Sin cuenta
-                            </span>
-                          )}
+                          <div className="lp-portal-cell">
+                            {p.tieneCuentaPortal ? (
+                              <span className="lp-badge lp-badge--ok">
+                                <ShieldCheck size={12} /> Activa
+                              </span>
+                            ) : (
+                              <>
+                                <span className="lp-badge lp-badge--off">
+                                  <ShieldOff size={12} /> Sin cuenta
+                                </span>
+                                <button
+                                  className="lp-btn-activar"
+                                  onClick={() => handleCrearCuenta(p)}
+                                  disabled={creandoCuentaId === p._id || !p.correo}
+                                  title={p.correo ? "Crear cuenta de portal" : "Requiere correo para crear cuenta"}
+                                >
+                                  {creandoCuentaId === p._id
+                                    ? <span className="lp-spinner-sm" />
+                                    : <><KeyRound size={12} /> Activar</>}
+                                </button>
+                              </>
+                            )}
+                          </div>
                         </td>
                       )}
                       <td className="td-center">
                         <div className="ge-actions">
-                          {!esMedico && !p.tieneCuentaPortal && (
-                            <button
-                              className="btn-action btn-action--primary"
-                              onClick={() => handleCrearCuenta(p)}
-                              disabled={creandoCuentaId === p._id || !p.correo}
-                              title={p.correo ? "Crear cuenta de portal" : "Falta correo"}
-                            >
-                              {creandoCuentaId === p._id ? (
-                                <span className="lp-spinner-sm" />
-                              ) : (
-                                <KeyRound size={14} />
-                              )}
-                            </button>
-                          )}
                           <button className="btn-action" onClick={() => navigate(`/pacientes/${p._id}`)} title="Ver historial">
                             <ClipboardList size={15} />
                           </button>

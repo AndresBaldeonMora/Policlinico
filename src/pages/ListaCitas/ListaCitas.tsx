@@ -3,7 +3,7 @@ import { useSearchParams, useNavigate } from "react-router-dom";
 import "./ListaCitas.css";
 import { CitaApiService } from "../../services/cita.service";
 import type { CitaProcesada } from "../../services/cita.service";
-import { CalendarClock, XCircle, Search, Calendar, Clock, User, Stethoscope, Trash2, ChevronLeft, ChevronRight } from "lucide-react";
+import { CalendarClock, XCircle, Search, Calendar, Clock, User, Stethoscope, Trash2, ChevronLeft, ChevronRight, AlertTriangle, RefreshCw, X, Check } from "lucide-react";
 import { DoctorApiService } from "../../services/doctor.service";
 import {
   listaCitasReducer,
@@ -59,21 +59,22 @@ const ESTADO_CONFIG: Record<string, { class: string; label: string }> = {
   ATENDIDA:     { class: "badge-success",       label: "Atendida" },
   CANCELADA:    { class: "badge-danger",        label: "Cancelada" },
   ASISTIO:      { class: "badge-asistio",       label: "En sala" },
-  // Alias defensivo para datos heredados sin migrar (VENCIDA → Cancelada)
+  AFECTADA:     { class: "badge-afectada",      label: "Afectada" },
   VENCIDA:      { class: "badge-danger",        label: "Cancelada" },
 };
 
 const TABS_ESTADO = [
-  { estado: "TODOS",     label: "Todos" },
-  { estado: "PENDIENTE", label: "Pendiente" },
   { estado: "EN_SALA",   label: "En sala" },
+  { estado: "PENDIENTE", label: "Pendiente" },
   { estado: "ATENDIDA",  label: "Atendida" },
   { estado: "CANCELADA", label: "Cancelada" },
+  { estado: "AFECTADA",  label: "⚠ Afectadas" },
+  { estado: "TODOS",     label: "Todos" },
 ];
 
-// Mapea cada tab a los estados reales que agrupa
 const TAB_GRUPOS: Record<string, string[]> = {
   TODOS:     [],
+  AFECTADA:  ["AFECTADA"],
   PENDIENTE: ["PENDIENTE", "REPROGRAMADA"],
   EN_SALA:   ["ASISTIO"],
   ATENDIDA:  ["ATENDIDA"],
@@ -97,9 +98,17 @@ const ListaCitas = () => {
   const [citasData, setCitasData] = useState<CitaProcesada[]>([]);
   const [busqueda, setBusqueda] = useState("");
   const [cargandoLista, setCargandoLista] = useState(true);
-  const [filtroEstado, setFiltroEstado] = useState("TODOS");
+  const [filtroEstado, setFiltroEstado] = useState("EN_SALA");
   const [filtroEspecialidad, setFiltroEspecialidad] = useState("TODAS");
   const [fechaFiltro, setFechaFiltro] = useState(hoyISO);
+
+  // Modal reprogramar cita afectada
+  const [citaAfectada, setCitaAfectada] = useState<CitaProcesada | null>(null);
+  const [repAfectadaFecha, setRepAfectadaFecha] = useState("");
+  const [repAfectadaHora, setRepAfectadaHora] = useState("");
+  const [repAfectadaHorarios, setRepAfectadaHorarios] = useState<{ hora: string; disponible: boolean }[]>([]);
+  const [repAfectadaCargando, setRepAfectadaCargando] = useState(false);
+  const [repAfectadaGuardando, setRepAfectadaGuardando] = useState(false);
 
   const sumarDias = (iso: string, dias: number): string => {
     const d = new Date(`${iso}T12:00:00`);
@@ -241,6 +250,44 @@ const ListaCitas = () => {
     }
   };
 
+  // Handlers para reprogramar cita afectada
+  const abrirReprogramarAfectada = (cita: CitaProcesada) => {
+    setCitaAfectada(cita);
+    setRepAfectadaFecha("");
+    setRepAfectadaHora("");
+    setRepAfectadaHorarios([]);
+  };
+
+  const onFechaAfectadaChange = async (fecha: string) => {
+    setRepAfectadaFecha(fecha);
+    setRepAfectadaHora("");
+    if (!fecha || !citaAfectada?.doctorId) return;
+    setRepAfectadaCargando(true);
+    try {
+      const horarios = await DoctorApiService.obtenerHorariosDisponibles(citaAfectada.doctorId, fecha);
+      setRepAfectadaHorarios(horarios);
+    } catch {
+      setRepAfectadaHorarios([]);
+    } finally {
+      setRepAfectadaCargando(false);
+    }
+  };
+
+  const confirmarReprogramarAfectada = async () => {
+    if (!citaAfectada || !repAfectadaFecha || !repAfectadaHora) return;
+    setRepAfectadaGuardando(true);
+    try {
+      await CitaApiService.reprogramarAfectada(citaAfectada._id, repAfectadaFecha, repAfectadaHora);
+      showNotification("Cita reprogramada correctamente. El paciente fue notificado.", "success");
+      setCitaAfectada(null);
+      cargarCitas();
+    } catch (err) {
+      showNotification(err instanceof Error ? err.message : "Error al reprogramar.", "error");
+    } finally {
+      setRepAfectadaGuardando(false);
+    }
+  };
+
   const citasMedicas = useMemo(
     () => citasData.filter((c) => c.tipo !== "LABORATORIO"),
     [citasData]
@@ -299,6 +346,21 @@ const ListaCitas = () => {
           <p className="lista-page-subtitle">{filtrarCitas.length} cita{filtrarCitas.length !== 1 ? "s" : ""} · {fechaDMY ?? "todas las fechas"}</p>
         </div>
       </div>
+
+      {/* ── Banner citas afectadas ── */}
+      {(() => {
+        const nAfectadas = citasData.filter((c) => c.estado === "AFECTADA").length;
+        if (!nAfectadas) return null;
+        return (
+          <div className="lc-banner-afectadas" onClick={() => setFiltroEstado("AFECTADA")}>
+            <AlertTriangle size={16} />
+            <span>
+              <strong>{nAfectadas} cita{nAfectadas !== 1 ? "s" : ""} afectada{nAfectadas !== 1 ? "s" : ""}</strong> por bloqueos de agenda — requieren reprogramación
+            </span>
+            <span className="lc-banner-link">Ver citas afectadas →</span>
+          </div>
+        );
+      })()}
 
       {/* ── Filtros ── */}
       <div className="lab-filtros-avanzados" style={{ marginBottom: "1rem" }}>
@@ -462,33 +524,42 @@ const ListaCitas = () => {
                         </td>
                         <td onClick={(e) => e.stopPropagation()}>
                           <div style={{ display: "flex", gap: "0.25rem" }}>
-                            {(() => {
-                              const fueraDePlazo = horasHastaCita(cita.fecha, cita.hora) < 24;
-                              // Regla de negocio: solo se puede reprogramar UNA vez (solo desde PENDIENTE).
-                              const puedeReprogramar = cita.estado === "PENDIENTE" && !fueraDePlazo;
-                              return (
-                                <button
-                                  className="btn-action"
-                                  title={
-                                    cita.estado === "REPROGRAMADA"
-                                      ? "Esta cita ya fue reprogramada y no admite una segunda reprogramación"
-                                      : fueraDePlazo
-                                      ? "No se puede reprogramar dentro de las 24h previas a la cita"
-                                      : puedeReprogramar
-                                      ? "Reprogramar cita"
-                                      : "Solo se pueden reprogramar citas pendientes"
-                                  }
-                                  disabled={!puedeReprogramar}
-                                  onClick={() => onReprogramar(cita)}
-                                >
-                                  <CalendarClock size={16} />
-                                </button>
-                              );
-                            })()}
+                            {cita.estado === "AFECTADA" ? (
+                              <button
+                                className="btn-action btn-action--amber"
+                                title="Reprogramar cita afectada"
+                                onClick={() => abrirReprogramarAfectada(cita)}
+                              >
+                                <RefreshCw size={16} />
+                              </button>
+                            ) : (
+                              (() => {
+                                const fueraDePlazo = horasHastaCita(cita.fecha, cita.hora) < 24;
+                                const puedeReprogramar = cita.estado === "PENDIENTE" && !fueraDePlazo;
+                                return (
+                                  <button
+                                    className="btn-action"
+                                    title={
+                                      cita.estado === "REPROGRAMADA"
+                                        ? "Esta cita ya fue reprogramada y no admite una segunda reprogramación"
+                                        : fueraDePlazo
+                                        ? "No se puede reprogramar dentro de las 24h previas a la cita"
+                                        : puedeReprogramar
+                                        ? "Reprogramar cita"
+                                        : "Solo se pueden reprogramar citas pendientes"
+                                    }
+                                    disabled={!puedeReprogramar}
+                                    onClick={() => onReprogramar(cita)}
+                                  >
+                                    <CalendarClock size={16} />
+                                  </button>
+                                );
+                              })()
+                            )}
                             <button
                               className="btn-action btn-action--danger"
                               title="Cancelar cita"
-                              disabled={cita.estado !== "PENDIENTE" && cita.estado !== "REPROGRAMADA"}
+                              disabled={cita.estado !== "PENDIENTE" && cita.estado !== "REPROGRAMADA" && cita.estado !== "AFECTADA"}
                               onClick={() => setCitaParaCancelar(cita)}
                             >
                               <XCircle size={16} />
@@ -553,6 +624,79 @@ const ListaCitas = () => {
             <div className="confirm-actions">
               <button className="btn btn-secondary" onClick={() => setCitaParaCancelar(null)}>Volver</button>
               <button className="btn btn-danger" onClick={confirmarCancelacion}>Sí, cancelar</button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ── Modal: Reprogramar cita afectada ── */}
+      {citaAfectada && (
+        <div className="pm-overlay" onClick={(e) => { if (e.target === e.currentTarget) setCitaAfectada(null); }}>
+          <div className="lc-rep-afectada-modal">
+            <div className="lc-rep-afectada-header">
+              <div className="lc-rep-afectada-header-left">
+                <div className="lc-rep-afectada-icon"><AlertTriangle size={18} /></div>
+                <div>
+                  <h2>Reprogramar cita afectada</h2>
+                  <p>{citaAfectada.paciente} · Dr. {citaAfectada.doctor}</p>
+                </div>
+              </div>
+              <button className="pm-close" onClick={() => setCitaAfectada(null)}><X size={16} /></button>
+            </div>
+
+            <div className="lc-rep-afectada-info">
+              <span><Calendar size={13} /> Fecha original: <strong>{citaAfectada.fecha}</strong></span>
+              <span><Clock size={13} /> Hora original: <strong>{citaAfectada.hora}</strong></span>
+            </div>
+
+            <div className="lc-rep-afectada-body">
+              <div className="pm-field">
+                <label className="pm-label">Nueva fecha <span className="pm-req">*</span></label>
+                <input
+                  type="date"
+                  className="pm-input"
+                  min={hoyISO}
+                  value={repAfectadaFecha}
+                  onChange={(e) => onFechaAfectadaChange(e.target.value)}
+                />
+              </div>
+
+              {repAfectadaFecha && (
+                <div className="pm-field">
+                  <label className="pm-label">Nueva hora <span className="pm-req">*</span></label>
+                  {repAfectadaCargando ? (
+                    <p className="lc-rep-cargando">Cargando horarios disponibles…</p>
+                  ) : repAfectadaHorarios.filter(h => h.disponible).length === 0 ? (
+                    <p className="lc-rep-sin-horarios">No hay horarios disponibles para esta fecha. Elige otra.</p>
+                  ) : (
+                    <div className="lc-rep-horas-grid">
+                      {repAfectadaHorarios.filter(h => h.disponible).map(h => (
+                        <button
+                          key={h.hora}
+                          type="button"
+                          className={`lc-rep-hora-btn ${repAfectadaHora === h.hora ? "lc-rep-hora-btn--on" : ""}`}
+                          onClick={() => setRepAfectadaHora(h.hora)}
+                        >
+                          {h.hora}
+                        </button>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              )}
+            </div>
+
+            <div className="lc-rep-afectada-footer">
+              <button className="pm-btn pm-btn--ghost" onClick={() => setCitaAfectada(null)}>
+                Cancelar
+              </button>
+              <button
+                className="pm-btn pm-btn--primary"
+                disabled={!repAfectadaFecha || !repAfectadaHora || repAfectadaGuardando}
+                onClick={confirmarReprogramarAfectada}
+              >
+                {repAfectadaGuardando ? "Guardando…" : <><Check size={14} /> Confirmar reprogramación</>}
+              </button>
             </div>
           </div>
         </div>

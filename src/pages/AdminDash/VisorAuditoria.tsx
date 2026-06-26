@@ -147,40 +147,49 @@ const VisorAuditoria = () => {
 
       {/* Filtros */}
       <div className="av-filters">
-        <div className="lista-search-bar av-search">
-          <Search size={18} className="lista-search-icon" />
+        {/* Búsqueda */}
+        <div className="av-filter-search">
+          <Search size={15} className="av-filter-search-icon" />
           <input
             type="text"
-            placeholder="Buscar por acción (ej: cita, orden, usuario)…"
+            placeholder="Buscar por acción, entidad, usuario…"
             value={busqueda}
             onChange={(e) => aplicarFiltro(() => setBusqueda(e.target.value))}
-            className="lista-search-input"
+            className="av-filter-input"
           />
         </div>
 
-        <select
-          className="av-select"
-          value={filtroEntidad}
-          onChange={(e) => aplicarFiltro(() => setFiltroEntidad(e.target.value))}
-        >
-          <option value="">Todas las entidades</option>
-          {entidades.map((e) => <option key={e} value={e}>{labelEntidad(e)}</option>)}
-        </select>
+        {/* Separador visual */}
+        <div className="av-filter-divider" />
 
-        <div className="av-date-group">
-          <label>Desde</label>
-          <input type="date" className="av-date" value={filtroDesde} max={filtroHasta || undefined}
+        {/* Entidad */}
+        <div className="av-filter-group">
+          <span className="av-filter-label">Entidad</span>
+          <select
+            className="av-filter-select"
+            value={filtroEntidad}
+            onChange={(e) => aplicarFiltro(() => setFiltroEntidad(e.target.value))}
+          >
+            <option value="">Todas</option>
+            {entidades.map((e) => <option key={e} value={e}>{labelEntidad(e)}</option>)}
+          </select>
+        </div>
+
+        {/* Rango fechas */}
+        <div className="av-filter-group">
+          <span className="av-filter-label">Desde</span>
+          <input type="date" className="av-filter-date" value={filtroDesde} max={filtroHasta || undefined}
             onChange={(e) => aplicarFiltro(() => setFiltroDesde(e.target.value))} />
         </div>
-        <div className="av-date-group">
-          <label>Hasta</label>
-          <input type="date" className="av-date" value={filtroHasta} min={filtroDesde || undefined}
+        <div className="av-filter-group">
+          <span className="av-filter-label">Hasta</span>
+          <input type="date" className="av-filter-date" value={filtroHasta} min={filtroDesde || undefined}
             onChange={(e) => aplicarFiltro(() => setFiltroHasta(e.target.value))} />
         </div>
 
         {hayFiltros && (
-          <button className="av-clear-btn" onClick={limpiarFiltros} title="Limpiar filtros">
-            <X size={14} /> Limpiar
+          <button className="av-filter-clear" onClick={limpiarFiltros}>
+            <X size={13} /> Limpiar
           </button>
         )}
       </div>
@@ -201,13 +210,20 @@ const VisorAuditoria = () => {
       ) : (
         <div className="lista-table-card">
           <div className="table-container">
-            <table className="modern-table">
+            <table className="modern-table" style={{ tableLayout: "fixed", width: "100%" }}>
+              <colgroup>
+                <col style={{ width: "16%" }} />
+                <col style={{ width: "16%" }} />
+                <col style={{ width: "18%" }} />
+                <col style={{ width: "14%" }} />
+                <col style={{ width: "36%" }} />
+              </colgroup>
               <thead>
                 <tr>
-                  <th style={{ width: 160 }}>Fecha / Hora</th>
-                  <th style={{ width: 180 }}>Usuario</th>
-                  <th style={{ width: 170 }}>Acción</th>
-                  <th style={{ width: 120 }}>Entidad</th>
+                  <th>Fecha / Hora</th>
+                  <th>Usuario</th>
+                  <th>Acción</th>
+                  <th>Entidad</th>
                   <th>Descripción</th>
                 </tr>
               </thead>
@@ -234,15 +250,21 @@ const VisorAuditoria = () => {
                     </td>
                     <td><span className="av-entidad">{labelEntidad(r.entidad)}</span></td>
                     <td>
-                      {(r.estadoAnterior || r.estadoNuevo) ? (
-                        <span className="av-estados">
-                          {r.estadoAnterior && <span className="av-estado-old">{labelEstado(r.estadoAnterior)}</span>}
-                          {r.estadoAnterior && r.estadoNuevo && <span className="av-arrow">→</span>}
-                          {r.estadoNuevo && <span className="av-estado-new">{labelEstado(r.estadoNuevo)}</span>}
-                        </span>
-                      ) : (
-                        <span className="av-desc">{r.descripcion || "—"}</span>
-                      )}
+                      <div className="av-desc-cell">
+                        {r.descripcion && (
+                          <span className="av-desc">{r.descripcion}</span>
+                        )}
+                        {(r.estadoAnterior || r.estadoNuevo) && (
+                          <span className="av-estados">
+                            {r.estadoAnterior && <span className="av-estado-old">{labelEstado(r.estadoAnterior)}</span>}
+                            {r.estadoAnterior && r.estadoNuevo && <span className="av-arrow">→</span>}
+                            {r.estadoNuevo && <span className="av-estado-new">{labelEstado(r.estadoNuevo)}</span>}
+                          </span>
+                        )}
+                        {!r.descripcion && !r.estadoAnterior && !r.estadoNuevo && (
+                          <span className="av-desc av-desc--muted">—</span>
+                        )}
+                      </div>
                     </td>
                   </tr>
                 ))}

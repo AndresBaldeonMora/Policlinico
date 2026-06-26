@@ -2,10 +2,8 @@ import { useEffect, useState, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import Swal from "sweetalert2";
 import {
-  Stethoscope, Users, BookOpen, ArrowRight,
-  AlertTriangle, Info, Megaphone, Trash2,
-  CheckCircle2, MessageSquare, ArrowLeftRight, Plus,
-  Send, ShieldAlert,
+  ArrowRight, AlertTriangle, Info, Megaphone, Trash2,
+  CheckCircle2, MessageSquare, Plus, Send, ShieldAlert,
 } from "lucide-react";
 import { AvisoService, type Aviso, type TipoAviso, type DashboardResumen } from "../../services/aviso.service";
 import { toastExito, toastError } from "../../utils/toast";
@@ -92,16 +90,6 @@ const AdminDashboard = () => {
     }
   };
 
-  const stats = resumen?.stats;
-
-  const kpiCards = [
-    { label: "Doctores",         value: stats?.totalDoctores,       icon: Stethoscope,    path: "/admin/doctores",       color: "#6366f1", bg: "rgba(99,102,241,0.08)"   },
-    { label: "Pacientes",        value: stats?.totalPacientes,      icon: Users,          path: "/admin/pacientes",      color: "#f59e0b", bg: "rgba(245,158,11,0.08)"   },
-    { label: "Especialidades",   value: stats?.totalEspecialidades, icon: BookOpen,       path: "/admin/especialidades", color: "var(--primary)", bg: "rgba(5,150,105,0.08)" },
-    { label: "Reclamaciones",    value: stats?.reclamacionesPendientes, icon: MessageSquare, path: "/admin/reclamaciones", color: stats?.reclamacionesPendientes ? "#ef4444" : "#10b981", bg: stats?.reclamacionesPendientes ? "rgba(239,68,68,0.08)" : "rgba(16,185,129,0.08)" },
-    { label: "Interconsultas",   value: stats?.interconsultasPendientes, icon: ArrowLeftRight, path: "/interconsultas", color: stats?.interconsultasPendientes ? "#f59e0b" : "#10b981", bg: stats?.interconsultasPendientes ? "rgba(245,158,11,0.08)" : "rgba(16,185,129,0.08)" },
-  ];
-
   return (
     <div className="dashboard">
       {/* ── Header ── */}
@@ -110,26 +98,6 @@ const AdminDashboard = () => {
           <h1 className="dashboard-title">Panel de Administración</h1>
           <p className="dashboard-subtitle">Centro de control y comunicaciones del sistema</p>
         </div>
-      </div>
-
-      {/* ── KPI Cards ── */}
-      <div className="dashboard-stats" style={{ gridTemplateColumns: "repeat(auto-fit, minmax(170px, 1fr))" }}>
-        {kpiCards.map(({ label, value, icon: Icon, path, color, bg }) => (
-          <div
-            key={label} className="ad-card"
-            style={{ "--card-color": color, "--card-bg": bg } as React.CSSProperties}
-            onClick={() => navigate(path)}
-          >
-            <div className="ad-card-icon"><Icon size={20} /></div>
-            <div className="ad-card-info">
-              <span className="stat-label">{label}</span>
-              <span className="stat-value">
-                {cargando ? <span className="stat-skeleton" /> : (value ?? 0)}
-              </span>
-            </div>
-            <ArrowRight size={15} className="ad-card-arrow" />
-          </div>
-        ))}
       </div>
 
       {/* ── Layout dos columnas ── */}

@@ -110,18 +110,23 @@
   border: 1px solid rgba(100, 116, 139, 0.25);
 }
 
-/* Botón primary y spinner pequeño dentro de la celda de acciones */
-.btn-action--primary {
-  background: rgba(5, 150, 105, 0.1) !important;
-  color: #047857 !important;
-  border-color: rgba(5, 150, 105, 0.3) !important;
+/* Celda portal: badge + botón activar apilados */
+.lp-portal-cell {
+  display: flex; flex-direction: column; align-items: center; gap: 0.35rem;
 }
-.btn-action--primary:hover:not(:disabled) {
-  background: rgba(5, 150, 105, 0.2) !important;
+
+.lp-btn-activar {
+  display: inline-flex; align-items: center; gap: 0.3rem;
+  font-size: 0.7rem; font-weight: 600; padding: 0.25rem 0.6rem;
+  border-radius: 5px; border: 1.5px solid rgba(5,150,105,0.4);
+  background: rgba(5,150,105,0.08); color: #047857;
+  cursor: pointer; transition: all 0.13s; white-space: nowrap;
 }
-.btn-action--primary:disabled {
-  opacity: 0.5;
-  cursor: not-allowed;
+.lp-btn-activar:hover:not(:disabled) {
+  background: rgba(5,150,105,0.18); border-color: #059669;
+}
+.lp-btn-activar:disabled {
+  opacity: 0.4; cursor: not-allowed;
 }
 .lp-spinner-sm {
   width: 13px;

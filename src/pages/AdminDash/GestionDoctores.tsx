@@ -1,5 +1,5 @@
 import { useEffect, useReducer, useState } from "react";
-import { Search, Plus, Pencil, Trash2, Stethoscope, X, AlertCircle, Check, CalendarOff } from "lucide-react";
+import { Search, Plus, Pencil, Trash2, Stethoscope, X, AlertCircle, Check, CalendarOff, User, Mail, Phone, Hash, DoorOpen, Clock3, FileText } from "lucide-react";
 import { DoctorApiService, type DoctorTransformado } from "../../services/doctor.service";
 import { EspecialidadApiService, type Especialidad } from "../../services/especialidad.service";
 import { BloqueoService, type Bloqueo } from "../../services/bloqueo.service";
@@ -19,6 +19,9 @@ interface FormFields {
   telefono: string;
   especialidadId: string;
   cmp: string;
+  descripcion: string;
+  consultorio: string;
+  turno: string;
 }
 
 interface ModalState {
@@ -39,6 +42,7 @@ type ModalAction =
 
 const camposVacios: FormFields = {
   nombres: "", apellidos: "", correo: "", telefono: "", especialidadId: "", cmp: "",
+  descripcion: "", consultorio: "", turno: "AMBOS",
 };
 
 function modalReducer(state: ModalState, action: ModalAction): ModalState {
@@ -56,6 +60,9 @@ function modalReducer(state: ModalState, action: ModalAction): ModalState {
           telefono: action.doctor.telefono,
           especialidadId: action.doctor.especialidadId,
           cmp: action.doctor.cmp ?? "",
+          descripcion: action.doctor.descripcion ?? "",
+          consultorio: action.doctor.consultorio ? String(action.doctor.consultorio) : "",
+          turno: action.doctor.turno ?? "AMBOS",
         },
         loading: false,
         error: "",
@@ -233,8 +240,15 @@ const GestionarDoctores = () => {
     if (err) { dispatch({ type: "SET_ERROR", message: err }); return; }
     dispatch({ type: "SET_LOADING", value: true });
     try {
-      const { nombres, apellidos, correo, telefono, especialidadId, cmp } = modal.campos;
-      const payload = { nombres: nombres.trim(), apellidos: apellidos.trim(), correo: correo.trim(), telefono: telefono.trim(), especialidadId, cmp: cmp.trim() || undefined };
+      const { nombres, apellidos, correo, telefono, especialidadId, cmp, descripcion, consultorio, turno } = modal.campos;
+      const payload = {
+        nombres: nombres.trim(), apellidos: apellidos.trim(),
+        correo: correo.trim(), telefono: telefono.trim(),
+        especialidadId, cmp: cmp.trim() || undefined,
+        descripcion: descripcion.trim() || undefined,
+        consultorio: consultorio ? Number(consultorio) : undefined,
+        turno: turno || undefined,
+      };
 
       if (modal.doctor) {
         const actualizado = await DoctorApiService.actualizar(modal.doctor.id, payload);
@@ -360,13 +374,6 @@ const GestionarDoctores = () => {
                             <Pencil size={14} />
                           </button>
                           <button
-                            className="btn-action btn-action--amber"
-                            onClick={() => abrirBloqueos(d)}
-                            title="Gestionar bloqueos de horario"
-                          >
-                            <CalendarOff size={14} />
-                          </button>
-                          <button
                             className="btn-action btn-action--danger"
                             onClick={() => setConfirmDelete(d.id)}
                             disabled={eliminandoId === d.id}
@@ -392,57 +399,77 @@ const GestionarDoctores = () => {
         </div>
       )}
 
-      {/* Modal */}
+      {/* Modal crear / editar doctor */}
       {modal.abierto && (
-        <div
-          className="pm-overlay"
-          onClick={(e) => { if (e.target === e.currentTarget) dispatch({ type: "CERRAR" }); }}
-        >
-          <div className="pm-modal" style={{ maxWidth: 520 }}>
-            <div className="pm-header">
-              <div className="pm-header-info">
-                <div className="pm-header-icon">{modal.doctor ? <Pencil size={16} /> : <Stethoscope size={16} />}</div>
+        <div className="pm-overlay" onClick={(e) => { if (e.target === e.currentTarget) dispatch({ type: "CERRAR" }); }}>
+          <div className="gd-modal">
+
+            {/* Header */}
+            <div className="gd-modal-header">
+              <div className="gd-modal-header-left">
+                <div className="gd-modal-avatar">
+                  {modal.campos.nombres ? modal.campos.nombres.charAt(0).toUpperCase() : <Stethoscope size={18}/>}
+                </div>
                 <div>
-                  <h2>{modal.doctor ? "Editar Doctor" : "Nuevo Doctor"}</h2>
+                  <h2 className="gd-modal-titulo">{modal.doctor ? "Editar doctor" : "Registrar nuevo doctor"}</h2>
+                  <p className="gd-modal-sub">
+                    {modal.doctor
+                      ? `Editando: ${modal.doctor.nombres} ${modal.doctor.apellidos}`
+                      : "Completa los datos del profesional médico"}
+                  </p>
                 </div>
               </div>
-              <button className="pm-close" aria-label="Cerrar" onClick={() => dispatch({ type: "CERRAR" })} disabled={modal.loading}><X size={16} /></button>
+              <button className="pm-close" onClick={() => dispatch({ type: "CERRAR" })} disabled={modal.loading}><X size={16}/></button>
             </div>
 
             {modal.error && (
-              <div className="pm-error">
-                <AlertCircle size={15} /> {modal.error}
-              </div>
+              <div className="pm-error"><AlertCircle size={14}/> {modal.error}</div>
             )}
 
-            <form onSubmit={handleGuardar} className="pm-form">
-              <div className="pm-section">
+            <form onSubmit={handleGuardar} className="gd-modal-body">
+
+              {/* ── Sección 1: Datos personales ── */}
+              <div className="gd-form-section">
+                <p className="gd-section-titulo"><User size={13}/> Datos personales</p>
                 <div className="pm-row">
                   <div className="pm-field">
                     <label className="pm-label">Nombres <span className="pm-req">*</span></label>
-                    <input className="pm-input" name="nombres" value={modal.campos.nombres} onChange={handleChange} placeholder="Juan" disabled={modal.loading} />
+                    <input className="pm-input" name="nombres" value={modal.campos.nombres}
+                      onChange={handleChange} placeholder="Juan" disabled={modal.loading} autoFocus/>
                   </div>
                   <div className="pm-field">
                     <label className="pm-label">Apellidos <span className="pm-req">*</span></label>
-                    <input className="pm-input" name="apellidos" value={modal.campos.apellidos} onChange={handleChange} placeholder="Pérez García" disabled={modal.loading} />
+                    <input className="pm-input" name="apellidos" value={modal.campos.apellidos}
+                      onChange={handleChange} placeholder="Pérez García" disabled={modal.loading}/>
                   </div>
                 </div>
+              </div>
 
+              {/* ── Sección 2: Contacto ── */}
+              <div className="gd-form-section">
+                <p className="gd-section-titulo"><Mail size={13}/> Contacto</p>
                 <div className="pm-row">
                   <div className="pm-field">
-                    <label className="pm-label">Correo <span className="pm-req">*</span></label>
-                    <input className="pm-input" type="email" name="correo" value={modal.campos.correo} onChange={handleChange} placeholder="doctor@clinica.com" disabled={modal.loading} />
+                    <label className="pm-label">Correo institucional <span className="pm-req">*</span></label>
+                    <input className="pm-input" type="email" name="correo" value={modal.campos.correo}
+                      onChange={handleChange} placeholder="doctor@sanjose.com" disabled={modal.loading}/>
                   </div>
                   <div className="pm-field">
                     <label className="pm-label">Teléfono <span className="pm-req">*</span></label>
-                    <input className="pm-input" name="telefono" value={modal.campos.telefono} onChange={handleChange} placeholder="987654321" maxLength={9}  disabled={modal.loading} />
+                    <input className="pm-input" name="telefono" value={modal.campos.telefono}
+                      onChange={handleChange} placeholder="987654321" maxLength={9} disabled={modal.loading}/>
                   </div>
                 </div>
+              </div>
 
+              {/* ── Sección 3: Datos profesionales ── */}
+              <div className="gd-form-section">
+                <p className="gd-section-titulo"><Stethoscope size={13}/> Datos profesionales</p>
                 <div className="pm-row">
-                  <div className="pm-field">
+                  <div className="pm-field" style={{ flex: 2 }}>
                     <label className="pm-label">Especialidad <span className="pm-req">*</span></label>
-                    <select className="pm-select" name="especialidadId" value={modal.campos.especialidadId} onChange={handleChange} disabled={modal.loading}>
+                    <select className="pm-select" name="especialidadId" value={modal.campos.especialidadId}
+                      onChange={handleChange} disabled={modal.loading}>
                       <option value="">Seleccionar especialidad</option>
                       {especialidades.map((esp) => (
                         <option key={esp.id} value={esp.id}>{esp.nombre}</option>
@@ -451,24 +478,66 @@ const GestionarDoctores = () => {
                   </div>
                   <div className="pm-field">
                     <label className="pm-label">CMP <span className="pm-label-optional">(opcional)</span></label>
-                    <input className="pm-input" name="cmp" value={modal.campos.cmp} onChange={handleChange} placeholder="Ej: 12345" maxLength={5} disabled={modal.loading} />
+                    <div className="gd-input-icon-wrap">
+                      <Hash size={13} className="gd-input-icon"/>
+                      <input className="pm-input gd-input-with-icon" name="cmp" value={modal.campos.cmp}
+                        onChange={handleChange} placeholder="12345" maxLength={8} disabled={modal.loading}/>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="pm-row">
+                  <div className="pm-field">
+                    <label className="pm-label">Consultorio <span className="pm-label-optional">(opcional)</span></label>
+                    <div className="gd-input-icon-wrap">
+                      <DoorOpen size={13} className="gd-input-icon"/>
+                      <input className="pm-input gd-input-with-icon" type="number" name="consultorio"
+                        value={modal.campos.consultorio} onChange={handleChange}
+                        placeholder="Ej: 3" min={1} max={999} disabled={modal.loading}/>
+                    </div>
+                  </div>
+                  <div className="pm-field">
+                    <label className="pm-label">Turno de atención</label>
+                    <div className="gd-turno-btns">
+                      {[
+                        { val: "MANANA",  label: "Mañana" },
+                        { val: "TARDE",   label: "Tarde" },
+                        { val: "AMBOS",   label: "Ambos" },
+                      ].map(t => (
+                        <button key={t.val} type="button"
+                          className={`gd-turno-btn ${modal.campos.turno === t.val ? "gd-turno-btn--on" : ""}`}
+                          onClick={() => dispatch({ type: "SET_CAMPO", field: "turno", value: t.val })}
+                          disabled={modal.loading}>
+                          {t.label}
+                        </button>
+                      ))}
+                    </div>
                   </div>
                 </div>
               </div>
 
-              <div className="pm-footer">
-                <div />
-                <div className="pm-footer-actions">
-                  <button type="button" className="pm-btn pm-btn--ghost" onClick={() => dispatch({ type: "CERRAR" })} disabled={modal.loading}>
-                    <X size={14} /> Cancelar
-                  </button>
-                  <button type="submit" className="pm-btn pm-btn--primary" disabled={modal.loading}>
-                    {modal.loading
-                      ? <><span className="pm-spinner-sm" /> Guardando…</>
-                      : <><Check size={14} /> {modal.doctor ? "Guardar cambios" : "Registrar doctor"}</>
-                    }
-                  </button>
+              {/* ── Sección 4: Perfil / Bio ── */}
+              <div className="gd-form-section">
+                <p className="gd-section-titulo"><FileText size={13}/> Perfil profesional <span className="pm-label-optional" style={{ fontWeight: 400, textTransform: "none" }}>(opcional)</span></p>
+                <div className="pm-field">
+                  <textarea className="pm-input gd-textarea" name="descripcion" rows={3}
+                    value={modal.campos.descripcion} onChange={(e) => dispatch({ type: "SET_CAMPO", field: "descripcion", value: e.target.value })}
+                    placeholder="Breve descripción del médico: experiencia, subespecialidades, enfoque clínico…"
+                    disabled={modal.loading}/>
+                  <span className="gd-char-count">{modal.campos.descripcion.length}/500</span>
                 </div>
+              </div>
+
+              {/* Footer */}
+              <div className="gd-modal-footer">
+                <button type="button" className="pm-btn pm-btn--ghost" onClick={() => dispatch({ type: "CERRAR" })} disabled={modal.loading}>
+                  Cancelar
+                </button>
+                <button type="submit" className="pm-btn pm-btn--primary" disabled={modal.loading || !modal.campos.nombres || !modal.campos.especialidadId}>
+                  {modal.loading
+                    ? <><span className="pm-spinner-sm"/> Guardando…</>
+                    : <><Check size={14}/> {modal.doctor ? "Guardar cambios" : "Registrar doctor"}</>}
+                </button>
               </div>
             </form>
           </div>
