@@ -568,35 +568,33 @@ export const NuevaOrdenRecepcionModal = ({ onCerrar, onOrdenCreada }: Props) => 
                 )}
               </div>
 
-              {/* Pago */}
-              <div className="nor-pago-metodos">
-                {(["EFECTIVO", "TARJETA", "TRANSFERENCIA"] as MetodoPago[]).map((m) => (
-                  <button
-                    key={m}
-                    className={`nor-pago-btn ${metodoPago === m ? "nor-pago-btn--active" : ""}`}
-                    onClick={() => setMetodoPago(m)}
-                  >
-                    {m === "EFECTIVO" ? "💵 Efectivo" : m === "TARJETA" ? "💳 Tarjeta" : "🏦 Transferencia"}
-                  </button>
-                ))}
-              </div>
+              {/* Total a cobrar */}
+              {precioEstimado > 0 && (
+                <div className="nor-pago-total">
+                  <span className="nor-pago-total-lbl">Total a cobrar</span>
+                  <span className="nor-pago-total-monto">S/ {precioEstimado.toFixed(2)}</span>
+                </div>
+              )}
 
-              <div className="nor-field-group">
-                <label className="nor-label">Monto pagado (S/)</label>
-                <input
-                  type="number"
-                  className="nor-input"
-                  placeholder={precioEstimado > 0 ? precioEstimado.toFixed(2) : "0.00"}
-                  value={monto}
-                  min={0}
-                  step={0.01}
-                  onChange={(e) => setMonto(e.target.value)}
-                />
+              {/* Método de pago */}
+              <div className="nor-pago-section">
+                <p className="nor-label">Método de pago <span className="nor-pago-opcional">(opcional)</span></p>
+                <div className="nor-pago-metodos">
+                  {(["EFECTIVO", "TARJETA", "TRANSFERENCIA"] as MetodoPago[]).map((m) => (
+                    <button
+                      key={m}
+                      className={`nor-pago-btn ${metodoPago === m ? "nor-pago-btn--active" : ""}`}
+                      onClick={() => setMetodoPago(prev => prev === m ? "EFECTIVO" : m)}
+                    >
+                      {m === "EFECTIVO" ? "💵 Efectivo" : m === "TARJETA" ? "💳 Tarjeta" : "🏦 Transferencia"}
+                    </button>
+                  ))}
+                </div>
               </div>
 
               <div className="nor-confirm-note">
                 <CheckCircle size={14} />
-                Al confirmar, la orden se creará directamente <strong>En Vigencia</strong>. Se podrá imprimir de inmediato.
+                Al confirmar, la orden queda <strong>En Vigencia</strong> y lista para imprimir. El cobro puede registrarse después.
               </div>
             </div>
           )}

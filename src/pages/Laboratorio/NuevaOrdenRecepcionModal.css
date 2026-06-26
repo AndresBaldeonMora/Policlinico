@@ -573,6 +573,21 @@
 .nor-resumen-lbl { font-size: 0.8rem; color: var(--text-muted); }
 .nor-resumen-val { font-size: 0.85rem; font-weight: 600; color: var(--text-primary); }
 
+.nor-pago-total {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background: var(--primary, #0ea5e9);
+  color: #fff;
+  border-radius: var(--radius-md);
+  padding: 0.85rem 1.1rem;
+}
+.nor-pago-total-lbl { font-size: 0.85rem; font-weight: 500; opacity: 0.9; }
+.nor-pago-total-monto { font-size: 1.35rem; font-weight: 800; letter-spacing: -0.01em; }
+
+.nor-pago-section { display: flex; flex-direction: column; gap: 0.5rem; }
+.nor-pago-opcional { font-weight: 400; color: var(--text-muted); font-size: 0.75rem; }
+
 .nor-pago-metodos {
   display: flex;
   gap: 0.5rem;
