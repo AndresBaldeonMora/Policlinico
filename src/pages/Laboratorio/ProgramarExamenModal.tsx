@@ -155,17 +155,19 @@ function CalendarioLab({ examen, onSeleccionar, onCerrar }: Props) {
                 if (!d) return <div key={`e-${i}`} />;
                 const iso = getDiaISO(d);
                 const oc  = ocupados[iso] ?? 0;
-                const pasado = iso < hoyISO_;
-                const esHoy  = iso === hoyISO_;
-                const lleno  = oc >= capacidad || (esHoy && hoyYaSinCupos);
-                const casi   = !lleno && oc >= capacidad * 0.8;
-                const activo = iso === seleccionado;
-                const disabled = pasado || lleno;
+                const pasado  = iso < hoyISO_;
+                const esHoy   = iso === hoyISO_;
+                const cerrado = esHoy && hoyYaSinCupos; // horario lab ya terminó hoy
+                const lleno   = !cerrado && oc >= capacidad;
+                const casi    = !lleno && !cerrado && oc >= capacidad * 0.8;
+                const activo  = iso === seleccionado;
+                const disabled = pasado || lleno || cerrado;
                 return (
                   <button
                     key={iso}
-                    className={`pem-dia ${pasado ? "pem-dia--pasado" : ""} ${lleno ? "pem-dia--lleno" : ""} ${casi ? "pem-dia--casi" : ""} ${activo ? "pem-dia--activo" : ""}`}
+                    className={`pem-dia ${pasado ? "pem-dia--pasado" : ""} ${cerrado ? "pem-dia--cerrado" : ""} ${lleno ? "pem-dia--lleno" : ""} ${casi ? "pem-dia--casi" : ""} ${activo ? "pem-dia--activo" : ""}`}
                     disabled={disabled}
+                    title={cerrado ? "Atención de laboratorio cerrada (7–11 a.m.)" : undefined}
                     onClick={() => setSeleccionado(iso)}
                   >
                     {d}
