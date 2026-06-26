@@ -534,57 +534,116 @@ export const NuevaOrdenRecepcionModal = ({ onCerrar, onOrdenCreada }: Props) => 
           )}
 
           {/* ── Paso 5: Pago y Confirmación ── */}
-          {paso === 5 && (
-            <div className="nor-paso">
-              <h4 className="nor-paso-titulo"><CreditCard size={16} /> Pago y Confirmación</h4>
+          {paso === 5 && (() => {
+            const exSel = examenes.filter(e => seleccionados.has(e._id));
+            const labItems   = exSel.filter(e => !IMAGEN_TIPOS.includes(e.tipo));
+            const imgItems   = exSel.filter(e =>  IMAGEN_TIPOS.includes(e.tipo));
 
-              {/* Resumen */}
-              <div className="nor-resumen">
-                <div className="nor-resumen-fila">
-                  <span className="nor-resumen-lbl">Paciente</span>
-                  <span className="nor-resumen-val">{pacienteSelec?.nombres} {pacienteSelec?.apellidos}</span>
+            const formatValor = (id: string, esImg: boolean) => {
+              const v = fechasPorExamen[id];
+              if (!v) return "—";
+              if (esImg) {
+                const [dp, tp] = v.split("T");
+                const [y,m,d] = dp.split("-");
+                return `${d}/${m}/${y} · ${tp ?? ""}`;
+              }
+              const [y,m,d] = v.split("-");
+              return `${d}/${m}/${y}`;
+            };
+
+            return (
+            <div className="nor-paso nor-paso--resumen">
+              {/* ─ Cabecera personas ─ */}
+              <div className="nor-rs-personas">
+                <div className="nor-rs-persona">
+                  <div className="nor-rs-avatar nor-rs-avatar--pac">
+                    {(pacienteSelec?.nombres?.[0] ?? "P").toUpperCase()}
+                  </div>
+                  <div>
+                    <p className="nor-rs-rol">Paciente</p>
+                    <p className="nor-rs-nombre">{pacienteSelec?.nombres} {pacienteSelec?.apellidos}</p>
+                    <p className="nor-rs-sub">DNI {pacienteSelec?.dni}</p>
+                  </div>
                 </div>
-                <div className="nor-resumen-fila">
-                  <span className="nor-resumen-lbl">Médico</span>
-                  <span className="nor-resumen-val">Dr(a). {doctorSelec?.nombres} {doctorSelec?.apellidos}</span>
+                <div className="nor-rs-divider-v" />
+                <div className="nor-rs-persona">
+                  <div className="nor-rs-avatar nor-rs-avatar--doc">
+                    {(doctorSelec?.nombres?.[0] ?? "M").toUpperCase()}
+                  </div>
+                  <div>
+                    <p className="nor-rs-rol">Médico responsable</p>
+                    <p className="nor-rs-nombre">Dr(a). {doctorSelec?.nombres} {doctorSelec?.apellidos}</p>
+                    <p className="nor-rs-sub">{doctorSelec?.especialidad} · CMP {doctorSelec?.cmp}</p>
+                  </div>
                 </div>
-                <div className="nor-resumen-fila">
-                  <span className="nor-resumen-lbl">Tipo</span>
-                  <span className="nor-resumen-val">{tipoOrden}</span>
-                </div>
-                <div className="nor-resumen-fila">
-                  <span className="nor-resumen-lbl">Exámenes</span>
-                  <span className="nor-resumen-val">{seleccionados.size} examen{seleccionados.size > 1 ? "es" : ""}</span>
-                </div>
-                <div className="nor-resumen-fila">
-                  <span className="nor-resumen-lbl">Citas programadas</span>
-                  <span className="nor-resumen-val">{Object.keys(fechasPorExamen).filter(id => seleccionados.has(id)).length} / {seleccionados.size}</span>
-                </div>
-                {precioEstimado > 0 && (
-                  <div className="nor-resumen-fila nor-resumen-fila--total">
-                    <span className="nor-resumen-lbl">Total estimado</span>
-                    <span className="nor-resumen-val">S/ {precioEstimado.toFixed(2)}</span>
+              </div>
+
+              {/* ─ Exámenes detallados ─ */}
+              <div className="nor-rs-examenes">
+                {labItems.length > 0 && (
+                  <div className="nor-rs-seccion">
+                    <p className="nor-rs-seccion-titulo nor-rs-seccion-titulo--lab">Laboratorio</p>
+                    {labItems.map(ex => (
+                      <div key={ex._id} className="nor-rs-examen-row">
+                        <div className="nor-rs-examen-info">
+                          <span className="nor-rs-examen-nombre">{ex.nombre}</span>
+                          <span className="nor-rs-examen-fecha">
+                            📅 {formatValor(ex._id, false)}
+                          </span>
+                          {obsItem[ex._id] && (
+                            <span className="nor-rs-examen-obs">"{obsItem[ex._id]}"</span>
+                          )}
+                        </div>
+                        {ex.precio > 0 && (
+                          <span className="nor-rs-examen-precio">S/ {ex.precio.toFixed(2)}</span>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                )}
+
+                {imgItems.length > 0 && (
+                  <div className="nor-rs-seccion">
+                    <p className="nor-rs-seccion-titulo nor-rs-seccion-titulo--img">Imagenología</p>
+                    {imgItems.map(ex => (
+                      <div key={ex._id} className="nor-rs-examen-row">
+                        <div className="nor-rs-examen-info">
+                          <span className="nor-rs-examen-nombre">{ex.nombre}</span>
+                          <span className="nor-rs-examen-fecha">
+                            🕐 {formatValor(ex._id, true)}
+                          </span>
+                          {obsItem[ex._id] && (
+                            <span className="nor-rs-examen-obs">"{obsItem[ex._id]}"</span>
+                          )}
+                        </div>
+                        {ex.precio > 0 && (
+                          <span className="nor-rs-examen-precio">S/ {ex.precio.toFixed(2)}</span>
+                        )}
+                      </div>
+                    ))}
                   </div>
                 )}
               </div>
 
-              {/* Total a cobrar */}
-              {precioEstimado > 0 && (
-                <div className="nor-pago-total">
-                  <span className="nor-pago-total-lbl">Total a cobrar</span>
-                  <span className="nor-pago-total-monto">S/ {precioEstimado.toFixed(2)}</span>
+              {/* ─ Total + método de pago ─ */}
+              <div className="nor-pago-total">
+                <div>
+                  <p className="nor-pago-total-lbl">Total a cobrar</p>
+                  <p className="nor-pago-total-sub">{exSel.length} examen{exSel.length !== 1 ? "es" : ""}</p>
                 </div>
-              )}
+                <span className="nor-pago-total-monto">
+                  {precioEstimado > 0 ? `S/ ${precioEstimado.toFixed(2)}` : "—"}
+                </span>
+              </div>
 
-              {/* Método de pago */}
               <div className="nor-pago-section">
-                <p className="nor-label">Método de pago <span className="nor-pago-opcional">(opcional)</span></p>
+                <p className="nor-label">Método de pago <span className="nor-pago-opcional">(opcional — puede registrarse después)</span></p>
                 <div className="nor-pago-metodos">
                   {(["EFECTIVO", "TARJETA", "TRANSFERENCIA"] as MetodoPago[]).map((m) => (
                     <button
                       key={m}
                       className={`nor-pago-btn ${metodoPago === m ? "nor-pago-btn--active" : ""}`}
-                      onClick={() => setMetodoPago(prev => prev === m ? "EFECTIVO" : m)}
+                      onClick={() => setMetodoPago(m)}
                     >
                       {m === "EFECTIVO" ? "💵 Efectivo" : m === "TARJETA" ? "💳 Tarjeta" : "🏦 Transferencia"}
                     </button>
@@ -594,10 +653,11 @@ export const NuevaOrdenRecepcionModal = ({ onCerrar, onOrdenCreada }: Props) => 
 
               <div className="nor-confirm-note">
                 <CheckCircle size={14} />
-                Al confirmar, la orden queda <strong>En Vigencia</strong> y lista para imprimir. El cobro puede registrarse después.
+                Al confirmar, la orden queda <strong>En Vigencia</strong> y lista para imprimir.
               </div>
             </div>
-          )}
+            );
+          })()}
         </div>
 
         {/* Footer de navegación */}
