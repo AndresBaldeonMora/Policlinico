@@ -174,16 +174,6 @@ const Sidebar = () => {
                   {!collapsed && (
                     <>
                       <span className="sidebar-label">{item.label}</span>
-                      {badge !== null && (
-                        <span style={{
-                          marginLeft: "auto", background: "#ef4444", color: "#fff",
-                          borderRadius: "9999px", fontSize: 11, fontWeight: 700,
-                          minWidth: 20, height: 20, display: "flex",
-                          alignItems: "center", justifyContent: "center", padding: "0 5px",
-                        }}>
-                          {badge > 99 ? "99+" : badge}
-                        </span>
-                      )}
                       {isActive && !badge && <ChevronRight size={16} className="sidebar-link-arrow" />}
                     </>
                   )}

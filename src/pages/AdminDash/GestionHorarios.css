@@ -360,6 +360,7 @@
   display: grid; grid-template-columns: 300px 1fr;
   gap: 0; min-height: 520px;
 }
+.gh-content > .gh-mes-nav { grid-column: 1 / -1; }
 .gh-cal-wrap {
   border-right: 1px solid #f3f4f6; padding: 1rem;
 }
